@@ -35,10 +35,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/rustam/Diploma/Project
+CMAKE_SOURCE_DIR = /home/rustam/BMSTU-Refal-Compiler/Project
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/rustam/Diploma/Project-build
+CMAKE_BINARY_DIR = /home/rustam/BMSTU-Refal-Compiler/Project-build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/Project.dir/depend.make
@@ -50,18 +50,18 @@ include CMakeFiles/Project.dir/progress.make
 include CMakeFiles/Project.dir/flags.make
 
 CMakeFiles/Project.dir/main.c.o: CMakeFiles/Project.dir/flags.make
-CMakeFiles/Project.dir/main.c.o: /home/rustam/Diploma/Project/main.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/Diploma/Project-build/CMakeFiles $(CMAKE_PROGRESS_1)
+CMakeFiles/Project.dir/main.c.o: /home/rustam/BMSTU-Refal-Compiler/Project/main.c
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/BMSTU-Refal-Compiler/Project-build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object CMakeFiles/Project.dir/main.c.o"
-	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/Project.dir/main.c.o   -c /home/rustam/Diploma/Project/main.c
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/Project.dir/main.c.o   -c /home/rustam/BMSTU-Refal-Compiler/Project/main.c
 
 CMakeFiles/Project.dir/main.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/Project.dir/main.c.i"
-	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -E /home/rustam/Diploma/Project/main.c > CMakeFiles/Project.dir/main.c.i
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -E /home/rustam/BMSTU-Refal-Compiler/Project/main.c > CMakeFiles/Project.dir/main.c.i
 
 CMakeFiles/Project.dir/main.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/Project.dir/main.c.s"
-	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -S /home/rustam/Diploma/Project/main.c -o CMakeFiles/Project.dir/main.c.s
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -S /home/rustam/BMSTU-Refal-Compiler/Project/main.c -o CMakeFiles/Project.dir/main.c.s
 
 CMakeFiles/Project.dir/main.c.o.requires:
 .PHONY : CMakeFiles/Project.dir/main.c.o.requires
@@ -81,7 +81,7 @@ Project_EXTERNAL_OBJECTS =
 
 Project: CMakeFiles/Project.dir/main.c.o
 Project: CMakeFiles/Project.dir/build.make
-Project: /home/rustam/Diploma/Runtime-build/libruntime.a
+Project: /home/rustam/BMSTU-Refal-Compiler/Runtime-build/libruntime.a
 Project: CMakeFiles/Project.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking C executable Project"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Project.dir/link.txt --verbose=$(VERBOSE)
@@ -98,6 +98,6 @@ CMakeFiles/Project.dir/clean:
 .PHONY : CMakeFiles/Project.dir/clean
 
 CMakeFiles/Project.dir/depend:
-	cd /home/rustam/Diploma/Project-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/rustam/Diploma/Project /home/rustam/Diploma/Project /home/rustam/Diploma/Project-build /home/rustam/Diploma/Project-build /home/rustam/Diploma/Project-build/CMakeFiles/Project.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/rustam/BMSTU-Refal-Compiler/Project-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/rustam/BMSTU-Refal-Compiler/Project /home/rustam/BMSTU-Refal-Compiler/Project /home/rustam/BMSTU-Refal-Compiler/Project-build /home/rustam/BMSTU-Refal-Compiler/Project-build /home/rustam/BMSTU-Refal-Compiler/Project-build/CMakeFiles/Project.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/Project.dir/depend
 

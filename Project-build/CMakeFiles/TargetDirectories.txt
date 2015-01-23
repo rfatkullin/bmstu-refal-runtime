@@ -1,1 +1,1 @@
-/home/rustam/Diploma/Project-build/CMakeFiles/Project.dir
+/home/rustam/BMSTU-Refal-Compiler/Project-build/CMakeFiles/Project.dir

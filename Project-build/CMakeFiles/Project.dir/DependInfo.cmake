@@ -4,7 +4,7 @@ SET(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 SET(CMAKE_DEPENDS_CHECK_C
-  "/home/rustam/Diploma/Project/main.c" "/home/rustam/Diploma/Project-build/CMakeFiles/Project.dir/main.c.o"
+  "/home/rustam/BMSTU-Refal-Compiler/Project/main.c" "/home/rustam/BMSTU-Refal-Compiler/Project-build/CMakeFiles/Project.dir/main.c.o"
   )
 SET(CMAKE_C_COMPILER_ID "GNU")
 
@@ -14,7 +14,7 @@ SET(CMAKE_TARGET_LINKED_INFO_FILES
 
 # The include file search paths:
 SET(CMAKE_C_TARGET_INCLUDE_PATH
-  "/home/rustam/Diploma/Runtime/headers"
+  "/home/rustam/BMSTU-Refal-Compiler/Runtime/headers"
   )
 SET(CMAKE_CXX_TARGET_INCLUDE_PATH ${CMAKE_C_TARGET_INCLUDE_PATH})
 SET(CMAKE_Fortran_TARGET_INCLUDE_PATH ${CMAKE_C_TARGET_INCLUDE_PATH})
