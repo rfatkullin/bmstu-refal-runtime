@@ -1,3 +1,8 @@
 Runtime/build/*
+Runtime/CMakeLists.txt.user
+
 Project/build/*
+Project/main.c
+Project/CMakeLists.txt.user
+
 RoomOfTesting/*
