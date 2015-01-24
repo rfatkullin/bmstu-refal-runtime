@@ -18,13 +18,13 @@ function AssertSuccess
 }
 
 #Собираем библиотеку рантайма.
-cd ../Runtime-build 
+cd ../Runtime/build 
 make 1>/dev/null 
-AssertSuccess "Runtime-build error" 
+AssertSuccess "Runtime build error" 
 cd - 1>/dev/null
 
 #Компилируем компилятор! В итоге получаем исполняемый файл refalc, который кладется в папку, прописанную в переменной PATH.
-go install -compiler gccgo ../Compiler/src/refalc/refalc.go 
+go install -compiler gccgo ${GOPATH}/src/BMSTU-Refal-Compiler/refalc/refalc.go 
 AssertSuccess "Can't build compiler"
 
 cp ${1} ${TmpRefSourceFile}
@@ -35,6 +35,7 @@ AssertSuccess "Can't compile refal source ${1}"
 
 #Собираем весь проект - линкуем сгенерированный файл с библиотекой исполнения.
 cp ${TmpCSourceFile} ../Project/main.c
+cd ../Project/build/
 make 1>/dev/null
 AssertSuccess "Can't build project!"
 

@@ -11,5 +11,5 @@ get_filename_component(PARENT_DIR ${PROJECT_SOURCE_DIR} PATH)
 include_directories(${PARENT_DIR}/Runtime/headers)
 
 #Указываем путь до статической библиотеки рантайма
-target_link_libraries(${PROJECT_NAME} ${PARENT_DIR}/Runtime-build/libruntime.a)
+target_link_libraries(${PROJECT_NAME} ${PARENT_DIR}/Runtime/build/libruntime.a)
 
