@@ -67,8 +67,8 @@ void mainLoop(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t*
 	{
 		printChainOfCalls(callTerm);
 
-		if (callTerm->funcCall->entryPoint == 0)
-			callTerm->funcCall->fieldOfView->current = getAssembliedChain(callTerm->funcCall->fieldOfView->current);
+		//if (callTerm->funcCall->entryPoint == 0)
+		//	callTerm->funcCall->fieldOfView->current = getAssembliedChain(callTerm->funcCall->fieldOfView->current);
 
 		funcRes = callTerm->funcCall->funcPtr(callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView);
 
