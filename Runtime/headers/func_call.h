@@ -13,6 +13,13 @@ struct env_t
 
 	//Локальные переменные. Содержимое постоянно изменяется.
 	struct lterm_t** locals;
+
+	//Собранные FOVы
+	struct lterm_t** assembledFOVs;
+
+	//Какие переменные в шаблонах были удлинены в последний раз. Т.е
+	//указывает какую переменную нужно удлинять.
+	int* stretchVarsNumber;
 };
 
 /*
@@ -31,13 +38,6 @@ struct func_call_t
 
 	//Содержит информацию о поле видимости.
 	struct lterm_chain_t* inFieldOfView;
-
-	//Собранные FOVы
-	struct lterm_t** assembledFOVs;
-
-	//Какие переменные в шаблонах были удлинены в последний раз. Т.е
-	//указывает какую переменную нужно удлинять.
-	int* stretchVarsNumber;
 
 	//Для хранения ссылки на поле видимости "под-вызова"
 	struct lterm_t* subCall;
