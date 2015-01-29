@@ -1,9 +1,5 @@
 $ENTRY Go
 {
-	= <Func 'Hi! How are you?'>	
+	e.1 s.1 : e.2 s.1  = 
 }
 
-Func
-{
-	e.1 s.1 = 
-}
