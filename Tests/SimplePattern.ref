@@ -1,0 +1,9 @@
+$ENTRY Go
+{
+	= <Func 'Hi! How are you?'>	
+}
+
+Func
+{
+	e.1 s.1 = 
+}

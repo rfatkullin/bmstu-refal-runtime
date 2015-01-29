@@ -12,20 +12,7 @@ struct env_t
 	struct lterm_t* params;
 
 	//Локальные переменные. Содержимое постоянно изменяется.
-	struct lterm_t* locals;
-};
-
-/*
-	Хранит текущее поле видимости и предыдущие.
-*/
-struct field_view_t
-{
-	//Текущее поле видимости.
-	struct lterm_chain_t* current;
-
-	//Список всех полей видимости. Необходим для восстановления
-	//текущего поля видимости при откатах.
-	struct lterm_chain_t* backups;
+	struct lterm_t** locals;
 };
 
 /*
@@ -37,16 +24,23 @@ struct func_call_t
 	const char* funcName;
 
 	//Ссылка на саму функцию.
-	struct func_result_t (*funcPtr)(int entryPoint, struct env_t* env, struct field_view_t* fieldOfView);
+	struct func_result_t (*funcPtr)(int entryPoint, struct env_t* env, struct lterm_chain_t* inFieldOfView);
 
 	//Окружение.
 	struct env_t* env;
 
-	//Узел в поле видимости
-	struct lterm_t* inField;
-
 	//Содержит информацию о поле видимости.
-	struct field_view_t* fieldOfView;
+	struct lterm_chain_t* inFieldOfView;
+
+	//Собранные FOVы
+	struct lterm_t** assembledFOVs;
+
+	//Какие переменные в шаблонах были удлинены в последний раз. Т.е
+	//указывает какую переменную нужно удлинять.
+	int* stretchVarsNumber;
+
+	//Для хранения ссылки на поле видимости "под-вызова"
+	struct lterm_t* subCall;
 
 	//Точка входа.
 	int entryPoint;

@@ -7,8 +7,10 @@
 
 static void printChainOfCalls(struct lterm_t* callTerm);
 static struct lterm_t* updateFieldOfView(struct lterm_t* mainChain, struct func_result_t* funcResult);
+static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
 static void assemblyChain(struct lterm_chain_t* chain);
-static struct lterm_chain_t* getAssembliedChain(struct lterm_chain_t* oldChain);
+static void destroyFuncCallTerm(struct lterm_t* term);
+static struct lterm_chain_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 
 static struct lterm_chain_t* ConstructEmptyLTermChain()
 {
@@ -20,7 +22,7 @@ static struct lterm_chain_t* ConstructEmptyLTermChain()
 	return chain;
 }
 
-static struct func_call_t* ConstructStartFunc(const char* funcName, struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t* env, struct field_view_t* fieldOfView),
+static struct func_call_t* ConstructStartFunc(const char* funcName, struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t* env, struct lterm_chain_t* fieldOfView),
 	struct lterm_chain_t* chain)
 {
 	struct func_call_t* goCall = (struct func_call_t*)malloc(sizeof(struct func_call_t));
@@ -31,17 +33,14 @@ static struct func_call_t* ConstructStartFunc(const char* funcName, struct func_
 	goCall->env = (struct env_t*)malloc(sizeof(struct env_t));
 	goCall->env->params = 0;
 
-	goCall->fieldOfView = (struct field_view_t*)malloc(sizeof(struct field_view_t));
-	goCall->fieldOfView->current = chain;
-	goCall->fieldOfView->backups = 0;
-	goCall->inField = chain;
+	goCall->inFieldOfView = chain;
 	goCall->entryPoint = 0;
 	goCall->next = 0;
 
 	return goCall;
 }
 
-static struct lterm_t* ConstructStartFieldOfView(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t* env, struct field_view_t* fieldOfView))
+static struct lterm_t* ConstructStartFieldOfView(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t* env, struct lterm_chain_t* fieldOfView))
 {
 	struct lterm_chain_t* fieldOfView = (struct lterm_chain_t*)malloc(sizeof(struct lterm_chain_t));
 	struct lterm_t* term = (struct lterm_t*)malloc(sizeof(struct lterm_t));
@@ -57,7 +56,7 @@ static struct lterm_t* ConstructStartFieldOfView(struct func_result_t (*firstFun
 	return term;
 }
 
-void mainLoop(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t* env, struct field_view_t* fieldOfView))
+void mainLoop(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t* env, struct lterm_chain_t* fieldOfView))
 {
 	struct lterm_t* fieldOfView = ConstructStartFieldOfView(firstFuncPtr);
 	struct lterm_t* callTerm = fieldOfView;
@@ -67,10 +66,10 @@ void mainLoop(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t*
 	{
 		printChainOfCalls(callTerm);
 
-		//if (callTerm->funcCall->entryPoint == 0)
-		//	callTerm->funcCall->fieldOfView->current = getAssembliedChain(callTerm->funcCall->fieldOfView->current);
+		if (callTerm->funcCall->entryPoint != 0)
+			createFieldOfViewForReCall(callTerm);
 
-		funcRes = callTerm->funcCall->funcPtr(callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView);
+		funcRes = callTerm->funcCall->funcPtr(callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->inFieldOfView);
 
 		switch (funcRes.status)
 		{
@@ -80,7 +79,7 @@ void mainLoop(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t*
 				break;
 
 			case CALL_RESULT:
-				//TO DO
+				callTerm = addFuncCallFiledOfView(callTerm, &funcRes);
 				break;
 
 			case FAIL_RESULT:
@@ -89,6 +88,30 @@ void mainLoop(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t*
 				break;
 		}
 	}
+}
+
+static struct lterm_chain_t* createFieldOfViewForReCall(struct lterm_t* callTerm)
+{
+	//TO CHECK: освобождается ли память для поля current
+	callTerm->funcCall->inFieldOfView = (struct lterm_chain_t*)malloc(sizeof(struct lterm_chain_t));
+	callTerm->funcCall->inFieldOfView->begin = callTerm->funcCall->subCall->next;
+	callTerm->funcCall->inFieldOfView->end = callTerm->funcCall->subCall->prev;
+}
+
+static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult)
+{
+	if (!currNode->funcCall->subCall)
+		currNode->funcCall->subCall = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+
+	currNode->funcCall->subCall->next = funcResult->fieldChain->begin;
+	funcResult->fieldChain->begin->prev = currNode->funcCall->subCall;
+
+	currNode->funcCall->subCall->prev = funcResult->fieldChain->end;
+	funcResult->fieldChain->end->next = currNode->funcCall->subCall;
+
+	funcResult->callChain->end->funcCall->next = currNode;
+
+	return funcResult->callChain->begin;
 }
 
 static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult)
@@ -117,9 +140,18 @@ static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_r
 
 	struct lterm_t* newCurrNode = currNode->funcCall->next;
 
-	free(currNode);
+	destroyFuncCallTerm(currNode);
 
 	return newCurrNode;
+}
+
+
+//TO FIX: Освободить всю структуру.
+static void destroyFuncCallTerm(struct lterm_t* term)
+{
+
+	free(term->funcCall->subCall);
+	free(term);
 }
 
 static void printChainOfCalls(struct lterm_t* callTerm)
@@ -142,27 +174,23 @@ static void printChainOfCalls(struct lterm_t* callTerm)
 	printf("\n");
 }
 
-static struct lterm_chain_t* getAssembliedChain(struct lterm_chain_t* chain)
+struct lterm_t* getAssembliedChain(struct lterm_chain_t* chain)
 {
-	struct lterm_chain_t* newChain = (struct lterm_chain_t*)malloc(sizeof(struct lterm_chain_t));
+	struct lterm_t* assembledChain = 0;
 
 	if (chain != 0)
 	{
-		newChain->begin = newChain->end = (struct lterm_t*)malloc(sizeof(struct lterm_t));
-		newChain->begin->tag = L_TERM_FRAGMENT_TAG;
-		newChain->begin->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
-		newChain->begin->fragment->offset = memMngr.vtermsOffset;
+		assembledChain = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+		assembledChain->tag = L_TERM_FRAGMENT_TAG;
+		assembledChain->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
+		assembledChain->fragment->offset = memMngr.vtermsOffset;
 
 		assemblyChain(chain);
 
-		newChain->begin->fragment->length = memMngr.vtermsOffset - newChain->begin->fragment->offset;
-	}
-	else
-	{
-		newChain->begin = newChain->end = 0;
+		assembledChain->fragment->length = memMngr.vtermsOffset - assembledChain->fragment->offset;
 	}
 
-	return newChain;
+	return assembledChain;
 }
 
 // TO FIX: Пока рекурсивно!
