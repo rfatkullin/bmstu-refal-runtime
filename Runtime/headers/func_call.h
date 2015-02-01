@@ -31,13 +31,13 @@ struct func_call_t
 	const char* funcName;
 
 	//Ссылка на саму функцию.
-	struct func_result_t (*funcPtr)(int entryPoint, struct env_t* env, struct lterm_chain_t* inFieldOfView);
+	struct func_result_t (*funcPtr)(int entryPoint, struct env_t* env, struct lterm_chain_t* fieldOfView);
 
 	//Окружение.
 	struct env_t* env;
 
 	//Содержит информацию о поле видимости.
-	struct lterm_chain_t* inFieldOfView;
+	struct lterm_chain_t* fieldOfView;
 
 	//Для хранения ссылки на поле видимости "под-вызова"
 	struct lterm_t* subCall;

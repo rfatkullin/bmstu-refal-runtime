@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "vmachine.h"
 #include "builtins.h"
 
 #define N 256
@@ -44,25 +45,9 @@ struct func_result_t Card(int entryPoint, struct env_t* env, struct lterm_chain_
 
 struct func_result_t Prout(int entryPoint, struct env_t* env, struct lterm_chain_t* fieldOfView)
 {
-	struct lterm_t* currExpr = fieldOfView->begin;
+	struct lterm_t* currExpr = getAssembliedChain(fieldOfView);
 
-	while (currExpr != 0)
-	{
-		if (currExpr->tag == L_TERM_FRAGMENT_TAG)
-		{
-			printRange(currExpr->fragment);
-		}
-		else if (currExpr->tag == L_TERM_CHAIN_TAG)
-		{
-			printf("[Error] !!!\n");
-		}
-
-		currExpr = currExpr->next;
-	}
-
-	struct lterm_chain_t* mainChain = (struct lterm_chain_t*)malloc(sizeof(struct lterm_chain_t));
-	mainChain->begin = 0;
-	mainChain->end = 0;
+	printRange(currExpr->fragment);
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
@@ -72,7 +57,6 @@ static void printRange(struct fragment_t* frag)
 	int i = 0;
 	struct v_term* currTerm = memMngr.vterms + frag->offset;
 
-	printf("Range: ");
 	for (i = 0; i < frag->length; ++i)
 	{
 		printSymbol(currTerm + i);

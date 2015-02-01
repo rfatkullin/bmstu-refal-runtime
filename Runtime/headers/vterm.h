@@ -12,8 +12,9 @@
 
 struct v_closure
 {
-	//struct v_symbol* func_name;
-	//struct l_term* vars[0];
+	//const char* funcName;
+	//struct func_result_t (*funcPtr)(int entryPoint, struct env_t* env, struct lterm_chain_t* fieldOfView);
+	//struct lterm_t* params;
 };
 
 struct v_term
