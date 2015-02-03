@@ -54,7 +54,7 @@ void mainLoop(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t*
 
 	while (callTerm)
 	{
-		printChainOfCalls(callTerm);
+		//printChainOfCalls(callTerm);
 
 		if (callTerm->funcCall->entryPoint != 0)
 			createFieldOfViewForReCall(callTerm);

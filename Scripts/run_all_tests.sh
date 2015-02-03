@@ -34,14 +34,13 @@ fi
 for sourceFile in `ls ${TestsDir}/*.ref`
 do	
 	cp ${sourceFile} ${TmpRefSourceFile}
-	
 	#Компилируем рефал программу
 	refalc ${TmpRefSourceFile} 1>/dev/null 
 	AssertSuccess "Can't compile refal source ${sourceFile}"		
 	
 	#Собираем весь проект - линкуем сгенерированный файл с библиотекой исполнения.
 	cp ${TmpCSourceFile} ../Project/main.c
-	cd ../Project/build/
+	cd ../Project/build/ 
 	make 1>/dev/null
 	AssertSuccess "Can't build project!"
 	
@@ -50,8 +49,13 @@ do
 	AssertSuccess "Bad execuatable file!"
 	
 	#Проверям ожидаемое с полученным
-#	cmp -s ${RealOutputFile} ${sourceFile%.*}.out 
-#	AssertSuccess "Check by command: vim -d ${RealOutputFile} ${sourceFile%.*}.out"		
-	
-#	echo -e "${green}[OK]: ${RealOutputFile} ${sourceFile%.*}.out ${NC}"
+	cmp -s ${RealOutputFile} ../${sourceFile%.*}.out
+	if [ "$?" != 0 ]
+	then
+		echo -e "${red}[FAIL]: ${sourceFile} ${NC}"		
+	else
+		echo -e "${green}[OK]: ${sourceFile} ${NC}"		
+	fi		
+
+	cd - 1>/dev/null
 done

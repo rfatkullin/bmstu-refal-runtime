@@ -136,11 +136,11 @@ void initHeaps(uint32_t segmentLen, uint32_t literalsNumber)
 	uint32_t ltermsHeapSize = size - dataHeapSize - vtermsHeapSize;
 
 
-	printf("\nAllocation size:                      %.2f Kb\n", byte2KByte(size));
-	printf("\nAllocation ratios and sizes:         Ratio\t   Size\n");
-	printf("\t For data:                    %.2f\t %.2f Kb\n", DATA_HEAP_SIZE_FACTOR, byte2KByte(dataHeapSize));
-	printf("\t For vterms:                  %.2f\t %.2f Kb\n", V_TERMS_HEAP_SIZE_FACTOR, byte2KByte(vtermsHeapSize));
-	printf("\t For lterms:                  %.2f\t %.2f Kb\n", 1.0f - (DATA_HEAP_SIZE_FACTOR + V_TERMS_HEAP_SIZE_FACTOR), byte2KByte(ltermsHeapSize));
+//	printf("\nAllocation size:                      %.2f Kb\n", byte2KByte(size));
+//	printf("\nAllocation ratios and sizes:         Ratio\t   Size\n");
+//	printf("\t For data:                    %.2f\t %.2f Kb\n", DATA_HEAP_SIZE_FACTOR, byte2KByte(dataHeapSize));
+//	printf("\t For vterms:                  %.2f\t %.2f Kb\n", V_TERMS_HEAP_SIZE_FACTOR, byte2KByte(vtermsHeapSize));
+//	printf("\t For lterms:                  %.2f\t %.2f Kb\n", 1.0f - (DATA_HEAP_SIZE_FACTOR + V_TERMS_HEAP_SIZE_FACTOR), byte2KByte(ltermsHeapSize));
 
 	memMngr.segmentLen = segmentLen;
 	memMngr.literalsNumber = literalsNumber;
@@ -219,7 +219,7 @@ static void allocateMemoryForVTerms(uint32_t size, uint8_t** pointer)
 
 	allocateMemoryForSegmentTree(memMngr.maxTermsNumber, pointer);
 
-	printf("\tMax terms: %d\n", memMngr.maxTermsNumber);
+	//printf("\tMax terms: %d\n", memMngr.maxTermsNumber);
 }
 
 static void allocateMemoryForData(uint32_t size, uint8_t** pointer)
