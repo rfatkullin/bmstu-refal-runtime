@@ -8,12 +8,12 @@
 
 static void printRange(struct fragment_t* frag);
 
-struct func_result_t Card(int entryPoint, struct env_t* env, struct lterm_chain_t* fieldOfView)
+struct func_result_t Card(int entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
 	char ch;
 	uint32_t lastOffset;
 	uint32_t firstOffset;
-	struct lterm_chain_t* mainChain;
+	struct lterm_t* mainChain = 0;
 
 	if((ch = getchar()) != '\n')
 	{
@@ -24,26 +24,23 @@ struct func_result_t Card(int entryPoint, struct env_t* env, struct lterm_chain_
 			lastOffset = allocateSymbol(ch);
 		}
 
-		mainChain = (struct lterm_chain_t*)malloc(sizeof(struct lterm_chain_t));
-		mainChain->begin = (struct lterm_t*)malloc(sizeof(struct lterm_t));
-		mainChain->end = mainChain->begin;
-		mainChain->end->next = 0;
+		struct lterm_t* inputFragment = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+		inputFragment->tag = L_TERM_FRAGMENT_TAG;
+		inputFragment->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
+		inputFragment->fragment->offset = firstOffset;
+		inputFragment->fragment->length = lastOffset - firstOffset + 1;
 
-		mainChain->begin->tag = L_TERM_FRAGMENT_TAG;
-		mainChain->begin->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
-		mainChain->begin->fragment->offset = firstOffset;
-		mainChain->begin->fragment->length = lastOffset - firstOffset + 1;
+		mainChain = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+		mainChain->next = inputFragment;
+		mainChain->prev = inputFragment;
+		inputFragment->next = mainChain;
+		inputFragment->prev = mainChain;
 	}
-	else
-	{
-		mainChain = 0;
-	}
-
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
 }
 
-struct func_result_t Prout(int entryPoint, struct env_t* env, struct lterm_chain_t* fieldOfView)
+struct func_result_t Prout(int entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
 	struct lterm_t* currExpr = getAssembliedChain(fieldOfView);
 

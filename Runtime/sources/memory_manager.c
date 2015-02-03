@@ -313,7 +313,7 @@ static void markVTerms(struct lterm_t* expr)
 				break;
 
 			case L_TERM_CHAIN_TAG:
-				markVTerms(currTerm->chain);
+				markVTerms(currTerm);
 				break;
 		}
 
