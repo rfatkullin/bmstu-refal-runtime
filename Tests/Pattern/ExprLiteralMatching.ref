@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Prout <Func1 (123 Ass) asd (asds)>>
+}
+
+Func1
+{
+	(s.1 s.2) e.1 = e.1 s.2 s.1
+}
+

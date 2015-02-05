@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Prout <Func1 Hello 123 (23) World>>
+}
+
+Func1
+{
+	Hello s.1 t.1 World = Success;
+}
+
