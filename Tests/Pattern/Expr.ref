@@ -1,0 +1,22 @@
+$ENTRY Go
+{
+	= <Prout <Func1 a b c d>>
+	  <Prout <Func2 a b c d>>
+	  <Prout <Func3 a b c d>>
+}
+
+Func1
+{
+	e.1 s.1 e.2 = 'First "' e.1 '" Second "' e.2 '"';
+}
+
+Func2
+{
+	s.1 e.1 s.2 e.2 = 'First "' e.1 '" Second "' e.2 '"';
+}
+
+Func3
+{
+	s.1 e.1 s.2 e.2 s.3 = 'First "' e.1 '" Second "' e.2 '"';
+}
+

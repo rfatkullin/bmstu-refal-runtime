@@ -1,0 +1,13 @@
+$ENTRY Go
+{
+	= <Prout <Func1 a b c d>>
+	  <Prout <Func1 (a) b (c) d>>
+	  <Prout <Func1 ((a) b) (d f) sd (c) d>>
+	  <Prout <Func1 (a) b (d f) sd (c) d>>;
+}
+
+Func1
+{
+	t.1 t.2 t.3 e.1 = t.1 t.2 t.3;
+}
+

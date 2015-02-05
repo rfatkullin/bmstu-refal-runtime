@@ -200,7 +200,7 @@ static void assemblyChain(struct lterm_t* chain)
 			{
 				uint32_t leftBracketOffset = allocateBracketVTerm(0);
 				assemblyChain(currTerm->chain);
-				changeBracketLength(leftBracketOffset, memMngr.vtermsOffset - leftBracketOffset);
+				changeBracketLength(leftBracketOffset, memMngr.vtermsOffset - leftBracketOffset + 1);
 				allocateBracketVTerm(0);
 				break;
 			}
