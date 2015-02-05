@@ -1,0 +1,11 @@
+$ENTRY Go
+{
+	= <Prout <Func><Func (asd)asd>> ;
+}
+
+Func
+{
+	s.1 = 'Error1';
+	s.1 e.1 = 'Error2';
+	e.1 = 'Success';
+}
