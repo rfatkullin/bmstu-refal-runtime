@@ -1,0 +1,9 @@
+$ENTRY Go
+{
+	= <Prout <Func>> 
+}
+
+Func
+{
+	= 'Empty Condition'
+}

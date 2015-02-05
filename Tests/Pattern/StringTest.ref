@@ -1,0 +1,12 @@
+$ENTRY Go 
+{ 
+	= <Func aaa asda>
+}
+
+
+Func 
+{
+	s.1 t.1 = <Prout s.1>
+}
+
+

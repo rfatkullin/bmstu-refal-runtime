@@ -74,7 +74,7 @@ void mainLoop(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t*
 
 			case FAIL_RESULT:
 				printf("Fail!\n");
-				exit(1);
+				exit(0);
 				break;
 		}
 	}
@@ -126,7 +126,7 @@ static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_r
 		if (funcResult->callChain)
 		{
 			newCurrNode = funcResult->callChain->next;
-			funcResult->callChain->prev->next = currNode->funcCall->next;
+			funcResult->callChain->prev->funcCall->next = currNode->funcCall->next;
 		}
 	}
 

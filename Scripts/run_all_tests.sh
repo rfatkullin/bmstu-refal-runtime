@@ -13,7 +13,7 @@ NC='\e[0m' # No Color
 function AssertSuccess
 {
 	if [ "$?" != 0 ] ; then
-		echo -e "${red}[FAIL] $1${NC}"		
+		echo -e "${red}[FAIL]$1${NC}"		
 	fi
 }
 
@@ -42,11 +42,11 @@ do
 	cp ${TmpCSourceFile} ../Project/main.c
 	cd ../Project/build/ 
 	make 1>/dev/null
-	AssertSuccess "Can't build project!"
+	AssertSuccess "[Can't build project!]: ${sourceFile}"
 	
 	#Запускаем испольняемый файл.
 	./Project > ${RealOutputFile}
-	AssertSuccess "Bad execuatable file!"
+	AssertSuccess "[Bad exe file!]: ${sourceFile}"
 	
 	#Проверям ожидаемое с полученным
 	cmp -s ${RealOutputFile} ../${sourceFile%.*}.out
