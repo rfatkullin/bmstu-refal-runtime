@@ -8,7 +8,7 @@
 
 static void printRange(struct fragment_t* frag);
 
-struct func_result_t Card(int entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
 	char ch;
 	uint32_t lastOffset;
@@ -40,7 +40,7 @@ struct func_result_t Card(int entryPoint, struct env_t* env, struct lterm_t* fie
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
 }
 
-struct func_result_t Prout(int entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
 	struct lterm_t* currExpr = getAssembliedChain(fieldOfView);
 

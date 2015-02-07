@@ -31,7 +31,7 @@ struct func_call_t
 	const char* funcName;
 
 	//Ссылка на саму функцию.
-	struct func_result_t (*funcPtr)(int entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
+	struct func_result_t (*funcPtr)(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
 
 	//Окружение.
 	struct env_t* env;

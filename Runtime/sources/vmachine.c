@@ -12,7 +12,7 @@ static void assemblyChain(struct lterm_t* chain);
 static void destroyFuncCallTerm(struct lterm_t* term);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 
-static struct func_call_t* ConstructStartFunc(const char* funcName, struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t* env, struct lterm_t* fieldOfView),
+static struct func_call_t* ConstructStartFunc(const char* funcName, struct func_result_t (*firstFuncPtr)(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView),
 	struct lterm_t* chain)
 {
 	struct func_call_t* goCall = (struct func_call_t*)malloc(sizeof(struct func_call_t));
@@ -30,7 +30,7 @@ static struct func_call_t* ConstructStartFunc(const char* funcName, struct func_
 	return goCall;
 }
 
-static struct lterm_t* ConstructStartFieldOfView(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t* env, struct lterm_t* fieldOfView))
+static struct lterm_t* ConstructStartFieldOfView(struct func_result_t (*firstFuncPtr)(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView))
 {
 	struct lterm_t* fieldOfView = (struct lterm_t*)malloc(sizeof(struct lterm_t));
 	struct lterm_t* term = (struct lterm_t*)malloc(sizeof(struct lterm_t));
@@ -46,7 +46,7 @@ static struct lterm_t* ConstructStartFieldOfView(struct func_result_t (*firstFun
 	return term;
 }
 
-void mainLoop(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t* env, struct lterm_t* fieldOfView))
+void mainLoop(struct func_result_t (*firstFuncPtr)(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView))
 {
 	struct lterm_t* fieldOfView = ConstructStartFieldOfView(firstFuncPtr);
 	struct lterm_t* callTerm = fieldOfView;
@@ -57,9 +57,9 @@ void mainLoop(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t*
 		//printChainOfCalls(callTerm);
 
 		if (callTerm->funcCall->entryPoint != 0)
-			createFieldOfViewForReCall(callTerm);
+			callTerm->funcCall->fieldOfView = callTerm->funcCall->subCall;
 
-		funcRes = callTerm->funcCall->funcPtr(callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView);
+		funcRes = callTerm->funcCall->funcPtr(&callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView);
 
 		switch (funcRes.status)
 		{
@@ -80,15 +80,6 @@ void mainLoop(struct func_result_t (*firstFuncPtr)(int entryPoint, struct env_t*
 	}
 }
 
-static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* callTerm)
-{
-	//TO CHECK: освобождается ли память для поля current
-	//callTerm->funcCall->fieldOfView = (struct lterm_t*)malloc(sizeof(struct lterm_t));
-	//callTerm->funcCall->fieldOfView->begin = callTerm->funcCall->subCall->next;
-	//callTerm->funcCall->fieldOfView->end = callTerm->funcCall->subCall->prev;
-	return callTerm;
-}
-
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult)
 {
 	if (!currNode->funcCall->subCall)
@@ -100,8 +91,14 @@ static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct f
 
 	targetChain->next = insertChain->next;
 	targetChain->prev = insertChain->prev;
-	funcResult->callChain->prev->next = currNode;
 
+	insertChain->next->prev = targetChain;
+	insertChain->prev->next = targetChain;
+
+	funcResult->callChain->prev->funcCall->next = currNode;
+
+	//CHECK
+	free(funcResult->fieldChain);
 	free(funcResult->callChain);
 
 	return newCallNode;
