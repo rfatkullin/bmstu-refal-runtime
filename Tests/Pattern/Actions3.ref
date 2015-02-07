@@ -10,10 +10,10 @@ Func
 
 HeadSwap
 {
-	s.1 s.2 e.3, <EmptyFunc> = s.2 s.1 e.3
+	s.1 s.2 e.3, <DummyFunc> = s.2 s.1 e.3
 }
 
-EmptyFunc
+DummyFunc
 {
 	=
 }
