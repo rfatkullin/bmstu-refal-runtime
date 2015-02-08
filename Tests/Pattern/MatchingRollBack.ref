@@ -1,0 +1,16 @@
+$ENTRY Go
+{
+	= <Prout <RollBackFunc a b a b>>
+	  <Prout <NoRollBackFunc a b a b>>
+}
+
+RollBackFunc
+{
+	e.1 e.2 : e.2 e.1 = Success;
+}
+
+NoRollBackFunc
+{
+	e.1 e.2 :: e.2 e.1 = Success;
+}
+
