@@ -1,0 +1,19 @@
+$ENTRY Go 
+{
+	= <Prout<Pal 'ca'> >
+	  <Prout<Pal 'aa'> >
+	  <Prout<Pal> >
+	  <Prout<Pal 'abcddcba'> >
+	  <Prout<Pal 'qweqwasd'> >
+	  <Prout<Pal a a b b a a> >
+	  <Prout<Pal 'aca'> >
+	  <Prout<Pal 'a'> >
+}
+
+Pal
+{
+	s.1 e.1 s.1 = <Pal e.1>;	
+	s.1 = T;
+	= T;
+	e.1 = F;	 
+}
