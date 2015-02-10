@@ -11,6 +11,7 @@ static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct f
 static void assemblyChain(struct lterm_t* chain);
 static void destroyFuncCallTerm(struct lterm_t* term);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
+static struct func_result_t (*GetFuncPointer(struct lterm_t* fieldOfView))(int*, struct env_t*, struct lterm_t*);
 
 static struct func_call_t* ConstructStartFunc(const char* funcName, struct func_result_t (*firstFuncPtr)(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView),
 	struct lterm_t* chain)
@@ -59,6 +60,17 @@ void mainLoop(struct func_result_t (*firstFuncPtr)(int* entryPoint, struct env_t
 		if (callTerm->funcCall->entryPoint != 0)
 			callTerm->funcCall->fieldOfView = callTerm->funcCall->subCall;
 
+		if (callTerm->funcCall->funcPtr == 0)
+		{
+			callTerm->funcCall->funcPtr = GetFuncPointer(callTerm->funcCall->fieldOfView);
+
+			if (callTerm->funcCall->funcPtr == 0)
+			{
+				printf("Bad func call --> Fail!\n");
+				exit(0);
+			}
+		}
+
 		funcRes = callTerm->funcCall->funcPtr(&callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView);
 
 		switch (funcRes.status)
@@ -78,6 +90,24 @@ void mainLoop(struct func_result_t (*firstFuncPtr)(int* entryPoint, struct env_t
 				break;
 		}
 	}
+}
+
+
+static struct func_result_t (*GetFuncPointer(struct lterm_t* fieldOfView))(int*, struct env_t*, struct lterm_t*)
+{
+	if (fieldOfView == 0)
+		return 0;
+
+	if (fieldOfView->next->tag != L_TERM_FRAGMENT_TAG)
+		return 0;
+
+	if (memMngr.vterms[fieldOfView->next->fragment->offset].tag != V_CLOSURE_TAG)
+		return 0;
+
+	fieldOfView->next->fragment->offset++;
+	fieldOfView->next->fragment->length--;
+
+	return 	memMngr.vterms[fieldOfView->next->fragment->offset-1].closure;
 }
 
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult)

@@ -10,12 +10,8 @@
 
 #include <stdint.h>
 
-struct v_closure
-{
-	//const char* funcName;
-	//struct func_result_t (*funcPtr)(int entryPoint, struct env_t* env, struct lterm_chain_t* fieldOfView);
-	//struct lterm_t* params;
-};
+#include "lterm.h"
+#include "func_call.h"
 
 struct v_term
 {
@@ -27,7 +23,7 @@ struct v_term
 		char ch;
 		int intNum;
 		float floatNum;
-		struct v_closure* closure;
+		struct func_result_t (*closure)(int*, struct env_t*, struct lterm_t*);
 		uint32_t inBracketLength;
 	};
 };

@@ -1,0 +1,11 @@
+$ENTRY Go
+{
+	= <Prout<<Func>>>
+}
+
+Func 
+{
+	= { 
+		= Success asdasd asdasd "asdasd"
+	  }
+}
