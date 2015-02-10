@@ -33,6 +33,21 @@ void collectGarbage(struct lterm_t* expr)
 	printf("End garbage collection. Time elapsed: %f\n", ((float)(end - start)) / CLOCKS_PER_SEC);
 }
 
+// TO FIX: сделать проверку переполнения памяти.
+// Сделать все правильно -- выделение памяти в области данных хипа
+uint32_t allocateClosure(struct func_result_t (*funcPtr)(int*, struct env_t*, struct lterm_t*), uint32_t envSize)
+{
+	struct v_term* term = memMngr.vterms + memMngr.vtermsOffset;
+	term->tag = V_CLOSURE_TAG;
+
+	//Выделение должно происходить в области данных хипа
+	term->closure = (struct v_closure*)malloc(sizeof(struct v_closure));
+	term->closure->env = (struct lterm_t*)malloc(envSize * sizeof(struct lterm_t));
+	term->closure->funcPtr = funcPtr;
+
+	return memMngr.vtermsOffset++;
+}
+
 //TO FIX: сделать проверку переполнения памяти.
 uint32_t allocateSymbol(char ch)
 {

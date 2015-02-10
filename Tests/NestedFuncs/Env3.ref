@@ -1,0 +1,13 @@
+$ENTRY Go
+{
+	= <Prout<<Fxy 'a' 'b'> 'aaabbbzaaa'>>
+}
+
+Fxy 
+{
+	t.X t.Y = $FUNC F { 
+				t.X e.1 = t.Y <F e.1>;
+				t.Z e.1 = t.Z <F e.1>;
+				= ;
+  			  };
+}

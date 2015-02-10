@@ -13,6 +13,12 @@
 #include "lterm.h"
 #include "func_call.h"
 
+struct v_closure
+{
+	struct func_result_t (*funcPtr)(int*, struct env_t*, struct lterm_t*);
+	struct lterm_t* env;
+};
+
 struct v_term
 {
 	int tag;
@@ -23,7 +29,7 @@ struct v_term
 		char ch;
 		int intNum;
 		float floatNum;
-		struct func_result_t (*closure)(int*, struct env_t*, struct lterm_t*);
+		struct v_closure* closure;
 		uint32_t inBracketLength;
 	};
 };
