@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	s.1 = $FUNC F { 
+			= Hello;
+			s.1 = asdasd asdasd 
+		  };
+
+	= <Prout Success>;
+}
+
