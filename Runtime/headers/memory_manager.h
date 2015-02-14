@@ -76,7 +76,7 @@ struct lterm_t* allocateVector(int strLen, char* str);
 uint32_t allocateSymbol(char str);
 
 /// Выделяет память для замыкания
-uint32_t allocateClosure(struct func_result_t (*funcPtr)(int*, struct env_t*, struct lterm_t*), uint32_t envSize);
+uint32_t allocateClosure(RefalFunc ptr, uint32_t envSize);
 
 /// Дебажный вывод vterm
 void debugLiteralsPrint();

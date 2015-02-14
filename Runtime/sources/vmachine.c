@@ -60,18 +60,15 @@ void mainLoop(struct func_result_t (*firstFuncPtr)(int* entryPoint, struct env_t
 		if (callTerm->funcCall->entryPoint != 0)
 			callTerm->funcCall->fieldOfView = callTerm->funcCall->subCall;
 
-		if (callTerm->funcCall->funcPtr == 0)
-		{
-			callTerm->funcCall->funcPtr = GetFuncPointer(callTerm->funcCall->fieldOfView, &callTerm->funcCall->env->params);
+		RefalFunc funcPtr = GetFuncPointer(callTerm->funcCall->fieldOfView, &callTerm->funcCall->env->params);
 
-			if (callTerm->funcCall->funcPtr == 0)
-			{
-				printf("Bad func call --> Fail!\n");
-				exit(0);
-			}
+		if (funcPtr == 0)
+		{
+			printf("Bad func call --> Fail!\n");
+			exit(0);
 		}
 
-		funcRes = callTerm->funcCall->funcPtr(&callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView);
+		funcRes = funcPtr(&callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView);
 
 		switch (funcRes.status)
 		{
@@ -92,7 +89,7 @@ void mainLoop(struct func_result_t (*firstFuncPtr)(int* entryPoint, struct env_t
 	}
 }
 
-static struct func_result_t (*GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** params))(int*, struct env_t*, struct lterm_t*)
+static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** params)
 {
 	if (fieldOfView == 0)
 		return 0;

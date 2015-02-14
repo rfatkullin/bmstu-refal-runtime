@@ -12,10 +12,11 @@
 
 #include "lterm.h"
 #include "func_call.h"
+#include "vmachine.h"
 
 struct v_closure
 {
-	struct func_result_t (*funcPtr)(int*, struct env_t*, struct lterm_t*);
+	RefalFunc funcPtr;
 	struct lterm_t* env;
 };
 

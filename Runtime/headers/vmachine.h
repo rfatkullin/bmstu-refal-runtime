@@ -4,7 +4,9 @@
 #include "lterm.h"
 #include "func_call.h"
 
-void mainLoop(struct func_result_t (*firstFuncPtr)(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView));
+typedef struct func_result_t (*RefalFunc)(int*, struct env_t*, struct lterm_t*);
+
+void mainLoop(RefalFunc);
 struct lterm_t* getAssembliedChain(struct lterm_t* oldChain);
 
 #endif
