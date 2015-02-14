@@ -3,6 +3,10 @@
 
 #include "func_result.h"
 
+struct env_t;
+
+typedef struct func_result_t (*RefalFunc)(int*, struct env_t*, struct lterm_t*);
+
 /*
 	Хранит окружение функции.
 */
@@ -30,8 +34,8 @@ struct env_t
 */
 struct func_call_t
 {
-	//Имя функции.
-	const char* funcName;
+	//Указатель на функцию
+	RefalFunc funcPtr;
 
 	//Окружение.
 	struct env_t* env;

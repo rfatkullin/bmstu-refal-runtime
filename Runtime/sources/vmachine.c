@@ -11,27 +11,37 @@ static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct f
 static void assemblyChain(struct lterm_t* chain);
 static void destroyFuncCallTerm(struct lterm_t* term);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
-static struct func_result_t (*GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** params))(int*, struct env_t*, struct lterm_t*);
+static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** params);
 
-static struct func_call_t* ConstructStartFunc(const char* funcName, struct func_result_t (*firstFuncPtr)(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView),
-	struct lterm_t* chain)
+
+static struct func_call_t* ConstructStartFunc(const char* funcName, RefalFunc entryFuncPointer)
 {
 	struct func_call_t* goCall = (struct func_call_t*)malloc(sizeof(struct func_call_t));
 
-	goCall->funcName = funcName;
-	goCall->funcPtr = firstFuncPtr;
+	struct lterm_t* fieldOfView = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+	struct lterm_t* currTerm = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+	currTerm->tag = L_TERM_FRAGMENT_TAG;
+	currTerm->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
+	currTerm->fragment->offset = allocateClosure(entryFuncPointer, 0);
+	currTerm->fragment->length = 1;
+	memMngr.vterms[currTerm->fragment->offset].closure->ident = funcName;
+
+	fieldOfView->next = currTerm;
+	fieldOfView->prev = currTerm;
+	currTerm->prev = fieldOfView;
+	currTerm->next = fieldOfView;
 
 	goCall->env = (struct env_t*)malloc(sizeof(struct env_t));
 	goCall->env->params = 0;
 
-	goCall->fieldOfView = chain;
+	goCall->fieldOfView = fieldOfView;
 	goCall->entryPoint = 0;
 	goCall->next = 0;
 
 	return goCall;
 }
 
-static struct lterm_t* ConstructStartFieldOfView(struct func_result_t (*firstFuncPtr)(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView))
+static struct lterm_t* ConstructStartFieldOfView(const char* funcName, RefalFunc entryFuncPointer)
 {
 	struct lterm_t* fieldOfView = (struct lterm_t*)malloc(sizeof(struct lterm_t));
 	struct lterm_t* term = (struct lterm_t*)malloc(sizeof(struct lterm_t));
@@ -42,33 +52,31 @@ static struct lterm_t* ConstructStartFieldOfView(struct func_result_t (*firstFun
 	term->next = fieldOfView;
 
 	term->tag = L_TERM_FUNC_CALL;
-	term->funcCall = ConstructStartFunc("Go", firstFuncPtr, fieldOfView);
+	term->funcCall = ConstructStartFunc(funcName, entryFuncPointer);
 
 	return term;
 }
 
-void mainLoop(struct func_result_t (*firstFuncPtr)(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView))
+void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 {
-	struct lterm_t* fieldOfView = ConstructStartFieldOfView(firstFuncPtr);
+	struct lterm_t* fieldOfView = ConstructStartFieldOfView(entryFuncName, entryFuncPointer);
 	struct lterm_t* callTerm = fieldOfView;
 	struct func_result_t funcRes;
 
 	while (callTerm)
 	{
-		//printChainOfCalls(callTerm);
-
-		if (callTerm->funcCall->entryPoint != 0)
+		if (callTerm->funcCall->funcPtr)
 			callTerm->funcCall->fieldOfView = callTerm->funcCall->subCall;
+		else
+			callTerm->funcCall->funcPtr = GetFuncPointer(callTerm->funcCall->fieldOfView, &callTerm->funcCall->env->params);
 
-		RefalFunc funcPtr = GetFuncPointer(callTerm->funcCall->fieldOfView, &callTerm->funcCall->env->params);
-
-		if (funcPtr == 0)
+		if (callTerm->funcCall->funcPtr == 0)
 		{
 			printf("Bad func call --> Fail!\n");
 			exit(0);
 		}
 
-		funcRes = funcPtr(&callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView);
+		funcRes = callTerm->funcCall->funcPtr(&callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView);
 
 		switch (funcRes.status)
 		{
@@ -100,12 +108,17 @@ static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** pa
 	if (memMngr.vterms[fieldOfView->next->fragment->offset].tag != V_CLOSURE_TAG)
 		return 0;
 
-	fieldOfView->next->fragment->offset++;
-	fieldOfView->next->fragment->length--;
+	RefalFunc newFuncPointer = memMngr.vterms[fieldOfView->next->fragment->offset].closure->funcPtr;
 
-	*params = memMngr.vterms[fieldOfView->next->fragment->offset-1].closure->env;
+	//printf("%s\n", memMngr.vterms[fieldOfView->next->fragment->offset].closure->ident);
 
-	return 	memMngr.vterms[fieldOfView->next->fragment->offset-1].closure->funcPtr;
+	*params = memMngr.vterms[fieldOfView->next->fragment->offset].closure->env;
+
+	//TO FIX:
+	fieldOfView->next = fieldOfView->next->next;
+	fieldOfView->next->next->prev = fieldOfView;
+
+	return newFuncPointer;
 }
 
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult)
@@ -167,26 +180,6 @@ static void destroyFuncCallTerm(struct lterm_t* term)
 {
 	free(term->funcCall->subCall);
 	free(term);
-}
-
-static void printChainOfCalls(struct lterm_t* callTerm)
-{
-	printf("[Debug]Call chain: ");
-	while (callTerm)
-	{
-		if (callTerm->funcCall)
-		{
-			printf("%s%s", callTerm->funcCall->funcName, callTerm->funcCall->next ? "->" : "");
-			callTerm = callTerm->funcCall->next;
-		}
-		else
-		{
-			printf("[Error]: Bad func call term!\n");
-			break;
-		}
-	}
-
-	printf("\n");
 }
 
 struct lterm_t* getAssembliedChain(struct lterm_t* chain)

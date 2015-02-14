@@ -35,7 +35,7 @@ void collectGarbage(struct lterm_t* expr)
 
 // TO FIX: сделать проверку переполнения памяти.
 // Сделать все правильно -- выделение памяти в области данных хипа
-uint32_t allocateClosure(struct func_result_t (*funcPtr)(int*, struct env_t*, struct lterm_t*), uint32_t envSize)
+uint32_t allocateClosure(RefalFunc funcPtr, uint32_t envSize)
 {
 	struct v_term* term = memMngr.vterms + memMngr.vtermsOffset;
 	term->tag = V_CLOSURE_TAG;
