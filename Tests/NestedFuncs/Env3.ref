@@ -1,6 +1,6 @@
 $ENTRY Go
 {
-	= <Prout<<Fxy 'a' 'b'> 'aaabbbzaaa'>>
+	= <Prout<<Fxy 'a' 'b'> 'aazdasdbaaa'>>
 }
 
 Fxy 
