@@ -171,17 +171,17 @@ void initHeaps(uint32_t segmentLen, uint32_t literalsNumber)
 	memMngr.ltermsOffset = 0;
 }
 
-void debugLiteralsPrint()
-{
-	printf("vterms debug print:\n\t");
-	int i;
-	for (i = 0; i < memMngr.literalsNumber; ++i)
-	{
-		printSymbol(memMngr.vterms + i);
-	}
+//void debugLiteralsPrint()
+//{
+//	printf("vterms debug print:\n\t");
+//	int i;
+//	for (i = 0; i < memMngr.literalsNumber; ++i)
+//	{
+//		printSymbol(memMngr.vterms + i);
+//	}
 
-	printf("\n");
-}
+//	printf("\n");
+//}
 
 static struct lterm_t* allocateLTerm(uint32_t offset, uint32_t len)
 {

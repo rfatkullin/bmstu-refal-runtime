@@ -28,14 +28,12 @@ struct v_term
 	union
 	{
 		char* str;
-		char ch;
+		uint32_t ch;
 		int intNum;
 		float floatNum;
 		struct v_closure* closure;
 		uint32_t inBracketLength;
 	};
 };
-
-void printSymbol(struct v_term* term);
 
 #endif
