@@ -27,35 +27,54 @@ cd - 1>/dev/null
 go install -compiler gccgo ${GOPATH}/src/BMSTU-Refal-Compiler/refalc/refalc.go 
 AssertSuccess "Can't build compiler"
 
+function RunTestsInDir
+{
+	if [ -z "$1" ]; then 
+		return
+	fi 
+
+	currDir="$1"
+
+	for sourceFile in `ls ${currDir}/*.ref`
+	do	
+		cp ${sourceFile} ${TmpRefSourceFile}
+		#Компилируем рефал программу
+		refalc ${TmpRefSourceFile} 1>/dev/null 
+		AssertSuccess "Can't compile refal source ${sourceFile}"		
+	
+		#Собираем весь проект - линкуем сгенерированный файл с библиотекой исполнения.
+		cp ${TmpCSourceFile} ../Project/main.c
+		cd ../Project/build/ 
+		make 1>/dev/null
+		AssertSuccess "[Can't build project!]: ${sourceFile}"
+	
+		#Запускаем испольняемый файл.
+		./Project > ${RealOutputFile}
+		AssertSuccess "[Bad exe file!]: ${sourceFile}"
+	
+		#Проверям ожидаемое с полученным
+		cmp -s ${RealOutputFile} ../${sourceFile%.*}.out
+		if [ "$?" != 0 ]
+		then
+			echo -e "${red}[FAIL]: ${sourceFile} ${NC}"		
+		else
+			echo -e "${green}[OK]: ${sourceFile} ${NC}"		
+		fi		
+
+		cd - 1>/dev/null
+	done
+	
+	for d in `ls -d ${currDir}/*`
+	do
+		if [ -d "${d}" ]; then
+			RunTestsInDir "${d}"
+		fi
+	done	
+}
+
 if [ ! -z "$1" ]; then 
 	TestsDir="$1"
 fi
 
-for sourceFile in `ls ${TestsDir}/*.ref`
-do	
-	cp ${sourceFile} ${TmpRefSourceFile}
-	#Компилируем рефал программу
-	refalc ${TmpRefSourceFile} 1>/dev/null 
-	AssertSuccess "Can't compile refal source ${sourceFile}"		
-	
-	#Собираем весь проект - линкуем сгенерированный файл с библиотекой исполнения.
-	cp ${TmpCSourceFile} ../Project/main.c
-	cd ../Project/build/ 
-	make 1>/dev/null
-	AssertSuccess "[Can't build project!]: ${sourceFile}"
-	
-	#Запускаем испольняемый файл.
-	./Project > ${RealOutputFile}
-	AssertSuccess "[Bad exe file!]: ${sourceFile}"
-	
-	#Проверям ожидаемое с полученным
-	cmp -s ${RealOutputFile} ../${sourceFile%.*}.out
-	if [ "$?" != 0 ]
-	then
-		echo -e "${red}[FAIL]: ${sourceFile} ${NC}"		
-	else
-		echo -e "${green}[OK]: ${sourceFile} ${NC}"		
-	fi		
+RunTestsInDir "${TestsDir}"
 
-	cd - 1>/dev/null
-done
