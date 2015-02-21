@@ -8,4 +8,6 @@
 struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
 
+struct func_result_t Add(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
+
 #endif

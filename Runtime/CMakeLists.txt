@@ -1,6 +1,11 @@
 project(runtime)
 cmake_minimum_required(VERSION 2.8)
 
+get_filename_component(PARENT_DIR ${PROJECT_SOURCE_DIR} DIRECTORY)
+set(LIBS_DIR ${PARENT_DIR}/libs )
+LINK_DIRECTORIES(${LIBS_DIR})
+include_directories(${LIBS_DIR})
+
 include_directories(${PROJECT_SOURCE_DIR}/headers)
 
 file(GLOB RuntimeHeaders ${PROJECT_SOURCE_DIR}/headers/*.h)
@@ -13,3 +18,5 @@ set(TEST_SRC_LIST ${RuntimeSources} ${RuntimeHeaders} ${RuntimeTestSources})
 add_executable(${PROJECT_NAME}_test ${TEST_SRC_LIST})
 add_library(${PROJECT_NAME} ${LIB_SRC_LIST})
 
+target_link_libraries(${PROJECT_NAME} libgmp.a)
+target_link_libraries(${PROJECT_NAME}_test libgmp.a)

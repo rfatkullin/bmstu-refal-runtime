@@ -15,6 +15,13 @@ static void allocateMemoryForVTerms(uint32_t size, uint8_t** pointer);
 static void allocateMemoryForData(uint32_t size, uint8_t** pointer);
 static void allocateMemoryForLTerms(uint32_t size, uint8_t** pointer);
 static struct lterm_t* allocateLTerm(uint32_t offset, uint32_t len);
+static void failWithMemoryOverflow();
+
+static void failWithMemoryOverflow()
+{
+	printf("Failed with memory overflow!");
+	exit(1);
+}
 
 void collectGarbage(struct lterm_t* expr)
 {
@@ -48,14 +55,31 @@ uint32_t allocateClosure(RefalFunc funcPtr, uint32_t envSize)
 	return memMngr.vtermsOffset++;
 }
 
-//TO FIX: сделать проверку переполнения памяти.
 uint32_t allocateSymbol(char ch)
 {
+	checkVTermsMemoryOverflow(1);
+
 	struct v_term* term = memMngr.vterms + memMngr.vtermsOffset;
-	term->tag =V_CHAR_TAG;
+	term->tag = V_CHAR_TAG;
 	term->ch = ch;
 
 	return memMngr.vtermsOffset++;
+}
+
+uint32_t allocateIntNum(uint32_t count)
+{
+	uint32_t i = 0;
+	uint32_t offset = 0;
+
+	checkVTermsMemoryOverflow(count);
+
+	for (i = 0; i < count; ++i)
+		memMngr.vterms[memMngr.vtermsOffset + i].tag = V_INT_NUM_TAG;
+
+	offset = memMngr.vtermsOffset;
+	memMngr.vtermsOffset += count;
+
+	return offset;
 }
 
 //TO FIX: сделать проверку переполнения памяти.
@@ -108,32 +132,6 @@ uint32_t allocateBracketVTerm(uint32_t length)
 void changeBracketLength(uint32_t offset, uint32_t newLength)
 {
 	memMngr.vterms[offset].inBracketLength = newLength;
-}
-
-struct lterm_t* allocateVector(int strLen, char* str)
-{
-	uint32_t i = 0;
-
-	if (memMngr.vtermsOffset + strLen >= memMngr.maxTermsNumber)
-	{
-		//TO FIX: нельзя передавать нулевой указатель.
-		collectGarbage(NULL);
-
-		if (memMngr.vtermsOffset + strLen >= memMngr.maxTermsNumber)
-		{
-			printf("[Memory manager]Fatal error: Can't allocate memory!\n");
-			exit(1);
-		}
-	}
-
-	for (i = 0; i < strLen; ++i, ++memMngr.vtermsOffset)
-	{
-		struct v_term* term = memMngr.vterms + memMngr.vtermsOffset;
-		term->tag =V_CHAR_TAG;
-		term->ch = str[i];
-	}
-
-	return allocateLTerm(memMngr.vtermsOffset - strLen, strLen);
 }
 
 void initAllocator(uint32_t size)
@@ -225,14 +223,14 @@ static void allocateMemoryForSegmentTree(uint32_t termsNumber, uint8_t** pointer
 
 static void allocateMemoryForVTerms(uint32_t size, uint8_t** pointer)
 {
-	memMngr.maxTermsNumber = getTermsMaxNumber(size);
+	uint32_t maxTermsNumber = getTermsMaxNumber(size);
 	memMngr.activeOffset = memMngr.literalsNumber;
-	memMngr.inactiveOffset = memMngr.activeOffset + memMngr.maxTermsNumber;
-
+	memMngr.inactiveOffset = memMngr.activeOffset + maxTermsNumber;
+	memMngr.vtermsMaxOffset = maxTermsNumber - 1;
 	*pointer += memMngr.literalsNumber * sizeof(struct v_term);
-	*pointer += 2 * memMngr.maxTermsNumber * sizeof(struct v_term);
+	*pointer += 2 * maxTermsNumber * sizeof(struct v_term);
 
-	allocateMemoryForSegmentTree(memMngr.maxTermsNumber, pointer);
+	allocateMemoryForSegmentTree(maxTermsNumber, pointer);
 
 	//printf("\tMax terms: %d\n", memMngr.maxTermsNumber);
 }
@@ -241,8 +239,11 @@ static void allocateMemoryForData(uint32_t size, uint8_t** pointer)
 {
 	uint32_t singleDataHeapSize = size / 2;
 
+	memMngr.dataHeap = *pointer;
 	memMngr.activeDataHeap = *pointer;
 	memMngr.inactiveDataHeap = *pointer + singleDataHeapSize;
+
+	memMngr.dataMaxOffset = singleDataHeapSize;
 
 	*pointer += size;
 }
@@ -283,6 +284,42 @@ static uint32_t copyVTerm(struct v_term* term)
 	}
 
 	return memSize;
+}
+
+void checkVTermsMemoryOverflow(uint32_t needVTermsCount)
+{
+	if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
+	{
+		//TO FIX: Передать корень FOV.
+		collectGarbage(0);
+	}
+
+	if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
+		failWithMemoryOverflow();
+}
+
+void checkLTermsMemoryOverflow(uint32_t needLTermsCount)
+{
+	if (memMngr.ltermsOffset + needLTermsCount > memMngr.ltermsMaxOffset)
+	{
+		//TO FIX: Передать корень FOV.
+		collectGarbage(0);
+	}
+
+	if (memMngr.ltermsOffset + needLTermsCount > memMngr.ltermsMaxOffset)
+		failWithMemoryOverflow();
+}
+
+void checkDataMemoryOverflow(uint32_t needDataCount)
+{
+	if (memMngr.dataOffset + needDataCount > memMngr.dataMaxOffset)
+	{
+		//TO FIX: Передать корень FOV.
+		collectGarbage(0);
+	}
+
+	if (memMngr.dataOffset + needDataCount > memMngr.dataMaxOffset)
+		failWithMemoryOverflow();
 }
 
 static void swapBuffers()
@@ -334,4 +371,24 @@ static void markVTerms(struct lterm_t* expr)
 
 		currTerm = currTerm->next;
 	}
+}
+
+struct lterm_t* constructLterm(uint32_t offset, uint32_t length)
+{
+	struct lterm_t* chain = 0;
+
+	//TO FIX: Replace malloc
+	struct lterm_t* inputFragment = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+	inputFragment->tag = L_TERM_FRAGMENT_TAG;
+	inputFragment->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
+	inputFragment->fragment->offset = offset;
+	inputFragment->fragment->length = length;
+
+	chain = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+	chain->next = inputFragment;
+	chain->prev = inputFragment;
+	inputFragment->next = chain;
+	inputFragment->prev = chain;
+
+	return chain;
 }

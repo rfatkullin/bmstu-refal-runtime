@@ -1,0 +1,17 @@
+$ENTRY Go
+{
+	= <Func2 <Func1 4294967295>>
+}
+
+Func1
+{
+	s.1 = <+ s.1 1>
+}
+
+Func2
+{
+	s.1 s.2 = <Prout s.2 s.1>
+}
+
+
+

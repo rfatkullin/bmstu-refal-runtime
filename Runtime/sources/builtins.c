@@ -23,21 +23,9 @@ struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fi
 		firstOffset = lastOffset = allocateSymbol(ch);
 
 		while ((ch = getchar()) != '\n')
-		{
 			lastOffset = allocateSymbol(ch);
-		}
 
-		struct lterm_t* inputFragment = (struct lterm_t*)malloc(sizeof(struct lterm_t));
-		inputFragment->tag = L_TERM_FRAGMENT_TAG;
-		inputFragment->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
-		inputFragment->fragment->offset = firstOffset;
-		inputFragment->fragment->length = lastOffset - firstOffset + 1;
-
-		mainChain = (struct lterm_t*)malloc(sizeof(struct lterm_t));
-		mainChain->next = inputFragment;
-		mainChain->prev = inputFragment;
-		inputFragment->next = mainChain;
-		inputFragment->prev = mainChain;
+		mainChain = constructLterm(firstOffset, lastOffset - firstOffset + 1);
 	}
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};

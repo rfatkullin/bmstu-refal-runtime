@@ -16,7 +16,6 @@
 struct memory_manager
 {
 	// Указатель на начало vterm'ов
-	// Структура: |литеры|n термов|n термов|
 	struct v_term* vterms;
 
 	/// Размер выделенного участка
@@ -27,7 +26,8 @@ struct memory_manager
 
 	struct segment_tree* segmentTree;
 
-	uint8_t* constDataHeap;
+	// Указатели на данные
+	uint8_t* dataHeap;
 	uint8_t* activeDataHeap;
 	uint8_t* inactiveDataHeap;
 
@@ -39,11 +39,15 @@ struct memory_manager
 
 	uint32_t literalsNumber;
 
-	//Количество элементов в листе дерева отрезков
+	//Количество элементов в листе дерева отрезков.
 	uint32_t segmentLen;
 
-	//На какое число v_term'ов хватит памяти
-	uint32_t maxTermsNumber;
+	//Максимальный размер массива vterm'ов.
+	uint32_t vtermsMaxOffset;
+	//Максимальный размер массива lterm'ов.
+	uint32_t ltermsMaxOffset;
+	//Максимальный размр массива данных.
+	uint32_t dataMaxOffset;
 };
 
 struct memory_manager memMngr;
@@ -75,10 +79,21 @@ struct lterm_t* allocateVector(int strLen, char* str);
 /// Выделяет память под один символ и возвращает смещение для v_term
 uint32_t allocateSymbol(char str);
 
+/// Выделяет память под vterm для целочисленного значения
+uint32_t allocateIntNum(uint32_t count);
+
 /// Выделяет память для замыкания
 uint32_t allocateClosure(RefalFunc ptr, uint32_t envSize);
 
 /// Дебажный вывод vterm
 void debugLiteralsPrint();
+
+/// Собирает lterm_t*
+struct lterm_t* constructLterm(uint32_t offset, uint32_t length);
+
+/// Проверки на переполнение.
+void checkVTermsMemoryOverflow(uint32_t);
+void checkLTermsMemoryOverflow(uint32_t);
+void checkDataMemoryOverflow(uint32_t);
 
 #endif

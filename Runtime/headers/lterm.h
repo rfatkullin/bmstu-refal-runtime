@@ -7,7 +7,6 @@
 #define L_TERM_CHAIN_TAG	1
 #define L_TERM_FUNC_CALL	2
 
-
 struct lterm_t;
 struct lterm_chain_t;
 
