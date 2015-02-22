@@ -66,6 +66,9 @@ static void printSymbol(struct v_term* term)
 	case V_INT_NUM_TAG:
 		printf("%u ", term->intNum);
 		break;
+	case V_FLOAT_NUM_TAG:
+		printf("%f ", term->floatNum);
+		break;
 	case V_CLOSURE_TAG:
 		//TO DO
 		break;
