@@ -8,8 +8,73 @@
 
 #define ARITHM_BASE "4294967296"
 
-static uint32_t readOperand(mpz_t num, uint32_t currOffset, uint32_t maxOffset, int all);
+typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
+
 static uint32_t writeOperand(mpz_t num);
+static struct lterm_t* constructNumLTerm(mpz_t num);
+static void readOperands(mpz_t x, mpz_t y, struct fragment_t* frag);
+static uint32_t readOperand(mpz_t num, uint32_t currOffset, uint32_t maxOffset, int all);
+static struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
+
+struct func_result_t Add(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+{
+	return  applyOp(mpz_add, entryPoint, env, fieldOfView);
+}
+
+struct func_result_t Sub(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+{
+	return  applyOp(mpz_sub, entryPoint, env, fieldOfView);
+}
+
+struct func_result_t Mul(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+{
+	return  applyOp(mpz_mul, entryPoint, env, fieldOfView);
+}
+
+struct func_result_t Div(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+{
+	return  applyOp(mpz_tdiv_q, entryPoint, env, fieldOfView);
+}
+
+struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+{
+	return  applyOp(mpz_mod, entryPoint, env, fieldOfView);
+}
+
+struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+{
+	struct lterm_t* currExpr = getAssembliedChain(fieldOfView);
+
+	mpz_t x;
+	mpz_t y;
+	mpz_t res;
+	int sign = 1;
+
+	mpz_init(res);
+
+	readOperands(x, y, currExpr->fragment);
+
+	if (op == mpz_mod)
+	{
+		sign = mpz_cmp_ui(y, 0);
+		if (sign < 0)
+			mpz_neg(y, y);
+	}
+
+	op(res, x, y);
+
+	if (op == mpz_mod && sign < 0)
+		mpz_neg(res, res);
+
+	struct lterm_t* resChain = constructNumLTerm(res);
+
+	mpz_clear(x);
+	mpz_clear(y);
+	mpz_clear(res);
+
+	return (struct func_result_t){.status = OK_RESULT, .fieldChain = resChain, .callChain = 0};
+}
+
 
 static void numParseFailed()
 {
@@ -27,14 +92,11 @@ static struct lterm_t* constructNumLTerm(mpz_t num)
 
 static uint32_t readOperand(mpz_t num, uint32_t currOffset, uint32_t maxOffset, int all)
 {
-	uint32_t i = 0;
 	uint32_t sign = 0;
 
-	mpz_t accm;
 	mpz_t base;
 
 	mpz_init_set_ui(num, 0);
-	mpz_init_set_ui(accm, 0);
 	mpz_init_set_str(base, ARITHM_BASE, 10);
 
 	if (memMngr.vterms[currOffset].tag == V_CHAR_TAG)
@@ -51,19 +113,15 @@ static uint32_t readOperand(mpz_t num, uint32_t currOffset, uint32_t maxOffset, 
 		if (memMngr.vterms[currOffset].tag != V_INT_NUM_TAG)
 			numParseFailed();
 
-		mpz_mul(accm, num, base);
-		mpz_add_ui(num, accm, memMngr.vterms[currOffset].intNum);
+		mpz_mul(num, num, base);
+		mpz_add_ui(num, num, memMngr.vterms[currOffset].intNum);
 		currOffset++;
 	}
 	while (currOffset < maxOffset && all);
 
 	if (sign)
-	{
-		mpz_mul_si(accm, num, -1);
-		mpz_swap(accm, num);
-	}
+		mpz_mul_si(num, num, -1);
 
-	mpz_clear(accm);
 	mpz_clear(base);
 
 	return currOffset;
@@ -73,12 +131,10 @@ static uint32_t getNumsCount(mpz_t num)
 {
 	uint32_t count = 0;
 	mpz_t tmp;
-	mpz_t tmpAccm;
 	mpz_t base;
 
 	mpz_init_set_str(base, ARITHM_BASE, 10);
 	mpz_init_set(tmp, num);
-	mpz_init(tmpAccm);
 
 	if (!mpz_cmp_ui(tmp, 0))
 	{
@@ -88,15 +144,13 @@ static uint32_t getNumsCount(mpz_t num)
 	{
 		while (mpz_cmp_ui(tmp, 0) > 0)
 		{
-			mpz_div(tmpAccm, tmp, base);
-			mpz_swap(tmpAccm, tmp);
+			mpz_div(tmp, tmp, base);
 			count++;
 		}
 	}
 
 	mpz_clear(base);
 	mpz_clear(tmp);
-	mpz_clear(tmpAccm);
 
 	return count;
 }
@@ -117,10 +171,7 @@ static uint32_t writeOperand(mpz_t num)
 	{
 		sign = 1;
 		allocateSymbol('-');
-		mpz_t tmp;
-		mpz_init_set(tmp, num);
-		mpz_neg(num, tmp);
-		mpz_clear(tmp);
+		mpz_neg(num, num);
 	}
 
 	uint32_t count = getNumsCount(num);
@@ -162,27 +213,4 @@ static void readOperands(mpz_t x, mpz_t y, struct fragment_t* frag)
 
 	if (currOffset < maxOffset)
 		numParseFailed();
-}
-
-struct func_result_t Add(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
-{
-	struct lterm_t* currExpr = getAssembliedChain(fieldOfView);
-
-	mpz_t x;
-	mpz_t y;
-	mpz_t res;
-
-	mpz_init(res);
-
-	readOperands(x, y, currExpr->fragment);
-
-	mpz_add(res, x, y);
-
-	struct lterm_t* resChain = constructNumLTerm(res);
-
-	mpz_clear(x);
-	mpz_clear(y);
-	mpz_clear(res);
-
-	return (struct func_result_t){.status = OK_RESULT, .fieldChain = resChain, .callChain = 0};
 }
