@@ -1,12 +1,11 @@
 #include <stdio.h>
-#include <gmp.h>
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <gmp.h>
+
 #include "vmachine.h"
 #include "builtins.h"
-
-#define ARITHM_BASE "4294967296"
 
 typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
 
@@ -94,10 +93,7 @@ static uint32_t readOperand(mpz_t num, uint32_t currOffset, uint32_t maxOffset, 
 {
 	uint32_t sign = 0;
 
-	mpz_t base;
-
 	mpz_init_set_ui(num, 0);
-	mpz_init_set_str(base, ARITHM_BASE, 10);
 
 	if (memMngr.vterms[currOffset].tag == V_CHAR_TAG)
 	{
@@ -122,8 +118,6 @@ static uint32_t readOperand(mpz_t num, uint32_t currOffset, uint32_t maxOffset, 
 	if (sign)
 		mpz_mul_si(num, num, -1);
 
-	mpz_clear(base);
-
 	return currOffset;
 }
 
@@ -131,9 +125,7 @@ static uint32_t getNumsCount(mpz_t num)
 {
 	uint32_t count = 0;
 	mpz_t tmp;
-	mpz_t base;
 
-	mpz_init_set_str(base, ARITHM_BASE, 10);
 	mpz_init_set(tmp, num);
 
 	if (!mpz_cmp_ui(tmp, 0))
@@ -149,7 +141,6 @@ static uint32_t getNumsCount(mpz_t num)
 		}
 	}
 
-	mpz_clear(base);
 	mpz_clear(tmp);
 
 	return count;
@@ -161,11 +152,9 @@ static uint32_t writeOperand(mpz_t num)
 	uint32_t sign = 0;
 	mpz_t remainder;
 	mpz_t quotient;
-	mpz_t base;
 
 	mpz_init_set_ui(remainder, 0);
 	mpz_init_set_ui(quotient, 0);
-	mpz_init_set_str(base, ARITHM_BASE, 10);
 
 	if (mpz_cmp_ui(num, 0) < 0)
 	{
@@ -186,7 +175,6 @@ static uint32_t writeOperand(mpz_t num)
 
 	mpz_clear(remainder);
 	mpz_clear(quotient);
-	mpz_clear(base);
 
 	return count + sign;
 }

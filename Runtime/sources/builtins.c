@@ -8,6 +8,7 @@
 #include "builtins.h"
 
 #define N 256
+#define ARITHM_BASE "4294967296"
 
 static void printRange(struct fragment_t* frag);
 static void printSymbol(struct v_term* term);
@@ -15,24 +16,15 @@ static void printUnicodeChar(uint32_t ch);
 
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
-	uint32_t firstOffset;
+	uint32_t firstOffset = memMngr.vtermsOffset;
 	struct lterm_t* mainChain = 0;
 
-	UChar ch = 0;
-	UFILE* input = u_finit(stdin, NULL, "UTF-8");
-	UFILE* output = u_finit(stdout, NULL, "UTF-8");
-
-	firstOffset = memMngr.vtermsOffset;
-
-	ch = u_fgetc(input);
+	UChar ch = u_fgetc(input);
 	while (ch != '\n')
 	{
 		allocateSymbol(ch);
 		ch = u_fgetc(input);
 	}
-
-	u_fclose(input);
-	u_fclose(output);
 
 	if (firstOffset != memMngr.vtermsOffset)
 		mainChain = constructLterm(firstOffset, memMngr.vtermsOffset - firstOffset);
@@ -89,8 +81,21 @@ static void printSymbol(struct v_term* term)
 
 static void printUnicodeChar(uint32_t ch)
 {
-	UFILE* output = u_finit(stdout, NULL, "UTF-8");
 	u_fprintf(output, "%C", ch);
-	u_fclose(output);
 }
 
+void initBuiltins()
+{
+	input = u_finit(stdin, NULL, "UTF-8");
+	output = u_finit(stdout, NULL, "UTF-8");
+
+	mpz_init_set_str(base, ARITHM_BASE, 10);
+}
+
+void deinitBuiltins()
+{
+	u_fclose(input);
+	u_fclose(output);
+
+	mpz_clear(base);
+}
