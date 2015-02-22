@@ -19,3 +19,6 @@ include_directories(${PARENT_DIR}/Runtime/headers)
 target_link_libraries(${PROJECT_NAME} ${PARENT_DIR}/Runtime/build/libruntime.a)
 target_link_libraries(${PROJECT_NAME} libgmp.a)
 
+#Временно
+LINK_DIRECTORIES("/usr/lib/i386-linux-gnu")
+target_link_libraries(${PROJECT_NAME} -licui18n -licuuc -licudata -ldl -lm -licuio )

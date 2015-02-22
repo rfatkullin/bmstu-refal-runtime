@@ -55,7 +55,7 @@ uint32_t allocateClosure(RefalFunc funcPtr, uint32_t envSize)
 	return memMngr.vtermsOffset++;
 }
 
-uint32_t allocateSymbol(char ch)
+uint32_t allocateSymbol(uint32_t ch)
 {
 	checkVTermsMemoryOverflow(1);
 

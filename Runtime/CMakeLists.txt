@@ -20,3 +20,8 @@ add_library(${PROJECT_NAME} ${LIB_SRC_LIST})
 
 target_link_libraries(${PROJECT_NAME} libgmp.a)
 target_link_libraries(${PROJECT_NAME}_test libgmp.a)
+
+#Временно
+LINK_DIRECTORIES("/usr/lib/i386-linux-gnu")
+target_link_libraries(${PROJECT_NAME} -licui18n -licuuc -licudata -ldl -lm -licuio )
+target_link_libraries(${PROJECT_NAME}_test -licui18n -licuuc -licudata -ldl -lm -licuio )

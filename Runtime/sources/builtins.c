@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ConvertUTF.h"
+#include <unicode/ustdio.h>
+#include <unicode/uchar.h>
+
 #include "vmachine.h"
 #include "builtins.h"
 
@@ -13,20 +15,27 @@ static void printUnicodeChar(uint32_t ch);
 
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
-	char ch;
-	uint32_t lastOffset;
 	uint32_t firstOffset;
 	struct lterm_t* mainChain = 0;
 
-	if((ch = getchar()) != '\n')
+	UChar ch = 0;
+	UFILE* input = u_finit(stdin, NULL, "UTF-8");
+	UFILE* output = u_finit(stdout, NULL, "UTF-8");
+
+	firstOffset = memMngr.vtermsOffset;
+
+	ch = u_fgetc(input);
+	while (ch != '\n')
 	{
-		firstOffset = lastOffset = allocateSymbol(ch);
-
-		while ((ch = getchar()) != '\n')
-			lastOffset = allocateSymbol(ch);
-
-		mainChain = constructLterm(firstOffset, lastOffset - firstOffset + 1);
+		allocateSymbol(ch);
+		ch = u_fgetc(input);
 	}
+
+	u_fclose(input);
+	u_fclose(output);
+
+	if (firstOffset != memMngr.vtermsOffset)
+		mainChain = constructLterm(firstOffset, memMngr.vtermsOffset - firstOffset);
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
 }
@@ -80,20 +89,8 @@ static void printSymbol(struct v_term* term)
 
 static void printUnicodeChar(uint32_t ch)
 {
-	UTF32 source = ch;
-	const UTF32 *pSource = &source;
-	UTF8 target[UNI_MAX_UTF8_BYTES_PER_CODE_POINT];
-	UTF8 *pTarget = target;
-
-	ConversionResult cr;
-	cr = ConvertUTF32toUTF8(&pSource, pSource + 1, &pTarget, pTarget+sizeof(target)-1, lenientConversion);
-
-	if (conversionOK != cr)
-		return;
-
-	uint32_t bytesNum = getNumBytesForUTF8(target[0]);
-	int i = 0;
-	for (i = 0; i < bytesNum; ++i)
-		printf("%c", target[i]);
+	UFILE* output = u_finit(stdout, NULL, "UTF-8");
+	u_fprintf(output, "%C", ch);
+	u_fclose(output);
 }
 

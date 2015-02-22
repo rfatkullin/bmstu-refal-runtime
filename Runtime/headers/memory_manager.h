@@ -77,7 +77,7 @@ void changeBracketLength(uint32_t offset, uint32_t newLength);
 struct lterm_t* allocateVector(int strLen, char* str);
 
 /// Выделяет память под один символ и возвращает смещение для v_term
-uint32_t allocateSymbol(char str);
+uint32_t allocateSymbol(uint32_t str);
 
 /// Выделяет память под vterm для целочисленного значения
 uint32_t allocateIntNum(uint32_t count);
