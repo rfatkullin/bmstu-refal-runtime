@@ -24,7 +24,7 @@ AssertSuccess "Runtime-build error"
 cd - 1>/dev/null
 
 #Компилируем компилятор! В итоге получаем исполняемый файл refalc, который кладется в папку, прописанную в переменной PATH.
-go install -compiler gccgo ${GOPATH}/src/BMSTU-Refal-Compiler/refalc/refalc.go 
+go install -compiler gccgo ${GOPATH}/src/bmstu-refal-compiler/refalc/refalc.go 
 AssertSuccess "Can't build compiler"
 
 function RunTestsInDir
