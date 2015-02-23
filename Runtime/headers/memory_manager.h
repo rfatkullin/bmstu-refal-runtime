@@ -19,10 +19,10 @@ struct memory_manager
 	struct v_term* vterms;
 
 	/// Размер выделенного участка
-	uint32_t totalSize;
+    uint64_t totalSize;
 
-	uint32_t activeOffset;
-	uint32_t inactiveOffset;
+    uint64_t activeOffset;
+    uint64_t inactiveOffset;
 
 	struct segment_tree* segmentTree;
 
@@ -33,21 +33,21 @@ struct memory_manager
 
 	uint8_t* lTermsHeap;
 
-	uint32_t vtermsOffset;
-	uint32_t dataOffset;
-	uint32_t ltermsOffset;
+    uint64_t vtermsOffset;
+    uint64_t dataOffset;
+    uint64_t ltermsOffset;
 
-	uint32_t literalsNumber;
+    uint64_t literalsNumber;
 
 	//Количество элементов в листе дерева отрезков.
-	uint32_t segmentLen;
+    uint64_t segmentLen;
 
 	//Максимальный размер массива vterm'ов.
-	uint32_t vtermsMaxOffset;
+    uint64_t vtermsMaxOffset;
 	//Максимальный размер массива lterm'ов.
-	uint32_t ltermsMaxOffset;
+    uint64_t ltermsMaxOffset;
 	//Максимальный размр массива данных.
-	uint32_t dataMaxOffset;
+    uint64_t dataMaxOffset;
 };
 
 struct memory_manager memMngr;
@@ -55,11 +55,11 @@ struct memory_manager memMngr;
 /// Выделяет память размера size
 /// и сохраняет указатель на выделенный участок
 /// в переменной mainHeap.
-void initAllocator(uint32_t size);
+void initAllocator(uint64_t size);
 
 /// Распределеяет память для типов данных
 /// т.е. инциализирует поля activeTermsHeap, inactiveTermsHeap и т.д.
-void initHeaps(uint32_t segmentLen, uint32_t literalsNumber);
+void initHeaps(uint64_t segmentLen, uint64_t literalsNumber);
 
 /// Собирает мусор.
 void collectGarbage(struct lterm_t* expr);
@@ -68,32 +68,29 @@ void collectGarbage(struct lterm_t* expr);
 void allocateVTerms(struct fragment_t* fragment_t);
 
 /// Выдыляет память под vterm типа V_BRACKET_TAG
-uint32_t allocateBracketVTerm(uint32_t length);
+uint64_t allocateBracketVTerm(uint64_t length);
 
 /// Изменяет длину выражения в скобках.
-void changeBracketLength(uint32_t offset, uint32_t newLength);
-
-/// Выделяет память под строку и возвращает результат.
-struct lterm_t* allocateVector(int strLen, char* str);
+void changeBracketLength(uint64_t offset, uint64_t newLength);
 
 /// Выделяет память под один символ и возвращает смещение для v_term
-uint32_t allocateSymbol(uint32_t str);
+uint64_t allocateSymbol(uint32_t ch);
 
 /// Выделяет память под vterm для целочисленного значения
-uint32_t allocateIntNum(uint32_t count);
+uint64_t allocateIntNum(uint64_t count);
 
 /// Выделяет память для замыкания
-uint32_t allocateClosure(RefalFunc ptr, uint32_t envSize);
+uint64_t allocateClosure(RefalFunc ptr, uint64_t envSize);
 
 /// Дебажный вывод vterm
 void debugLiteralsPrint();
 
 /// Собирает lterm_t*
-struct lterm_t* constructLterm(uint32_t offset, uint32_t length);
+struct lterm_t* constructLterm(uint64_t offset, uint64_t length);
 
 /// Проверки на переполнение.
-void checkVTermsMemoryOverflow(uint32_t);
-void checkLTermsMemoryOverflow(uint32_t);
-void checkDataMemoryOverflow(uint32_t);
+void checkVTermsMemoryOverflow(uint64_t);
+void checkLTermsMemoryOverflow(uint64_t);
+void checkDataMemoryOverflow(uint64_t);
 
 #endif

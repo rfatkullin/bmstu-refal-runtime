@@ -9,10 +9,10 @@
 
 typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
 
-static uint32_t writeOperand(mpz_t num);
+static uint64_t writeOperand(mpz_t num);
 static struct lterm_t* constructNumLTerm(mpz_t num);
 static void readOperands(mpz_t x, mpz_t y, struct fragment_t* frag);
-static uint32_t readOperand(mpz_t num, uint32_t currOffset, uint32_t maxOffset, int all);
+static uint64_t readOperand(mpz_t num, uint64_t currOffset, uint64_t maxOffset, int all);
 static struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
 
 struct func_result_t Add(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
@@ -83,15 +83,21 @@ static void numParseFailed()
 
 static struct lterm_t* constructNumLTerm(mpz_t num)
 {
-	uint32_t offset = memMngr.vtermsOffset;
-	uint32_t length = writeOperand(num);
+    uint64_t offset = memMngr.vtermsOffset;
+    uint64_t length = writeOperand(num);
 
 	return constructLterm(offset, length);
 }
 
-static uint32_t readOperand(mpz_t num, uint32_t currOffset, uint32_t maxOffset, int all)
+/// Записывает в num число, вычисленное с помощью цепочки vterm'ов
+/// c основанием base.
+/// currOffset - текущий сдвиг в массиве vterm'ов.
+/// maxOffset - максимально возможный сдвиг в массиве vterm'ов.
+/// all == 1 - использовать все возможные vterm'ы, иначе только первый, значащий.
+/// Возвращает новый сдвиг в массиве vterm'ов.
+static uint64_t readOperand(mpz_t num, uint64_t currOffset, uint64_t maxOffset, int all)
 {
-	uint32_t sign = 0;
+    int sign = 0;
 
 	mpz_init_set_ui(num, 0);
 
@@ -121,9 +127,11 @@ static uint32_t readOperand(mpz_t num, uint32_t currOffset, uint32_t maxOffset, 
 	return currOffset;
 }
 
-static uint32_t getNumsCount(mpz_t num)
+/// Вычисляет количество разрядов в числе
+/// где base - основание.
+static uint64_t getNumsCount(mpz_t num)
 {
-	uint32_t count = 0;
+    uint64_t count = 0;
 	mpz_t tmp;
 
 	mpz_init_set(tmp, num);
@@ -146,10 +154,12 @@ static uint32_t getNumsCount(mpz_t num)
 	return count;
 }
 
-static uint32_t writeOperand(mpz_t num)
+/// Записывает целочисленное значение в vterm'ы.
+/// Возвращает количество созданных vterm'ов.
+static uint64_t writeOperand(mpz_t num)
 {
-	uint32_t i = 0;
-	uint32_t sign = 0;
+    uint64_t i = 0;
+    uint64_t sign = 0;
 	mpz_t remainder;
 	mpz_t quotient;
 
@@ -163,8 +173,8 @@ static uint32_t writeOperand(mpz_t num)
 		mpz_neg(num, num);
 	}
 
-	uint32_t count = getNumsCount(num);
-	uint32_t offset = allocateIntNum(count);
+    uint64_t count = getNumsCount(num);
+    uint64_t offset = allocateIntNum(count);
 
 	for (i = offset + count - 1; i >= offset; --i)
 	{
@@ -179,10 +189,12 @@ static uint32_t writeOperand(mpz_t num)
 	return count + sign;
 }
 
+/// Вычисляет операнды x и y для бинарной операции.
+/// frag - фрагмент, с помощью которого нужно вычислить операнды.
 static void readOperands(mpz_t x, mpz_t y, struct fragment_t* frag)
 {
-	uint32_t currOffset = frag->offset;
-	uint32_t maxOffset = frag->offset + frag->length;
+    uint64_t currOffset = frag->offset;
+    uint64_t maxOffset = frag->offset + frag->length;
 
 	if (memMngr.vterms[currOffset].tag == V_BRACKET_TAG)
 	{

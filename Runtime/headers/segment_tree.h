@@ -5,14 +5,14 @@
 
 struct segment_tree
 {
-	uint32_t currN;
+    uint64_t currN;
 	int32_t* tree;
-	uint32_t* elements;
+    uint64_t* elements;
 };
 
-void buildSegmentTree(uint32_t n);
+void buildSegmentTree(uint64_t n);
 void clearSegmentTree();
-void markInSegmentTree(uint32_t begin, uint32_t end);
-uint32_t sumInSegmentTree(uint32_t begin, uint32_t end);
+void markInSegmentTree(uint64_t begin, uint64_t end);
+uint64_t sumInSegmentTree(uint64_t begin, uint64_t end);
 
 #endif

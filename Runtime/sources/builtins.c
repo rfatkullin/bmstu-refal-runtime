@@ -16,7 +16,7 @@ static void printUnicodeChar(uint32_t ch);
 
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
-	uint32_t firstOffset = memMngr.vtermsOffset;
+    uint64_t firstOffset = memMngr.vtermsOffset;
 	struct lterm_t* mainChain = 0;
 
 	UChar ch = u_fgetc(input);

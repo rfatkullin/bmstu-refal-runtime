@@ -12,8 +12,8 @@ struct lterm_chain_t;
 
 struct fragment_t
 {
-	uint32_t offset;
-	uint32_t length;
+    uint64_t offset;
+    uint64_t length;
 };
 
 struct lterm_t

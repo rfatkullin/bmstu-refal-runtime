@@ -32,9 +32,8 @@ struct v_term
 		float floatNum;
 		struct v_closure* closure;
 		uint32_t intNum;
-
 		// Хранит длину всей скобочной последовательности. Для () равна 2, для (1 2) равна 4 и т.д.
-		uint32_t inBracketLength;
+        uint64_t inBracketLength;
 	};
 };
 

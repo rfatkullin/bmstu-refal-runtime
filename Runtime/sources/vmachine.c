@@ -216,7 +216,7 @@ static void assemblyChain(struct lterm_t* chain)
 
 			case L_TERM_CHAIN_TAG:
 			{
-				uint32_t leftBracketOffset = allocateBracketVTerm(0);
+                uint64_t leftBracketOffset = allocateBracketVTerm(0);
 				assemblyChain(currTerm->chain);
 				changeBracketLength(leftBracketOffset, memMngr.vtermsOffset - leftBracketOffset + 1);
 				allocateBracketVTerm(0);

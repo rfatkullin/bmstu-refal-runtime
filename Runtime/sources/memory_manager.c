@@ -6,15 +6,15 @@
 
 #include "memory_manager.h"
 
-static float byte2KByte(uint32_t bytes);
+static float byte2KByte(uint64_t bytes);
 static void swapBuffers();
 static void markVTerms(struct lterm_t* expr);
 
-static void allocateMemoryForSegmentTree(uint32_t termsNumber, uint8_t** pointer);
-static void allocateMemoryForVTerms(uint32_t size, uint8_t** pointer);
-static void allocateMemoryForData(uint32_t size, uint8_t** pointer);
-static void allocateMemoryForLTerms(uint32_t size, uint8_t** pointer);
-static struct lterm_t* allocateLTerm(uint32_t offset, uint32_t len);
+static void allocateMemoryForSegmentTree(uint64_t termsNumber, uint8_t** pointer);
+static void allocateMemoryForVTerms(uint64_t size, uint8_t** pointer);
+static void allocateMemoryForData(uint64_t size, uint8_t** pointer);
+static void allocateMemoryForLTerms(uint64_t size, uint8_t** pointer);
+static struct lterm_t* allocateLTerm(uint64_t offset, uint64_t len);
 static void failWithMemoryOverflow();
 
 static void failWithMemoryOverflow()
@@ -42,7 +42,7 @@ void collectGarbage(struct lterm_t* expr)
 
 // TO FIX: сделать проверку переполнения памяти.
 // Сделать все правильно -- выделение памяти в области данных хипа
-uint32_t allocateClosure(RefalFunc funcPtr, uint32_t envSize)
+uint64_t allocateClosure(RefalFunc funcPtr, uint64_t envSize)
 {
 	struct v_term* term = memMngr.vterms + memMngr.vtermsOffset;
 	term->tag = V_CLOSURE_TAG;
@@ -55,7 +55,7 @@ uint32_t allocateClosure(RefalFunc funcPtr, uint32_t envSize)
 	return memMngr.vtermsOffset++;
 }
 
-uint32_t allocateSymbol(uint32_t ch)
+uint64_t allocateSymbol(uint32_t ch)
 {
 	checkVTermsMemoryOverflow(1);
 
@@ -66,10 +66,10 @@ uint32_t allocateSymbol(uint32_t ch)
 	return memMngr.vtermsOffset++;
 }
 
-uint32_t allocateIntNum(uint32_t count)
+uint64_t allocateIntNum(uint64_t count)
 {
-	uint32_t i = 0;
-	uint32_t offset = 0;
+    uint64_t i = 0;
+    uint64_t offset = 0;
 
 	checkVTermsMemoryOverflow(count);
 
@@ -85,7 +85,7 @@ uint32_t allocateIntNum(uint32_t count)
 //TO FIX: сделать проверку переполнения памяти.
 void allocateVTerms(struct fragment_t* frag)
 {
-	uint32_t i = 0;
+    uint64_t i = 0;
 	for (i = 0; i < frag->length; ++i)
 	{
 		memMngr.vterms[memMngr.vtermsOffset].tag = memMngr.vterms[frag->offset + i].tag;
@@ -121,7 +121,7 @@ void allocateVTerms(struct fragment_t* frag)
 }
 
 //TO FIX: сделать проверку переполнения памяти.
-uint32_t allocateBracketVTerm(uint32_t length)
+uint64_t allocateBracketVTerm(uint64_t length)
 {
 	memMngr.vterms[memMngr.vtermsOffset].tag = V_BRACKET_TAG;
 	memMngr.vterms[memMngr.vtermsOffset].inBracketLength = length;
@@ -129,24 +129,24 @@ uint32_t allocateBracketVTerm(uint32_t length)
 	return memMngr.vtermsOffset++;
 }
 
-void changeBracketLength(uint32_t offset, uint32_t newLength)
+void changeBracketLength(uint64_t offset, uint64_t newLength)
 {
 	memMngr.vterms[offset].inBracketLength = newLength;
 }
 
-void initAllocator(uint32_t size)
+void initAllocator(uint64_t size)
 {
 	memMngr.vterms = (struct v_term*)malloc(size);
 	memMngr.totalSize = size;
 }
 
-void initHeaps(uint32_t segmentLen, uint32_t literalsNumber)
+void initHeaps(uint64_t segmentLen, uint64_t literalsNumber)
 {
 	//TO FIX: Если инициализируем данные, то их тоже нужно тут учитывать.
-	uint32_t size = memMngr.totalSize - literalsNumber * sizeof(struct v_term);
-	uint32_t dataHeapSize = DATA_HEAP_SIZE_FACTOR * size;
-	uint32_t vtermsHeapSize = V_TERMS_HEAP_SIZE_FACTOR * size;
-	uint32_t ltermsHeapSize = size - dataHeapSize - vtermsHeapSize;
+    uint64_t size = memMngr.totalSize - literalsNumber * sizeof(struct v_term);
+    uint64_t dataHeapSize = DATA_HEAP_SIZE_FACTOR * size;
+    uint64_t vtermsHeapSize = V_TERMS_HEAP_SIZE_FACTOR * size;
+    uint64_t ltermsHeapSize = size - dataHeapSize - vtermsHeapSize;
 
 
 //	printf("\nAllocation size:                      %.2f Kb\n", byte2KByte(size));
@@ -181,7 +181,7 @@ void initHeaps(uint32_t segmentLen, uint32_t literalsNumber)
 //	printf("\n");
 //}
 
-static struct lterm_t* allocateLTerm(uint32_t offset, uint32_t len)
+static struct lterm_t* allocateLTerm(uint64_t offset, uint64_t len)
 {
 	struct lterm_t* term = (struct lterm_t*)malloc(sizeof(struct lterm_t));
 
@@ -193,26 +193,26 @@ static struct lterm_t* allocateLTerm(uint32_t offset, uint32_t len)
 	return term;
 }
 
-static float byte2KByte(uint32_t bytes)
+static float byte2KByte(uint64_t bytes)
 {
 	return bytes / 1024.0f;
 }
 
 // Значение n выводится из формулы:
-// size = 2 * n * sizeof(struct v_term) + (4 * n / N + n) * sizeof(uint32_t)
+// size = 2 * n * sizeof(struct v_term) + (4 * n / N + n) * sizeof(uint64_t)
 // где N - длина отрезка в листьях дерева.
-static uint32_t getTermsMaxNumber(uint32_t size)
+static uint64_t getTermsMaxNumber(uint64_t size)
 {
-	uint32_t memSizeWithoutHeader = size - sizeof(struct segment_tree);
-	uint32_t N = memMngr.segmentLen;
-	return (N * memSizeWithoutHeader) / (2 * N * sizeof(struct v_term) + (4 + N) * sizeof(uint32_t));
+    uint64_t memSizeWithoutHeader = size - sizeof(struct segment_tree);
+    uint64_t N = memMngr.segmentLen;
+    return (N * memSizeWithoutHeader) / (2 * N * sizeof(struct v_term) + (4 + N) * sizeof(uint64_t));
 }
 
-static void allocateMemoryForSegmentTree(uint32_t termsNumber, uint8_t** pointer)
+static void allocateMemoryForSegmentTree(uint64_t termsNumber, uint8_t** pointer)
 {
-	uint32_t chunck = memMngr.segmentLen;
-	uint32_t memSizeForTree = 4 * termsNumber / chunck * sizeof(uint32_t);
-	uint32_t memSizeForElements = termsNumber * sizeof(uint32_t);
+    uint64_t chunck = memMngr.segmentLen;
+    uint64_t memSizeForTree = 4 * termsNumber / chunck * sizeof(uint64_t);
+    uint64_t memSizeForElements = termsNumber * sizeof(uint64_t);
 
 	memMngr.segmentTree = (struct segment_tree*)(*pointer);
 	memMngr.segmentTree->tree = (int32_t*)(*pointer + sizeof(struct segment_tree));
@@ -221,9 +221,9 @@ static void allocateMemoryForSegmentTree(uint32_t termsNumber, uint8_t** pointer
 	*pointer += memSizeForTree + memSizeForElements + sizeof(struct segment_tree);
 }
 
-static void allocateMemoryForVTerms(uint32_t size, uint8_t** pointer)
+static void allocateMemoryForVTerms(uint64_t size, uint8_t** pointer)
 {
-	uint32_t maxTermsNumber = getTermsMaxNumber(size);
+    uint64_t maxTermsNumber = getTermsMaxNumber(size);
 	memMngr.activeOffset = memMngr.literalsNumber;
 	memMngr.inactiveOffset = memMngr.activeOffset + maxTermsNumber;
 	memMngr.vtermsMaxOffset = maxTermsNumber - 1;
@@ -235,9 +235,9 @@ static void allocateMemoryForVTerms(uint32_t size, uint8_t** pointer)
 	//printf("\tMax terms: %d\n", memMngr.maxTermsNumber);
 }
 
-static void allocateMemoryForData(uint32_t size, uint8_t** pointer)
+static void allocateMemoryForData(uint64_t size, uint8_t** pointer)
 {
-	uint32_t singleDataHeapSize = size / 2;
+    uint64_t singleDataHeapSize = size / 2;
 
 	memMngr.dataHeap = *pointer;
 	memMngr.activeDataHeap = *pointer;
@@ -248,7 +248,7 @@ static void allocateMemoryForData(uint32_t size, uint8_t** pointer)
 	*pointer += size;
 }
 
-static void allocateMemoryForLTerms(uint32_t size, uint8_t** pointer)
+static void allocateMemoryForLTerms(uint64_t size, uint8_t** pointer)
 {
 	memMngr.lTermsHeap = *pointer;
 
@@ -256,10 +256,10 @@ static void allocateMemoryForLTerms(uint32_t size, uint8_t** pointer)
 }
 
 //Возвращает сколько байтов было использовано
-static uint32_t copyVTerm(struct v_term* term)
+static uint64_t copyVTerm(struct v_term* term)
 {
 	uint8_t* data = memMngr.inactiveDataHeap;
-	uint32_t memSize = 0;
+    uint64_t memSize = 0;
 
 	switch (term->tag)
 	{
@@ -286,7 +286,7 @@ static uint32_t copyVTerm(struct v_term* term)
 	return memSize;
 }
 
-void checkVTermsMemoryOverflow(uint32_t needVTermsCount)
+void checkVTermsMemoryOverflow(uint64_t needVTermsCount)
 {
 	if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
 	{
@@ -298,7 +298,7 @@ void checkVTermsMemoryOverflow(uint32_t needVTermsCount)
 		failWithMemoryOverflow();
 }
 
-void checkLTermsMemoryOverflow(uint32_t needLTermsCount)
+void checkLTermsMemoryOverflow(uint64_t needLTermsCount)
 {
 	if (memMngr.ltermsOffset + needLTermsCount > memMngr.ltermsMaxOffset)
 	{
@@ -310,7 +310,7 @@ void checkLTermsMemoryOverflow(uint32_t needLTermsCount)
 		failWithMemoryOverflow();
 }
 
-void checkDataMemoryOverflow(uint32_t needDataCount)
+void checkDataMemoryOverflow(uint64_t needDataCount)
 {
 	if (memMngr.dataOffset + needDataCount > memMngr.dataMaxOffset)
 	{
@@ -324,7 +324,7 @@ void checkDataMemoryOverflow(uint32_t needDataCount)
 
 static void swapBuffers()
 {
-	uint32_t dataOffset = 0;
+    uint64_t dataOffset = 0;
 	int i = 0;
 
 //	for (i = memMngr.activeOffset; i < memMngr.vtermsOffset; ++i)
@@ -373,7 +373,7 @@ static void markVTerms(struct lterm_t* expr)
 	}
 }
 
-struct lterm_t* constructLterm(uint32_t offset, uint32_t length)
+struct lterm_t* constructLterm(uint64_t offset, uint64_t length)
 {
 	struct lterm_t* chain = 0;
 
