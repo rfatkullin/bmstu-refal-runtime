@@ -1,12 +1,13 @@
 #ifndef __V_TERM_H__
 #define __V_TERM_H__
 
-#define V_CHAR_TAG		0
-#define V_IDENT_TAG		1
-#define V_INT_NUM_TAG	2
-#define V_FLOAT_NUM_TAG	3
-#define V_CLOSURE_TAG	4
-#define V_BRACKET_TAG	5
+#define V_CHAR_TAG          0
+#define V_IDENT_TAG         1
+#define V_INT_NUM_TAG       2
+#define V_FLOAT_NUM_TAG     3
+#define V_CLOSURE_TAG       4
+#define V_BRACKET_OPEN_TAG	5
+#define V_BRACKET_CLOSE_TAG	6
 
 #include <stdint.h>
 

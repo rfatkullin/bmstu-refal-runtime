@@ -67,8 +67,9 @@ void collectGarbage(struct lterm_t* expr);
 /// Выделяет память под vterm'ы
 void allocateVTerms(struct fragment_t* fragment_t);
 
-/// Выдыляет память под vterm типа V_BRACKET_TAG
-uint64_t allocateBracketVTerm(uint64_t length);
+/// Выдыляет память под vterm типа V_BRACKET_OPEN_TAG или V_BRACKET_CLOSE_TAG
+uint64_t allocateOpenBracketVTerm(uint64_t length);
+uint64_t allocateCloseBracketVTerm(uint64_t length);
 
 /// Изменяет длину выражения в скобках.
 void changeBracketLength(uint64_t offset, uint64_t newLength);

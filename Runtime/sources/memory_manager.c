@@ -112,21 +112,30 @@ void allocateVTerms(struct fragment_t* frag)
 				//TO DO:
 				break;
 
-			case V_BRACKET_TAG:
+            case V_BRACKET_OPEN_TAG:
+            case V_BRACKET_CLOSE_TAG:
 				memMngr.vterms[memMngr.vtermsOffset].inBracketLength = memMngr.vterms[frag->offset + i].inBracketLength;
-				break;
+				break;        
 		}
 		memMngr.vtermsOffset++;
 	}
 }
 
 //TO FIX: сделать проверку переполнения памяти.
-uint64_t allocateBracketVTerm(uint64_t length)
+uint64_t allocateOpenBracketVTerm(uint64_t length)
 {
-	memMngr.vterms[memMngr.vtermsOffset].tag = V_BRACKET_TAG;
+    memMngr.vterms[memMngr.vtermsOffset].tag = V_BRACKET_OPEN_TAG;
 	memMngr.vterms[memMngr.vtermsOffset].inBracketLength = length;
 
 	return memMngr.vtermsOffset++;
+}
+
+uint64_t allocateCloseBracketVTerm(uint64_t length)
+{
+    memMngr.vterms[memMngr.vtermsOffset].tag = V_BRACKET_CLOSE_TAG;
+    memMngr.vterms[memMngr.vtermsOffset].inBracketLength = length;
+
+    return memMngr.vtermsOffset++;
 }
 
 void changeBracketLength(uint64_t offset, uint64_t newLength)

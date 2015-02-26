@@ -196,11 +196,11 @@ static void readOperands(mpz_t x, mpz_t y, struct fragment_t* frag)
     uint64_t currOffset = frag->offset;
     uint64_t maxOffset = frag->offset + frag->length;
 
-	if (memMngr.vterms[currOffset].tag == V_BRACKET_TAG)
+    if (memMngr.vterms[currOffset].tag == V_BRACKET_OPEN_TAG)
 	{
 		currOffset = readOperand(x, currOffset + 1, currOffset + memMngr.vterms[currOffset].inBracketLength - 1, 1);
 
-		if (memMngr.vterms[currOffset].tag != V_BRACKET_TAG || memMngr.vterms[currOffset].inBracketLength != 0)
+        if (memMngr.vterms[currOffset].tag != V_BRACKET_CLOSE_TAG)
 			numParseFailed();
 
 		currOffset = readOperand(y, currOffset + 1, maxOffset, 1);

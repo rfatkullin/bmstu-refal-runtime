@@ -1,0 +1,15 @@
+$ENTRY Go
+{
+	= <Prout <FuncL 'a+b+c+d'>> <Prout<FuncR 'a+b+c+d'>>
+}
+
+FuncL
+{
+	e.1 '+' e.2 = e.2 
+}
+
+FuncR
+{
+	$R e.1 '+' e.2  = e.2
+}
+

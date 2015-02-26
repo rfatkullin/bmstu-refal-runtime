@@ -19,11 +19,11 @@ struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fi
     uint64_t firstOffset = memMngr.vtermsOffset;
 	struct lterm_t* mainChain = 0;
 
-	UChar ch = u_fgetc(input);
+    UChar ch = u_fgetcx(input);
 	while (ch != '\n')
 	{
 		allocateSymbol(ch);
-		ch = u_fgetc(input);
+        ch = u_fgetcx(input);
 	}
 
 	if (firstOffset != memMngr.vtermsOffset)
@@ -73,15 +73,18 @@ static void printSymbol(struct v_term* term)
 	case V_CLOSURE_TAG:
 		//TO DO
 		break;
-	case V_BRACKET_TAG:
-		printf("%c", term->inBracketLength > 0 ? '(' : ')');
+    case V_BRACKET_OPEN_TAG:
+        printf("%c", '(' );
 		break;
+    case V_BRACKET_CLOSE_TAG:
+        printf("%c", ')' );
+        break;
 	}
 }
 
 static void printUnicodeChar(uint32_t ch)
 {
-	u_fprintf(output, "%C", ch);
+    u_fprintf(output, "%lC", ch);
 }
 
 void initBuiltins()
