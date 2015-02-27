@@ -13,7 +13,3 @@ include_directories(${PARENT_DIR}/Runtime/headers)
 #Указываем путь до статической библиотеки рантайма
 target_link_libraries(${PROJECT_NAME} ${PARENT_DIR}/Runtime/build/libruntime.a)
 target_link_libraries(${PROJECT_NAME} -lgmp)
-
-#Временно
-LINK_DIRECTORIES("/usr/lib/i386-linux-gnu")
-target_link_libraries(${PROJECT_NAME} -licui18n -licuuc -licudata -ldl -lm -licuio )

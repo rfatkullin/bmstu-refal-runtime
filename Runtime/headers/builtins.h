@@ -2,8 +2,6 @@
 #define __BUILTINS_H__
 
 #include <unicode/ustdio.h>
-#include <unicode/uchar.h>
-
 #include <gmp.h>
 
 #include "lterm.h"
@@ -22,8 +20,9 @@ struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fie
 void initBuiltins();
 void deinitBuiltins();
 
-UFILE* input;
-UFILE* output;
+/// Сравнение двух строк. 1 - успех, 0 - неудача.
+int UStrCmp(struct v_string* a, struct v_string* b);
+
 mpz_t base;
 
 #endif

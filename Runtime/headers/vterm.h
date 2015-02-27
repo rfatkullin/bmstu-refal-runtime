@@ -22,17 +22,24 @@ struct v_closure
 	const char* ident;
 };
 
+struct v_string
+{
+    uint32_t* head;
+    uint64_t length;
+};
+
 struct v_term
 {
 	int tag;
 
 	union
 	{
-		char* str;
 		uint32_t ch;
 		float floatNum;
+        struct v_string* str;
 		struct v_closure* closure;
 		uint32_t intNum;
+
 		// Хранит длину всей скобочной последовательности. Для () равна 2, для (1 2) равна 4 и т.д.
         uint64_t inBracketLength;
 	};

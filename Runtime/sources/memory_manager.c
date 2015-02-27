@@ -264,37 +264,6 @@ static void allocateMemoryForLTerms(uint64_t size, uint8_t** pointer)
 	*pointer += size;
 }
 
-//Возвращает сколько байтов было использовано
-static uint64_t copyVTerm(struct v_term* term)
-{
-	uint8_t* data = memMngr.inactiveDataHeap;
-    uint64_t memSize = 0;
-
-	switch (term->tag)
-	{
-		case V_CHAR_TAG:
-			data[0] = term->str[0];
-			memSize = 1;
-			break;
-
-		case V_IDENT_TAG:
-			memSize = strlen(term->str) + 1;
-			memcpy(term->str, data, memSize);
-			break;
-
-		case V_INT_NUM_TAG:
-			((int*)data)[0] = term->intNum;
-			memSize = sizeof(int);
-			break;
-
-		case V_CLOSURE_TAG:
-			//Пока ничего не делаем
-			break;
-	}
-
-	return memSize;
-}
-
 void checkVTermsMemoryOverflow(uint64_t needVTermsCount)
 {
 	if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
@@ -400,4 +369,19 @@ struct lterm_t* constructLterm(uint64_t offset, uint64_t length)
 	inputFragment->prev = chain;
 
 	return chain;
+}
+
+//TO FIX: Проверка на переполнение памяти.
+struct v_string* allocateLiteralVString(uint32_t* runes, uint64_t length)
+{
+    struct v_string* pointer = (struct v_string*)malloc(sizeof(struct v_string));
+
+    pointer->head = (uint32_t*) malloc(length * sizeof(u_int32_t));
+    pointer->length = length;
+
+    u_int64_t i =0;
+    for (i = 0; i < length; ++i)
+        pointer->head[i] = runes[i];
+
+    return pointer;
 }
