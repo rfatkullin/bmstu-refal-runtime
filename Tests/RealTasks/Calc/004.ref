@@ -1,0 +1,17 @@
+$ENTRY Go
+{
+	= <Prout <Calc 10 '*' 7 '*' 5>>
+}
+
+Calc
+{
+	e.1 '+' e.2 			= <Add <Calc e.1> <Calc e.2>>;
+	e.1 '-' e.2 '-' e.3 	= <Calc <Calc e.1 '-' e.2> '-' e.3>;
+	e.1 '-' e.2 			= <Sub <Calc e.1> <Calc e.2>>;
+	e.1 '*' e.2 			= <Mul <Calc e.1> <Calc e.2>>;
+	e.1 '/' e.2 '/' e.3 	= <Calc <Calc e.1 '/' e.2> '/' e.3>;
+	e.1 '/' e.2 			= <Div <Calc e.1> <Calc e.2>>;
+	(e.1)					= <Calc e.1>;
+	s.1 					= s.1;
+}
+

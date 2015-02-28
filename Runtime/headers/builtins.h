@@ -23,4 +23,7 @@ int UStrCmp(struct v_string* a, struct v_string* b);
 /// Проверка на равенство двух чисел. 1 - успех, 0 - неудача.
 int IntCmp(struct v_int* a, struct v_int* b);
 
+/// Вывод Unicode строки.
+void printUStr(struct v_string* str);
+
 #endif

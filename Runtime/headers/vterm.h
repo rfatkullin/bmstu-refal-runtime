@@ -19,7 +19,7 @@ struct v_closure
 {
 	RefalFunc funcPtr;
 	struct lterm_t* env;
-	const char* ident;
+    struct v_string* ident;
 };
 
 struct v_string

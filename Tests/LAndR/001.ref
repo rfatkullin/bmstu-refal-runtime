@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Prout <Func a (b) d>>
+}
+
+Func
+{
+	s.1 ($R s.2) s.3 = s.2
+}
+

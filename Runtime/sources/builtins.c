@@ -10,7 +10,6 @@
 static void printRange(struct fragment_t* frag);
 static void printSymbol(struct v_term* term);
 static void printUnicodeChar(uint32_t ch);
-static void printUStr(struct v_string* str);
 static void printIntNumber(struct v_int* num);
 
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
@@ -112,7 +111,7 @@ int IntCmp(struct v_int* a, struct v_int* b)
     return 1;
 }
 
-static void printUStr(struct v_string* str)
+void printUStr(struct v_string* str)
 {
     uint64_t i = 0;
 

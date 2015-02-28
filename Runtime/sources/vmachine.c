@@ -13,6 +13,18 @@ static void destroyFuncCallTerm(struct lterm_t* term);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** params);
 
+static struct v_string* constructVStringFromASCIIName(char* name)
+{
+    struct v_string* ptr = (struct v_string*)malloc(sizeof(struct v_string));
+    ptr->length = strlen(name);
+    ptr->head = (uint32_t*)malloc(ptr->length * sizeof(uint32_t));
+
+    uint64_t i = 0;
+    for (i = 0; i < ptr->length; ++i)
+        ptr->head[i] = name[i];
+
+    return ptr;
+}
 
 static struct func_call_t* ConstructStartFunc(const char* funcName, RefalFunc entryFuncPointer)
 {
@@ -24,7 +36,7 @@ static struct func_call_t* ConstructStartFunc(const char* funcName, RefalFunc en
 	currTerm->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
 	currTerm->fragment->offset = allocateClosure(entryFuncPointer, 0);
 	currTerm->fragment->length = 1;
-	memMngr.vterms[currTerm->fragment->offset].closure->ident = funcName;
+    memMngr.vterms[currTerm->fragment->offset].closure->ident = constructVStringFromASCIIName(funcName);
 
 	fieldOfView->next = currTerm;
 	fieldOfView->prev = currTerm;
@@ -72,7 +84,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 
 		if (callTerm->funcCall->funcPtr == 0)
 		{
-			printf("Bad func call --> Fail!\n");
+            printf("[Error]: Func pointer is null!\n");
 			exit(0);
 		}
 
@@ -90,7 +102,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 				break;
 
 			case FAIL_RESULT:
-				printf("Fail!\n");
+                printf("[Error]: Bad func result!\n");
 				exit(0);
 				break;
 		}
@@ -108,15 +120,16 @@ static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** pa
 	if (memMngr.vterms[fieldOfView->next->fragment->offset].tag != V_CLOSURE_TAG)
 		return 0;
 
-	RefalFunc newFuncPointer = memMngr.vterms[fieldOfView->next->fragment->offset].closure->funcPtr;
-
-	//printf("%s\n", memMngr.vterms[fieldOfView->next->fragment->offset].closure->ident);
-
-	*params = memMngr.vterms[fieldOfView->next->fragment->offset].closure->env;
+    RefalFunc newFuncPointer = memMngr.vterms[fieldOfView->next->fragment->offset].closure->funcPtr;
+    *params = memMngr.vterms[fieldOfView->next->fragment->offset].closure->env;
+    struct v_string* ident = memMngr.vterms[fieldOfView->next->fragment->offset].closure->ident;
 
 	//TO FIX:
 	fieldOfView->next = fieldOfView->next->next;
-	fieldOfView->next->next->prev = fieldOfView;
+    fieldOfView->next->next->prev = fieldOfView;
+
+//    printUStr(ident);
+//    printf("\n");
 
 	return newFuncPointer;
 }
