@@ -80,6 +80,9 @@ uint64_t allocateSymbol(uint32_t ch);
 /// Выделяет память под vterm для целочисленного значения
 uint64_t allocateIntNum(uint64_t count);
 
+/// Выделяет память под vterm для вещественного значения
+uint64_t allocateDoubleNum();
+
 /// Выделяет память для замыкания
 uint64_t allocateClosure(RefalFunc ptr, uint64_t envSize);
 

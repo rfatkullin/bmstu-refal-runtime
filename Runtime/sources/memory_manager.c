@@ -82,13 +82,22 @@ uint64_t allocateIntNum(uint64_t count)
 	return offset;
 }
 
+
+uint64_t allocateDoubleNum()
+{
+    checkVTermsMemoryOverflow(1);
+    memMngr.vterms[memMngr.vtermsOffset].tag = V_DOUBLE_NUM_TAG;
+    return memMngr.vtermsOffset++;
+}
+
+
 //TO FIX: сделать проверку переполнения памяти.
 void allocateVTerms(struct fragment_t* frag)
 {
     uint64_t i = 0;
 	for (i = 0; i < frag->length; ++i)
 	{
-		memMngr.vterms[memMngr.vtermsOffset].tag = memMngr.vterms[frag->offset + i].tag;
+        memMngr.vterms[memMngr.vtermsOffset].tag = memMngr.vterms[frag->offset + i].tag;
 
 		switch (memMngr.vterms[frag->offset + i].tag)
 		{
@@ -104,8 +113,8 @@ void allocateVTerms(struct fragment_t* frag)
 				memMngr.vterms[memMngr.vtermsOffset].intNum = memMngr.vterms[frag->offset + i].intNum;
 				break;
 
-			case V_FLOAT_NUM_TAG:
-				memMngr.vterms[memMngr.vtermsOffset].floatNum = memMngr.vterms[frag->offset + i].floatNum;
+            case V_DOUBLE_NUM_TAG:
+                memMngr.vterms[memMngr.vtermsOffset].doubleNum = memMngr.vterms[frag->offset + i].doubleNum;
 				break;
 
 			case V_CLOSURE_TAG:

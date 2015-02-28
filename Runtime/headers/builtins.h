@@ -17,12 +17,10 @@ struct func_result_t Mul(int* entryPoint, struct env_t* env, struct lterm_t* fie
 struct func_result_t Div(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
 struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
 
-void initBuiltins();
-void deinitBuiltins();
-
-/// Сравнение двух строк. 1 - успех, 0 - неудача.
+/// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
 int UStrCmp(struct v_string* a, struct v_string* b);
 
-mpz_t base;
+/// Проверка на равенство двух чисел. 1 - успех, 0 - неудача.
+int IntCmp(struct v_int* a, struct v_int* b);
 
 #endif

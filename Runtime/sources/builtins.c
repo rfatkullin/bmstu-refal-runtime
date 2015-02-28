@@ -6,7 +6,6 @@
 #include "input.h"
 
 #define N 256
-#define ARITHM_BASE "4294967296"
 
 static void printRange(struct fragment_t* frag);
 static void printSymbol(struct v_term* term);
@@ -66,8 +65,8 @@ static void printSymbol(struct v_term* term)
 	case V_INT_NUM_TAG:
         printIntNumber(term->intNum);
 		break;
-	case V_FLOAT_NUM_TAG:
-		printf("%f ", term->floatNum);
+    case V_DOUBLE_NUM_TAG:
+        printf("%lf ", term->doubleNum);
 		break;
 	case V_CLOSURE_TAG:
 		//TO DO
@@ -81,18 +80,7 @@ static void printSymbol(struct v_term* term)
 	}
 }
 
-
-void initBuiltins()
-{
-	mpz_init_set_str(base, ARITHM_BASE, 10);
-}
-
-void deinitBuiltins()
-{
-	mpz_clear(base);
-}
-
-/// Сравнение двух строк. 1 - успех, 0 - неудача.
+/// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
 int UStrCmp(struct v_string* a, struct v_string* b)
 {
     if (a->length != b->length)
@@ -108,6 +96,21 @@ int UStrCmp(struct v_string* a, struct v_string* b)
     return 1;
 }
 
+/// Проверка на равенство двух чисел. 1 - успех, 0 - неудача.
+int IntCmp(struct v_int* a, struct v_int* b)
+{
+    if (a->length != b->length || a->sign != b->sign)
+        return 0;
+
+    uint64_t i = 0;
+    for (i = 0; i < a->length; ++i)
+    {
+        if (a->bytes[i] != b->bytes[i])
+            return 0;
+    }
+
+    return 1;
+}
 
 static void printUStr(struct v_string* str)
 {

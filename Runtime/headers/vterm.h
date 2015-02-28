@@ -4,7 +4,7 @@
 #define V_CHAR_TAG          0
 #define V_IDENT_TAG         1
 #define V_INT_NUM_TAG       2
-#define V_FLOAT_NUM_TAG     3
+#define V_DOUBLE_NUM_TAG     3
 #define V_CLOSURE_TAG       4
 #define V_BRACKET_OPEN_TAG	5
 #define V_BRACKET_CLOSE_TAG	6
@@ -42,7 +42,7 @@ struct v_term
 	union
 	{
 		uint32_t ch;
-		float floatNum;
+        double doubleNum;
         struct v_string* str;
 		struct v_closure* closure;
         struct v_int* intNum;

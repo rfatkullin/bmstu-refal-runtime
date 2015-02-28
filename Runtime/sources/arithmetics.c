@@ -7,14 +7,23 @@
 #include "vmachine.h"
 #include "builtins.h"
 
+#define WRONG_OPERANDS_NUMBER "It's binary operation!"
+#define OPERANDS_TYPES_MISMATCH "Operands must be same type!"
+#define OPERAND_BAD_TYPE "Operand must be int or double!"
+#define BAD_BINARY_OPERATION "Unknown binary operation"
+#define MOD_TO_DOUBLE_ERROR "Can't applay mod operation to double!"
+
 typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
 
 static void writeOperand(mpz_t num);
-static struct lterm_t* constructNumLTerm(mpz_t num);
-static void readOperands(mpz_t x, mpz_t y, struct fragment_t* frag);
+static struct lterm_t* constructIntNumLTerm(mpz_t num);
+static struct lterm_t* constructDoubleNumLTerm(double val);
+static void readIntOperands(mpz_t x, mpz_t y, struct fragment_t* frag);
 static void readOperand(mpz_t num, struct v_term* term);
 static struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
 static void numParseFailed();
+static struct lterm_t* applyOpToInt(ArithOp op, struct fragment_t* frag);
+static struct lterm_t* applyOpToDouble(ArithOp op, struct fragment_t* currExpr);
 
 struct func_result_t Add(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
@@ -43,34 +52,79 @@ struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fie
 
 struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
-	struct lterm_t* currExpr = getAssembliedChain(fieldOfView);
+    struct fragment_t* frag = getAssembliedChain(fieldOfView)->fragment;
+    struct lterm_t* resChain = 0;
 
-	mpz_t x;
-	mpz_t y;
-	mpz_t res;    
+    if (frag->length != 2)
+        numParseFailed(WRONG_OPERANDS_NUMBER);
 
-    mpz_init(x);
-    mpz_init(y);
-	mpz_init(res);
+    if (memMngr.vterms[frag->offset].tag != memMngr.vterms[frag->offset + 1].tag )
+        numParseFailed(OPERANDS_TYPES_MISMATCH);
 
-	readOperands(x, y, currExpr->fragment);
-
-	op(res, x, y);
-
-	struct lterm_t* resChain = constructNumLTerm(res);
-
-	mpz_clear(x);
-	mpz_clear(y);
-	mpz_clear(res);
+    if (memMngr.vterms[frag->offset].tag == V_INT_NUM_TAG)
+        resChain = applyOpToInt(op, frag);
+    else if (memMngr.vterms[frag->offset].tag == V_DOUBLE_NUM_TAG)
+        resChain = applyOpToDouble(op, frag);
+    else
+        numParseFailed(OPERAND_BAD_TYPE);
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = resChain, .callChain = 0};
 }
 
+static struct lterm_t* applyOpToInt(ArithOp op, struct fragment_t* frag)
+{
+    mpz_t x;
+    mpz_t y;
+    mpz_t res;
 
-static struct lterm_t* constructNumLTerm(mpz_t num)
+    mpz_init(x);
+    mpz_init(y);
+    mpz_init(res);
+
+    readIntOperands(x, y, frag);
+
+    op(res, x, y);
+
+    struct lterm_t* resChain = constructIntNumLTerm(res);
+
+    mpz_clear(x);
+    mpz_clear(y);
+    mpz_clear(res);
+
+    return resChain;
+}
+
+static struct lterm_t* applyOpToDouble(ArithOp op, struct fragment_t* frag)
+{
+    double a = memMngr.vterms[frag->offset].doubleNum;
+    double b = memMngr.vterms[frag->offset+1].doubleNum;
+
+    if (op == mpz_add)
+        return constructDoubleNumLTerm(a + b);
+    else if (op == mpz_sub)
+        return constructDoubleNumLTerm(a - b);
+    else if (op == mpz_mul)
+        return constructDoubleNumLTerm(a * b);
+    else if (op == mpz_tdiv_q)
+        return constructDoubleNumLTerm(a / b);
+    else if (op == mpz_mod)
+        numParseFailed(MOD_TO_DOUBLE_ERROR);
+
+    numParseFailed(BAD_BINARY_OPERATION);
+}
+
+static struct lterm_t* constructIntNumLTerm(mpz_t num)
 {
     uint64_t offset = memMngr.vtermsOffset;
     writeOperand(num);
+
+    return constructLterm(offset, 1);
+}
+
+static struct lterm_t* constructDoubleNumLTerm(double val)
+{
+    uint64_t offset = allocateDoubleNum();
+    memMngr.vterms[offset].doubleNum = val;
 
     return constructLterm(offset, 1);
 }
@@ -101,10 +155,8 @@ static void writeOperand(mpz_t num)
 
 /// Вычисляет операнды x и y для бинарной операции.
 /// frag - фрагмент, с помощью которого нужно вычислить операнды.
-static void readOperands(mpz_t x, mpz_t y, struct fragment_t* frag)
+static void readIntOperands(mpz_t x, mpz_t y, struct fragment_t* frag)
 {    
-    if (frag->length != 2 || memMngr.vterms[frag->offset].tag != memMngr.vterms[frag->offset + 1].tag )
-        numParseFailed();
 
     struct v_term* term = memMngr.vterms + frag->offset;
 
@@ -113,9 +165,9 @@ static void readOperands(mpz_t x, mpz_t y, struct fragment_t* frag)
     readOperand(y, term);
 }
 
-static void numParseFailed()
+static void numParseFailed(char* msg)
 {
-    printf("Failed: Can't parse int num!\n");
+    printf("Fail: %s\n", msg);
     exit(0);
 }
 
