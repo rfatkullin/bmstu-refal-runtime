@@ -9,11 +9,12 @@
 
 typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
 
-static uint64_t writeOperand(mpz_t num);
+static void writeOperand(mpz_t num);
 static struct lterm_t* constructNumLTerm(mpz_t num);
 static void readOperands(mpz_t x, mpz_t y, struct fragment_t* frag);
-static uint64_t readOperand(mpz_t num, uint64_t currOffset, uint64_t maxOffset, int all);
+static void readOperand(mpz_t num, struct v_term* term);
 static struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
+static void numParseFailed();
 
 struct func_result_t Add(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
@@ -46,24 +47,15 @@ struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, str
 
 	mpz_t x;
 	mpz_t y;
-	mpz_t res;
-	int sign = 1;
+	mpz_t res;    
 
+    mpz_init(x);
+    mpz_init(y);
 	mpz_init(res);
 
 	readOperands(x, y, currExpr->fragment);
 
-	if (op == mpz_mod)
-	{
-		sign = mpz_cmp_ui(y, 0);
-		if (sign < 0)
-			mpz_neg(y, y);
-	}
-
 	op(res, x, y);
-
-	if (op == mpz_mod && sign < 0)
-		mpz_neg(res, res);
 
 	struct lterm_t* resChain = constructNumLTerm(res);
 
@@ -75,142 +67,55 @@ struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, str
 }
 
 
-static void numParseFailed()
-{
-	printf("Failed: Can't parse int num!\n");
-	exit(0);
-}
-
 static struct lterm_t* constructNumLTerm(mpz_t num)
 {
     uint64_t offset = memMngr.vtermsOffset;
-    uint64_t length = writeOperand(num);
+    writeOperand(num);
 
-	return constructLterm(offset, length);
+    return constructLterm(offset, 1);
 }
 
-/// Записывает в num число, вычисленное с помощью цепочки vterm'ов
-/// c основанием base.
-/// currOffset - текущий сдвиг в массиве vterm'ов.
-/// maxOffset - максимально возможный сдвиг в массиве vterm'ов.
-/// all == 1 - использовать все возможные vterm'ы, иначе только первый, значащий.
-/// Возвращает новый сдвиг в массиве vterm'ов.
-static uint64_t readOperand(mpz_t num, uint64_t currOffset, uint64_t maxOffset, int all)
+static void readOperand(mpz_t num, struct v_term* term)
 {
-    int sign = 0;
+    mpz_import(num, term->intNum->length, 1, sizeof(uint8_t), 1, 0, term->intNum->bytes);
 
-	mpz_init_set_ui(num, 0);
-
-	if (memMngr.vterms[currOffset].tag == V_CHAR_TAG)
-	{
-		currOffset++;
-		sign = 1;
-	}
-
-	if (currOffset >= maxOffset)
-		numParseFailed();
-
-	do
-	{
-		if (memMngr.vterms[currOffset].tag != V_INT_NUM_TAG)
-			numParseFailed();
-
-		mpz_mul(num, num, base);
-		mpz_add_ui(num, num, memMngr.vterms[currOffset].intNum);
-		currOffset++;
-	}
-	while (currOffset < maxOffset && all);
-
-	if (sign)
-		mpz_mul_si(num, num, -1);
-
-	return currOffset;
-}
-
-/// Вычисляет количество разрядов в числе
-/// где base - основание.
-static uint64_t getNumsCount(mpz_t num)
-{
-    uint64_t count = 0;
-	mpz_t tmp;
-
-	mpz_init_set(tmp, num);
-
-	if (!mpz_cmp_ui(tmp, 0))
-	{
-		count = 1;
-	}
-	else
-	{
-		while (mpz_cmp_ui(tmp, 0) > 0)
-		{
-			mpz_div(tmp, tmp, base);
-			count++;
-		}
-	}
-
-	mpz_clear(tmp);
-
-	return count;
+    if (term->intNum->sign)
+		mpz_mul_si(num, num, -1);	
 }
 
 /// Записывает целочисленное значение в vterm'ы.
 /// Возвращает количество созданных vterm'ов.
-static uint64_t writeOperand(mpz_t num)
+static void writeOperand(mpz_t num)
 {
-    uint64_t i = 0;
-    uint64_t sign = 0;
-	mpz_t remainder;
-	mpz_t quotient;
+    uint32_t numb = 8 * sizeof(uint8_t);
+    uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
 
-	mpz_init_set_ui(remainder, 0);
-	mpz_init_set_ui(quotient, 0);
+    struct v_int* intNum = allocateIntNumber(length);
 
-	if (mpz_cmp_ui(num, 0) < 0)
-	{
-		sign = 1;
-		allocateSymbol('-');
-		mpz_neg(num, num);
-	}
+    mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
+    intNum->sign = mpz_sgn(num) < 0;
 
-    uint64_t count = getNumsCount(num);
-    uint64_t offset = allocateIntNum(count);
-
-	for (i = offset + count - 1; i >= offset; --i)
-	{
-		mpz_divmod(quotient, remainder, num, base);
-		memMngr.vterms[i].intNum = mpz_get_ui(remainder);
-		mpz_set(num, quotient);
-	}
-
-	mpz_clear(remainder);
-	mpz_clear(quotient);
-
-	return count + sign;
+    uint64_t offset = allocateIntNum(1);
+    memMngr.vterms[offset].intNum = intNum;
 }
 
 /// Вычисляет операнды x и y для бинарной операции.
 /// frag - фрагмент, с помощью которого нужно вычислить операнды.
 static void readOperands(mpz_t x, mpz_t y, struct fragment_t* frag)
-{
-    uint64_t currOffset = frag->offset;
-    uint64_t maxOffset = frag->offset + frag->length;
+{    
+    if (frag->length != 2 || memMngr.vterms[frag->offset].tag != memMngr.vterms[frag->offset + 1].tag )
+        numParseFailed();
 
-    if (memMngr.vterms[currOffset].tag == V_BRACKET_OPEN_TAG)
-	{
-		currOffset = readOperand(x, currOffset + 1, currOffset + memMngr.vterms[currOffset].inBracketLength - 1, 1);
+    struct v_term* term = memMngr.vterms + frag->offset;
 
-        if (memMngr.vterms[currOffset].tag != V_BRACKET_CLOSE_TAG)
-			numParseFailed();
-
-		currOffset = readOperand(y, currOffset + 1, maxOffset, 1);
-	}
-	else
-	{
-		currOffset = readOperand(x, currOffset, maxOffset, 0);
-		currOffset = readOperand(y, currOffset, maxOffset, 1);
-	}
-
-	if (currOffset < maxOffset)
-		numParseFailed();
+    readOperand(x, term);
+    term++;
+    readOperand(y, term);
 }
+
+static void numParseFailed()
+{
+    printf("Failed: Can't parse int num!\n");
+    exit(0);
+}
+

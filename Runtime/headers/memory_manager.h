@@ -90,7 +90,13 @@ void debugLiteralsPrint();
 struct lterm_t* constructLterm(uint64_t offset, uint64_t length);
 
 /// Выделяет память с помощью malloc'а под структуру v_string
-struct v_string* allocateLiteralVString(uint32_t* runes, uint64_t length);
+struct v_string* allocateVStringLiteral(uint32_t* runes, uint64_t length);
+
+/// Выделяет память с помощью malloc'а под структуру v_int
+struct v_int* allocateIntNumberLiteral(uint8_t* bytes, uint8_t sign, uint64_t length);
+
+/// Выделяет память в хипе под структуру v_int
+struct v_int* allocateIntNumber(uint64_t length);
 
 /// Проверки на переполнение.
 void checkVTermsMemoryOverflow(uint64_t);

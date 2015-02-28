@@ -12,6 +12,7 @@ static void printRange(struct fragment_t* frag);
 static void printSymbol(struct v_term* term);
 static void printUnicodeChar(uint32_t ch);
 static void printUStr(struct v_string* str);
+static void printIntNumber(struct v_int* num);
 
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
@@ -63,7 +64,7 @@ static void printSymbol(struct v_term* term)
         printf(" ");
 		break;
 	case V_INT_NUM_TAG:
-		printf("%u ", term->intNum);
+        printIntNumber(term->intNum);
 		break;
 	case V_FLOAT_NUM_TAG:
 		printf("%f ", term->floatNum);
@@ -114,4 +115,20 @@ static void printUStr(struct v_string* str)
 
     for (i = 0; i < str->length; ++i)
         printUTF32(str->head[i]);
+}
+
+
+static void printIntNumber(struct v_int* intNum)
+{
+    mpz_t num;
+    mpz_init(num);
+
+    mpz_import(num, intNum->length, 1, sizeof(uint8_t), 1, 0, intNum->bytes);
+
+    if (intNum->sign)
+        mpz_mul_si(num, num, -1);
+
+    gmp_printf("%Zd ", num);
+
+    mpz_clear(num);
 }

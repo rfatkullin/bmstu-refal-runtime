@@ -372,11 +372,11 @@ struct lterm_t* constructLterm(uint64_t offset, uint64_t length)
 }
 
 //TO FIX: Проверка на переполнение памяти.
-struct v_string* allocateLiteralVString(uint32_t* runes, uint64_t length)
+struct v_string* allocateVStringLiteral(uint32_t* runes, uint64_t length)
 {
     struct v_string* pointer = (struct v_string*)malloc(sizeof(struct v_string));
 
-    pointer->head = (uint32_t*) malloc(length * sizeof(u_int32_t));
+    pointer->head = (uint32_t*) malloc(length * sizeof(uint32_t));
     pointer->length = length;
 
     u_int64_t i =0;
@@ -385,3 +385,37 @@ struct v_string* allocateLiteralVString(uint32_t* runes, uint64_t length)
 
     return pointer;
 }
+
+
+//TO FIX: Проверка на переполнение памяти.
+struct v_int* allocateIntNumberLiteral(uint8_t* bytes, uint8_t sign, uint64_t length)
+{
+    struct v_int* pointer = (struct v_int*)malloc(sizeof(struct v_int));
+
+    pointer->bytes = (uint8_t*) malloc(length * sizeof(uint8_t));
+    pointer->length = length;
+    pointer->sign = sign;
+
+    u_int64_t i = 0;
+    for (i = 0; i < length; ++i)
+        pointer->bytes[i] = bytes[i];
+
+    return pointer;
+}
+
+//TO FIX: Проверка на переполнение.
+struct v_int* allocateIntNumber(uint64_t length)
+{
+    struct v_int* pointer = (struct v_int*)(memMngr.dataHeap + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(struct v_int);
+
+    pointer->bytes = (uint8_t*)(memMngr.dataHeap + memMngr.dataOffset);
+    pointer->length = length;
+
+    memMngr.dataOffset += length;
+
+    return pointer;
+}
+
+
+

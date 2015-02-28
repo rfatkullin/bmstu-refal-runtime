@@ -1,0 +1,18 @@
+$ENTRY Go
+{
+	= <Func1 2 1><Func2 -20 -156>
+}
+
+Func1
+{
+	s.1 s.2 = <Prout<Add s.1 s.2>>
+}
+
+
+Func2
+{
+	s.1 s.2 = <Prout <Add s.2 s.1>>
+}
+
+
+

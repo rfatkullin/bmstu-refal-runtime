@@ -28,6 +28,13 @@ struct v_string
     uint64_t length;
 };
 
+struct v_int
+{
+    uint8_t* bytes;
+    uint8_t sign;
+    uint64_t length;
+};
+
 struct v_term
 {
 	int tag;
@@ -38,7 +45,7 @@ struct v_term
 		float floatNum;
         struct v_string* str;
 		struct v_closure* closure;
-		uint32_t intNum;
+        struct v_int* intNum;
 
 		// Хранит длину всей скобочной последовательности. Для () равна 2, для (1 2) равна 4 и т.д.
         uint64_t inBracketLength;
