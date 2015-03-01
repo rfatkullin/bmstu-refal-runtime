@@ -43,11 +43,18 @@ struct func_call_t
 	//Содержит информацию о поле видимости.
 	struct lterm_t* fieldOfView;
 
-	//Для хранения ссылки на поле видимости "под-вызова"
+    //Для хранения ссылки на поле видимости "подфункции"
 	struct lterm_t* subCall;
+
+    struct lterm_t* parentCall;
+
+    int rollBack;
 
 	//Точка входа.
 	int entryPoint;
+
+    //Точка в входа в случае неуспеха при вызове "подфункций"
+    int failEntryPoint;
 
 	//Указатель на след. запрос на вызов функции
 	struct lterm_t* next;

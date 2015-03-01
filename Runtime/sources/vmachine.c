@@ -73,14 +73,15 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 {
 	struct lterm_t* fieldOfView = ConstructStartFieldOfView(entryFuncName, entryFuncPointer);
 	struct lterm_t* callTerm = fieldOfView;
-	struct func_result_t funcRes;
+	struct func_result_t funcRes;    
+    struct lterm_t* parentCall = 0;
 
 	while (callTerm)
 	{
-		if (callTerm->funcCall->funcPtr)
-			callTerm->funcCall->fieldOfView = callTerm->funcCall->subCall;
-		else
-			callTerm->funcCall->funcPtr = GetFuncPointer(callTerm->funcCall->fieldOfView, &callTerm->funcCall->env->params);
+        if (callTerm->funcCall->funcPtr)
+            callTerm->funcCall->fieldOfView = callTerm->funcCall->subCall;
+        else
+            callTerm->funcCall->funcPtr = GetFuncPointer(callTerm->funcCall->fieldOfView, &callTerm->funcCall->env->params);
 
 		if (callTerm->funcCall->funcPtr == 0)
 		{
@@ -90,22 +91,30 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 
 		funcRes = callTerm->funcCall->funcPtr(&callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView);
 
-		switch (funcRes.status)
-		{
-			case OK_RESULT:
+        switch (funcRes.status)
+        {
+            case OK_RESULT:
+                callTerm = updateFieldOfView(callTerm, &funcRes);
+                break;
 
-				callTerm = updateFieldOfView(callTerm, &funcRes);
-				break;
-
-			case CALL_RESULT:
-				callTerm = addFuncCallFiledOfView(callTerm, &funcRes);
-				break;
-
-			case FAIL_RESULT:
-                printf("[Error]: Bad func result!\n");
-				exit(0);
-				break;
-		}
+            case CALL_RESULT:
+                parentCall = callTerm;
+                callTerm = addFuncCallFiledOfView(callTerm, &funcRes);
+                callTerm->funcCall->parentCall = parentCall;
+                break;
+            case FAIL_RESULT:
+                if (!callTerm->funcCall->rollBack || !callTerm->funcCall->parentCall || callTerm->funcCall->failEntryPoint == -1)
+                {
+                    printf("[Error]: Bad func result!\n");
+                    exit(0);
+                }
+                else
+                {
+                    callTerm->funcCall->parentCall->funcCall->entryPoint = callTerm->funcCall->failEntryPoint;
+                    callTerm = parentCall;
+                }
+                break;
+        }
 	}
 }
 
