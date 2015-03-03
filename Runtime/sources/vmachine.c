@@ -10,7 +10,6 @@ static void printChainOfCalls(struct lterm_t* callTerm);
 static struct lterm_t* updateFieldOfView(struct lterm_t* mainChain, struct func_result_t* funcResult);
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
 static void assemblyChain(struct lterm_t* chain);
-static void destroyFuncCallTerm(struct lterm_t* term);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** params);
 
@@ -163,10 +162,6 @@ static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct f
 
 	funcResult->callChain->prev->funcCall->next = currNode;
 
-	//CHECK
-	free(funcResult->fieldChain);
-	free(funcResult->callChain);
-
 	return newCallNode;
 }
 
@@ -191,20 +186,9 @@ static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_r
 			newCurrNode = funcResult->callChain->next;
 			funcResult->callChain->prev->funcCall->next = currNode->funcCall->next;
 		}
-	}
-
-	free(funcResult->callChain);
-	free(funcResult->fieldChain);
-	destroyFuncCallTerm(currNode);
+	}	
 
 	return newCurrNode;
-}
-
-//TO FIX: Освободить всю структуру.
-static void destroyFuncCallTerm(struct lterm_t* term)
-{
-	free(term->funcCall->subCall);
-	free(term);
 }
 
 struct lterm_t* getAssembliedChain(struct lterm_t* chain)

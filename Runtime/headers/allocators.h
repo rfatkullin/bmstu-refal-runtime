@@ -25,9 +25,6 @@ uint64_t allocateDoubleNum();
 /// Выделяет память для замыкания
 uint64_t allocateClosure(RefalFunc ptr, uint32_t paramsCount, uint64_t identLiteralOffset);
 
-/// Собирает lterm_t*
-struct lterm_t* allocateChainLTerm(uint64_t offset, uint64_t length);
-
 /// Выделяет память с помощью malloc'а под структуру v_string
 struct v_string* allocateVStringLiteral(uint32_t* runes, uint64_t length);
 
@@ -39,5 +36,15 @@ struct v_int* allocateIntNumber(uint64_t length);
 
 /// Выделяет память в хипе под lterm типа L_TERM_FRAGMENT_TAG
 struct lterm_t* allocateFragmentLTerm();
+
+/// Выделяет память в хипе под lterm типа L_TERM_FUNC_CALL
+struct lterm_t* allocateFuncCallLTerm();
+
+/// Выделяет память в хипе под lterm типа L_TERM_CHAIN_TAG
+struct lterm_t* allocateChainLTerm(uint64_t count);
+
+/// Выделяет память для L_TERM_CHAIN_TAG, добавляет L_TERM_FRAGMENT_TAG с пере-
+/// данными значениями offset и length.
+struct lterm_t* allocateBuiltinsResult(uint64_t offset, uint64_t length);
 
 #endif

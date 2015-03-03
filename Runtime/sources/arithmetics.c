@@ -119,7 +119,7 @@ static struct lterm_t* constructIntNumLTerm(mpz_t num)
     uint64_t offset = memMngr.vtermsOffset;
     writeOperand(num);
 
-    return allocateChainLTerm(offset, 1);
+    return allocateBuiltinsResult(offset, 1);
 }
 
 static struct lterm_t* constructDoubleNumLTerm(double val)
@@ -127,7 +127,7 @@ static struct lterm_t* constructDoubleNumLTerm(double val)
     uint64_t offset = allocateDoubleNum();
     memMngr.vterms[offset].doubleNum = val;
 
-    return allocateChainLTerm(offset, 1);
+    return allocateBuiltinsResult(offset, 1);
 }
 
 static void readOperand(mpz_t num, struct v_term* term)

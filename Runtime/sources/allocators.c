@@ -172,17 +172,15 @@ struct v_int* allocateIntNumber(uint64_t length)
     return pointer;
 }
 
-//TO FIX: Проверка на переполнение.
-struct lterm_t* allocateChainLTerm(uint64_t offset, uint64_t length)
+struct lterm_t* allocateBuiltinsResult(uint64_t offset, uint64_t length)
 {
     struct lterm_t* chain = 0;
 
-    //TO FIX: Replace malloc
     struct lterm_t* lterm = allocateFragmentLTerm();
     lterm->fragment->offset = offset;
     lterm->fragment->length = length;
 
-    chain = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+    chain = allocateChainLTerm(1);
     chain->next = lterm;
     chain->prev = lterm;
     lterm->next = chain;
@@ -204,6 +202,45 @@ struct lterm_t* allocateFragmentLTerm()
     memMngr.dataOffset += sizeof(struct fragment_t);
 
     return lterm;
+}
+
+struct lterm_t* allocateFuncCallLTerm()
+{
+    checkLTermsMemoryOverflow(1);
+    checkDataMemoryOverflow(sizeof(struct func_call_t) + sizeof(struct env_t));
+
+    struct lterm_t* lterm = memMngr.lterms + memMngr.ltermsOffset;
+    lterm->tag = L_TERM_FUNC_CALL;
+
+    lterm->funcCall = (struct func_call_t*)(memMngr.dataHeap + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(struct func_call_t);
+    lterm->funcCall->env = (struct env_t*)(memMngr.dataHeap + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(struct env_t);
+
+    memMngr.ltermsOffset++;
+
+    return lterm;
+}
+
+struct lterm_t* allocateChainLTerm(uint64_t count)
+{
+    checkLTermsMemoryOverflow(count);
+
+    struct lterm_t* headLTerm = memMngr.lterms + memMngr.ltermsOffset;
+    struct lterm_t* lterm = headLTerm;
+    uint64_t i = 0;
+
+    for (i = 0; i < count; ++i)
+    {
+        lterm->tag = L_TERM_CHAIN_TAG;
+        lterm->prev = lterm;
+        lterm->next = lterm;
+        lterm++;
+    }
+
+    memMngr.ltermsOffset += count;
+
+    return headLTerm;
 }
 
 void checkVTermsMemoryOverflow(uint64_t needVTermsCount)
