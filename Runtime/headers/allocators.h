@@ -35,7 +35,7 @@ struct v_int* allocateIntNumberLiteral(uint8_t* bytes, uint8_t sign, uint64_t le
 struct v_int* allocateIntNumber(uint64_t length);
 
 /// Выделяет память в хипе под lterm типа L_TERM_FRAGMENT_TAG
-struct lterm_t* allocateFragmentLTerm();
+struct lterm_t* allocateFragmentLTerm(uint32_t count);
 
 /// Выделяет память в хипе под lterm типа L_TERM_FUNC_CALL
 struct lterm_t* allocateFuncCallLTerm();
@@ -46,5 +46,8 @@ struct lterm_t* allocateChainLTerm(uint64_t count);
 /// Выделяет память для L_TERM_CHAIN_TAG, добавляет L_TERM_FRAGMENT_TAG с пере-
 /// данными значениями offset и length.
 struct lterm_t* allocateBuiltinsResult(uint64_t offset, uint64_t length);
+
+/// Выделяет память для полей структуры env_t.
+struct lterm_t* allocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount);
 
 #endif

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "allocators.h"
 
@@ -176,7 +177,7 @@ struct lterm_t* allocateBuiltinsResult(uint64_t offset, uint64_t length)
 {
     struct lterm_t* chain = 0;
 
-    struct lterm_t* lterm = allocateFragmentLTerm();
+    struct lterm_t* lterm = allocateFragmentLTerm(1);
     lterm->fragment->offset = offset;
     lterm->fragment->length = length;
 
@@ -189,19 +190,26 @@ struct lterm_t* allocateBuiltinsResult(uint64_t offset, uint64_t length)
     return chain;
 }
 
-struct lterm_t* allocateFragmentLTerm()
+struct lterm_t* allocateFragmentLTerm(uint32_t count)
 {
-    checkLTermsMemoryOverflow(1);
-    checkDataMemoryOverflow(sizeof(struct fragment_t));
+    checkLTermsMemoryOverflow(count);
+    checkDataMemoryOverflow(count * sizeof(struct fragment_t));
 
-    struct lterm_t* lterm = memMngr.lterms + memMngr.ltermsOffset;
-    lterm->tag = L_TERM_FRAGMENT_TAG;
-    lterm->fragment = (struct fragment_t*)(memMngr.dataHeap + memMngr.dataOffset);
+    struct lterm_t* headLterm = memMngr.lterms + memMngr.ltermsOffset;
+    struct lterm_t* lterm = headLterm;
 
-    memMngr.ltermsOffset++;
-    memMngr.dataOffset += sizeof(struct fragment_t);
+    uint32_t i = 0;
+    for (i = 0; i < count; ++i)
+    {
+        lterm->tag = L_TERM_FRAGMENT_TAG;
+        lterm->fragment = (struct fragment_t*)(memMngr.dataHeap + memMngr.dataOffset);
+        memMngr.dataOffset += sizeof(struct fragment_t);
+        lterm++;
+    }
 
-    return lterm;
+    memMngr.ltermsOffset += count;
+
+    return headLterm;
 }
 
 struct lterm_t* allocateFuncCallLTerm()
@@ -243,6 +251,22 @@ struct lterm_t* allocateChainLTerm(uint64_t count)
     return headLTerm;
 }
 
+//TO FIX: Проверка на переполнение для env->locals
+struct lterm_t* allocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount)
+{
+    env->locals = allocateFragmentLTerm(localsCount);
+    env->_FOVs = (struct lterm_t**)(memMngr.dataHeap + memMngr.dataOffset);
+    memMngr.dataOffset += patternsCount * sizeof(struct lterm_t*);
+    env->assembledFOVs = (struct lterm_t**)(memMngr.dataHeap + memMngr.dataOffset);
+    memMngr.dataOffset += patternsCount * sizeof(struct lterm_t*);
+    env->stretchVarsNumber = (int*)(memMngr.dataHeap + memMngr.dataOffset);
+    memMngr.dataOffset += patternsCount * sizeof(int);
+
+    memset(env->_FOVs, 0, patternsCount * sizeof(struct lterm_t*));
+    memset(env->assembledFOVs, 0, patternsCount * sizeof(struct lterm_t*));
+    memset(env->stretchVarsNumber, 0, patternsCount * sizeof(int));
+}
+
 void checkVTermsMemoryOverflow(uint64_t needVTermsCount)
 {
     if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
@@ -278,4 +302,5 @@ void checkDataMemoryOverflow(uint64_t needDataCount)
     if (memMngr.dataOffset + needDataCount > memMngr.dataMaxOffset)
         failWithMemoryOverflow();
 }
+
 

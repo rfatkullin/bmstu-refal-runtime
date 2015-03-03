@@ -16,7 +16,7 @@ struct env_t
 	struct lterm_t* params;
 
 	//Локальные переменные. Содержимое постоянно изменяется.
-	struct lterm_t** locals;
+    struct lterm_t* locals;
 
 	//Поля видимости
 	struct lterm_t** _FOVs;
