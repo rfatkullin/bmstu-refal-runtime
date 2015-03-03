@@ -6,6 +6,7 @@
 
 #include "vmachine.h"
 #include "builtins.h"
+#include "allocators.h"
 
 #define WRONG_OPERANDS_NUMBER "It's binary operation!"
 #define OPERANDS_TYPES_MISMATCH "Operands must be same type!"
@@ -118,7 +119,7 @@ static struct lterm_t* constructIntNumLTerm(mpz_t num)
     uint64_t offset = memMngr.vtermsOffset;
     writeOperand(num);
 
-    return constructLterm(offset, 1);
+    return allocateChainLTerm(offset, 1);
 }
 
 static struct lterm_t* constructDoubleNumLTerm(double val)
@@ -126,7 +127,7 @@ static struct lterm_t* constructDoubleNumLTerm(double val)
     uint64_t offset = allocateDoubleNum();
     memMngr.vterms[offset].doubleNum = val;
 
-    return constructLterm(offset, 1);
+    return allocateChainLTerm(offset, 1);
 }
 
 static void readOperand(mpz_t num, struct v_term* term)

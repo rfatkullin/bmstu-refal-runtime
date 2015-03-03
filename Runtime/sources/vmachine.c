@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "func_call.h"
 #include "vmachine.h"
@@ -13,7 +14,7 @@ static void destroyFuncCallTerm(struct lterm_t* term);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** params);
 
-static struct v_string* constructVStringFromASCIIName(char* name)
+static struct v_string* constructVStringFromASCIIName(const char* name)
 {
     struct v_string* ptr = (struct v_string*)malloc(sizeof(struct v_string));
     ptr->length = strlen(name);
@@ -129,16 +130,18 @@ static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** pa
 	if (memMngr.vterms[fieldOfView->next->fragment->offset].tag != V_CLOSURE_TAG)
 		return 0;
 
-    RefalFunc newFuncPointer = memMngr.vterms[fieldOfView->next->fragment->offset].closure->funcPtr;
-    *params = memMngr.vterms[fieldOfView->next->fragment->offset].closure->env;
-    struct v_string* ident = memMngr.vterms[fieldOfView->next->fragment->offset].closure->ident;
+    struct v_closure* closure = memMngr.vterms[fieldOfView->next->fragment->offset].closure;
 
-	//TO FIX:
-	fieldOfView->next = fieldOfView->next->next;
-    fieldOfView->next->next->prev = fieldOfView;
+    RefalFunc newFuncPointer = closure->funcPtr;
+    *params = closure->params;
 
+//    struct v_string* ident = memMngr.vterms[fieldOfView->next->fragment->offset].closure->ident;
 //    printUStr(ident);
 //    printf("\n");
+
+    // Удаляем функциональный терм из поля зрения.
+    fieldOfView->next = fieldOfView->next->next;
+    fieldOfView->next->next->prev = fieldOfView;
 
 	return newFuncPointer;
 }

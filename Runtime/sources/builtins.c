@@ -23,7 +23,7 @@ struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
 
 	if (firstOffset != memMngr.vtermsOffset)
-		mainChain = constructLterm(firstOffset, memMngr.vtermsOffset - firstOffset);
+        mainChain = allocateChainLTerm(firstOffset, memMngr.vtermsOffset - firstOffset);
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
 }

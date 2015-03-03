@@ -18,7 +18,7 @@
 struct v_closure
 {
 	RefalFunc funcPtr;
-	struct lterm_t* env;
+    struct lterm_t* params;
     struct v_string* ident;
 };
 
