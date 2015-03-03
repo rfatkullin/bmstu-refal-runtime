@@ -232,7 +232,7 @@ struct lterm_t* allocateFuncCallLTerm()
 
 struct lterm_t* allocateChainLTerm(uint64_t count)
 {
-    checkLTermsMemoryOverflow(count);
+    checkLTermsMemoryOverflow(2 * count);
 
     struct lterm_t* headLTerm = memMngr.lterms + memMngr.ltermsOffset;
     struct lterm_t* lterm = headLTerm;
@@ -241,12 +241,14 @@ struct lterm_t* allocateChainLTerm(uint64_t count)
     for (i = 0; i < count; ++i)
     {
         lterm->tag = L_TERM_CHAIN_TAG;
-        lterm->prev = lterm;
-        lterm->next = lterm;
+        lterm->chain = lterm + count ;
+        lterm->chain->next = lterm->chain;
+        lterm->chain->prev = lterm->chain;
+
         lterm++;
     }
 
-    memMngr.ltermsOffset += count;
+    memMngr.ltermsOffset += 2 * count;
 
     return headLTerm;
 }
