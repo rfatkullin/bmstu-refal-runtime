@@ -1,11 +1,11 @@
 $ENTRY Go
 {
-	= <Prout <Func>>
+	= <Prout <Func 'A'>>
 }
 
 Func
-? {
-	= "Hello, World!!!"
+{
+	s.1, "AAAAA" -> { s.2 = Success};
 }
 
 

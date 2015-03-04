@@ -181,26 +181,15 @@ static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** pa
 
     // Удаляем функциональный терм из поля зрения.
     fieldOfView->next = fieldOfView->next->next;
-    fieldOfView->next->next->prev = fieldOfView;
+    fieldOfView->next->prev = fieldOfView;
 
 	return newFuncPointer;
 }
 
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult)
 {
-	if (!currNode->funcCall->subCall)
-		currNode->funcCall->subCall = (struct lterm_t*)malloc(sizeof(struct lterm_t));
-
-	struct lterm_t* insertChain = funcResult->fieldChain;
-	struct lterm_t* targetChain = currNode->funcCall->subCall;
+    currNode->funcCall->subCall = funcResult->fieldChain;
 	struct lterm_t* newCallNode = funcResult->callChain->next;
-
-	targetChain->next = insertChain->next;
-	targetChain->prev = insertChain->prev;
-
-	insertChain->next->prev = targetChain;
-	insertChain->prev->next = targetChain;
-
 	funcResult->callChain->prev->funcCall->next = currNode;
 
 	return newCallNode;
@@ -256,12 +245,14 @@ static void assemblyChain(struct lterm_t* chain)
 {
 	struct lterm_t* currTerm = chain->next;
 
-	while (currTerm != chain)
+
+
+    while (currTerm != chain)
 	{
 		switch (currTerm->tag)
 		{
 			case L_TERM_FRAGMENT_TAG :
-				allocateVTerms(currTerm->fragment);
+                allocateVTerms(currTerm->fragment);
 				break;
 
 			case L_TERM_CHAIN_TAG:
