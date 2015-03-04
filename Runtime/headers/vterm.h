@@ -20,6 +20,7 @@ struct v_closure
 	RefalFunc funcPtr;
     struct lterm_t* params;
     struct v_string* ident;
+    uint32_t paramsCount;
 };
 
 struct v_string

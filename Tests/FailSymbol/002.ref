@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Func>
+}
+
+Func
+{
+	e.1 = <e.1>
+}
+

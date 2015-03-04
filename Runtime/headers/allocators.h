@@ -23,7 +23,7 @@ uint64_t allocateIntNum(uint64_t count);
 uint64_t allocateDoubleNum();
 
 /// Выделяет память для замыкания
-uint64_t allocateClosure(RefalFunc ptr, uint32_t paramsCount, uint64_t identLiteralOffset);
+uint64_t allocateClosure(RefalFunc ptr, uint32_t paramsCount, struct v_string* ident);
 
 /// Выделяет память с помощью malloc'а под структуру v_string
 struct v_string* allocateVStringLiteral(uint32_t* runes, uint64_t length);

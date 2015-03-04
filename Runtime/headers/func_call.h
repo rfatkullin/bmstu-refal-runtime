@@ -5,7 +5,7 @@
 
 struct env_t;
 
-typedef struct func_result_t (*RefalFunc)(int*, struct env_t*, struct lterm_t*);
+typedef struct func_result_t (*RefalFunc)(int*, struct env_t*, struct lterm_t*, int);
 
 /*
 	Хранит окружение функции.

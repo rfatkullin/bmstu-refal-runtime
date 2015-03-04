@@ -1,0 +1,16 @@
+$ENTRY Go
+{
+	= <Prout<Func1 Func2>>
+}
+
+Func1
+{
+	e.1, <e.1> : e.2 = e.2
+}
+
+Func2
+{
+	= Success
+}
+
+

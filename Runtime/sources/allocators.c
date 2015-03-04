@@ -27,46 +27,50 @@ void allocateVTerms(struct fragment_t* frag)
         switch (memMngr.vterms[frag->offset + i].tag)
         {
             case V_CHAR_TAG:
-                memMngr.vterms[memMngr.vtermsOffset].ch = memMngr.vterms[frag->offset + i].ch;
+                memMngr.vterms[memMngr.vtermsOffset++].ch = memMngr.vterms[frag->offset + i].ch;
                 break;
 
             case V_IDENT_TAG :
-                memMngr.vterms[memMngr.vtermsOffset].str = memMngr.vterms[frag->offset + i].str;
+                memMngr.vterms[memMngr.vtermsOffset++].str = memMngr.vterms[frag->offset + i].str;
                 break;
 
             case V_INT_NUM_TAG:
-                memMngr.vterms[memMngr.vtermsOffset].intNum = memMngr.vterms[frag->offset + i].intNum;
+                memMngr.vterms[memMngr.vtermsOffset++].intNum = memMngr.vterms[frag->offset + i].intNum;
                 break;
 
             case V_DOUBLE_NUM_TAG:
-                memMngr.vterms[memMngr.vtermsOffset].doubleNum = memMngr.vterms[frag->offset + i].doubleNum;
+                memMngr.vterms[memMngr.vtermsOffset++].doubleNum = memMngr.vterms[frag->offset + i].doubleNum;
                 break;
 
             case V_CLOSURE_TAG:
-                //TO DO:
+                allocateClosure(memMngr.vterms[frag->offset + i].closure->funcPtr,
+                                memMngr.vterms[frag->offset + i].closure->paramsCount,
+                                memMngr.vterms[frag->offset + i].closure->ident);
                 break;
 
             case V_BRACKET_OPEN_TAG:
             case V_BRACKET_CLOSE_TAG:
-                memMngr.vterms[memMngr.vtermsOffset].inBracketLength = memMngr.vterms[frag->offset + i].inBracketLength;
+                memMngr.vterms[memMngr.vtermsOffset++].inBracketLength = memMngr.vterms[frag->offset + i].inBracketLength;
                 break;
-        }
-        memMngr.vtermsOffset++;
+        }        
     }
 }
 
-// TO FIX: сделать проверку переполнения памяти.
-// Сделать все правильно -- выделение памяти в области данных хипа
-uint64_t allocateClosure(RefalFunc funcPtr, uint32_t paramsCount, uint64_t identLiteralOffset)
+uint64_t allocateClosure(RefalFunc funcPtr, uint32_t paramsCount, struct v_string* ident)
 {
+    checkLTermsMemoryOverflow(1);
+    checkDataMemoryOverflow(sizeof(struct v_closure) + paramsCount * sizeof(struct lterm_t));
+
     struct v_term* term = memMngr.vterms + memMngr.vtermsOffset;
     term->tag = V_CLOSURE_TAG;
 
-    //Выделение должно происходить в области данных хипа
-    term->closure = (struct v_closure*)malloc(sizeof(struct v_closure));
-    term->closure->params = (struct lterm_t*)malloc(paramsCount * sizeof(struct lterm_t));
+    term->closure = (struct v_closure*)(memMngr.dataHeap + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(struct v_closure);
+    term->closure->params = (struct lterm_t*)(memMngr.dataHeap + memMngr.dataOffset);
+    memMngr.dataOffset += paramsCount * sizeof(struct lterm_t);
     term->closure->funcPtr = funcPtr;
-    term->closure->ident = memMngr.vterms[identLiteralOffset].str;
+    term->closure->ident = ident;
+    term->closure->paramsCount = paramsCount;
 
     return memMngr.vtermsOffset++;
 }

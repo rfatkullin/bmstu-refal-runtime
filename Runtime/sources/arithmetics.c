@@ -26,27 +26,27 @@ static void numParseFailed();
 static struct lterm_t* applyOpToInt(ArithOp op, struct fragment_t* frag);
 static struct lterm_t* applyOpToDouble(ArithOp op, struct fragment_t* currExpr);
 
-struct func_result_t Add(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+struct func_result_t Add(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
 	return  applyOp(mpz_add, entryPoint, env, fieldOfView);
 }
 
-struct func_result_t Sub(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+struct func_result_t Sub(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
 	return  applyOp(mpz_sub, entryPoint, env, fieldOfView);
 }
 
-struct func_result_t Mul(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+struct func_result_t Mul(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
 	return  applyOp(mpz_mul, entryPoint, env, fieldOfView);
 }
 
-struct func_result_t Div(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+struct func_result_t Div(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
 	return  applyOp(mpz_tdiv_q, entryPoint, env, fieldOfView);
 }
 
-struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
 	return  applyOp(mpz_mod, entryPoint, env, fieldOfView);
 }

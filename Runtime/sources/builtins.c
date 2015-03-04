@@ -13,7 +13,7 @@ static void printSymbol(struct v_term* term);
 static void printUnicodeChar(uint32_t ch);
 static void printIntNumber(struct v_int* num);
 
-struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
     uint64_t firstOffset = memMngr.vtermsOffset;
 	struct lterm_t* mainChain = 0;
@@ -29,7 +29,7 @@ struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fi
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
 }
 
-struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
 	struct lterm_t* currExpr = getAssembliedChain(fieldOfView);
 

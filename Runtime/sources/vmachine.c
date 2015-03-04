@@ -12,6 +12,7 @@ static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct f
 static void assemblyChain(struct lterm_t* chain);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** params);
+static void OnFuncFail(struct lterm_t** callTerm, int failResult);
 
 static struct v_string* constructVStringFromASCIIName(const char* name)
 {
@@ -75,21 +76,38 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 	struct lterm_t* callTerm = fieldOfView;
 	struct func_result_t funcRes;    
     struct lterm_t* parentCall = 0;
+    int entryStatus = 0;
 
 	while (callTerm)
 	{
+        // Указатель на функцию проставлен --> функция вызывается повторно.
         if (callTerm->funcCall->funcPtr)
-            callTerm->funcCall->fieldOfView = callTerm->funcCall->subCall;
-        else
+        {
+            // Предыдущий результат успешен --> все скобки активации обработаны, можно передавать функции-потребителю.
+            if (funcRes.status != FAIL_RESULT)
+            {
+                callTerm->funcCall->fieldOfView = callTerm->funcCall->subCall;
+                entryStatus = NEXT_ENTRYPOINT;
+            }
+            else // Обработка скобок активаций завершилась неудачно --> откат.
+            {
+                entryStatus = ROLL_BACK;
+            }
+        }
+        else // Указатель на функцию не проставлен --> первый вызов.
+        {
+            entryStatus = FIRST_CALL;
             callTerm->funcCall->funcPtr = GetFuncPointer(callTerm->funcCall->fieldOfView, &callTerm->funcCall->env->params);
 
-		if (callTerm->funcCall->funcPtr == 0)
-		{
-            printf("[Error]: Func pointer is null!\n");
-			exit(0);
-		}
+            // Первый терм в скобках аткивации не является функциональным --> откат.
+            if (callTerm->funcCall->funcPtr == 0)
+            {
+                OnFuncFail(&callTerm, 0);
+                entryStatus = ROLL_BACK;
+            }
+        }
 
-		funcRes = callTerm->funcCall->funcPtr(&callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView);
+        funcRes = callTerm->funcCall->funcPtr(&callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView, entryStatus);
 
         switch (funcRes.status)
         {
@@ -103,31 +121,54 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
                 callTerm->funcCall->parentCall = parentCall;
                 break;
             case FAIL_RESULT:
-                if (!callTerm->funcCall->rollBack || !callTerm->funcCall->parentCall || callTerm->funcCall->failEntryPoint == -1)
-                {
-                    printf("[Error]: Bad func result!\n");
-                    exit(0);
-                }
-                else
-                {
-                    callTerm->funcCall->parentCall->funcCall->entryPoint = callTerm->funcCall->failEntryPoint;
-                    callTerm = parentCall;
-                }
+                OnFuncFail(&callTerm, 1);
                 break;
         }
 	}
 }
 
+static void OnFuncFail(struct lterm_t** callTerm, int failResult)
+{
+    if ((failResult && !(*callTerm)->funcCall->rollBack) || !(*callTerm)->funcCall->parentCall || (*callTerm)->funcCall->failEntryPoint == -1)
+    {
+        printf("%s\n", FUNC_CALL_FAILED);
+        exit(0);
+    }
+    else
+    {
+        (*callTerm)->funcCall->parentCall->funcCall->entryPoint = (*callTerm)->funcCall->failEntryPoint;
+        (*callTerm) = (*callTerm)->funcCall->parentCall;
+    }
+}
+
 static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** params)
 {
-	if (fieldOfView == 0)
-		return 0;
+    //Fatal error!
+    if (fieldOfView == 0)
+    {
+        printf("%s\n", BAD_EVAL_EXPR);
+        exit(0);
+    }
 
-	if (fieldOfView->next->tag != L_TERM_FRAGMENT_TAG)
-		return 0;
+    if (fieldOfView->next == fieldOfView)
+        return 0;
 
+    //Fatal error!
+    if (fieldOfView->next->tag != L_TERM_FRAGMENT_TAG)
+    {
+        printf("%s\n", BAD_EVAL_EXPR);
+        exit(0);
+    }
+
+    if (fieldOfView->next->fragment->length == 0)
+        return 0;
+
+    //Fatal error!
 	if (memMngr.vterms[fieldOfView->next->fragment->offset].tag != V_CLOSURE_TAG)
-		return 0;
+    {
+        printf("%s\n", BAD_EVAL_EXPR);
+        exit(0);
+    }
 
     struct v_closure* closure = memMngr.vterms[fieldOfView->next->fragment->offset].closure;
 
