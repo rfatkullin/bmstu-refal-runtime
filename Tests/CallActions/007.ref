@@ -1,0 +1,16 @@
+$ENTRY Go
+{
+	= <Prout <Func1 'BeginMiddleEnd'>><Prout <Func2 'BeginMiddleEnd'>>
+}
+
+Func1
+{
+	e.1 e.2 e.3 e.4, e.1 -> ?{'Begin' = Success1} : s.1, e.2 -> ?{'Middle' = Success2} : s.2, e.3 -> ?{'End' = Success3} : s.3 = s.1 s.2 s.3;
+}
+
+Func2
+{
+	e.1 e.2 e.3 e.4, e.1 -> ?{'Begin' = Success1} : s.1, e.2 -> ?{'Middle' = Success2} : s.2, e.3 => ?{'End' = Success3} : s.3 = s.1 s.2 s.3;
+}
+
+
