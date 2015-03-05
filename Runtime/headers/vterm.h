@@ -21,6 +21,7 @@ struct v_closure
     struct lterm_t* params;
     struct v_string* ident;
     uint32_t paramsCount;
+    int rollback;
 };
 
 struct v_string

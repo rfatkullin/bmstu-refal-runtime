@@ -45,7 +45,8 @@ void allocateVTerms(struct fragment_t* frag)
             case V_CLOSURE_TAG:
                 allocateClosure(memMngr.vterms[frag->offset + i].closure->funcPtr,
                                 memMngr.vterms[frag->offset + i].closure->paramsCount,
-                                memMngr.vterms[frag->offset + i].closure->ident);
+                                memMngr.vterms[frag->offset + i].closure->ident,
+                                memMngr.vterms[frag->offset + i].closure->rollback);
                 break;
 
             case V_BRACKET_OPEN_TAG:
@@ -56,7 +57,7 @@ void allocateVTerms(struct fragment_t* frag)
     }
 }
 
-uint64_t allocateClosure(RefalFunc funcPtr, uint32_t paramsCount, struct v_string* ident)
+uint64_t allocateClosure(RefalFunc funcPtr, uint32_t paramsCount, struct v_string* ident, int rollback)
 {
     checkLTermsMemoryOverflow(1);
     checkDataMemoryOverflow(sizeof(struct v_closure) + paramsCount * sizeof(struct lterm_t));
@@ -71,6 +72,7 @@ uint64_t allocateClosure(RefalFunc funcPtr, uint32_t paramsCount, struct v_strin
     term->closure->funcPtr = funcPtr;
     term->closure->ident = ident;
     term->closure->paramsCount = paramsCount;
+    term->closure->rollback = rollback;
 
     return memMngr.vtermsOffset++;
 }

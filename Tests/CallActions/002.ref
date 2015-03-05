@@ -1,0 +1,28 @@
+$ENTRY Go
+{
+	= <Prout <Func1 'A' 'F'>> <Prout<Func2 'A' 'F' 'S'>> <Prout<Func3 'A' 'F' 'S'>>
+}
+
+Func1
+{
+	e.1 s.1 'F' e.2, e.2 -> { s.3 = 1; 
+								= 2;} : 2 = Sucess; 
+}
+
+
+Func2
+{
+	e.1 s.1 'F' e.2, e.2 -> { s.3 = 1; 
+								= 2;} : 1 = Sucess; 
+}
+
+Func3
+{
+	e.1 s.1 'F' e.2, e.2 -> { s.3 = 1; 
+								= 2;} : 3 = Sucess; 
+}
+
+
+
+
+

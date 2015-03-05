@@ -11,8 +11,8 @@ static struct lterm_t* updateFieldOfView(struct lterm_t* mainChain, struct func_
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
 static void assemblyChain(struct lterm_t* chain);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
-static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** params);
-static void OnFuncFail(struct lterm_t** callTerm, int failResult);
+static RefalFunc getFuncPointer(struct lterm_t* callTerm);
+static void onFuncFail(struct lterm_t** callTerm, int failResult);
 
 static struct v_string* constructVStringFromASCIIName(const char* name)
 {
@@ -35,7 +35,7 @@ static struct func_call_t* ConstructStartFunc(const char* funcName, RefalFunc en
 	struct lterm_t* currTerm = (struct lterm_t*)malloc(sizeof(struct lterm_t));
 	currTerm->tag = L_TERM_FRAGMENT_TAG;
 	currTerm->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
-	currTerm->fragment->offset = allocateClosure(entryFuncPointer, 0);
+    currTerm->fragment->offset = allocateClosure(entryFuncPointer, 0, 0);
 	currTerm->fragment->length = 1;
     memMngr.vterms[currTerm->fragment->offset].closure->ident = constructVStringFromASCIIName(funcName);
 
@@ -97,12 +97,12 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
         else // Указатель на функцию не проставлен --> первый вызов.
         {
             entryStatus = FIRST_CALL;
-            callTerm->funcCall->funcPtr = GetFuncPointer(callTerm->funcCall->fieldOfView, &callTerm->funcCall->env->params);
+            callTerm->funcCall->funcPtr = getFuncPointer(callTerm);
 
             // Первый терм в скобках аткивации не является функциональным --> откат.
             if (callTerm->funcCall->funcPtr == 0)
             {
-                OnFuncFail(&callTerm, 0);
+                onFuncFail(&callTerm, 0);
                 entryStatus = ROLL_BACK;
             }
         }
@@ -121,15 +121,15 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
                 callTerm->funcCall->parentCall = parentCall;
                 break;
             case FAIL_RESULT:
-                OnFuncFail(&callTerm, 1);
+                onFuncFail(&callTerm, 1);
                 break;
         }
 	}
 }
 
-static void OnFuncFail(struct lterm_t** callTerm, int failResult)
+static void onFuncFail(struct lterm_t** callTerm, int failResult)
 {
-    if ((failResult && !(*callTerm)->funcCall->rollBack) || !(*callTerm)->funcCall->parentCall || (*callTerm)->funcCall->failEntryPoint == -1)
+    if ((failResult && !(*callTerm)->funcCall->rollback) || !(*callTerm)->funcCall->parentCall || (*callTerm)->funcCall->failEntryPoint == -1)
     {
         printf("%s\n", FUNC_CALL_FAILED);
         exit(0);
@@ -141,8 +141,10 @@ static void OnFuncFail(struct lterm_t** callTerm, int failResult)
     }
 }
 
-static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** params)
+static RefalFunc getFuncPointer(struct lterm_t* callTerm)
 {
+    struct lterm_t* fieldOfView = callTerm->funcCall->fieldOfView;
+
     //Fatal error!
     if (fieldOfView == 0)
     {
@@ -173,7 +175,8 @@ static RefalFunc GetFuncPointer(struct lterm_t* fieldOfView, struct lterm_t** pa
     struct v_closure* closure = memMngr.vterms[fieldOfView->next->fragment->offset].closure;
 
     RefalFunc newFuncPointer = closure->funcPtr;
-    *params = closure->params;
+    callTerm->funcCall->env->params = closure->params;
+    callTerm->funcCall->rollback = closure->rollback;
 
 //    struct v_string* ident = memMngr.vterms[fieldOfView->next->fragment->offset].closure->ident;
 //    printUStr(ident);

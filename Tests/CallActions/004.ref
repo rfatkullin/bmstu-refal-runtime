@@ -1,0 +1,12 @@
+$ENTRY Go
+{
+	= <Prout <Func 'Begin Middle End'>>
+}
+
+Func
+{
+	e.1 e.2, e.1 -> {'Begin' = Success} = e.1;
+}
+
+
+
