@@ -56,7 +56,7 @@ uint64_t chAllocateClosureVTerm(allocate_result* res)
 {
     if (memMngr.vtermsOffset + 1 > memMngr.vtermsMaxOffset)
     {
-        *res = NEED_VTERM_CLEAN;
+        *res = NEED_CLEAN;
         return 0;
     }
 

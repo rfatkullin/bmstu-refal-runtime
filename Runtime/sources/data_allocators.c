@@ -17,7 +17,7 @@ struct lterm_t* chAllocateFuncCallLTerm(allocate_result* res)
 
     if (memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
     {
-        *res = NEED_DATA_CLEAN;
+        *res = NEED_CLEAN;
         return 0;
     }
 
@@ -31,7 +31,7 @@ struct lterm_t* chAllocateChainLTerm(uint32_t count, allocate_result* res)
     uint64_t needDataSize = 2 * count * sizeof(struct lterm_t);
     if (memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
     {
-        *res = NEED_DATA_CLEAN;
+        *res = NEED_CLEAN;
         return 0;
     }
 
@@ -45,7 +45,7 @@ struct lterm_t* chAllocateFragmentLTerm(uint32_t count, allocate_result *res)
     uint64_t needDataSize = count * (sizeof(struct fragment_t) + sizeof(struct lterm_t));
     if (memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
     {
-        *res = NEED_DATA_CLEAN;
+        *res = NEED_CLEAN;
         return 0;
     }
 
@@ -58,7 +58,7 @@ struct v_closure* chAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCoun
 {
     if (memMngr.dataOffset + CLOSURE_SIZE(paramsCount) > memMngr.dataMaxOffset)
     {
-        *res = NEED_DATA_CLEAN;
+        *res = NEED_CLEAN;
         return 0;
     }
 

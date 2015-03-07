@@ -7,9 +7,8 @@ typedef int  allocate_result;
 
 //TO DO: Перенести в gc.h или memory_manager.h
 
-#define OK                  0
-#define NEED_DATA_CLEAN     1
-#define NEED_VTERM_CLEAN    2
+#define OK          0
+#define NEED_CLEAN  1
 
 /// Изменяет длину выражения в скобках.
 void changeBracketLength(uint64_t offset, uint64_t newLength);
