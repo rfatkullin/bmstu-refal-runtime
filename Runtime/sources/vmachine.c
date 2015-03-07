@@ -39,7 +39,8 @@ static struct func_call_t* ConstructStartFunc(const char* funcName, RefalFunc en
     struct v_string* ident = constructVStringFromASCIIName(funcName);
 	currTerm->tag = L_TERM_FRAGMENT_TAG;
 	currTerm->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
-    currTerm->fragment->offset = gcAllocateClosure(entryFuncPointer, 0, ident, 0);
+    currTerm->fragment->offset = gcAllocateClosureVTerm();
+    memMngr.vterms[currTerm->fragment->offset].closure = gcAllocateClosureStruct(entryFuncPointer, 0, ident, 0);
 	currTerm->fragment->length = 1;
     memMngr.vterms[currTerm->fragment->offset].closure->ident = ident;
 

@@ -2,34 +2,30 @@
 #define __V_TERM_ALLOCATORS_H__
 
 #include "vterm.h"
+#include "helpers.h"
 
-/// Выдыляет память под vterm типа V_BRACKET_OPEN_TAG или V_BRACKET_CLOSE_TAG
+/// Выделяют память в хипе vterm'ов
+/// Статус выполнения возвращается в аргументе res.
+/// Если памяти хватило и она выделена,то в *res будет Ok,
+/// в противном случае NEED_DATA_CLEAN
+uint64_t chAllocateClosureVTerm(allocate_result* res);
+
+/// Выдыляют память под vterm
 /// В процессе выполнения может быть вызван сборщик мусора для vterm'ов.
 uint64_t gcAllocateOpenBracketVTerm(uint64_t length);
 uint64_t gcAllocateCloseBracketVTerm(uint64_t length);
-
-/// Выделяет память под один символ и возвращает смещение для v_term
-/// В процессе выполнения может быть вызван сборщик мусора для vterm'ов.
 uint64_t gcAllocateSymbolVTerm(uint32_t ch);
-
-/// Выделяет память под vterm для целочисленного значения
-/// В процессе выполнения может быть вызван сборщик мусора для vterm'ов.
 uint64_t gcAllocateIntNumVTerm(struct v_int* value);
-
-/// Выделяет память под vterm для вещественного значения
-/// В процессе выполнения может быть вызван сборщик мусора для vterm'ов.
 uint64_t gcAllocateDoubleNumVTerm(double value);
+uint64_t gcAllocateClosureVTerm();
 
-/// Выдыляет память под vterm типа V_BRACKET_OPEN_TAG
+/// Выдыляет память под vterm без проверок.
 uint64_t allocateOpenBracketVTerm(uint64_t length);
-
-/// Выдыляет память под vterm типа V_BRACKET_CLOSE_TAG
 uint64_t allocateCloseBracketVTerm(uint64_t length);
+uint64_t allocateIntNumVTerm(struct v_int* value);
+uint64_t allocateDoubleNumVTerm(double value);
 
-/// Выделяет память под vterm'ы
+/// Копирует термы из фрагмента в новую область.
 int allocateVTerms(struct fragment_t* fragment_t);
-
-/// Выделяет память для замыкания
-uint64_t gcAllocateClosure(RefalFunc ptr, uint32_t paramsCount, struct v_string* ident, int rollback);
 
 #endif

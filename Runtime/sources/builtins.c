@@ -23,7 +23,7 @@ struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fi
         gcAllocateSymbolVTerm(ch);
 
 	if (firstOffset != memMngr.vtermsOffset)
-        mainChain = allocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);
+        mainChain = gcAllocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
 }

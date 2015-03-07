@@ -7,6 +7,8 @@
 #include "vmachine.h"
 #include "builtins.h"
 #include "data_allocators.h"
+#include "vterm_allocators.h"
+#include "helpers.h"
 
 #define WRONG_OPERANDS_NUMBER "It's binary operation!"
 #define OPERANDS_TYPES_MISMATCH "Operands must be same type!"
@@ -16,7 +18,6 @@
 
 typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
 
-static void writeOperand(mpz_t num);
 static struct lterm_t* constructIntNumLTerm(mpz_t num);
 static struct lterm_t* constructDoubleNumLTerm(double val);
 static void readIntOperands(mpz_t x, mpz_t y, struct fragment_t* frag);
@@ -115,18 +116,29 @@ static struct lterm_t* applyOpToDouble(ArithOp op, struct fragment_t* frag)
 }
 
 static struct lterm_t* constructIntNumLTerm(mpz_t num)
-{
-    uint64_t offset = memMngr.vtermsOffset;
-    writeOperand(num);
+{      
+    uint32_t numb = 8 * sizeof(uint8_t);
+    uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
+
+    checkAndCleanVTerms(1);
+    checkAndCleanData(V_INT_STRUCT_SIZE(length) + BUILTINS_RESULT_SIZE);
+
+    struct v_int* intNum = allocateIntStruct(length);
+
+    mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
+    intNum->sign = mpz_sgn(num) < 0;
+
+    uint64_t offset = allocateIntNumVTerm(intNum);
 
     return allocateBuiltinsResult(offset, 1);
 }
 
 static struct lterm_t* constructDoubleNumLTerm(double val)
 {    
-    uint64_t offset = gcAllocateDoubleNumVTerm(val);
+    checkAndCleanVTerms(1);
+    checkAndCleanData(BUILTINS_RESULT_SIZE);
 
-    return allocateBuiltinsResult(offset, 1);
+    return allocateBuiltinsResult(allocateDoubleNumVTerm(val), 1);
 }
 
 static void readOperand(mpz_t num, struct v_term* term)
@@ -135,21 +147,6 @@ static void readOperand(mpz_t num, struct v_term* term)
 
     if (term->intNum->sign)
 		mpz_mul_si(num, num, -1);	
-}
-
-/// Записывает целочисленное значение в vterm'ы.
-/// Возвращает количество созданных vterm'ов.
-static void writeOperand(mpz_t num)
-{
-    uint32_t numb = 8 * sizeof(uint8_t);
-    uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
-
-    struct v_int* intNum = gcAllocateIntStruct(length);
-
-    mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
-    intNum->sign = mpz_sgn(num) < 0;
-
-    gcAllocateIntNumVTerm(intNum);
 }
 
 /// Вычисляет операнды x и y для бинарной операции.

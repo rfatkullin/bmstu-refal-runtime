@@ -3,15 +3,13 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "data_allocators.h"
 #include "vterm_allocators.h"
 #include "memory_manager.h"
 
 /// Функции выделения vterm'ов без проверок.
-static uint64_t allocateDoubleNum();
-static uint64_t allocateIntNumVTerm();
 static uint64_t allocateSymbolVTerm(uint32_t ch);
-static struct v_int* allocateIntStruct(uint64_t length);
-static uint64_t allocateClosure(RefalFunc funcPtr, uint32_t paramsCount, struct v_string* ident, int rollback);
+static uint64_t allocateClosureVterm();
 
 //TO FIX: сделать проверку переполнения памяти.
 int allocateVTerms(struct fragment_t* frag)
@@ -40,7 +38,7 @@ int allocateVTerms(struct fragment_t* frag)
                 break;
 
             case V_CLOSURE_TAG:
-                allocateClosure(memMngr.vterms[frag->offset + i].closure->funcPtr,
+                memMngr.vterms[memMngr.vtermsOffset++].closure = allocateClosureStruct(memMngr.vterms[frag->offset + i].closure->funcPtr,
                                 memMngr.vterms[frag->offset + i].closure->paramsCount,
                                 memMngr.vterms[frag->offset + i].closure->ident,
                                 memMngr.vterms[frag->offset + i].closure->rollback);
@@ -56,19 +54,24 @@ int allocateVTerms(struct fragment_t* frag)
     return 1;
 }
 
-uint64_t gcAllocateClosure(RefalFunc ptr, uint32_t paramsCount, struct v_string* ident, int rollback)
+uint64_t chAllocateClosureVTerm(allocate_result* res)
 {
-    checkAndCleanVTerms(1);
-    checkAndCleanData(sizeof(struct v_closure) + paramsCount * sizeof(struct lterm_t));
+    if (memMngr.vtermsOffset + 1 > memMngr.vtermsMaxOffset)
+    {
+        *res = NEED_VTERM_CLEAN;
+        return 0;
+    }
 
-    return allocateClosure(ptr, paramsCount, ident, rollback);
+    *res = OK;
+
+    return allocateClosureVterm();
 }
 
-struct v_int* gcAllocateIntStruct(uint64_t length)
+uint64_t allocateDoubleNumVTerm(double value)
 {
-    checkAndCleanData(sizeof(struct v_int) + length);
-
-    return allocateIntStruct(length);
+    memMngr.vterms[memMngr.vtermsOffset].tag = V_DOUBLE_NUM_TAG;
+    memMngr.vterms[memMngr.vtermsOffset].doubleNum = value;
+    return memMngr.vtermsOffset++;
 }
 
 uint64_t gcAllocateSymbolVTerm(uint32_t ch)
@@ -89,7 +92,14 @@ uint64_t gcAllocateDoubleNumVTerm(double value)
 {
     checkAndCleanVTerms(1);
 
-    return allocateDoubleNum(value);
+    return allocateDoubleNumVTerm(value);
+}
+
+uint64_t gcAllocateClosureVTerm()
+{
+    checkAndCleanVTerms(1);
+
+    return allocateClosureVterm();
 }
 
 uint64_t gcAllocateOpenBracketVTerm(uint64_t length)
@@ -106,36 +116,11 @@ uint64_t gcAllocateCloseBracketVTerm(uint64_t length)
     return allocateCloseBracketVTerm(length);
 }
 
-static uint64_t allocateClosure(RefalFunc funcPtr, uint32_t paramsCount, struct v_string* ident, int rollback)
+static uint64_t allocateClosureVterm()
 {
-    struct v_term* term = memMngr.vterms + memMngr.vtermsOffset;
-    term->tag = V_CLOSURE_TAG;
-
-    term->closure = (struct v_closure*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct v_closure);
-
-    term->closure->params = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += paramsCount * sizeof(struct lterm_t);
-
-    term->closure->funcPtr = funcPtr;
-    term->closure->ident = ident;
-    term->closure->paramsCount = paramsCount;
-    term->closure->rollback = rollback;
+    memMngr.vterms[memMngr.vtermsOffset].tag = V_CLOSURE_TAG;
 
     return memMngr.vtermsOffset++;
-}
-
-static struct v_int* allocateIntStruct(uint64_t length)
-{
-    struct v_int* pointer = (struct v_int*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct v_int);
-
-    pointer->bytes = (uint8_t*)(memMngr.data + memMngr.dataOffset);
-    pointer->length = length;
-
-    memMngr.dataOffset += length;
-
-    return pointer;
 }
 
 static uint64_t allocateSymbolVTerm(uint32_t ch)
@@ -146,17 +131,10 @@ static uint64_t allocateSymbolVTerm(uint32_t ch)
     return memMngr.vtermsOffset++;
 }
 
-static uint64_t allocateIntNumVTerm(struct v_int* value)
+uint64_t allocateIntNumVTerm(struct v_int* value)
 {
     memMngr.vterms[memMngr.vtermsOffset].tag = V_INT_NUM_TAG;
     memMngr.vterms[memMngr.vtermsOffset].intNum = value;
-    return memMngr.vtermsOffset++;
-}
-
-static uint64_t allocateDoubleNum(double value)
-{
-    memMngr.vterms[memMngr.vtermsOffset].tag = V_DOUBLE_NUM_TAG;
-    memMngr.vterms[memMngr.vtermsOffset].doubleNum = value;
     return memMngr.vtermsOffset++;
 }
 

@@ -21,14 +21,14 @@ void checkAndCleanVTerms(uint64_t needVTermsCount)
         failWithMemoryOverflow();
 }
 
-void checkAndCleanData(uint64_t needDataCount)
+void checkAndCleanData(uint64_t needDataSize)
 {
-    if (memMngr.dataOffset + needDataCount > memMngr.dataMaxOffset)
+    if (memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
     {
         //TO FIX: Передать корень FOV.
         collectGarbage(0);
     }
 
-    if (memMngr.dataOffset + needDataCount > memMngr.dataMaxOffset)
+    if (memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
         failWithMemoryOverflow();
 }
