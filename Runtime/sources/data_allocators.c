@@ -83,7 +83,7 @@ struct lterm_t* gcAllocateBuiltinsResult(uint64_t offset, uint64_t length)
 
 struct v_int* gcAllocateIntStruct(uint64_t length)
 {
-    checkAndCleanData(V_INT_STRUCT_SIZE(length));
+    checkAndCleanData(VINT_STRUCT_SIZE(length));
 
     return allocateIntStruct(length);
 }

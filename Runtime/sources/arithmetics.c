@@ -121,7 +121,7 @@ static struct lterm_t* constructIntNumLTerm(mpz_t num)
     uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
 
     checkAndCleanVTerms(1);
-    checkAndCleanData(V_INT_STRUCT_SIZE(length) + BUILTINS_RESULT_SIZE);
+    checkAndCleanData(VINT_STRUCT_SIZE(length) + BUILTINS_RESULT_SIZE);
 
     struct v_int* intNum = allocateIntStruct(length);
 

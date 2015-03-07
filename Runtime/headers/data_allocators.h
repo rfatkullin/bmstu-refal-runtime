@@ -5,11 +5,12 @@
 #include "vterm.h"
 #include "helpers.h"
 
-#define V_INT_STRUCT_SIZE(length) (sizeof(struct v_int) + length)
-#define FRAGMENT_LTERM_SIZE(count) (count * (sizeof(struct lterm_t) + sizeof(struct fragment_t)))
-#define CHAIN_LTERM_SIZE(count) (2 * count * sizeof(struct lterm_t))
-#define BUILTINS_RESULT_SIZE (FRAGMENT_LTERM_SIZE(1) + CHAIN_LTERM_SIZE(1))
-#define CLOSURE_SIZE(paramsCount) (sizeof(struct v_closure) + paramsCount * sizeof(struct lterm_t))
+#define VINT_STRUCT_SIZE(length)        (sizeof(struct v_int) + length)
+#define FRAGMENT_LTERM_SIZE(count)      (count * (sizeof(struct lterm_t) + sizeof(struct fragment_t)))
+#define CHAIN_LTERM_SIZE(count)         (2 * count * sizeof(struct lterm_t))
+#define BUILTINS_RESULT_SIZE            (FRAGMENT_LTERM_SIZE(1) + CHAIN_LTERM_SIZE(1))
+#define CLOSURE_SIZE(paramsCount)       (sizeof(struct v_closure) + paramsCount * sizeof(struct lterm_t))
+#define VSTRING_SIZE(length)            (sizeof(struct v_string) + length * sizeof(uint32_t))
 
 /// Выделяют память в хипе данных
 /// Статус выполнения возвращается в аргументе res.

@@ -67,7 +67,7 @@ static void printSymbol(struct v_term* term)
     case V_DOUBLE_NUM_TAG:
         printf("%lf ", term->doubleNum);
 		break;
-	case V_CLOSURE_TAG:
+    case V_CLOSURE_TAG:
 		//TO DO
 		break;
     case V_BRACKET_OPEN_TAG:

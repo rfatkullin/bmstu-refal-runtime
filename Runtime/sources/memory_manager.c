@@ -40,6 +40,8 @@ void initHeaps(uint64_t segmentLen, uint64_t literalsNumber)
 
     memMngr.vtermsOffset = memMngr.vtActiveOffset;
     memMngr.dataOffset = memMngr.dtActiveOffset;
+    memMngr.vtermsOverflow = 0;
+    memMngr.dataOverflow = 0;
 }
 
 static float byte2KByte(uint64_t bytes)

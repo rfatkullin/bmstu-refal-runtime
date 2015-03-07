@@ -171,7 +171,7 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
         return 0;
 
     //Fatal error!
-	if (memMngr.vterms[fieldOfView->next->fragment->offset].tag != V_CLOSURE_TAG)
+    if (memMngr.vterms[fieldOfView->next->fragment->offset].tag != V_CLOSURE_TAG)
     {
         printf("%s\n", BAD_EVAL_EXPR);
         exit(0);

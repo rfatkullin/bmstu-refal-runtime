@@ -42,6 +42,10 @@ struct memory_manager
     uint64_t vtermsMaxOffset;	
     //Максимальный размер данных.
     uint64_t dataMaxOffset;
+
+    //Флаги переполнения хипов
+    int vtermsOverflow;
+    int dataOverflow;
 };
 
 struct memory_manager memMngr;
