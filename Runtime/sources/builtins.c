@@ -12,20 +12,45 @@ static void printRange(struct fragment_t* frag);
 static void printSymbol(struct v_term* term);
 static void printUnicodeChar(uint32_t ch);
 static void printIntNumber(struct v_int* num);
+static uint64_t copySymbols(uint64_t first, uint64_t length);
 
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
     uint64_t firstOffset = memMngr.vtermsOffset;
+    uint64_t currOffset =  memMngr.vtermsOffset;
 	struct lterm_t* mainChain = 0;
+
+    checkAndCleanData(BUILTINS_RESULT_SIZE);
 
     uint32_t ch;
     while ((ch = readUTF8Char()) != '\n')
-        gcAllocateSymbolVTerm(ch);
+    {
+        if (checkAndCleanVTerms(1))
+        {
+            uint64_t length = currOffset - firstOffset + 1;
+            strictCheckVTermsOverflow(length + 1);
+            firstOffset = copySymbols(firstOffset, currOffset - firstOffset);
+            currOffset = memMngr.vtermsOffset;
+        }
+        allocateSymbolVTerm(ch);
+        currOffset++;
+    }
 
 	if (firstOffset != memMngr.vtermsOffset)
-        mainChain = gcAllocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);
+        mainChain = allocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
+}
+
+static uint64_t copySymbols(uint64_t first, uint64_t length)
+{
+    uint64_t firstOffset = memMngr.vtermsOffset;
+
+    uint64_t i = 0;
+    for (i = 0; i < length; ++i)
+        allocateSymbolVTerm(memMngr.vterms[first + i]);
+
+    return firstOffset;
 }
 
 struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
@@ -42,10 +67,8 @@ static void printRange(struct fragment_t* frag)
 	int i = 0;
 	struct v_term* currTerm = memMngr.vterms + frag->offset;
 
-	for (i = 0; i < frag->length; ++i)
-	{
-		printSymbol(currTerm + i);
-	}
+	for (i = 0; i < frag->length; ++i)	
+		printSymbol(currTerm + i);	
 
 	printf("\n");
 }

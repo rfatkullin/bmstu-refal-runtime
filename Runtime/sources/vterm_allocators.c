@@ -8,41 +8,11 @@
 #include "memory_manager.h"
 
 /// Функции выделения vterm'ов без проверок.
-static uint64_t allocateSymbolVTerm(uint32_t ch);
 static uint64_t allocateClosureVterm();
-
-static void calcNeedResources(struct fragment_t* frag)
-{
-    uint64_t needDataSize = 0;
-    uint64_t i = 0;
-
-    for (i = 0; i < frag->length; ++i)
-    {
-        switch (memMngr.vterms[frag->offset + i].tag)
-        {
-            case V_IDENT_TAG :
-                needDataSize += VSTRING_SIZE(memMngr.vterms[frag->offset + i].str->length);
-                break;
-
-            case V_INT_NUM_TAG:
-                needDataSize += VINT_STRUCT_SIZE(memMngr.vterms[frag->offset + i].intNum->length);
-                break;
-
-            case V_CLOSURE_TAG:
-                needDataSize += CLOSURE_SIZE(memMngr.vterms[frag->offset + i].closure->paramsCount);
-                break;
-        }
-    }
-
-    checkVTermsOverflow(frag->length);
-    checkDataOverflow(needDataSize);
-}
 
 int allocateVTerms(struct fragment_t* frag)
 {
-    calcNeedResources(frag);
-
-    if (isOverflowed())
+    if (checkVTermsOverflow(frag->length))
         return 0;
 
     uint64_t i = 0;
@@ -69,10 +39,7 @@ int allocateVTerms(struct fragment_t* frag)
                 break;
 
             case V_CLOSURE_TAG:
-                memMngr.vterms[memMngr.vtermsOffset++].closure = allocateClosureStruct(memMngr.vterms[frag->offset + i].closure->funcPtr,
-                                memMngr.vterms[frag->offset + i].closure->paramsCount,
-                                memMngr.vterms[frag->offset + i].closure->ident,
-                                memMngr.vterms[frag->offset + i].closure->rollback);
+                memMngr.vterms[memMngr.vtermsOffset++].closure = memMngr.vterms[frag->offset + i].closure;
                 break;
 
             case V_BRACKET_OPEN_TAG:
@@ -103,13 +70,6 @@ uint64_t allocateDoubleNumVTerm(double value)
     memMngr.vterms[memMngr.vtermsOffset].tag = V_DOUBLE_NUM_TAG;
     memMngr.vterms[memMngr.vtermsOffset].doubleNum = value;
     return memMngr.vtermsOffset++;
-}
-
-uint64_t gcAllocateSymbolVTerm(uint32_t ch)
-{
-    checkAndCleanVTerms(1);
-
-    return allocateSymbolVTerm(ch);
 }
 
 uint64_t gcAllocateIntNumVTerm(struct v_int* value)
@@ -154,7 +114,7 @@ static uint64_t allocateClosureVterm()
     return memMngr.vtermsOffset++;
 }
 
-static uint64_t allocateSymbolVTerm(uint32_t ch)
+uint64_t allocateSymbolVTerm(uint32_t ch)
 {
     memMngr.vterms[memMngr.vtermsOffset].tag = V_CHAR_TAG;
     memMngr.vterms[memMngr.vtermsOffset].ch = ch;

@@ -15,14 +15,13 @@ typedef int  allocate_result;
 void changeBracketLength(uint64_t offset, uint64_t newLength);
 
 /// Проверка на переполнение и очистка хипов.
-void checkAndCleanVTerms(uint64_t);
-void checkAndCleanData(uint64_t);
+int checkAndCleanVTerms(uint64_t);
+int checkAndCleanData(uint64_t);
 
 /// Проверка переполнения хипов
-void checkVTermsOverflow(uint64_t);
-void checkDataOverflow(uint64_t);
+int checkVTermsOverflow(uint64_t);
+int checkDataOverflow(uint64_t);
 
-/// Переполен хотя бы один из хипов
-int isOverflowed();
+void strictCheckVTermsOverflow(uint64_t needVTermsCount);
 
 #endif

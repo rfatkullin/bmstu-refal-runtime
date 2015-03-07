@@ -9,46 +9,67 @@ void failWithMemoryOverflow()
     exit(1);
 }
 
-void checkAndCleanVTerms(uint64_t needVTermsCount)
+void strictCheckVTermsOverflow(uint64_t needVTermsCount)
 {
+    if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
+        failWithMemoryOverflow();
+}
+
+int checkAndCleanVTerms(uint64_t needVTermsCount)
+{
+    int collected = 0;
+
     if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
     {
         memMngr.vtermsOverflow = 1;
         //TO FIX: Передать корень FOV.
         collectGarbage(0);
+        collected = 1;
     }
 
     if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
         failWithMemoryOverflow();
+
+    return collected;
 }
 
-void checkAndCleanData(uint64_t needDataSize)
+int checkAndCleanData(uint64_t needDataSize)
 {
+    int collected = 0;
+
     if (memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
     {
         memMngr.dataOverflow = 1;
         //TO FIX: Передать корень FOV.
         collectGarbage(0);
+        collected = 1;
     }
 
     if (memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
         failWithMemoryOverflow();
+
+    return collected;
 }
 
 
-void checkVTermsOverflow(uint64_t needVTermsCount)
+int checkVTermsOverflow(uint64_t needVTermsCount)
 {
     if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
+    {
         memMngr.vtermsOverflow = 1;
+        return 1;
+    }
+
+    return 0;
 }
 
-void checkDataOverflow(uint64_t needDataSize)
+int checkDataOverflow(uint64_t needDataSize)
 {
     if (memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
+    {
         memMngr.dataOverflow = 1;
-}
+        return 1;
+    }
 
-int isOverflowed()
-{
-    return memMngr.vtermsOverflow + memMngr.dataOverflow;
+    return 0;
 }
