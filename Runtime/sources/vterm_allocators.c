@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "allocators.h"
+#include "vterm_allocators.h"
+#include "memory_manager.h"
 
 /// Функции выделения vterm'ов без проверок.
 static uint64_t allocateDoubleNum();

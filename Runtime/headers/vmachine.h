@@ -10,11 +10,13 @@
 
 #define BAD_EVAL_EXPR "Can't execute expr in evaluate brackets!"
 #define FUNC_CALL_FAILED "Func call failed!"
+#define MEMORY_OVERFLOW "Memory overflow!"
 
-
-#define CHECK_SUCCESS(val) {if (!val) return 0;}
-
+/// Главный цикл программы.
 void mainLoop(const char*, RefalFunc);
-struct lterm_t* getAssembliedChain(struct lterm_t* oldChain);
+
+/// Выполняет сборку lterm'ов в vterm'ы.
+/// В процессе выполнения могут быть вызваны сборщики мусора vterm'ов и lterm'ов.
+struct lterm_t* gcGetAssembliedChain(struct lterm_t* oldChain);
 
 #endif

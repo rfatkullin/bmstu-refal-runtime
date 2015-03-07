@@ -3,7 +3,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "allocators.h"
+#include "data_allocators.h"
+#include "memory_manager.h"
+
+static struct lterm_t* allocateFragmentLTerm(uint32_t count);
 
 struct lterm_t* allocateBuiltinsResult(uint64_t offset, uint64_t length)
 {
@@ -22,10 +25,15 @@ struct lterm_t* allocateBuiltinsResult(uint64_t offset, uint64_t length)
     return chain;
 }
 
-struct lterm_t* allocateFragmentLTerm(uint32_t count)
-{    
+struct lterm_t* gcAllocateFragmentLTerm(uint32_t count)
+{
     checkAndCleanData(count * (sizeof(struct fragment_t) + sizeof(struct lterm_t)));
 
+    return allocateFragmentLTerm(count);
+}
+
+static struct lterm_t* allocateFragmentLTerm(uint32_t count)
+{
     struct lterm_t* lterm = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += count * sizeof(struct lterm_t);
 

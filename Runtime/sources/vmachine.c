@@ -5,7 +5,8 @@
 #include "func_call.h"
 #include "vmachine.h"
 #include "memory_manager.h"
-#include "allocators.h"
+#include "vterm_allocators.h"
+#include "data_allocators.h"
 
 static void printChainOfCalls(struct lterm_t* callTerm);
 static struct lterm_t* updateFieldOfView(struct lterm_t* mainChain, struct func_result_t* funcResult);
@@ -15,13 +16,13 @@ static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm);
 static void onFuncFail(struct lterm_t** callTerm, int failResult);
 
-// TO FIX:
 static struct v_string* constructVStringFromASCIIName(const char* name)
 {
     struct v_string* ptr = (struct v_string*)malloc(sizeof(struct v_string));
     ptr->length = strlen(name);
     ptr->head = (uint32_t*)malloc(ptr->length * sizeof(uint32_t));
 
+    // USE MEMSET
     uint64_t i = 0;
     for (i = 0; i < ptr->length; ++i)
         ptr->head[i] = name[i];
@@ -227,21 +228,29 @@ static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_r
 	return newCurrNode;
 }
 
-struct lterm_t* getAssembliedChain(struct lterm_t* chain)
-{
+struct lterm_t* gcGetAssembliedChain(struct lterm_t* chain)
+{    
 	struct lterm_t* assembledChain = 0;
 
-	if (chain != 0)
-	{
-		assembledChain = (struct lterm_t*)malloc(sizeof(struct lterm_t));
-		assembledChain->tag = L_TERM_FRAGMENT_TAG;
-		assembledChain->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
-		assembledChain->fragment->offset = memMngr.vtermsOffset;
+    if (chain != 0)
+    {
+        assembledChain = gcAllocateFragmentLTerm(1);
+        assembledChain->fragment->offset = memMngr.vtermsOffset;
 
-		assemblyChain(chain);
+        if(!assemblyChain(chain))
+        {
+            // TO FIX: replace 0
+            collectGarbage(0);
 
-		assembledChain->fragment->length = memMngr.vtermsOffset - assembledChain->fragment->offset;
-	}
+            if (!assemblyChain(chain))
+            {
+                printf("%s\n", MEMORY_OVERFLOW);
+                exit(0);
+            }
+        }
+
+        assembledChain->fragment->length = memMngr.vtermsOffset - assembledChain->fragment->offset;
+    }
 
 	return assembledChain;
 }

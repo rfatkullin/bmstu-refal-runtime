@@ -6,7 +6,7 @@
 
 #include "vmachine.h"
 #include "builtins.h"
-#include "allocators.h"
+#include "data_allocators.h"
 
 #define WRONG_OPERANDS_NUMBER "It's binary operation!"
 #define OPERANDS_TYPES_MISMATCH "Operands must be same type!"
@@ -53,7 +53,7 @@ struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fie
 
 struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
-    struct fragment_t* frag = getAssembliedChain(fieldOfView)->fragment;
+    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
     struct lterm_t* resChain = 0;
 
     if (frag->length != 2)

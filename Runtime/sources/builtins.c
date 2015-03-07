@@ -4,7 +4,7 @@
 #include "vmachine.h"
 #include "builtins.h"
 #include "input.h"
-#include "allocators.h"
+#include "data_allocators.h"
 
 #define N 256
 
@@ -30,7 +30,7 @@ struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
 struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-	struct lterm_t* currExpr = getAssembliedChain(fieldOfView);
+    struct lterm_t* currExpr = gcGetAssembliedChain(fieldOfView);
 
 	printRange(currExpr->fragment);
 
