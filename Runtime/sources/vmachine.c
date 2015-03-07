@@ -5,15 +5,17 @@
 #include "func_call.h"
 #include "vmachine.h"
 #include "memory_manager.h"
+#include "allocators.h"
 
 static void printChainOfCalls(struct lterm_t* callTerm);
 static struct lterm_t* updateFieldOfView(struct lterm_t* mainChain, struct func_result_t* funcResult);
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
-static void assemblyChain(struct lterm_t* chain);
+static int assemblyChain(struct lterm_t* chain);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm);
 static void onFuncFail(struct lterm_t** callTerm, int failResult);
 
+// TO FIX:
 static struct v_string* constructVStringFromASCIIName(const char* name)
 {
     struct v_string* ptr = (struct v_string*)malloc(sizeof(struct v_string));
@@ -33,11 +35,12 @@ static struct func_call_t* ConstructStartFunc(const char* funcName, RefalFunc en
 
 	struct lterm_t* fieldOfView = (struct lterm_t*)malloc(sizeof(struct lterm_t));
 	struct lterm_t* currTerm = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+    struct v_string* ident = constructVStringFromASCIIName(funcName);
 	currTerm->tag = L_TERM_FRAGMENT_TAG;
 	currTerm->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
-    currTerm->fragment->offset = allocateClosure(entryFuncPointer, 0, 0);
+    currTerm->fragment->offset = gcAllocateClosure(entryFuncPointer, 0, ident, 0);
 	currTerm->fragment->length = 1;
-    memMngr.vterms[currTerm->fragment->offset].closure->ident = constructVStringFromASCIIName(funcName);
+    memMngr.vterms[currTerm->fragment->offset].closure->ident = ident;
 
 	fieldOfView->next = currTerm;
 	fieldOfView->prev = currTerm;
@@ -243,33 +246,44 @@ struct lterm_t* getAssembliedChain(struct lterm_t* chain)
 	return assembledChain;
 }
 
-// TO FIX: Пока рекурсивно!
-static void assemblyChain(struct lterm_t* chain)
+static int assemblyChain(struct lterm_t* chain)
 {
-	struct lterm_t* currTerm = chain->next;
-
-
+    struct lterm_t* currTerm = chain->next;
 
     while (currTerm != chain)
-	{
-		switch (currTerm->tag)
-		{
-			case L_TERM_FRAGMENT_TAG :
-                allocateVTerms(currTerm->fragment);
-				break;
+    {
+        switch (currTerm->tag)
+        {
+            case L_TERM_FRAGMENT_TAG :
+            {
+                if (!allocateVTerms(currTerm->fragment))
+                    return 0;
+                break;
+            }
+            case L_TERM_CHAIN_TAG:
+            {
+                if (memMngr.vtermsOffset + 1 > memMngr.vtermsMaxOffset)
+                    return 0;
 
-			case L_TERM_CHAIN_TAG:
-			{
                 uint64_t openBracketOffset = allocateOpenBracketVTerm(0);
-				assemblyChain(currTerm->chain);
-                changeBracketLength(openBracketOffset, memMngr.vtermsOffset - openBracketOffset + 1);
-                allocateCloseBracketVTerm(memMngr.vtermsOffset - openBracketOffset + 1);
-				break;
-			}
-		}
 
-		currTerm = currTerm->next;
-	}
+                if (!assemblyChain(currTerm->chain))
+                    return 0;
+
+                changeBracketLength(openBracketOffset, memMngr.vtermsOffset - openBracketOffset + 1);
+
+                if (memMngr.vtermsOffset + 1 > memMngr.vtermsMaxOffset)
+                    return 0;
+
+                allocateCloseBracketVTerm(memMngr.vtermsOffset - openBracketOffset + 1);
+                break;
+            }
+        }
+
+        currTerm = currTerm->next;
+    }
+
+    return 1;
 }
 
 

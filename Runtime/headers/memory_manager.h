@@ -9,9 +9,8 @@
 
 //Сколько процентов памяти выдялется тому или иному типу данных
 //Память для дерева отрезков берется из памяти для v_term'ов.
-#define V_TERMS_HEAP_SIZE_FACTOR 		0.3f
-#define DATA_HEAP_SIZE_FACTOR 			0.4f
-#define L_TERMS_HEAP_SIZE_FACTOR		0.3f
+#define V_TERMS_HEAP_SIZE_FACTOR 		0.4f
+#define DATA_HEAP_SIZE_FACTOR 			0.6f
 
 struct memory_manager
 {
@@ -21,21 +20,18 @@ struct memory_manager
 	/// Размер выделенного участка
     uint64_t totalSize;
 
-    uint64_t activeOffset;
-    uint64_t inactiveOffset;
+    uint64_t vtActiveOffset;
+    uint64_t vtInactiveOffset;
 
 	struct segment_tree* segmentTree;
 
 	// Указатели на данные
-	uint8_t* dataHeap;
-	uint8_t* activeDataHeap;
-	uint8_t* inactiveDataHeap;
-
-    struct lterm_t* lterms;
+    uint8_t* data;
+    uint64_t dtActiveOffset;
+    uint64_t dtInactiveOffset;
 
     uint64_t vtermsOffset;
-    uint64_t dataOffset;
-    uint64_t ltermsOffset;
+    uint64_t dataOffset;    
 
     uint64_t literalsNumber;
 
@@ -43,10 +39,8 @@ struct memory_manager
     uint64_t segmentLen;
 
 	//Максимальный размер массива vterm'ов.
-    uint64_t vtermsMaxOffset;
-	//Максимальный размер массива lterm'ов.
-    uint64_t ltermsMaxOffset;
-	//Максимальный размр массива данных.
+    uint64_t vtermsMaxOffset;	
+    //Максимальный размер данных.
     uint64_t dataMaxOffset;
 };
 

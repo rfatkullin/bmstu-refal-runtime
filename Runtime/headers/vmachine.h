@@ -11,6 +11,9 @@
 #define BAD_EVAL_EXPR "Can't execute expr in evaluate brackets!"
 #define FUNC_CALL_FAILED "Func call failed!"
 
+
+#define CHECK_SUCCESS(val) {if (!val) return 0;}
+
 void mainLoop(const char*, RefalFunc);
 struct lterm_t* getAssembliedChain(struct lterm_t* oldChain);
 

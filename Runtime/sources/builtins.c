@@ -20,8 +20,7 @@ struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
     uint32_t ch;
     while ((ch = readUTF8Char()) != '\n')
-		allocateSymbol(ch);    
-
+        gcAllocateSymbolVTerm(ch);
 
 	if (firstOffset != memMngr.vtermsOffset)
         mainChain = allocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);

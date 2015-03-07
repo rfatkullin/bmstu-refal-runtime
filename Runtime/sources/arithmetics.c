@@ -123,9 +123,8 @@ static struct lterm_t* constructIntNumLTerm(mpz_t num)
 }
 
 static struct lterm_t* constructDoubleNumLTerm(double val)
-{
-    uint64_t offset = allocateDoubleNum();
-    memMngr.vterms[offset].doubleNum = val;
+{    
+    uint64_t offset = gcAllocateDoubleNumVTerm(val);
 
     return allocateBuiltinsResult(offset, 1);
 }
@@ -145,20 +144,18 @@ static void writeOperand(mpz_t num)
     uint32_t numb = 8 * sizeof(uint8_t);
     uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
 
-    struct v_int* intNum = allocateIntNumber(length);
+    struct v_int* intNum = gcAllocateIntStruct(length);
 
     mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
     intNum->sign = mpz_sgn(num) < 0;
 
-    uint64_t offset = allocateIntNum(1);
-    memMngr.vterms[offset].intNum = intNum;
+    gcAllocateIntNumVTerm(intNum);
 }
 
 /// Вычисляет операнды x и y для бинарной операции.
 /// frag - фрагмент, с помощью которого нужно вычислить операнды.
 static void readIntOperands(mpz_t x, mpz_t y, struct fragment_t* frag)
-{    
-
+{
     struct v_term* term = memMngr.vterms + frag->offset;
 
     readOperand(x, term);

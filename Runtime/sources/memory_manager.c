@@ -10,7 +10,6 @@ static float byte2KByte(uint64_t bytes);
 static void allocateMemoryForSegmentTree(uint64_t termsNumber, uint8_t** pointer);
 static void allocateMemoryForVTerms(uint64_t size, uint8_t** pointer);
 static void allocateMemoryForData(uint64_t size, uint8_t** pointer);
-static void allocateMemoryForLTerms(uint64_t size, uint8_t** pointer);
 
 void initAllocator(uint64_t size)
 {
@@ -24,8 +23,6 @@ void initHeaps(uint64_t segmentLen, uint64_t literalsNumber)
     uint64_t size = memMngr.totalSize - literalsNumber * sizeof(struct v_term);
     uint64_t dataHeapSize = DATA_HEAP_SIZE_FACTOR * size;
     uint64_t vtermsHeapSize = V_TERMS_HEAP_SIZE_FACTOR * size;
-    uint64_t ltermsHeapSize = size - dataHeapSize - vtermsHeapSize;
-
 
 //	printf("\nAllocation size:                      %.2f Kb\n", byte2KByte(size));
 //	printf("\nAllocation ratios and sizes:         Ratio\t   Size\n");
@@ -40,11 +37,9 @@ void initHeaps(uint64_t segmentLen, uint64_t literalsNumber)
 
 	allocateMemoryForVTerms(vtermsHeapSize, &pointer);
 	allocateMemoryForData(dataHeapSize, &pointer);
-	allocateMemoryForLTerms(ltermsHeapSize, &pointer);
 
-	memMngr.vtermsOffset = memMngr.activeOffset;
-	memMngr.dataOffset = 0;
-	memMngr.ltermsOffset = 0;
+    memMngr.vtermsOffset = memMngr.vtActiveOffset;
+    memMngr.dataOffset = memMngr.dtActiveOffset;
 }
 
 static float byte2KByte(uint64_t bytes)
@@ -78,8 +73,8 @@ static void allocateMemoryForSegmentTree(uint64_t termsNumber, uint8_t** pointer
 static void allocateMemoryForVTerms(uint64_t size, uint8_t** pointer)
 {
     uint64_t maxTermsNumber = getTermsMaxNumber(size);
-	memMngr.activeOffset = memMngr.literalsNumber;
-	memMngr.inactiveOffset = memMngr.activeOffset + maxTermsNumber;
+    memMngr.vtActiveOffset = memMngr.literalsNumber;
+    memMngr.vtInactiveOffset = memMngr.vtActiveOffset + maxTermsNumber;
 	memMngr.vtermsMaxOffset = maxTermsNumber - 1;
 	*pointer += memMngr.literalsNumber * sizeof(struct v_term);
 	*pointer += 2 * maxTermsNumber * sizeof(struct v_term);
@@ -93,20 +88,10 @@ static void allocateMemoryForData(uint64_t size, uint8_t** pointer)
 {
     uint64_t singleDataHeapSize = size / 2;
 
-	memMngr.dataHeap = *pointer;
-	memMngr.activeDataHeap = *pointer;
-	memMngr.inactiveDataHeap = *pointer + singleDataHeapSize;
-
+    memMngr.data = *pointer;
+    memMngr.dtActiveOffset = 0;
+    memMngr.dtInactiveOffset = singleDataHeapSize;
 	memMngr.dataMaxOffset = singleDataHeapSize;
 
-	*pointer += size;
-}
-
-//TO FIX: Для CG нужно поделить на две части. --> ltermsMaxOffset уменьшится
-static void allocateMemoryForLTerms(uint64_t size, uint8_t** pointer)
-{
-    memMngr.lterms = (struct lterm_t*)*pointer;
-	*pointer += size;
-
-    memMngr.ltermsMaxOffset = size;
+    *pointer += size;
 }
