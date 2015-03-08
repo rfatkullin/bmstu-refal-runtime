@@ -12,20 +12,26 @@ typedef struct func_result_t (*RefalFunc)(int*, struct env_t*, struct lterm_t*, 
 */
 struct env_t
 {
-	//Переменные внешних функций.
+    // Переменные окружения.
 	struct lterm_t* params;
 
-	//Локальные переменные. Содержимое постоянно изменяется.
+    // Число переменных окружения.
+    uint32_t paramsCount;
+
+    // Локальные переменные. Содержимое постоянно изменяется.
     struct lterm_t* locals;
 
-	//Поля видимости
-	struct lterm_t** _FOVs;
+    // Число необходимых FieldOfView.
+    uint32_t fovsCount;
 
-	//Собранные FOVы
+    // FieldOfView. Каждый элемент - цепочка lterm'ов.
+    struct lterm_t** fovs;
+
+    // Собранные FieldOfView. Каждый элемент - фрагмент.
 	struct lterm_t** assembledFOVs;
 
-	//Какие переменные в шаблонах были удлинены в последний раз. Т.е
-	//указывает какую переменную нужно удлинять.
+    // Какие переменные в шаблонах были удлинены в последний раз. Т.е
+    // указывает какую переменную нужно удлинять.
 	int* stretchVarsNumber;
 };
 

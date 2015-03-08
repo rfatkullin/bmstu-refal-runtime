@@ -103,7 +103,7 @@ struct env_t* gcAllocateEnvData(struct env_t* env, uint32_t localsCount, uint32_
 
     env->locals = allocateFragmentLTerm(localsCount);
 
-    env->_FOVs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
+    env->fovs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += patternsCount * sizeof(struct lterm_t*);
 
     env->assembledFOVs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
@@ -112,7 +112,7 @@ struct env_t* gcAllocateEnvData(struct env_t* env, uint32_t localsCount, uint32_
     env->stretchVarsNumber = (int*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += patternsCount * sizeof(int);
 
-    memset(env->_FOVs, 0, patternsCount * sizeof(struct lterm_t*));
+    memset(env->fovs, 0, patternsCount * sizeof(struct lterm_t*));
     memset(env->assembledFOVs, 0, patternsCount * sizeof(struct lterm_t*));
     memset(env->stretchVarsNumber, 0, patternsCount * sizeof(int));
 

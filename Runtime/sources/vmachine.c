@@ -181,6 +181,7 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
 
     RefalFunc newFuncPointer = closure->funcPtr;
     callTerm->funcCall->env->params = closure->params;
+    callTerm->funcCall->env->paramsCount = closure->paramsCount;
     callTerm->funcCall->rollback = closure->rollback;
 
 //    struct v_string* ident = memMngr.vterms[fieldOfView->next->fragment->offset].closure->ident;

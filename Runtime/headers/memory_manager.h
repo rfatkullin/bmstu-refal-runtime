@@ -5,7 +5,6 @@
 
 #include "vterm.h"
 #include "lterm.h"
-#include "segment_tree.h"
 
 //Сколько процентов памяти выдялется тому или иному типу данных
 //Память для дерева отрезков берется из памяти для v_term'ов.
@@ -16,34 +15,34 @@ struct memory_manager
 {
 	// Указатель на начало vterm'ов
 	struct v_term* vterms;
-
-	/// Размер выделенного участка
-    uint64_t totalSize;
-
     uint64_t vtActiveOffset;
     uint64_t vtInactiveOffset;
-
-	struct segment_tree* segmentTree;
 
 	// Указатели на данные
     uint8_t* data;
     uint64_t dtActiveOffset;
     uint64_t dtInactiveOffset;
 
+    // Текущие сдвиги
     uint64_t vtermsOffset;
     uint64_t dataOffset;    
 
-    uint64_t literalsNumber;
+    // Вспомогательный массив для GC. Отмечаются использованные vterm'ы.
+    uint8_t* gcInUseVTerms;
 
-	//Количество элементов в листе дерева отрезков.
-    uint64_t segmentLen;
+    // Начиная с какого vterm'а начинаются не литеральные vterm'ы в массиве vterms
+    uint64_t vtermsBeginOffset;
 
-	//Максимальный размер массива vterm'ов.
+    // Максимальный размер массива vterm'ов.
     uint64_t vtermsMaxOffset;	
-    //Максимальный размер данных.
+
+    // Максимальный размер данных.
     uint64_t dataMaxOffset;
 
-    //Флаги переполнения хипов
+    // Размер выделенного участка
+    uint64_t totalSize;
+
+    // Флаги переполнения хипов
     int vtermsOverflow;
     int dataOverflow;
 };
@@ -57,7 +56,7 @@ void initAllocator(uint64_t size);
 
 /// Распределеяет память для типов данных
 /// т.е. инциализирует поля activeTermsHeap, inactiveTermsHeap и т.д.
-void initHeaps(uint64_t segmentLen, uint64_t literalsNumber);
+void initHeaps(uint64_t literalsNumber);
 
 /// Собирает мусор.
 void collectGarbage(struct lterm_t* expr);
