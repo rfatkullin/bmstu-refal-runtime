@@ -21,6 +21,9 @@ struct env_t
     // Локальные переменные. Содержимое постоянно изменяется.
     struct lterm_t* locals;
 
+    // Число локальных переменных.
+    uint32_t localsCount;
+
     // Число необходимых FieldOfView.
     uint32_t fovsCount;
 

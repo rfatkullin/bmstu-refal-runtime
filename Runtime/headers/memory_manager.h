@@ -64,5 +64,7 @@ void collectGarbage(struct lterm_t* expr);
 /// Дебажный вывод vterm
 void debugLiteralsPrint();
 
+void collectVTermGarbage();
+void collectDataGarbage();
 
 #endif

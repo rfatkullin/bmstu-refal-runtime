@@ -9,6 +9,8 @@
 #define L_TERM_CHAIN_TAG	1
 #define L_TERM_FUNC_CALL	2
 
+#define GC_MOVED            3
+
 struct lterm_t;
 struct lterm_chain_t;
 

@@ -7,10 +7,6 @@
 #include "memory_manager.h"
 #include "helpers.h"
 
-static struct lterm_t* allocateFragmentLTerm(uint32_t count);
-static struct lterm_t* allocateChainLTerm(uint32_t count);
-static struct lterm_t* allocateFuncCallLTerm();
-
 struct lterm_t* chAllocateFuncCallLTerm(allocate_result* res)
 {
     uint64_t needDataSize = sizeof(struct func_call_t) + sizeof(struct env_t) + sizeof(struct lterm_t);
@@ -101,6 +97,11 @@ struct env_t* gcAllocateEnvData(struct env_t* env, uint32_t localsCount, uint32_
                             patternsCount * sizeof(struct lterm_t*) +
                             patternsCount * sizeof(int));
 
+    return allocateEnvData(env, localsCount, patternsCount);
+}
+
+struct env_t* allocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount)
+{
     env->locals = allocateFragmentLTerm(localsCount);
 
     env->fovs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
@@ -111,6 +112,9 @@ struct env_t* gcAllocateEnvData(struct env_t* env, uint32_t localsCount, uint32_
 
     env->stretchVarsNumber = (int*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += patternsCount * sizeof(int);
+
+    env->localsCount = localsCount;
+    env->fovsCount = patternsCount;
 
     memset(env->fovs, 0, patternsCount * sizeof(struct lterm_t*));
     memset(env->assembledFOVs, 0, patternsCount * sizeof(struct lterm_t*));
@@ -165,7 +169,7 @@ struct lterm_t* allocateBuiltinsResult(uint64_t offset, uint64_t length)
     return chain;
 }
 
-static struct lterm_t* allocateFragmentLTerm(uint32_t count)
+struct lterm_t* allocateFragmentLTerm(uint32_t count)
 {
     struct lterm_t* lterm = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += count * sizeof(struct lterm_t);
@@ -187,7 +191,7 @@ static struct lterm_t* allocateFragmentLTerm(uint32_t count)
     return head;
 }
 
-static struct lterm_t* allocateFuncCallLTerm()
+struct lterm_t* allocateFuncCallLTerm()
 {
     struct lterm_t* lterm = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset +=  sizeof(struct lterm_t);
@@ -205,7 +209,7 @@ static struct lterm_t* allocateFuncCallLTerm()
     return lterm;
 }
 
-static struct lterm_t* allocateChainLTerm(uint32_t count)
+struct lterm_t* allocateChainLTerm(uint32_t count)
 {
     struct lterm_t* lterm = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += 2 * count * sizeof(struct lterm_t);
