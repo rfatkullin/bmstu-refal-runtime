@@ -1,0 +1,11 @@
+$ENTRY Go
+{
+	= <Prout <Eq 3.128945 3.128945>> <Prout <Eq 2.0 2.1>> <Prout <Eq>>
+}
+
+Eq
+{
+	s.1 s.1 = True;
+	e.1 = False
+}
+

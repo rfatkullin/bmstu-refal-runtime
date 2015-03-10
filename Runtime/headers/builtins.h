@@ -16,6 +16,8 @@ struct func_result_t Mul(int* entryPoint, struct env_t* env, struct lterm_t* fie
 struct func_result_t Div(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 
+int doubleCmp(double a, double b);
+
 /// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
 int UStrCmp(struct v_string* a, struct v_string* b);
 

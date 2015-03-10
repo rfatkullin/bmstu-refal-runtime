@@ -16,6 +16,8 @@
 #define BAD_BINARY_OPERATION "Unknown binary operation"
 #define MOD_TO_DOUBLE_ERROR "Can't applay mod operation to double!"
 
+#define EPS 1e-6
+
 typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
 
 static struct lterm_t* constructIntNumLTerm(mpz_t num);
@@ -52,7 +54,18 @@ struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fie
 	return  applyOp(mpz_mod, entryPoint, env, fieldOfView);
 }
 
-struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+int doubleCmp(double a, double b)
+{
+    if (b + EPS < a)
+        return 1;
+
+    if (a + EPS < b)
+        return -1;
+
+    return 0;
+}
+
+static struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
     struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
     struct lterm_t* resChain = 0;

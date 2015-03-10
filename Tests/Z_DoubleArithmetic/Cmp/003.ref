@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Prout <Func 12.232 Hello>>
+}
+
+Func
+{
+	12.232 s.1 = Success
+}
+

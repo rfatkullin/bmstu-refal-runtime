@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "builtins.h"
 
 #define UNI_MAX_LEGAL_UTF32 (uint32_t)0x0010FFFF
