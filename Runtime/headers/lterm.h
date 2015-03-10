@@ -11,6 +11,22 @@
 
 #define GC_MOVED            3
 
+#define ADD_TO_CHAIN(chain, term)   \
+do{                                 \
+    chain->prev->next = term;       \
+    term->prev = chain->prev;       \
+    chain->prev = term;             \
+    term->next = chain;             \
+}while(0)
+
+#define CONCAT_CHAINS(a, b)         \
+{                                   \
+    a->prev->next = b->prev->next;  \
+    b->prev->next = a->next;        \
+    a->next->prev = b->prev;        \
+    b->prev = a->prev;              \
+}while(0)
+
 struct lterm_t;
 struct lterm_chain_t;
 

@@ -8,9 +8,19 @@
 #define ROLL_BACK       1
 #define NEXT_ENTRYPOINT	2
 
-#define BAD_EVAL_EXPR "Can't execute expr in evaluate brackets!"
-#define FUNC_CALL_FAILED "Func call failed!"
-#define MEMORY_OVERFLOW "Memory overflow!"
+#define BAD_EVAL_EXPR       "Can't execute expr in evaluate brackets!"
+#define FUNC_CALL_FAILED    "Func call failed!"
+#define MEMORY_OVERFLOW     "Memory overflow!"
+
+#define ALLOCATE_CHECK(var, expr, statusVar)    \
+do{                                             \
+    var = expr;                                 \
+    if (statusVar == NEED_CLEAN)                \
+    {                                           \
+        statusVar = 0;                          \
+        continue;                               \
+    }                                           \
+}while(0)
 
 /// Главный цикл программы.
 void mainLoop(const char*, RefalFunc);
