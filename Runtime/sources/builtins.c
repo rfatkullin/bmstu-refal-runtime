@@ -119,19 +119,36 @@ int UStrCmp(struct v_string* a, struct v_string* b)
 }
 
 /// Проверка на равенство двух чисел. 1 - успех, 0 - неудача.
-int IntCmp(struct v_int* a, struct v_int* b)
+int intCmp(struct v_int* a, struct v_int* b)
 {
-    if (a->length != b->length || a->sign != b->sign)
-        return 0;
+    int invert = 1;
+
+    if (a->sign > b->sign)
+        return -1;
+
+    if (a->sign < b->sign)
+        return 1;
+
+    if (a->sign)
+        invert = -1;
+
+    if (a->length > b->length)
+        return 1 * invert;
+
+    if (a->length < b->length)
+        return -1 * invert;
 
     uint64_t i = 0;
     for (i = 0; i < a->length; ++i)
     {
-        if (a->bytes[i] != b->bytes[i])
-            return 0;
+        if (a->bytes[i] > b->bytes[i])
+            return 1 * invert;
+
+        if (a->bytes[i] < b->bytes[i])
+            return -1 * invert;
     }
 
-    return 1;
+    return 0;
 }
 
 void printUStr(struct v_string* str)
