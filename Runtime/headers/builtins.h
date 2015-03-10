@@ -1,7 +1,6 @@
 #ifndef __BUILTINS_H__
 #define __BUILTINS_H__
 
-#include <unicode/ustdio.h>
 #include <gmp.h>
 
 #include "lterm.h"
