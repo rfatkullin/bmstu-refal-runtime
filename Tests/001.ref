@@ -1,0 +1,12 @@
+$ENTRY Go
+{
+	= <Prout<Func Q>>
+}
+
+
+Func
+{
+	s.1 s.1 = 'Bad!!!';
+	= 'Bad!!!';
+ 	e.1 = Success
+}
