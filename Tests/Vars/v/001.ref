@@ -1,0 +1,12 @@
+$ENTRY Go
+{
+	= <Prout <Func Hello>>
+}
+
+Func
+{
+	v.1 = v.1
+}
+
+
+
