@@ -91,7 +91,7 @@ static void printSymbol(struct v_term* term)
         printf("%lf ", term->doubleNum);
 		break;
     case V_CLOSURE_TAG:
-		//TO DO
+        printUStr(term->closure->ident);
 		break;
     case V_BRACKET_OPEN_TAG:
         printf("%c", '(' );
@@ -103,8 +103,11 @@ static void printSymbol(struct v_term* term)
 }
 
 /// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
-int UStrCmp(struct v_string* a, struct v_string* b)
+int ustrEq(struct v_string* a, struct v_string* b)
 {
+    if (!a || !b)
+        return 0;
+
     if (a->length != b->length)
         return 0;
 
@@ -153,6 +156,9 @@ int intCmp(struct v_int* a, struct v_int* b)
 
 void printUStr(struct v_string* str)
 {
+    if (!str)
+        return;
+
     uint64_t i = 0;
 
     for (i = 0; i < str->length; ++i)

@@ -19,9 +19,9 @@ struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fie
 int doubleCmp(double a, double b);
 
 /// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
-int UStrCmp(struct v_string* a, struct v_string* b);
+int ustrEq(struct v_string* a, struct v_string* b);
 
-/// Проверка на равенство двух чисел. 1 - успех, 0 - неудача.
+/// Проверка на равенство двух чисел. 1: a > b, -1 a < b, 0 a == b
 int intCmp(struct v_int* a, struct v_int* b);
 
 /// Вывод Unicode строки.

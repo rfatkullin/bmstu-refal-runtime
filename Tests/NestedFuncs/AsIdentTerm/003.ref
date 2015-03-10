@@ -1,0 +1,17 @@
+$ENTRY Go
+{
+	= <Prout<Func2<Func1>>>
+}
+
+Func1
+{
+	= $FUNC MyNestedFunc { = }
+}
+
+Func2
+{
+	s.1 e.1 = Success s.1
+}
+
+
+

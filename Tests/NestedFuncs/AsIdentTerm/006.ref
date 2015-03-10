@@ -1,0 +1,18 @@
+$ENTRY Go
+{
+	= <Prout<Func2 'Func name: ' <Func1> '!!!' Delimeter Abra>>
+}
+
+Func1
+{
+	= $FUNC MyNestedFunc { = }
+}
+
+Func2
+{
+	e.1 Delimeter e.2 = e.1
+}
+
+
+
+
