@@ -65,18 +65,11 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
     to->env = copyEnv(from->env, to->env);
     to->subCall = copyChainLTerm(from->subCall);
 
-    // TO FIX: Кажется, поля parentCall и next одно и то же.
     if (from->next->tag != GC_MOVED)
     {
         printf("[Warn]: Strange situation");
         to->next = copyFuncCallLTerm(from->next);
-    }
-
-    if (from->parentCall->tag != GC_MOVED)
-    {
-        printf("[Warn]: Strange situation");
-        to->parentCall = copyFuncCallLTerm(from->parentCall);
-    }
+    }    
 
     newTerm->tag = L_TERM_FUNC_CALL;
     oldTerm->tag = GC_MOVED;
