@@ -5,15 +5,15 @@
 #include "memory_manager.h"
 #include "data_allocators.h"
 
-void collectGarbage(struct lterm_t* fieldOfView)
+void collectGarbage()
 {
     clock_t start, end;
     printf("Start garbage collection.\n");
     start = clock();
 
-    collectVTermGarbage(fieldOfView);
+    collectVTermGarbage(memMngr.fieldOfView);
 
-    copyChainLTerm(fieldOfView);
+    copyChainLTerm(memMngr.fieldOfView);
 
     end = clock();
 

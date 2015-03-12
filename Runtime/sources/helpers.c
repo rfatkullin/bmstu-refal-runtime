@@ -20,10 +20,8 @@ int checkAndCleanVTerms(uint64_t needVTermsCount)
     int collected = 0;
 
     if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
-    {
-        memMngr.vtermsOverflow = 1;
-        //TO FIX: Передать корень FOV.
-        collectGarbage(0);
+    {        
+        collectGarbage();
         collected = 1;
     }
 
@@ -38,10 +36,8 @@ int checkAndCleanData(uint64_t needDataSize)
     int collected = 0;
 
     if (memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
-    {
-        memMngr.dataOverflow = 1;
-        //TO FIX: Передать корень FOV.
-        collectGarbage(0);
+    {        
+        collectGarbage();
         collected = 1;
     }
 
@@ -54,22 +50,10 @@ int checkAndCleanData(uint64_t needDataSize)
 
 int checkVTermsOverflow(uint64_t needVTermsCount)
 {
-    if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
-    {
-        memMngr.vtermsOverflow = 1;
-        return 1;
-    }
-
-    return 0;
+    return memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset;
 }
 
 int checkDataOverflow(uint64_t needDataSize)
 {
-    if (memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
-    {
-        memMngr.dataOverflow = 1;
-        return 1;
-    }
-
-    return 0;
+    return memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset;
 }

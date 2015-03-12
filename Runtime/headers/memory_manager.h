@@ -42,9 +42,8 @@ struct memory_manager
     // Размер выделенного участка
     uint64_t totalSize;
 
-    // Флаги переполнения хипов
-    int vtermsOverflow;
-    int dataOverflow;
+    // Поле зрения
+    struct lterm_t* fieldOfView;
 };
 
 struct memory_manager memMngr;
@@ -59,7 +58,7 @@ void initAllocator(uint64_t size);
 void initHeaps(uint64_t literalsNumber);
 
 /// Собирает мусор.
-void collectGarbage(struct lterm_t* expr);
+void collectGarbage();
 
 /// Дебажный вывод vterm
 void debugLiteralsPrint();

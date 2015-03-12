@@ -77,8 +77,8 @@ static struct lterm_t* ConstructStartFieldOfView(const char* funcName, RefalFunc
 
 void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 {
-	struct lterm_t* fieldOfView = ConstructStartFieldOfView(entryFuncName, entryFuncPointer);
-	struct lterm_t* callTerm = fieldOfView;
+    memMngr.fieldOfView = ConstructStartFieldOfView(entryFuncName, entryFuncPointer);
+    struct lterm_t* callTerm = memMngr.fieldOfView;
 	struct func_result_t funcRes;    
     struct lterm_t* parentCall = 0;
     int entryStatus = 0;
@@ -240,9 +240,8 @@ struct lterm_t* gcGetAssembliedChain(struct lterm_t* chain)
         assembledChain->fragment->offset = memMngr.vtermsOffset;
 
         if(!assemblyChain(chain))
-        {
-            // TO FIX: replace 0
-            collectGarbage(0);
+        {            
+            collectGarbage();
 
             if (!assemblyChain(chain))
             {

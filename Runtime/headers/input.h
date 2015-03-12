@@ -9,4 +9,10 @@ uint32_t readUTF8Char();
 /// Print UTF32 char as UTF8 char
 void printUTF32 (uint32_t ch);
 
+#define MAX_FILE_DESCR  20
+#define READ_MODE       1
+#define WRITE_MODE      2
+
+int openedFiles[MAX_FILE_DESCR];
+
 #endif

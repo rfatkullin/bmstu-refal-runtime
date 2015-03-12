@@ -29,9 +29,7 @@ void initHeaps(uint64_t literalsNumber)
 	allocateMemoryForData(dataHeapSize, &pointer);
 
     memMngr.vtermsOffset = memMngr.vtActiveOffset;
-    memMngr.dataOffset = memMngr.dtActiveOffset;
-    memMngr.vtermsOverflow = 0;
-    memMngr.dataOverflow = 0;
+    memMngr.dataOffset = memMngr.dtActiveOffset;    
 }
 
 // Значение n выводится из формулы:

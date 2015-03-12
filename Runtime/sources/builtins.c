@@ -42,6 +42,76 @@ struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fi
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
 }
 
+struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+    struct lterm_t* currExpr = gcGetAssembliedChain(fieldOfView);
+
+	printRange(currExpr->fragment);
+
+	return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
+}
+
+/*
+struct func_result_t Open(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+
+    if (frag->length < 2)
+    {
+        printf("%s\n", TOO_FEW_ARGUMENTS);
+        exit(0);
+    }
+
+    if (memMngr.vterms[frag->offset].tag != V_CHAR_TAG)
+    {
+        printf("%s Expected 'W','w', 'R' or 'r'\n", BAD_ARGUMENTS);
+        exit(0);
+    }
+
+    int mode = -1;
+    switch (memMngr.vterms[frag->offset].tag)
+    {
+        case 'w':
+        case 'W':
+            mode = WRITE_MODE;
+            break;
+
+        case 'r':
+        case 'R':
+            mode = READ_MODE;
+           break;
+
+        default:
+            printf("%s Expected 'W','w', 'R' or 'r'\n", BAD_ARGUMENTS);
+            exit(0);
+    }
+
+    if (memMngr.vterms[frag->offset + 1].tag != V_INT_NUM_TAG)
+    {
+        printf("%s Expected descr number less than %d\n", BAD_ARGUMENTS, MAX_FILE_DESCR);
+        exit(0);
+    }
+
+    uint8_t fileDescr = 0;
+    if (!converToFileDescr(memMngr.vterms[frag->offset + 1].intNum, &fileDescr))
+    {
+        printf("%s Expected descr number less than %d\n", BAD_ARGUMENTS, MAX_FILE_DESCR);
+        exit(0);
+    }
+
+
+}
+
+struct func_result_t Get(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+
+}
+
+struct func_result_t Put(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+
+}
+*/
 static uint64_t copySymbols(uint64_t first, uint64_t length)
 {
     uint64_t firstOffset = memMngr.vtermsOffset;
@@ -51,15 +121,6 @@ static uint64_t copySymbols(uint64_t first, uint64_t length)
         allocateSymbolVTerm(memMngr.vterms[first + i]);
 
     return firstOffset;
-}
-
-struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
-{
-    struct lterm_t* currExpr = gcGetAssembliedChain(fieldOfView);
-
-	printRange(currExpr->fragment);
-
-	return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
 
 static void printRange(struct fragment_t* frag)

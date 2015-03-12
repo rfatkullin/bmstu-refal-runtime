@@ -65,6 +65,16 @@ int doubleCmp(double a, double b)
     return 0;
 }
 
+int converToFileDescr(struct v_int* bigInt, uint8_t* descr)
+{
+    if (bigInt->sign || bigInt->length > 1)
+        return 0;
+
+    *descr = *bigInt->bytes;
+
+    return 1;
+}
+
 static struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
     struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
