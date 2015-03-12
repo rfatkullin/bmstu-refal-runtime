@@ -7,8 +7,15 @@
 #include "memory_manager.h"
 #include "func_call.h"
 
+#define MAX_FILE_DESCR  20
+#define READ_MODE       1
+#define WRITE_MODE      2
+
 #define TOO_FEW_ARGUMENTS   "Too few arguments to function!"
 #define BAD_ARGUMENTS        "Bad argments!"
+
+// Дескрипторы файлов.
+int openedDescrs[MAX_FILE_DESCR];
 
 struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);

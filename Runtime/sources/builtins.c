@@ -3,7 +3,7 @@
 
 #include "vmachine.h"
 #include "builtins.h"
-#include "input.h"
+#include "unicode_io.h"
 #include "data_allocators.h"
 
 #define N 256
