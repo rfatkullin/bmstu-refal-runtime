@@ -3,9 +3,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "data_allocators.h"
-#include "memory_manager.h"
-#include "helpers.h"
+#include <memory_manager.h>
+#include <allocators/data_alloc.h>
 
 struct lterm_t* chAllocateFuncCallLTerm(allocate_result* res)
 {

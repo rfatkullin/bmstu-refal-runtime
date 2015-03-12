@@ -4,11 +4,10 @@
 
 #include <gmp.h>
 
-#include "vmachine.h"
-#include "builtins.h"
-#include "data_allocators.h"
-#include "vterm_allocators.h"
-#include "helpers.h"
+#include <vmachine.h>
+#include <builtins/builtins.h>
+#include <allocators/data_alloc.h>
+#include <allocators/vterm_alloc.h>
 
 #define WRONG_OPERANDS_NUMBER "It's binary operation!"
 #define OPERANDS_TYPES_MISMATCH "Operands must be same type!"

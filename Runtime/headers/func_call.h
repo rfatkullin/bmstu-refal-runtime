@@ -1,7 +1,7 @@
 #ifndef __F_CALL_H__
 #define __F_CALL_H__
 
-#include "func_result.h"
+#include <func_result.h>
 
 struct env_t;
 

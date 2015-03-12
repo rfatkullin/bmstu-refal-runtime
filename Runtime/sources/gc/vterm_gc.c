@@ -2,8 +2,8 @@
 #include <time.h>
 #include <string.h>
 
-#include "memory_manager.h"
-#include "data_allocators.h"
+#include <memory_manager.h>
+#include <allocators/data_alloc.h>
 
 static void copyVTerms();
 static void processChainVTerms(struct lterm_t* expr);

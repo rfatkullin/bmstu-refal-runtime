@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "builtins.h"
+#include <builtins/builtins.h>
 
 #define UNI_MAX_LEGAL_UTF32 (uint32_t)0x0010FFFF
 #define UNI_SUR_HIGH_START  (uint32_t)0xD800

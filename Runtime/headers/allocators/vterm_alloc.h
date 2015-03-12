@@ -1,8 +1,8 @@
 #ifndef __V_TERM_ALLOCATORS_H__
 #define __V_TERM_ALLOCATORS_H__
 
-#include "vterm.h"
-#include "helpers.h"
+#include <vterm.h>
+#include <gc/gc.h>
 
 /// Выделяют память в хипе vterm'ов
 /// Статус выполнения возвращается в аргументе res.
@@ -27,5 +27,8 @@ uint64_t allocateSymbolVTerm(uint32_t ch);
 
 /// Копирует термы из фрагмента в новую область.
 int allocateVTerms(struct fragment_t* fragment_t);
+
+/// Изменяет длину выражения в скобках.
+void changeBracketLength(uint64_t offset, uint64_t newLength);
 
 #endif

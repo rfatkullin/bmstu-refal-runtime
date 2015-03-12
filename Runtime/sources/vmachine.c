@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "func_call.h"
-#include "vmachine.h"
-#include "memory_manager.h"
-#include "vterm_allocators.h"
-#include "data_allocators.h"
+#include <func_call.h>
+#include <vmachine.h>
+#include <memory_manager.h>
+#include <allocators/vterm_alloc.h>
+#include <allocators/data_alloc.h>
 
 static void printChainOfCalls(struct lterm_t* callTerm);
 static struct lterm_t* updateFieldOfView(struct lterm_t* mainChain, struct func_result_t* funcResult);

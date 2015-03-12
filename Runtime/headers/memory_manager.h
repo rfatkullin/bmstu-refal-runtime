@@ -57,13 +57,7 @@ void initAllocator(uint64_t size);
 /// т.е. инциализирует поля activeTermsHeap, inactiveTermsHeap и т.д.
 void initHeaps(uint64_t literalsNumber);
 
-/// Собирает мусор.
-void collectGarbage();
-
 /// Дебажный вывод vterm
 void debugLiteralsPrint();
-
-void collectVTermGarbage();
-void collectDataGarbage();
 
 #endif

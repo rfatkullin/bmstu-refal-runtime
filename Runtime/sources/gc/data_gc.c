@@ -2,8 +2,8 @@
 #include <time.h>
 #include <string.h>
 
-#include "memory_manager.h"
-#include "data_allocators.h"
+#include <memory_manager.h>
+#include <allocators/data_alloc.h>
 
 static struct lterm_t* copyFuncCallLTerm(struct lterm_t* term);
 static struct lterm_t* copyFragmentLTerm(struct lterm_t* term);

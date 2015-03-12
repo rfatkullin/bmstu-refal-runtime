@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "vmachine.h"
-#include "builtins.h"
-#include "unicode_io.h"
-#include "data_allocators.h"
+#include <vmachine.h>
+#include <builtins/builtins.h>
+#include <builtins/unicode_io.h>
+#include <allocators/data_alloc.h>
 
 #define N 256
 

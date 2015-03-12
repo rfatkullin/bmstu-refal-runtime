@@ -3,9 +3,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "data_allocators.h"
-#include "vterm_allocators.h"
-#include "memory_manager.h"
+#include <allocators/data_alloc.h>
+#include <allocators/vterm_alloc.h>
+#include <memory_manager.h>
 
 /// Функции выделения vterm'ов без проверок.
 static uint64_t allocateClosureVterm();

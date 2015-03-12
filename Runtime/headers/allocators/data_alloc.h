@@ -1,9 +1,9 @@
 #ifndef __DATA_ALLOCATORS_H___
 #define __DATA_ALLOCATORS_H___
 
-#include "lterm.h"
-#include "vterm.h"
-#include "helpers.h"
+#include <lterm.h>
+#include <vterm.h>
+#include <gc/gc.h>
 
 #define VINT_STRUCT_SIZE(length)        (sizeof(struct v_int) + length)
 #define FRAGMENT_LTERM_SIZE(count)      (count * (sizeof(struct lterm_t) + sizeof(struct fragment_t)))
