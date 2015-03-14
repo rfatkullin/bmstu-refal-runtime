@@ -10,55 +10,61 @@
 #include <builtins/unicode_io.h>
 #include <allocators/data_alloc.h>
 
-
-#define N 256
-
-static void printRange(struct fragment_t* frag);
-static void printSymbol(struct v_term* term);
+static void printRange(FILE* file, struct fragment_t* frag);
+static void printSymbol(FILE* file, struct v_term* term);
 static void printUnicodeChar(uint32_t ch);
-static void printIntNumber(struct v_int* num);
+static void printIntNumber(FILE* file, struct v_int* intNum);
 static uint64_t copySymbols(uint64_t first, uint64_t length);
 static char* getFileName();
 static char* assemblyFileName(struct fragment_t* frag);
-static void openFile(struct fragment_t* frag, const char* modeStr, uint8_t mode);
-static void findOutOpenMode(struct fragment_t* frag, const char** modeStr, uint8_t* mode);
+static void openFile(struct fragment_t* frag, uint8_t mode, uint8_t descr);
 static uint64_t calcNeedBytesCount(struct fragment_t* frag);
+static uint8_t calcOpenMode(struct fragment_t* frag);
+static uint8_t calcDescr(struct fragment_t* frag);
+static void openDefaultFile(uint8_t descr, uint8_t mode);
+static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr);
+static void _put(struct lterm_t* fieldOfView);
+static struct func_result_t _get(FILE* file);
 
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-    uint64_t firstOffset = memMngr.vtermsOffset;
-    uint64_t currOffset =  memMngr.vtermsOffset;
-	struct lterm_t* mainChain = 0;
+    return _get(stdin);
+}
 
-    checkAndCleanData(BUILTINS_RESULT_SIZE);
+struct func_result_t Get(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
 
-    uint32_t ch;
-    while ((ch = readUTF8Char()) != '\n')
-    {
-        if (checkAndCleanVTerms(1))
-        {
-            uint64_t length = currOffset - firstOffset + 1;
-            strictCheckVTermsOverflow(length + 1);
-            firstOffset = copySymbols(firstOffset, currOffset - firstOffset);
-            currOffset = memMngr.vtermsOffset;
-        }
-        allocateSymbolVTerm(ch);
-        currOffset++;
-    }
+    if (frag->length != 1)
+        PRINT_AND_EXIT(GET_WRONG_ARG_NUM);
 
-	if (firstOffset != memMngr.vtermsOffset)
-        mainChain = allocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);
+    uint8_t descr = calcDescr(frag);
 
-	return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
+    if (!descr)
+        return _get(stdin);
+
+    if (!files[descr].file)
+        openDefaultFile(descr, READ_MODE);
+
+    return _get(files[descr].file);
 }
 
 struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
     struct lterm_t* currExpr = gcGetAssembliedChain(fieldOfView);
 
-	printRange(currExpr->fragment);
+    printRange(stdout, currExpr->fragment);
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
+}
+
+struct func_result_t Print(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+    struct lterm_t* currExpr = gcGetAssembliedChain(fieldOfView);
+
+    printRange(stdout, currExpr->fragment);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = fieldOfView, .callChain = 0};
 }
 
 struct func_result_t Open(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
@@ -71,29 +77,87 @@ struct func_result_t Open(int* entryPoint, struct env_t* env, struct lterm_t* fi
     if (memMngr.vterms[frag->offset].tag != V_CHAR_TAG)
         PRINT_AND_EXIT(BAD_FILE_OPEN_MODE);
 
-    const char* modeStr = 0;
-    uint8_t mode = 0;
+    uint8_t mode = calcOpenMode(frag);
+    uint8_t descr = calcDescr(frag);
 
-    findOutOpenMode(frag, &modeStr, &mode);
-    openFile(frag, modeStr, mode);
+    openFile(frag, mode, descr);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
 
-static void findOutOpenMode(struct fragment_t* frag, const char** modeStr, uint8_t* mode)
+struct func_result_t Put(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-    switch (memMngr.vterms[frag->offset].tag)
+    _put(fieldOfView);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = fieldOfView, .callChain = 0};
+}
+
+struct func_result_t Putout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+    _put(fieldOfView);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
+}
+
+static struct func_result_t _get(FILE* file)
+{
+    uint64_t firstOffset = memMngr.vtermsOffset;
+    uint64_t currOffset =  memMngr.vtermsOffset;
+    struct lterm_t* mainChain = 0;
+
+    checkAndCleanData(BUILTINS_RESULT_SIZE);
+
+    uint32_t ch;
+    while ((ch = readUTF8Char(file)) != '\n')
+    {
+        if (checkAndCleanVTerms(1))
+        {
+            uint64_t length = currOffset - firstOffset + 1;
+            strictCheckVTermsOverflow(length + 1);
+            firstOffset = copySymbols(firstOffset, currOffset - firstOffset);
+            currOffset = memMngr.vtermsOffset;
+        }
+        allocateSymbolVTerm(ch);
+        currOffset++;
+    }
+
+    if (firstOffset != memMngr.vtermsOffset)
+        mainChain = allocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
+}
+
+static void _put(struct lterm_t* fieldOfView)
+{
+    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+
+    if (frag->length < 1)
+        PRINT_AND_EXIT(TOO_FEW_ARGUMENTS);
+
+    uint8_t descr = calcDescr(frag);
+
+    if (!descr)
+        printRange(stdout, frag);
+    else if (!files[descr].file)
+        openDefaultFile(descr, WRITE_MODE);
+
+    printRange(files[descr].file, frag);
+}
+
+static uint8_t calcOpenMode(struct fragment_t* frag)
+{
+    uint8_t mode;
+
+    switch (memMngr.vterms[frag->offset].ch)
     {
         case 'w':
-        case 'W':
-            *modeStr = WRITE_MODE_STR;
-            *mode = WRITE_MODE;
+        case 'W':            
+            mode = WRITE_MODE;
             break;
 
         case 'r':
-        case 'R':
-            *modeStr = READ_MODE_STR;
-            *mode = READ_MODE;
+        case 'R':            
+            mode = READ_MODE;
            break;
 
         default:
@@ -102,9 +166,11 @@ static void findOutOpenMode(struct fragment_t* frag, const char** modeStr, uint8
 
     frag->offset++;
     frag->length--;
+
+    return mode;
 }
 
-static void openFile(struct fragment_t* frag, const char* modeStr, uint8_t mode)
+static uint8_t calcDescr(struct fragment_t* frag)
 {
     if (memMngr.vterms[frag->offset].tag != V_INT_NUM_TAG)
         FMT_PRINT_AND_EXIT(BAD_ARGUMENTS, MAX_FILE_DESCR);
@@ -116,22 +182,50 @@ static void openFile(struct fragment_t* frag, const char* modeStr, uint8_t mode)
     if (files[descr].file)
         FMT_PRINT_AND_EXIT(DESCR_ALREADY_IN_USE, descr);
 
+    if (descr == 0)
+        FMT_PRINT_AND_EXIT(TRY_TO_TAKE_TERMINAL_DESCR, MAX_FILE_DESCR);
+
+    frag->offset++;
+    frag->length--;
+
+    return descr;
+}
+
+static void openFile(struct fragment_t* frag, uint8_t mode, uint8_t descr)
+{
     char* fileName = 0;
     fileName = assemblyFileName(frag);
 
     if (!fileName)
     {
-        fileName = (char*)malloc(PATTERN_FILE_NAME_LENGHT);
-        snprintf(fileName, PATTERN_FILE_NAME_LENGHT, FILE_NAME_PATTERN, descr);
+        openDefaultFile(descr, mode);
+        return;
     }
 
-    files[descr].file = fopen(fileName, modeStr);
+    openFileWithName(fileName, mode, descr);
+
+    free(fileName);
+}
+
+static void openDefaultFile(uint8_t descr, uint8_t mode)
+{
+    char* fileName = (char*)malloc(PATTERN_FILE_NAME_LENGHT);
+
+    snprintf(fileName, PATTERN_FILE_NAME_LENGHT, FILE_NAME_PATTERN, descr);
+
+    openFileWithName(fileName, mode, descr);
+
+    free(fileName);
+}
+
+static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr)
+{
+    files[descr].file = fopen(fileName, modeStr[mode]);
 
     if (!files[descr].file)
-        FMT_PRINT_AND_EXIT(FILE_OPEN_ERROR, fileName, modeStr, strerror(errno));
+        FMT_PRINT_AND_EXIT(FILE_OPEN_ERROR, fileName, modeStr[mode], strerror(errno));
 
     files[descr].mode = mode;
-    free(fileName);
 }
 
 static char* assemblyFileName(struct fragment_t* frag)
@@ -225,16 +319,6 @@ static uint64_t calcNeedBytesCount(struct fragment_t* frag)
     return needBytesCount;
 }
 
-struct func_result_t Get(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
-{
-
-}
-
-struct func_result_t Put(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
-{
-
-}
-
 static uint64_t copySymbols(uint64_t first, uint64_t length)
 {
     uint64_t firstOffset = memMngr.vtermsOffset;
@@ -246,42 +330,42 @@ static uint64_t copySymbols(uint64_t first, uint64_t length)
     return firstOffset;
 }
 
-static void printRange(struct fragment_t* frag)
+static void printRange(FILE* file, struct fragment_t* frag)
 {
 	int i = 0;
 	struct v_term* currTerm = memMngr.vterms + frag->offset;
 
 	for (i = 0; i < frag->length; ++i)	
-		printSymbol(currTerm + i);	
+        printSymbol(file, currTerm + i);
 
-	printf("\n");
+    fprintf(file, "\n");
 }
 
-static void printSymbol(struct v_term* term)
+static void printSymbol(FILE* file, struct v_term* term)
 {
 	switch (term->tag)
 	{
 	case V_CHAR_TAG:
-        printUTF32(term->ch);
+        printUTF32(file, term->ch);
 		break;
 	case V_IDENT_TAG:
-        printUStr(term->str);
-        printf(" ");
+        printUStr(file, term->str);
+        fprintf(file, " ");
 		break;
 	case V_INT_NUM_TAG:
-        printIntNumber(term->intNum);
+        printIntNumber(file, term->intNum);
 		break;
     case V_DOUBLE_NUM_TAG:
-        printf("%lf ", term->doubleNum);
+        fprintf(file, "%lf ", term->doubleNum);
 		break;
     case V_CLOSURE_TAG:
-        printUStr(term->closure->ident);
+        printUStr(file, term->closure->ident);
 		break;
     case V_BRACKET_OPEN_TAG:
-        printf("%c", '(' );
+        fprintf(file, "%c", '(' );
 		break;
     case V_BRACKET_CLOSE_TAG:
-        printf("%c", ')' );
+        fprintf(file, "%c", ')' );
         break;
 	}
 }
@@ -338,7 +422,7 @@ int intCmp(struct v_int* a, struct v_int* b)
     return 0;
 }
 
-void printUStr(struct v_string* str)
+void printUStr(FILE* file, struct v_string* str)
 {
     if (!str)
         return;
@@ -346,11 +430,11 @@ void printUStr(struct v_string* str)
     uint64_t i = 0;
 
     for (i = 0; i < str->length; ++i)
-        printUTF32(str->head[i]);
+        printUTF32(file, str->head[i]);
 }
 
 
-static void printIntNumber(struct v_int* intNum)
+static void printIntNumber(FILE* file, struct v_int* intNum)
 {
     mpz_t num;
     mpz_init(num);

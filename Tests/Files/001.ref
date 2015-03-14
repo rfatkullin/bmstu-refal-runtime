@@ -1,0 +1,4 @@
+$ENTRY Go
+{
+	= <Open 'w' 1 '../../Tests/Files/001.ref.tmp'>
+}

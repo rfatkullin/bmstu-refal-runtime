@@ -34,12 +34,12 @@ static uint8_t utf8CharBytes[4];
 int bytesToWrite = 0;
 
 /// Read UTF-8 char as UTF32 char.
-uint32_t readUTF8Char()
+uint32_t readUTF8Char(FILE* file)
 {
     uint32_t res = 0;
     uint8_t ch;
 
-    scanf("%c", &ch);
+    ch = fgetc(file);
 
     int extraBytesToRead = trailingBytesForUTF8[ch];
     int i = 0;
@@ -48,7 +48,7 @@ uint32_t readUTF8Char()
     {
         res += ch;
         res <<= 6;
-        scanf("%c", &ch);
+        ch = fgetc(file);
     }
     res += ch;
     res -= offsetsFromUTF8[extraBytesToRead];
@@ -67,13 +67,13 @@ uint32_t readUTF8Char()
 }
 
 /// Print UTF32 char as UTF8 char
-void printUTF32 (uint32_t ch)
+void printUTF32 (FILE* file, uint32_t ch)
 {
     UTF32ToUTF8(ch);
 
     int i;
     for (i = 0; i < bytesToWrite; ++i)
-        printf("%c", utf8CharBytes[i]);
+        fprintf(file, "%c", utf8CharBytes[i]);
 }
 
 char* writeAsUTF8ToBuff(uint32_t ch, char* buff)
