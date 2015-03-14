@@ -9,6 +9,7 @@
 #include <builtins/builtins.h>
 #include <builtins/unicode_io.h>
 #include <allocators/data_alloc.h>
+#include <allocators/vterm_alloc.h>
 
 static void printRange(FILE* file, struct fragment_t* frag);
 static void printSymbol(FILE* file, struct v_term* term);
@@ -19,12 +20,13 @@ static char* getFileName();
 static char* assemblyFileName(struct fragment_t* frag);
 static void openFile(struct fragment_t* frag, uint8_t mode, uint8_t descr);
 static uint64_t calcNeedBytesCount(struct fragment_t* frag);
-static uint8_t calcOpenMode(struct fragment_t* frag);
-static uint8_t calcDescr(struct fragment_t* frag);
+static uint8_t getOpenMode(struct fragment_t* frag);
+static uint8_t getDescr(struct fragment_t* frag);
 static void openDefaultFile(uint8_t descr, uint8_t mode);
 static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr);
 static void _put(struct lterm_t* fieldOfView);
 static struct func_result_t _get(FILE* file);
+static getFileDescr(struct v_int* bigInt, uint8_t* descr);
 
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
@@ -38,7 +40,7 @@ struct func_result_t Get(int* entryPoint, struct env_t* env, struct lterm_t* fie
     if (frag->length != 1)
         PRINT_AND_EXIT(GET_WRONG_ARG_NUM);
 
-    uint8_t descr = calcDescr(frag);
+    uint8_t descr = getDescr(frag);
 
     if (!descr)
         return _get(stdin);
@@ -77,8 +79,8 @@ struct func_result_t Open(int* entryPoint, struct env_t* env, struct lterm_t* fi
     if (memMngr.vterms[frag->offset].tag != V_CHAR_TAG)
         PRINT_AND_EXIT(BAD_FILE_OPEN_MODE);
 
-    uint8_t mode = calcOpenMode(frag);
-    uint8_t descr = calcDescr(frag);
+    uint8_t mode = getOpenMode(frag);
+    uint8_t descr = getDescr(frag);
 
     openFile(frag, mode, descr);
 
@@ -108,8 +110,12 @@ static struct func_result_t _get(FILE* file)
     checkAndCleanData(BUILTINS_RESULT_SIZE);
 
     uint32_t ch;
-    while ((ch = readUTF8Char(file)) != '\n')
+    while(1)
     {
+        ch = readUTF8Char(file);
+        if ( ch == '\n' || ch == 0)
+            break;
+
         if (checkAndCleanVTerms(1))
         {
             uint64_t length = currOffset - firstOffset + 1;
@@ -118,11 +124,18 @@ static struct func_result_t _get(FILE* file)
             currOffset = memMngr.vtermsOffset;
         }
         allocateSymbolVTerm(ch);
-        currOffset++;
+        currOffset++;        
     }
 
-    if (firstOffset != memMngr.vtermsOffset)
+    if (ch == '\n')
+    {
         mainChain = allocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);
+    }
+    else
+    {        
+        gcAllocateUInt8VTerm(0);
+        mainChain = allocateBuiltinsResult(firstOffset, 1);
+    }
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
 }
@@ -134,7 +147,7 @@ static void _put(struct lterm_t* fieldOfView)
     if (frag->length < 1)
         PRINT_AND_EXIT(TOO_FEW_ARGUMENTS);
 
-    uint8_t descr = calcDescr(frag);
+    uint8_t descr = getDescr(frag);
 
     if (!descr)
         printRange(stdout, frag);
@@ -144,7 +157,7 @@ static void _put(struct lterm_t* fieldOfView)
     printRange(files[descr].file, frag);
 }
 
-static uint8_t calcOpenMode(struct fragment_t* frag)
+static uint8_t getOpenMode(struct fragment_t* frag)
 {
     uint8_t mode;
 
@@ -170,25 +183,29 @@ static uint8_t calcOpenMode(struct fragment_t* frag)
     return mode;
 }
 
-static uint8_t calcDescr(struct fragment_t* frag)
+static uint8_t getDescr(struct fragment_t* frag)
 {
     if (memMngr.vterms[frag->offset].tag != V_INT_NUM_TAG)
-        FMT_PRINT_AND_EXIT(BAD_ARGUMENTS, MAX_FILE_DESCR);
+        FMT_PRINT_AND_EXIT(BAD_DESCR, MAX_FILE_DESCR);
 
     uint8_t descr = 0;
-    if (!convertToFileDescr(memMngr.vterms[frag->offset].intNum, &descr))
-        FMT_PRINT_AND_EXIT(BAD_ARGUMENTS, MAX_FILE_DESCR);
-
-    if (files[descr].file)
-        FMT_PRINT_AND_EXIT(DESCR_ALREADY_IN_USE, descr);
-
-    if (descr == 0)
-        FMT_PRINT_AND_EXIT(TRY_TO_TAKE_TERMINAL_DESCR, MAX_FILE_DESCR);
+    if (!getFileDescr(memMngr.vterms[frag->offset].intNum, &descr))
+        FMT_PRINT_AND_EXIT(BAD_DESCR, MAX_FILE_DESCR);
 
     frag->offset++;
     frag->length--;
 
     return descr;
+}
+
+static getFileDescr(struct v_int* bigInt, uint8_t* descr)
+{
+    if (bigInt->sign || bigInt->length > 1)
+        return 0;
+
+    *descr = *bigInt->bytes;
+
+    return *descr < MAX_FILE_DESCR;
 }
 
 static void openFile(struct fragment_t* frag, uint8_t mode, uint8_t descr)
@@ -220,6 +237,12 @@ static void openDefaultFile(uint8_t descr, uint8_t mode)
 
 static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr)
 {
+    if (files[descr].file)
+        FMT_PRINT_AND_EXIT(DESCR_ALREADY_IN_USE, descr);
+
+    if (descr == 0)
+        FMT_PRINT_AND_EXIT(TRY_TO_TAKE_TERMINAL_DESCR, MAX_FILE_DESCR);
+
     files[descr].file = fopen(fileName, modeStr[mode]);
 
     if (!files[descr].file)
@@ -325,7 +348,7 @@ static uint64_t copySymbols(uint64_t first, uint64_t length)
 
     uint64_t i = 0;
     for (i = 0; i < length; ++i)
-        allocateSymbolVTerm(memMngr.vterms[first + i]);
+        allocateSymbolVTerm(memMngr.vterms[first + i].ch);
 
     return firstOffset;
 }
@@ -392,6 +415,10 @@ int ustrEq(struct v_string* a, struct v_string* b)
 /// Проверка на равенство двух чисел. 1 - успех, 0 - неудача.
 int intCmp(struct v_int* a, struct v_int* b)
 {
+    if (a->length == 1 && b->length == 1 &&
+        a->bytes[0] == 0 && b->bytes[0] == 0)
+        return 0;
+
     int invert = 1;
 
     if (a->sign > b->sign)

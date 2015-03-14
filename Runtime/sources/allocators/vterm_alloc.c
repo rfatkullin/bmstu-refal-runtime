@@ -107,6 +107,18 @@ uint64_t gcAllocateCloseBracketVTerm(uint64_t length)
     return allocateCloseBracketVTerm(length);
 }
 
+uint64_t gcAllocateUInt8VTerm(uint8_t val)
+{
+    checkAndCleanVTerms(1);
+    checkAndCleanData(VINT_STRUCT_SIZE(1));
+
+    struct v_int* num = allocateIntStruct(1);
+    num->sign = 0;
+    *num->bytes = val;
+
+    return allocateIntNumVTerm(num);
+}
+
 static uint64_t allocateClosureVterm()
 {
     memMngr.vterms[memMngr.vtermsOffset].tag = V_CLOSURE_TAG;

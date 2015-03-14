@@ -1,4 +1,4 @@
 $ENTRY Go
 {
-	= <Open 'w' 1 '../../Tests/Files/001.ref.tmp'>
+	= <Open 'w' 0 '../../Tests/Files/test1.write.tmp'>
 }

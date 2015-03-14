@@ -14,13 +14,13 @@
 #define PATTERN_FILE_NAME_LENGHT    12
 
 #define TOO_FEW_ARGUMENTS           "Too few arguments to function!\n"
-#define BAD_ARGUMENTS               "Bad file descriptor! Expected 1 <= descriptor < %d\n"
+#define BAD_DESCR                   "Bad file descriptor! Descriptor must be in range [1,%d)!\n"
 #define BAD_FILE_OPEN_MODE          "Bad file open mode! Expected 'W','w', 'R' or 'r'\n"
-#define FILE_OPEN_ERROR             "Can't open file %s for %s! The reason: %s\n"
-#define DESCR_ALREADY_IN_USE        "Descriptor %u already in use!"
-#define BAD_VTERM                   "Bad vterm!"
-#define TRY_TO_TAKE_TERMINAL_DESCR  "Trying to take terminal descriptor! Expected 1 <= descriptor < %d\n"
-#define GET_WRONG_ARG_NUM           "Get take 1 arguemnt - file descriptor!"
+#define FILE_OPEN_ERROR             "Can't open file %s in '%s' mode! The reason: %s\n"
+#define DESCR_ALREADY_IN_USE        "Descriptor %u already in use!\n"
+#define BAD_VTERM                   "Bad vterm type!\n"
+#define TRY_TO_TAKE_TERMINAL_DESCR  "Trying to bind file to terminal descriptor! Descriptor must be in range [1,%d)!\n"
+#define GET_WRONG_ARG_NUM           "Get take 1 arguemnt - file descriptor!\'n"
 
 static const char* modeStr[2] = {"r", "w"};
 
@@ -48,9 +48,6 @@ struct func_result_t Sub(int* entryPoint, struct env_t* env, struct lterm_t* fie
 struct func_result_t Mul(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Div(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-
-/// Конвертирует в обычный uint8_t. В случае успеха вернет 1, 0 в противном случае.
-int convertToFileDescr(struct v_int* bigInt, uint8_t* descr);
 
 /// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
 int ustrEq(struct v_string* a, struct v_string* b);

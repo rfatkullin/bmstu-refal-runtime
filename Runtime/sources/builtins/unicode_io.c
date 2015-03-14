@@ -37,28 +37,35 @@ int bytesToWrite = 0;
 uint32_t readUTF8Char(FILE* file)
 {
     uint32_t res = 0;
-    uint8_t ch;
+    uint8_t uch;
 
-    ch = fgetc(file);
+    int8_t ch = fgetc(file);
 
-    int extraBytesToRead = trailingBytesForUTF8[ch];
+    if (ch == EOF)
+        return 0;
+
+    uch = ch;
+
+    int extraBytesToRead = trailingBytesForUTF8[uch];
     int i = 0;
 
     for (i = 0; i < extraBytesToRead; ++i)
     {
-        res += ch;
+        res += uch;
         res <<= 6;
         ch = fgetc(file);
+
+        if (ch == EOF)
+            return 0;
+        uch = ch;
     }
-    res += ch;
+    res += uch;
     res -= offsetsFromUTF8[extraBytesToRead];
 
     if (res <= UNI_MAX_LEGAL_UTF32)
     {
-        if (res >= UNI_SUR_HIGH_START && res <= UNI_SUR_LOW_END)
-        {
-            res = UNI_REPLACEMENT_CHAR;
-        }
+        if (res >= UNI_SUR_HIGH_START && res <= UNI_SUR_LOW_END)        
+            res = UNI_REPLACEMENT_CHAR;        
     }
     else
         res = UNI_REPLACEMENT_CHAR;
