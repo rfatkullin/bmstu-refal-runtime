@@ -1,10 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
+#include <helpers.h>
 #include <vmachine.h>
+#include <to_string.h>
 #include <builtins/builtins.h>
 #include <builtins/unicode_io.h>
 #include <allocators/data_alloc.h>
+
 
 #define N 256
 
@@ -13,6 +18,11 @@ static void printSymbol(struct v_term* term);
 static void printUnicodeChar(uint32_t ch);
 static void printIntNumber(struct v_int* num);
 static uint64_t copySymbols(uint64_t first, uint64_t length);
+static char* getFileName();
+static char* assemblyFileName(struct fragment_t* frag);
+static void openFile(struct fragment_t* frag, const char* modeStr, uint8_t mode);
+static void findOutOpenMode(struct fragment_t* frag, const char** modeStr, uint8_t* mode);
+static uint64_t calcNeedBytesCount(struct fragment_t* frag);
 
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
@@ -51,55 +61,168 @@ struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* f
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
 
-/*
 struct func_result_t Open(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
     struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
 
     if (frag->length < 2)
-    {
-        printf("%s\n", TOO_FEW_ARGUMENTS);
-        exit(0);
-    }
+        PRINT_AND_EXIT(TOO_FEW_ARGUMENTS);
 
     if (memMngr.vterms[frag->offset].tag != V_CHAR_TAG)
-    {
-        printf("%s Expected 'W','w', 'R' or 'r'\n", BAD_ARGUMENTS);
-        exit(0);
-    }
+        PRINT_AND_EXIT(BAD_FILE_OPEN_MODE);
 
-    int mode = -1;
+    const char* modeStr = 0;
+    uint8_t mode = 0;
+
+    findOutOpenMode(frag, &modeStr, &mode);
+    openFile(frag, modeStr, mode);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
+}
+
+static void findOutOpenMode(struct fragment_t* frag, const char** modeStr, uint8_t* mode)
+{
     switch (memMngr.vterms[frag->offset].tag)
     {
         case 'w':
         case 'W':
-            mode = WRITE_MODE;
+            *modeStr = WRITE_MODE_STR;
+            *mode = WRITE_MODE;
             break;
 
         case 'r':
         case 'R':
-            mode = READ_MODE;
+            *modeStr = READ_MODE_STR;
+            *mode = READ_MODE;
            break;
 
         default:
-            printf("%s Expected 'W','w', 'R' or 'r'\n", BAD_ARGUMENTS);
-            exit(0);
+            PRINT_AND_EXIT(BAD_FILE_OPEN_MODE);
     }
 
-    if (memMngr.vterms[frag->offset + 1].tag != V_INT_NUM_TAG)
+    frag->offset++;
+    frag->length--;
+}
+
+static void openFile(struct fragment_t* frag, const char* modeStr, uint8_t mode)
+{
+    if (memMngr.vterms[frag->offset].tag != V_INT_NUM_TAG)
+        FMT_PRINT_AND_EXIT(BAD_ARGUMENTS, MAX_FILE_DESCR);
+
+    uint8_t descr = 0;
+    if (!convertToFileDescr(memMngr.vterms[frag->offset].intNum, &descr))
+        FMT_PRINT_AND_EXIT(BAD_ARGUMENTS, MAX_FILE_DESCR);
+
+    if (files[descr].file)
+        FMT_PRINT_AND_EXIT(DESCR_ALREADY_IN_USE, descr);
+
+    char* fileName = 0;
+    fileName = assemblyFileName(frag);
+
+    if (!fileName)
     {
-        printf("%s Expected descr number less than %d\n", BAD_ARGUMENTS, MAX_FILE_DESCR);
-        exit(0);
+        fileName = (char*)malloc(PATTERN_FILE_NAME_LENGHT);
+        snprintf(fileName, PATTERN_FILE_NAME_LENGHT, FILE_NAME_PATTERN, descr);
     }
 
-    uint8_t fileDescr = 0;
-    if (!converToFileDescr(memMngr.vterms[frag->offset + 1].intNum, &fileDescr))
+    files[descr].file = fopen(fileName, modeStr);
+
+    if (!files[descr].file)
+        FMT_PRINT_AND_EXIT(FILE_OPEN_ERROR, fileName, modeStr, strerror(errno));
+
+    files[descr].mode = mode;
+    free(fileName);
+}
+
+static char* assemblyFileName(struct fragment_t* frag)
+{
+    uint64_t needBytesCount = calcNeedBytesCount(frag);
+    char* fileName = (char*)malloc(needBytesCount + 1); // +1 for 0 character.
+    char* pointer = fileName;
+
+    uint64_t i = 0;
+    for (i = 0; i < frag->length; ++i)
     {
-        printf("%s Expected descr number less than %d\n", BAD_ARGUMENTS, MAX_FILE_DESCR);
-        exit(0);
+        struct v_term* term = memMngr.vterms + frag->offset + i;
+
+        switch (term->tag)
+        {
+            case V_BRACKET_CLOSE_TAG:
+                *pointer++ = '(';
+                break;
+
+            case V_BRACKET_OPEN_TAG:
+                *pointer++ = ')';
+                break;
+
+            case V_CHAR_TAG:
+                pointer = writeAsUTF8ToBuff(term->ch, pointer);
+                break;
+
+            case V_IDENT_TAG:
+                pointer = vStringToCharArr(term->str, pointer);
+                break;
+
+            case V_CLOSURE_TAG:
+                pointer = vStringToCharArr(term->closure->ident, pointer);
+                break;
+
+            case V_INT_NUM_TAG:
+                pointer = vIntToCharArr(term->intNum, pointer);
+                break;
+
+            case V_DOUBLE_NUM_TAG:
+                pointer += sprintf(pointer, "%f", term->doubleNum);
+                break;
+
+            default:
+                PRINT_AND_EXIT(BAD_VTERM);
+        }
     }
 
+    *pointer++ = 0;
 
+    return fileName;
+}
+
+static uint64_t calcNeedBytesCount(struct fragment_t* frag)
+{
+    uint64_t needBytesCount = 0;
+    uint64_t i = 0;
+    for (i = 0; i < frag->length; ++i)
+    {
+        struct v_term* term = memMngr.vterms + frag->offset + i;
+
+        switch (term->tag)
+        {
+            case V_BRACKET_CLOSE_TAG:
+            case V_BRACKET_OPEN_TAG:
+                ++needBytesCount;
+                break;
+
+            case V_CHAR_TAG:
+                needBytesCount += sizeof(uint32_t);
+                break;
+
+            case V_IDENT_TAG:
+                needBytesCount += calcBytesForVStringCharArr(term->str);
+                break;
+
+            case V_CLOSURE_TAG:
+                needBytesCount += calcBytesForVStringCharArr(term->closure->ident);
+                break;
+
+            case V_INT_NUM_TAG:
+                needBytesCount += calcBytesForIntCharArr(term->intNum);
+                break;
+
+            case V_DOUBLE_NUM_TAG:
+                needBytesCount += snprintf(0, 0, "%f", term->doubleNum);
+                break;
+        }
+    }
+
+    return needBytesCount;
 }
 
 struct func_result_t Get(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
@@ -111,7 +234,7 @@ struct func_result_t Put(int* entryPoint, struct env_t* env, struct lterm_t* fie
 {
 
 }
-*/
+
 static uint64_t copySymbols(uint64_t first, uint64_t length)
 {
     uint64_t firstOffset = memMngr.vtermsOffset;

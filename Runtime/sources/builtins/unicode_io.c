@@ -2,6 +2,8 @@
 
 #include <builtins/builtins.h>
 
+static void UTF32ToUTF8(uint32_t ch);
+
 #define UNI_MAX_LEGAL_UTF32 (uint32_t)0x0010FFFF
 #define UNI_SUR_HIGH_START  (uint32_t)0xD800
 #define UNI_SUR_HIGH_END    (uint32_t)0xDBFF
@@ -24,7 +26,14 @@ static const uint8_t firstByteMark[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0x
 static const uint32_t offsetsFromUTF8[6] = { 0x00000000UL, 0x00003080UL, 0x000E2080UL,
                      0x03C82080UL, 0xFA082080UL, 0x82082080UL };
 
-/// Read UTF-8 char as UTF32 char
+
+/// Array for store bytes of UTF-8 char.
+static uint8_t utf8CharBytes[4];
+
+/// Bytes in UTF-8 char.
+int bytesToWrite = 0;
+
+/// Read UTF-8 char as UTF32 char.
 uint32_t readUTF8Char()
 {
     uint32_t res = 0;
@@ -60,11 +69,28 @@ uint32_t readUTF8Char()
 /// Print UTF32 char as UTF8 char
 void printUTF32 (uint32_t ch)
 {
+    UTF32ToUTF8(ch);
+
+    int i;
+    for (i = 0; i < bytesToWrite; ++i)
+        printf("%c", utf8CharBytes[i]);
+}
+
+char* writeAsUTF8ToBuff(uint32_t ch, char* buff)
+{
+    UTF32ToUTF8(ch);
+
+    int i;
+    for (i = 0; i < bytesToWrite; ++i)
+        *buff++ = utf8CharBytes[i];
+
+    return buff;
+}
+
+static void UTF32ToUTF8(uint32_t ch)
+{
     const uint32_t byteMask = 0xBF;
     const uint32_t byteMark = 0x80;
-
-    uint8_t out[4];
-    int bytesToWrite = 0;
 
     if (ch < (uint32_t)0x80)
         bytesToWrite = 1;
@@ -80,16 +106,12 @@ void printUTF32 (uint32_t ch)
         ch = UNI_REPLACEMENT_CHAR;
     }
 
-    uint8_t* p = out + bytesToWrite - 1;
-    while (p > out)
+    uint8_t* p = utf8CharBytes + bytesToWrite - 1;
+    while (p > utf8CharBytes)
     {
         *p-- = (uint8_t)((ch | byteMark) & byteMask);
         ch >>= 6;
     }
 
     *p = (uint8_t)(ch | firstByteMark[bytesToWrite]);
-
-    int i;
-    for (i = 0; i < bytesToWrite; ++i)
-        printf("%c", out[i]);
 }

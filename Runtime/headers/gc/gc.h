@@ -1,5 +1,5 @@
-#ifndef __HELPERS_H__
-#define __HELPERS_H__
+#ifndef __GC_H__
+#define __GC_H__
 
 #include <memory_manager.h>
 

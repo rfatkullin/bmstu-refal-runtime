@@ -15,6 +15,7 @@
 #include "func_call.h"
 #include "vmachine.h"
 
+/// vterm функций.
 struct v_closure
 {
 	RefalFunc funcPtr;
@@ -24,12 +25,17 @@ struct v_closure
     int rollback;
 };
 
+/// vterm строк Юникода.
 struct v_string
 {
+    /// Для хранения кодовых точек Юникода.
     uint32_t* head;
+
+    /// Длина Юникод строки
     uint64_t length;
 };
 
+/// vterm целочисленных чисел.
 struct v_int
 {
     /// Байты для хранения большого числа.

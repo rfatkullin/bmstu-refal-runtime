@@ -64,7 +64,7 @@ int doubleCmp(double a, double b)
     return 0;
 }
 
-int converToFileDescr(struct v_int* bigInt, uint8_t* descr)
+int convertToFileDescr(struct v_int* bigInt, uint8_t* descr)
 {
     if (bigInt->sign || bigInt->length > 1)
         return 0;
