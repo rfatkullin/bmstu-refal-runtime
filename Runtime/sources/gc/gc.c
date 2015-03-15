@@ -76,6 +76,21 @@ int checkDataOverflow(uint64_t needDataSize)
     return memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset;
 }
 
+void checkAndCleanTermsAndData(uint64_t needTermCount, uint64_t needDataSize)
+{
+    if (memMngr.vtermsOffset + needTermCount > memMngr.vtermsMaxOffset ||
+        memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
+    {
+        collectGarbage();
+    }
+
+    if (memMngr.vtermsOffset + needTermCount > memMngr.vtermsMaxOffset ||
+        memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
+    {
+        failWithMemoryOverflow();
+    }
+}
+
 
 
 

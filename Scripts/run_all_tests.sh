@@ -35,7 +35,7 @@ function RunTestsInDir
 
 	currDir="$1"
 
-	for sourceFile in `ls ${currDir}/*.ref`
+	for sourceFile in `ls ${currDir}/*.ref 2>/dev/null`
 	do	
 		cp ${sourceFile} ${TmpRefSourceFile}
 		#Компилируем рефал программу
@@ -49,7 +49,8 @@ function RunTestsInDir
 		AssertSuccess "[Can't build project!]: ${sourceFile}"
 	
 		#Запускаем испольняемый файл.
-		./Project > ${RealOutputFile}
+		args=`cat ../${sourceFile%.*}.args 2>/dev/null`
+		./Project ${args} > ${RealOutputFile} 
 		AssertSuccess "[Bad exe file!]: ${sourceFile}"
 	
 		#Проверям ожидаемое с полученным

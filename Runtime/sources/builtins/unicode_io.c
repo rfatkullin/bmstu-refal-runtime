@@ -73,6 +73,40 @@ uint32_t readUTF8Char(FILE* file)
     return res;
 }
 
+// TO FIX: Код дублируется - исправить.
+char* readUTF8CharFromStr(char* str, uint32_t* resPointer)
+{
+    uint32_t res = 0;
+    uint8_t ch;
+    uint64_t offset = 0;
+
+    ch = str[offset++];
+
+    int extraBytesToRead = trailingBytesForUTF8[ch];
+    int i = 0;
+
+    for (i = 0; i < extraBytesToRead; ++i)
+    {
+        res += ch;
+        res <<= 6;
+        ch = str[offset++];
+    }
+    res += ch;
+    res -= offsetsFromUTF8[extraBytesToRead];
+
+    if (res <= UNI_MAX_LEGAL_UTF32)
+    {
+        if (res >= UNI_SUR_HIGH_START && res <= UNI_SUR_LOW_END)
+            res = UNI_REPLACEMENT_CHAR;
+    }
+    else
+        res = UNI_REPLACEMENT_CHAR;
+
+    *resPointer = res;
+
+    return str + offset;
+}
+
 /// Print UTF32 char as UTF8 char
 void printUTF32 (FILE* file, uint32_t ch)
 {

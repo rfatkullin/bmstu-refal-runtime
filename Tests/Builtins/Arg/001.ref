@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Prout <Arg 1>>
+	  <Prout <Arg 2>>
+	  <Prout <Arg 3>>
+	  <Prout <Arg 4>>
+	  <Prout <Arg 5>>
+}
+
+

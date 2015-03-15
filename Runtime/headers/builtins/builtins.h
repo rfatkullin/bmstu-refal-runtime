@@ -20,7 +20,9 @@
 #define DESCR_ALREADY_IN_USE        "Descriptor %u already in use!\n"
 #define BAD_VTERM                   "Bad vterm type!\n"
 #define TRY_TO_TAKE_TERMINAL_DESCR  "Trying to bind file to terminal descriptor! Descriptor must be in range [1,%d)!\n"
-#define GET_WRONG_ARG_NUM           "Get take 1 arguemnt - file descriptor!\'n"
+#define GET_WRONG_ARG_NUM           "Get take 1 argument - file descriptor!\'n"
+#define ARG_WRONG_ARG_NUM           "Arg take 1 argument - argument number!\'n"
+#define BAD_PROGRAM_ARG_NUM         "Bad program argument number! Program args count: %d. Passed arg num: %d. But must in range [0, %d).\n"
 
 static const char* modeStr[2] = {"r", "w"};
 
@@ -30,9 +32,13 @@ struct file_info
     uint8_t mode;
 };
 
-/// Информация об открытых файлах.
+int refalProgramArgsCount;
+struct fragment_t* refalProgramArgs;
+
+/// Opend files info.
 struct file_info files[MAX_FILE_DESCR];
 
+/// Input/Output
 struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Print(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
@@ -43,11 +49,19 @@ struct func_result_t Get(int* entryPoint, struct env_t* env, struct lterm_t* fie
 struct func_result_t Put(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Putout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 
+/// Arithmetics.
 struct func_result_t Add(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Sub(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Mul(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Div(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+
+/// Get int from mpz_t.
+int ConvertToInt(struct v_int* numData);
+
+/// Others
+uint64_t initArgsData(uint64_t offset, int argc, char** argv);
+struct func_result_t Arg(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 
 /// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
 int ustrEq(struct v_string* a, struct v_string* b);

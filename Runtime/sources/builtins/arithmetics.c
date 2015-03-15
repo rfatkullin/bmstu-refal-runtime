@@ -64,6 +64,24 @@ int doubleCmp(double a, double b)
     return 0;
 }
 
+int ConvertToInt(struct v_int* numData)
+{
+    mpz_t num;
+
+    mpz_init(num);
+
+    mpz_import(num, numData->length, 1, sizeof(uint8_t), 1, 0, numData->bytes);
+
+    if (numData->sign)
+        mpz_mul_si(num, num, -1);
+
+    int res = mpz_get_si(num);
+
+    mpz_clear(num);
+
+    return res;
+}
+
 static struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
     struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;

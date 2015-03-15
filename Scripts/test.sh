@@ -36,10 +36,11 @@ AssertSuccess "Can't compile refal source ${1}"
 #Собираем весь проект - линкуем сгенерированный файл с библиотекой исполнения.
 cp ${TmpCSourceFile} ../Project/main.c
 cd ../Project/build/
-make --debug=a 1>/dev/null
+make 1>/dev/null
 AssertSuccess "Can't build project!"
 
 #Запускаем испольняемый файл.
-./Project
+args=`cat ../${1%.*}.args 2>/dev/null`
+./Project ${args}
 
 

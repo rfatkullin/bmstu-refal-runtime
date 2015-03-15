@@ -101,6 +101,49 @@ struct func_result_t Putout(int* entryPoint, struct env_t* env, struct lterm_t* 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
 
+struct func_result_t Arg(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+
+    if (frag->length != 1)
+        PRINT_AND_EXIT(ARG_WRONG_ARG_NUM);
+
+    int argNum = ConvertToInt(memMngr.vterms[frag->offset].intNum);
+
+    if (argNum < 0 || argNum >= refalProgramArgsCount)
+        FMT_PRINT_AND_EXIT(BAD_PROGRAM_ARG_NUM, refalProgramArgsCount, argNum, refalProgramArgsCount);
+
+    checkAndCleanData(BUILTINS_RESULT_SIZE);
+
+    struct lterm_t* chain = allocateBuiltinsResult(refalProgramArgs[argNum].offset, refalProgramArgs[argNum].length);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = chain, .callChain = 0};
+}
+
+// TO FIX: Убрать malloc.
+uint64_t initArgsData(uint64_t offset, int argc, char** argv)
+{
+    refalProgramArgsCount = argc;
+    refalProgramArgs = (struct fragment_t*) malloc(argc * sizeof(struct fragment_t));
+
+    int i = 0;
+    for (i = 0; i < argc; ++i)
+    {
+        refalProgramArgs[i].offset = offset;
+        char* curr = argv[i];
+
+        while (*curr)
+        {
+            uint32_t ch;
+            curr = readUTF8CharFromStr(curr, &ch);
+            memMngr.vterms[offset++] = (struct v_term){.tag = V_CHAR_TAG, .ch = ch};
+            refalProgramArgs[i].length++;
+        }
+    }
+
+    return offset;
+}
+
 static struct func_result_t _get(FILE* file)
 {
     uint64_t firstOffset = memMngr.vtermsOffset;

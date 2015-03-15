@@ -1,0 +1,9 @@
+$ENTRY Go
+{
+	= <Prout <ChangeExt ('c') <Arg 1>>>
+}
+
+ChangeExt
+{
+	(s.1) e.1 '.' e.2 = e.1 '.' s.1
+}
