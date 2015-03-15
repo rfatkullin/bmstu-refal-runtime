@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Prout <Parse <Symb -916382>>>
+}
+
+Parse
+{
+	e.1 '638' e.2 = e.2 e.1
+}
+

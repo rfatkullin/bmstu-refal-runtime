@@ -110,6 +110,8 @@ struct func_result_t Arg(int* entryPoint, struct env_t* env, struct lterm_t* fie
     if (frag->length != 1)
         PRINT_AND_EXIT(ARG_WRONG_ARG_NUM);
 
+    // TO FIX: CHECK ON INT!
+
     int argNum = ConvertToInt(memMngr.vterms[frag->offset].intNum);
 
     if (argNum < 0 || argNum >= refalProgramArgsCount)
@@ -154,6 +156,46 @@ struct func_result_t Upper(int* entryPoint, struct env_t* env, struct lterm_t* f
 struct func_result_t Lower(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
     return switchCase(toLowerCase, fieldOfView);
+}
+
+struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+
+    if (frag->length != 1)
+        PRINT_AND_EXIT(SYMB_WRONG_ARG);
+
+    if (memMngr.vterms[frag->offset].tag != V_INT_NUM_TAG)
+        PRINT_AND_EXIT(SYMB_WRONG_ARG);
+
+    struct v_int* intNum = memMngr.vterms[frag->offset].intNum;
+    mpz_t num;
+    mpz_init(num);
+    mpz_import(num, intNum->length, 1, sizeof(uint8_t), 1, 0, intNum->bytes);
+
+    char ch;
+    uint64_t size = gmp_snprintf(&ch, 1, "%Zd", num);
+
+    checkAndCleanTermsAndData(size, BUILTINS_RESULT_SIZE + size + 1);  // +1 for 0 character!
+
+    // No need to update memMngr.dataOffset, because using only in this function.
+    char* buff = (char*)(memMngr.data + memMngr.dataOffset);
+
+    gmp_sprintf (buff, "%Zd", num);
+    mpz_clear(num);
+
+    uint64_t firstOffset = memMngr.vtermsOffset;
+    uint64_t i = 0;
+
+    if (intNum->sign)
+        allocateSymbolVTerm('-');
+
+    for (i = 0; i < size; ++i)
+        allocateSymbolVTerm(buff[i]);
+
+    struct lterm_t* res = allocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
 static struct func_result_t switchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView)

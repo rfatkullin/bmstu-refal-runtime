@@ -23,6 +23,7 @@
 #define GET_WRONG_ARG_NUM           "Get take 1 argument - file descriptor!\'n"
 #define ARG_WRONG_ARG_NUM           "Arg take 1 argument - argument number!\'n"
 #define BAD_PROGRAM_ARG_NUM         "Bad program argument number! Program args count: %d. Passed arg num: %d. But must in range [0, %d).\n"
+#define SYMB_WRONG_ARG              "Symb takes 1 argument - int number!\n"
 
 static const char* modeStr[2] = {"r", "w"};
 
@@ -59,16 +60,20 @@ struct func_result_t Mul(int* entryPoint, struct env_t* env, struct lterm_t* fie
 struct func_result_t Div(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 
-/// Get int from mpz_t.
-int ConvertToInt(struct v_int* numData);
+/// Case switching
+struct func_result_t Upper(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Lower(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 
 /// Others
 uint64_t initArgsData(uint64_t offset, int argc, char** argv);
 struct func_result_t Arg(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 
-/// Case switching
-struct func_result_t Upper(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-struct func_result_t Lower(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+
+/// Get int from mpz_t.
+int ConvertToInt(struct v_int* numData);
+
 
 /// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
 int ustrEq(struct v_string* a, struct v_string* b);
