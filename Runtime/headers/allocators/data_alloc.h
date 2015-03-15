@@ -26,7 +26,6 @@ struct v_closure* chAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCoun
 /// В процессе выполнения может быть вызван сборщик мусора для данных.
 struct lterm_t*   gcAllocateFragmentLTerm(uint32_t count);
 struct v_int*     gcAllocateIntStruct(uint64_t length);
-struct lterm_t*   gcAllocateBuiltinsResult(uint64_t offset, uint64_t length);
 struct env_t*     gcAllocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount);
 struct v_closure* gcAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct v_string* ident, int rollback);
 

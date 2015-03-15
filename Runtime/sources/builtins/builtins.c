@@ -10,6 +10,7 @@
 #include <builtins/unicode_io.h>
 #include <allocators/data_alloc.h>
 #include <allocators/vterm_alloc.h>
+#include <builtins/case_map_table.h>
 
 static void printRange(FILE* file, struct fragment_t* frag);
 static void printSymbol(FILE* file, struct v_term* term);
@@ -27,6 +28,7 @@ static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr);
 static void _put(struct lterm_t* fieldOfView);
 static struct func_result_t _get(FILE* file);
 static getFileDescr(struct v_int* bigInt, uint8_t* descr);
+static struct func_result_t switchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView);
 
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
@@ -142,6 +144,36 @@ uint64_t initArgsData(uint64_t offset, int argc, char** argv)
     }
 
     return offset;
+}
+
+struct func_result_t Upper(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+    return switchCase(toUpperCase, fieldOfView);
+}
+
+struct func_result_t Lower(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+    return switchCase(toLowerCase, fieldOfView);
+}
+
+static struct func_result_t switchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView)
+{
+    assembledFrageInBuiltins = gcGetAssembliedChain(fieldOfView);
+
+    checkAndCleanData(CHAIN_LTERM_SIZE(1));
+
+    struct lterm_t* chainTerm = allocateChainLTerm(1);
+
+    ADD_TO_CHAIN(chainTerm->chain, assembledFrageInBuiltins);
+
+    struct fragment_t* frag = assembledFrageInBuiltins->fragment;
+    uint64_t i =0;
+    for (i = 0; i < frag->length; ++i)
+        memMngr.vterms[frag->offset + i].ch = op(memMngr.vterms[frag->offset + i].ch);
+
+    assembledFrageInBuiltins = 0;
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm->chain, .callChain = 0};
 }
 
 static struct func_result_t _get(FILE* file)

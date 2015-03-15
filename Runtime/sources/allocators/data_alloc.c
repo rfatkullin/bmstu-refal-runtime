@@ -69,13 +69,6 @@ struct v_closure* gcAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCoun
     return allocateClosureStruct(funcPtr, paramsCount, ident, rollback);
 }
 
-struct lterm_t* gcAllocateBuiltinsResult(uint64_t offset, uint64_t length)
-{
-    checkAndCleanData(BUILTINS_RESULT_SIZE);
-
-    return allocateBuiltinsResult(offset, length);
-}
-
 struct v_int* gcAllocateIntStruct(uint64_t length)
 {
     checkAndCleanData(VINT_STRUCT_SIZE(length));

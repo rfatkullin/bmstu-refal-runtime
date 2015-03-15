@@ -4,6 +4,7 @@
 
 #include <memory_manager.h>
 #include <allocators/data_alloc.h>
+#include <builtins/builtins.h>
 
 static void copyVTerms();
 static void processChainVTerms(struct lterm_t* expr);
@@ -25,11 +26,13 @@ void collectVTermGarbage(struct lterm_t* fieldOfView)
 
     stage = MARK_STAGE;
     processChainVTerms(fieldOfView);
+    processFragmentVTerms(assembledFrageInBuiltins->fragment);
 
     copyVTerms();
 
     stage = POINTER_CORRECTING_STAGE;
     processChainVTerms(fieldOfView);
+    processFragmentVTerms(assembledFrageInBuiltins->fragment);
 }
 
 static void processChainVTerms(struct lterm_t* chain)

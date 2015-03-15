@@ -6,7 +6,6 @@
 #include <allocators/data_alloc.h>
 
 static struct lterm_t* copyFuncCallLTerm(struct lterm_t* term);
-static struct lterm_t* copyFragmentLTerm(struct lterm_t* term);
 static void addTerm(struct lterm_t* chain, struct lterm_t* term);
 static struct env_t* copyEnv(struct env_t* from, struct env_t* to);
 
@@ -95,7 +94,7 @@ static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
     return to;
 }
 
-static struct lterm_t* copyFragmentLTerm(struct lterm_t* term)
+struct lterm_t* copyFragmentLTerm(struct lterm_t* term)
 {
     struct lterm_t* newTerm = allocateFragmentLTerm(1);
 

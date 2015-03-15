@@ -11,6 +11,8 @@ typedef int  allocate_result;
 /// Собирает мусор.
 void collectGarbage();
 
+struct lterm_t* copyFragmentLTerm(struct lterm_t* term);
+
 // TO FIX: Хрень какая-то! - НАЧАЛО
 void collectVTermGarbage();
 void collectDataGarbage();

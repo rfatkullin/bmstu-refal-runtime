@@ -35,6 +35,9 @@ struct file_info
 int refalProgramArgsCount;
 struct fragment_t* refalProgramArgs;
 
+/// To save from garbage collection;
+struct lterm_t* assembledFrageInBuiltins;
+
 /// Opend files info.
 struct file_info files[MAX_FILE_DESCR];
 
@@ -62,6 +65,10 @@ int ConvertToInt(struct v_int* numData);
 /// Others
 uint64_t initArgsData(uint64_t offset, int argc, char** argv);
 struct func_result_t Arg(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+
+/// Case switching
+struct func_result_t Upper(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Lower(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 
 /// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
 int ustrEq(struct v_string* a, struct v_string* b);
