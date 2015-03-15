@@ -72,6 +72,8 @@ struct func_result_t Arg(int* entryPoint, struct env_t* env, struct lterm_t* fie
 struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 
+struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+
 /// Get int from mpz_t.
 int ConvertToInt(struct v_int* numData);
 

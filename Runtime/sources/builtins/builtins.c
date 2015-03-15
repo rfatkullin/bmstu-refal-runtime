@@ -252,6 +252,49 @@ struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fi
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
+struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+    assembledFrageInBuiltins = gcGetAssembliedChain(fieldOfView);
+    struct fragment_t* frag = assembledFrageInBuiltins->fragment;
+
+    mpz_t num;
+    mpz_t helper;
+
+    mpz_init_set_ui(num, 0);
+    mpz_init_set_ui(helper, UINT32_MAX);
+
+    mpz_add_ui(helper, helper, 1);
+
+    uint64_t div = (uint64_t)UINT32_MAX + 1;
+
+    mpz_addmul_ui(num, helper, frag->length / div);
+    mpz_add_ui(num, num, frag->length % div);
+
+    //TO FIX: Дублирование кода. arithmetics.c
+    uint32_t numb = 8 * sizeof(uint8_t);
+    uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
+
+    checkAndCleanTermsAndData(1, VINT_STRUCT_SIZE(length) + BUILTINS_RESULT_SIZE);
+
+    struct v_int* intNum = allocateIntStruct(length);
+
+    mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
+    intNum->sign = 0;
+
+    uint64_t offset = allocateIntNumVTerm(intNum);
+
+    mpz_clear(num);
+    mpz_clear(helper);
+
+    struct lterm_t* res = allocateBuiltinsResult(offset, 1);
+
+    CONCAT_CHAINS(res, fieldOfView);
+
+    assembledFrageInBuiltins = 0;
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
+}
+
 static struct func_result_t switchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView)
 {
     assembledFrageInBuiltins = gcGetAssembliedChain(fieldOfView);

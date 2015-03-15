@@ -21,10 +21,10 @@ do{                                 \
 
 #define CONCAT_CHAINS(a, b)         \
 {                                   \
-    a->prev->next = b->prev->next;  \
-    b->prev->next = a->next;        \
-    a->next->prev = b->prev;        \
-    b->prev = a->prev;              \
+    a->prev->next = b->next;        \
+    b->next->prev = a->prev;        \
+    a->prev = b->prev;              \
+    a->prev->next = a;              \
 }while(0)
 
 struct lterm_t;
