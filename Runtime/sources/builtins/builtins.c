@@ -163,10 +163,10 @@ struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fi
     struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
 
     if (frag->length != 1)
-        PRINT_AND_EXIT(SYMB_WRONG_ARG);
+        PRINT_AND_EXIT(SYMB_BAD_ARG);
 
     if (memMngr.vterms[frag->offset].tag != V_INT_NUM_TAG)
-        PRINT_AND_EXIT(SYMB_WRONG_ARG);
+        PRINT_AND_EXIT(SYMB_BAD_ARG);
 
     struct v_int* intNum = memMngr.vterms[frag->offset].intNum;
     mpz_t num;
@@ -194,6 +194,60 @@ struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fi
         allocateSymbolVTerm(buff[i]);
 
     struct lterm_t* res = allocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
+}
+
+struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+    assembledFrageInBuiltins = gcGetAssembliedChain(fieldOfView);
+    struct fragment_t* frag = assembledFrageInBuiltins->fragment;
+
+    if (frag->length == 0)
+        PRINT_AND_EXIT(NUMB_BAD_ARG);
+
+    int sign = 0;
+    if (memMngr.vterms[frag->offset].tag == V_CHAR_TAG && memMngr.vterms[frag->offset].ch == '-')
+    {
+        sign = 1;
+        frag->offset++;
+        frag->length--;
+    }
+
+    mpz_t num;
+    mpz_init_set_si(num, 0);
+
+    uint64_t i = 0;
+    for (i = 0; i < frag->length; ++i)
+    {
+        if (memMngr.vterms[frag->offset + i].tag != V_CHAR_TAG)
+            PRINT_AND_EXIT(NUMB_BAD_ARG);
+
+        if (memMngr.vterms[frag->offset + i].ch < '0' || memMngr.vterms[frag->offset + i].ch > '9')
+            PRINT_AND_EXIT(NUMB_BAD_ARG);
+
+        mpz_mul_ui(num, num, 10);
+        mpz_add_ui(num, num, memMngr.vterms[frag->offset + i].ch -  '0');
+    }
+
+    //TO FIX: Дублирование кода. arithmetics.c
+    uint32_t numb = 8 * sizeof(uint8_t);
+    uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
+
+    checkAndCleanTermsAndData(1, VINT_STRUCT_SIZE(length) + BUILTINS_RESULT_SIZE);
+
+    struct v_int* intNum = allocateIntStruct(length);
+
+    mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
+    intNum->sign = sign;
+
+    uint64_t offset = allocateIntNumVTerm(intNum);
+
+    mpz_clear(num);
+
+    struct lterm_t* res = allocateBuiltinsResult(offset, 1);
+
+    assembledFrageInBuiltins = 0;
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
