@@ -79,14 +79,8 @@ struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fi
     if (memMngr.vterms[frag->offset].tag != V_INT_NUM_TAG)
         PRINT_AND_EXIT(SYMB_BAD_ARG);
 
-    struct v_int* intNum = memMngr.vterms[frag->offset].intNum;
     mpz_t num;
-    mpz_init(num);
-    mpz_import(num, intNum->length, 1, sizeof(uint8_t), 1, 0, intNum->bytes);
-
-    char ch;
-    uint64_t size = gmp_snprintf(&ch, 1, "%Zd", num);
-
+    uint64_t size = calcBytesForIntCharArr(memMngr.vterms[frag->offset].intNum, &num);
     checkAndCleanTermsAndData(size, BUILTINS_RESULT_SIZE + size + 1);  // +1 for 0 character!
 
     // No need to update memMngr.dataOffset, because using only in this function.
@@ -97,10 +91,6 @@ struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
     uint64_t firstOffset = memMngr.vtermsOffset;
     uint64_t i = 0;
-
-    if (intNum->sign)
-        allocateSymbolVTerm('-');
-
     for (i = 0; i < size; ++i)
         allocateSymbolVTerm(buff[i]);
 
@@ -141,22 +131,12 @@ struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fi
         mpz_add_ui(num, num, memMngr.vterms[frag->offset + i].ch -  '0');
     }
 
-    //TO FIX: Дублирование кода. arithmetics.c
-    uint32_t numb = 8 * sizeof(uint8_t);
-    uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
+    if (sign)
+        mpz_neg(num, num);
 
-    checkAndCleanTermsAndData(1, VINT_STRUCT_SIZE(length) + BUILTINS_RESULT_SIZE);
-
-    struct v_int* intNum = allocateIntStruct(length);
-
-    mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
-    intNum->sign = sign;
-
-    uint64_t offset = allocateIntNumVTerm(intNum);
+    struct lterm_t* res = constructIntNumBuiltinResult(num);
 
     mpz_clear(num);
-
-    struct lterm_t* res = allocateBuiltinsResult(offset, 1);
 
     assembledFrageInBuiltins = 0;
 
@@ -181,23 +161,10 @@ struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fi
     mpz_addmul_ui(num, helper, frag->length / div);
     mpz_add_ui(num, num, frag->length % div);
 
-    //TO FIX: Дублирование кода. arithmetics.c
-    uint32_t numb = 8 * sizeof(uint8_t);
-    uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
-
-    checkAndCleanTermsAndData(1, VINT_STRUCT_SIZE(length) + BUILTINS_RESULT_SIZE);
-
-    struct v_int* intNum = allocateIntStruct(length);
-
-    mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
-    intNum->sign = 0;
-
-    uint64_t offset = allocateIntNumVTerm(intNum);
+    struct lterm_t* res = constructIntNumBuiltinResult(num);
 
     mpz_clear(num);
     mpz_clear(helper);
-
-    struct lterm_t* res = allocateBuiltinsResult(offset, 1);
 
     CONCAT_CHAINS(res, fieldOfView);
 

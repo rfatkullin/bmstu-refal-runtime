@@ -331,7 +331,7 @@ static uint64_t calcNeedBytesCount(struct fragment_t* frag)
                 break;
 
             case V_INT_NUM_TAG:
-                needBytesCount += calcBytesForIntCharArr(term->intNum);
+                needBytesCount += calcBytesForIntCharArr(term->intNum, 0);
                 break;
 
             case V_DOUBLE_NUM_TAG:

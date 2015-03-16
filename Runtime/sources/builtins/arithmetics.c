@@ -19,7 +19,6 @@
 
 typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
 
-static struct lterm_t* constructIntNumLTerm(mpz_t num);
 static struct lterm_t* constructDoubleNumLTerm(double val);
 static void readIntOperands(mpz_t x, mpz_t y, struct fragment_t* frag);
 static void readOperand(mpz_t num, struct v_term* term);
@@ -117,7 +116,7 @@ static struct lterm_t* applyOpToInt(ArithOp op, struct fragment_t* frag)
 
     op(res, x, y);
 
-    struct lterm_t* resChain = constructIntNumLTerm(res);
+    struct lterm_t* resChain = constructIntNumBuiltinResult(res);
 
     mpz_clear(x);
     mpz_clear(y);
@@ -145,7 +144,7 @@ static struct lterm_t* applyOpToDouble(ArithOp op, struct fragment_t* frag)
     numParseFailed(BAD_BINARY_OPERATION);
 }
 
-static struct lterm_t* constructIntNumLTerm(mpz_t num)
+struct lterm_t* constructIntNumBuiltinResult(mpz_t num)
 {      
     uint32_t numb = 8 * sizeof(uint8_t);
     uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;

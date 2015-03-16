@@ -6,19 +6,22 @@
 
 #define BAD_BUFF  "Bad buffer passed to char array converter!"
 
-uint64_t calcBytesForIntCharArr(struct v_int* intNumStruct)
+uint64_t calcBytesForIntCharArr(struct v_int* intNum, mpz_t* outputNum)
 {
     mpz_t num;
     mpz_init(num);
+    mpz_import(num, intNum->length, 1, sizeof(uint8_t), 1, 0, intNum->bytes);
 
-    mpz_import(num, intNumStruct->length, 1, sizeof(uint8_t), 1, 0, intNumStruct->bytes);
+    if (intNum->sign)
+        mpz_neg(num, num);
 
-    uint64_t size = mpz_sizeinbase(num, 10);
+    char ch;
+    uint64_t size = gmp_snprintf(&ch, 1, "%Zd", num);
 
-    if (intNumStruct->sign)
-        ++size;
-
-    mpz_clear(num);
+    if (outputNum)
+        mpz_swap(*outputNum, num);
+    else
+        mpz_clear(num);
 
     return size;
 }
@@ -31,19 +34,10 @@ uint64_t calcBytesForVStringCharArr(struct v_string* str)
     return  sizeof(uint32_t) * str->length;
 }
 
-char* vIntToCharArr(struct v_int* intNumStruct, char* buff)
+char* vIntToCharArr(struct v_int* intNum, char* buff)
 {
     mpz_t num;
-    mpz_init(num);
-
-    mpz_import(num, intNumStruct->length, 1, sizeof(uint8_t), 1, 0, intNumStruct->bytes);
-    uint64_t size = mpz_sizeinbase(num, 10);
-
-    if (intNumStruct->sign)
-    {
-        mpz_mul_si(num, num, -1);
-        ++size;
-    }
+    uint64_t size = calcBytesForIntCharArr(intNum, &num);
 
     if (!buff)
         PRINT_AND_EXIT(BAD_BUFF);
