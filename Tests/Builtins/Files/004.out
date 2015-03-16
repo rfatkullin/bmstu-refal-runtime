@@ -1,6 +1,6 @@
 $ENTRY Go
 {
-	= <Open 'r' 1 '../../Tests/Files/Тестовое_Имя_Файля_для_UTF-8.write.tmp'>
+	= <Open 'r' 1 '../../Tests/Builtins/Files/004.ref'>
 	  <Prout <LoadFile 1>>		
 }
 
@@ -15,5 +15,6 @@ LoadFile2
 	s.1 e.2 0 = e.2;
 	s.1 e.2 = e.2 '\n' <LoadFile s.1>;
 }
+
 
 
