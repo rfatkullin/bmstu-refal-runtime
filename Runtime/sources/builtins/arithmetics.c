@@ -8,48 +8,48 @@
 #include <builtins/builtins.h>
 #include <allocators/data_alloc.h>
 #include <allocators/vterm_alloc.h>
+#include <helpers.h>
 
-#define WRONG_OPERANDS_NUMBER "It's binary operation!"
-#define OPERANDS_TYPES_MISMATCH "Operands must be same type!"
-#define OPERAND_BAD_TYPE "Operand must be int or double!"
-#define BAD_BINARY_OPERATION "Unknown binary operation"
-#define MOD_TO_DOUBLE_ERROR "Can't applay mod operation to double!"
+#define WRONG_OPERANDS_NUMBER       "It's binary operation!\n"
+#define OPERANDS_TYPES_MISMATCH     "Operands must be same type!\n"
+#define OPERAND_BAD_TYPE            "Operand must be int or double!\n"
+#define BAD_BINARY_OPERATION        "Unknown binary operation\n"
+#define MOD_TO_DOUBLE_ERROR         "Can't applay mod operation to double!\n"
 
 #define EPS 1e-6
 
 typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
 
-static struct lterm_t* constructDoubleNumLTerm(double val);
 static void readIntOperands(mpz_t x, mpz_t y, struct fragment_t* frag);
 static void readOperand(mpz_t num, struct v_term* term);
-static struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
-static void numParseFailed();
-static struct lterm_t* applyOpToInt(ArithOp op, struct fragment_t* frag);
-static struct lterm_t* applyOpToDouble(ArithOp op, struct fragment_t* currExpr);
+static struct lterm_t* gcApplyOpToInt(ArithOp op, struct fragment_t* frag);
+static struct lterm_t* gcApplyOpToDouble(ArithOp op, struct fragment_t* currExpr);
+static struct lterm_t* gcConstructDoubleNumLTerm(double val);
+static struct func_result_t gcApplyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
 
 struct func_result_t Add(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-	return  applyOp(mpz_add, entryPoint, env, fieldOfView);
+    return  gcApplyOp(mpz_add, entryPoint, env, fieldOfView);
 }
 
 struct func_result_t Sub(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-	return  applyOp(mpz_sub, entryPoint, env, fieldOfView);
+    return  gcApplyOp(mpz_sub, entryPoint, env, fieldOfView);
 }
 
 struct func_result_t Mul(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-	return  applyOp(mpz_mul, entryPoint, env, fieldOfView);
+    return  gcApplyOp(mpz_mul, entryPoint, env, fieldOfView);
 }
 
 struct func_result_t Div(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-	return  applyOp(mpz_tdiv_q, entryPoint, env, fieldOfView);
+    return  gcApplyOp(mpz_tdiv_q, entryPoint, env, fieldOfView);
 }
 
 struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-	return  applyOp(mpz_mod, entryPoint, env, fieldOfView);
+    return  gcApplyOp(mpz_mod, entryPoint, env, fieldOfView);
 }
 
 int doubleCmp(double a, double b)
@@ -72,7 +72,7 @@ int ConvertToInt(struct v_int* numData)
     mpz_import(num, numData->length, 1, sizeof(uint8_t), 1, 0, numData->bytes);
 
     if (numData->sign)
-        mpz_mul_si(num, num, -1);
+        mpz_neg(num, num);
 
     int res = mpz_get_si(num);
 
@@ -81,28 +81,28 @@ int ConvertToInt(struct v_int* numData)
     return res;
 }
 
-static struct func_result_t applyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+static struct func_result_t gcApplyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
 {
     struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
     struct lterm_t* resChain = 0;
 
     if (frag->length != 2)
-        numParseFailed(WRONG_OPERANDS_NUMBER);
+        PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER);
 
     if (memMngr.vterms[frag->offset].tag != memMngr.vterms[frag->offset + 1].tag )
-        numParseFailed(OPERANDS_TYPES_MISMATCH);
+        PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH);
 
     if (memMngr.vterms[frag->offset].tag == V_INT_NUM_TAG)
-        resChain = applyOpToInt(op, frag);
+        resChain = gcApplyOpToInt(op, frag);
     else if (memMngr.vterms[frag->offset].tag == V_DOUBLE_NUM_TAG)
-        resChain = applyOpToDouble(op, frag);
+        resChain = gcApplyOpToDouble(op, frag);
     else
-        numParseFailed(OPERAND_BAD_TYPE);
+        PRINT_AND_EXIT(OPERAND_BAD_TYPE);
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = resChain, .callChain = 0};
 }
 
-static struct lterm_t* applyOpToInt(ArithOp op, struct fragment_t* frag)
+static struct lterm_t* gcApplyOpToInt(ArithOp op, struct fragment_t* frag)
 {
     mpz_t x;
     mpz_t y;
@@ -116,7 +116,7 @@ static struct lterm_t* applyOpToInt(ArithOp op, struct fragment_t* frag)
 
     op(res, x, y);
 
-    struct lterm_t* resChain = constructIntNumBuiltinResult(res);
+    struct lterm_t* resChain = gcConstructIntNumBuiltinResult(res);
 
     mpz_clear(x);
     mpz_clear(y);
@@ -125,26 +125,26 @@ static struct lterm_t* applyOpToInt(ArithOp op, struct fragment_t* frag)
     return resChain;
 }
 
-static struct lterm_t* applyOpToDouble(ArithOp op, struct fragment_t* frag)
+static struct lterm_t* gcApplyOpToDouble(ArithOp op, struct fragment_t* frag)
 {
     double a = memMngr.vterms[frag->offset].doubleNum;
     double b = memMngr.vterms[frag->offset+1].doubleNum;
 
     if (op == mpz_add)
-        return constructDoubleNumLTerm(a + b);
+        return gcConstructDoubleNumLTerm(a + b);
     else if (op == mpz_sub)
-        return constructDoubleNumLTerm(a - b);
+        return gcConstructDoubleNumLTerm(a - b);
     else if (op == mpz_mul)
-        return constructDoubleNumLTerm(a * b);
+        return gcConstructDoubleNumLTerm(a * b);
     else if (op == mpz_tdiv_q)
-        return constructDoubleNumLTerm(a / b);
+        return gcConstructDoubleNumLTerm(a / b);
     else if (op == mpz_mod)
-        numParseFailed(MOD_TO_DOUBLE_ERROR);
+        PRINT_AND_EXIT(MOD_TO_DOUBLE_ERROR);
 
-    numParseFailed(BAD_BINARY_OPERATION);
+    PRINT_AND_EXIT(BAD_BINARY_OPERATION);
 }
 
-struct lterm_t* constructIntNumBuiltinResult(mpz_t num)
+struct lterm_t* gcConstructIntNumBuiltinResult(mpz_t num)
 {      
     uint32_t numb = 8 * sizeof(uint8_t);
     uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
@@ -161,7 +161,7 @@ struct lterm_t* constructIntNumBuiltinResult(mpz_t num)
     return allocateBuiltinsResult(offset, 1);
 }
 
-static struct lterm_t* constructDoubleNumLTerm(double val)
+static struct lterm_t* gcConstructDoubleNumLTerm(double val)
 {    
     checkAndCleanHeaps(1, BUILTINS_RESULT_SIZE);
 
@@ -186,10 +186,3 @@ static void readIntOperands(mpz_t x, mpz_t y, struct fragment_t* frag)
     term++;
     readOperand(y, term);
 }
-
-static void numParseFailed(char* msg)
-{
-    printf("Fail: %s\n", msg);
-    exit(0);
-}
-

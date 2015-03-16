@@ -74,7 +74,7 @@ struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
 struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 
-struct lterm_t* constructIntNumBuiltinResult(mpz_t num);
+struct lterm_t* gcConstructIntNumBuiltinResult(mpz_t num);
 
 /// Get int from mpz_t.
 int ConvertToInt(struct v_int* numData);

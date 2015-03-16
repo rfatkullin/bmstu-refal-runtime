@@ -134,7 +134,7 @@ struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fi
     if (sign)
         mpz_neg(num, num);
 
-    struct lterm_t* res = constructIntNumBuiltinResult(num);
+    struct lterm_t* res = gcConstructIntNumBuiltinResult(num);
 
     mpz_clear(num);
 
@@ -143,6 +143,7 @@ struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fi
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
+// TO FIX: Using fieldOfView after gc! Fix: global var func_call_t
 struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
     assembledFragInBuiltins = gcGetAssembliedChain(fieldOfView);
@@ -161,7 +162,7 @@ struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fi
     mpz_addmul_ui(num, helper, frag->length / div);
     mpz_add_ui(num, num, frag->length % div);
 
-    struct lterm_t* res = constructIntNumBuiltinResult(num);
+    struct lterm_t* res = gcConstructIntNumBuiltinResult(num);
 
     mpz_clear(num);
     mpz_clear(helper);

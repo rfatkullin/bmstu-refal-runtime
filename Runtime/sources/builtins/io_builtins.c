@@ -467,7 +467,6 @@ void printUStr(FILE* file, struct v_string* str)
         printUTF32(file, str->head[i]);
 }
 
-
 static void printIntNumber(FILE* file, struct v_int* intNum)
 {
     mpz_t num;
