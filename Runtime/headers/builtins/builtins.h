@@ -38,7 +38,7 @@ int refalProgramArgsCount;
 struct fragment_t* refalProgramArgs;
 
 /// To save from garbage collection;
-struct lterm_t* assembledFrageInBuiltins;
+struct lterm_t* assembledFragInBuiltins;
 
 /// Opend files info.
 struct file_info files[MAX_FILE_DESCR];

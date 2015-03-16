@@ -16,7 +16,7 @@ void collectGarbage()
     collectVTermGarbage(memMngr.fieldOfView);
 
     copyChainLTerm(memMngr.fieldOfView);
-    assembledFrageInBuiltins = copyFragmentLTerm(assembledFrageInBuiltins);
+    assembledFragInBuiltins = copyFragmentLTerm(assembledFragInBuiltins);
 
     end = clock();
 

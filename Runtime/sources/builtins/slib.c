@@ -101,8 +101,8 @@ struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
 struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-    assembledFrageInBuiltins = gcGetAssembliedChain(fieldOfView);
-    struct fragment_t* frag = assembledFrageInBuiltins->fragment;
+    assembledFragInBuiltins = gcGetAssembliedChain(fieldOfView);
+    struct fragment_t* frag = assembledFragInBuiltins->fragment;
 
     if (frag->length == 0)
         PRINT_AND_EXIT(NUMB_BAD_ARG);
@@ -138,15 +138,15 @@ struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
     mpz_clear(num);
 
-    assembledFrageInBuiltins = 0;
+    assembledFragInBuiltins = 0;
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
 struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-    assembledFrageInBuiltins = gcGetAssembliedChain(fieldOfView);
-    struct fragment_t* frag = assembledFrageInBuiltins->fragment;
+    assembledFragInBuiltins = gcGetAssembliedChain(fieldOfView);
+    struct fragment_t* frag = assembledFragInBuiltins->fragment;
 
     mpz_t num;
     mpz_t helper;
@@ -168,27 +168,27 @@ struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
     CONCAT_CHAINS(res, fieldOfView);
 
-    assembledFrageInBuiltins = 0;
+    assembledFragInBuiltins = 0;
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
 static struct func_result_t switchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView)
 {
-    assembledFrageInBuiltins = gcGetAssembliedChain(fieldOfView);
+    assembledFragInBuiltins = gcGetAssembliedChain(fieldOfView);
 
     checkAndCleanHeaps(0, SIMPLE_CHAIN_SIZE);
 
     struct lterm_t* chainTerm = allocateSimpleChain();
 
-    ADD_TO_CHAIN(chainTerm, assembledFrageInBuiltins);
+    ADD_TO_CHAIN(chainTerm, assembledFragInBuiltins);
 
-    struct fragment_t* frag = assembledFrageInBuiltins->fragment;
+    struct fragment_t* frag = assembledFragInBuiltins->fragment;
     uint64_t i =0;
     for (i = 0; i < frag->length; ++i)
         memMngr.vterms[frag->offset + i].ch = op(memMngr.vterms[frag->offset + i].ch);
 
-    assembledFrageInBuiltins = 0;
+    assembledFragInBuiltins = 0;
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm, .callChain = 0};
 }

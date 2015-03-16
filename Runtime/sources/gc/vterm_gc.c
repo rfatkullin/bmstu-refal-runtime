@@ -26,13 +26,13 @@ void collectVTermGarbage(struct lterm_t* fieldOfView)
 
     stage = MARK_STAGE;
     processChainVTerms(fieldOfView);
-    processFragmentVTerms(assembledFrageInBuiltins->fragment);
+    processFragmentVTerms(assembledFragInBuiltins->fragment);
 
     copyVTerms();
 
     stage = POINTER_CORRECTING_STAGE;
     processChainVTerms(fieldOfView);
-    processFragmentVTerms(assembledFrageInBuiltins->fragment);
+    processFragmentVTerms(assembledFragInBuiltins->fragment);
 }
 
 static void processChainVTerms(struct lterm_t* chain)

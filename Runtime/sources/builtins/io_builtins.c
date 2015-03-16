@@ -151,8 +151,8 @@ static struct func_result_t _gcGet(FILE* file)
 
 static void _gcPut(struct lterm_t* fieldOfView)
 {
-    assembledFrageInBuiltins = gcGetAssembliedChain(fieldOfView);
-    struct fragment_t* frag = assembledFrageInBuiltins->fragment;
+    assembledFragInBuiltins = gcGetAssembliedChain(fieldOfView);
+    struct fragment_t* frag = assembledFragInBuiltins->fragment;
 
     if (frag->length < 1)
         PRINT_AND_EXIT(TOO_FEW_ARGUMENTS);
@@ -166,7 +166,7 @@ static void _gcPut(struct lterm_t* fieldOfView)
 
     printRange(files[descr].file, frag);
 
-    assembledFrageInBuiltins = 0;
+    assembledFragInBuiltins = 0;
 }
 
 static uint8_t getOpenMode(struct fragment_t* frag)
