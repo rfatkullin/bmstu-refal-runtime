@@ -19,9 +19,10 @@ struct func_result_t Arg(int* entryPoint, struct env_t* env, struct lterm_t* fie
     struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
 
     if (frag->length != 1)
-        PRINT_AND_EXIT(ARG_WRONG_ARG_NUM);
+        PRINT_AND_EXIT(ARG_FUNC_BAD_ARG_NUM);
 
-    // TO FIX: CHECK ON INT!
+    if (memMngr.vterms[frag->offset].tag != V_INT_NUM_TAG)
+        PRINT_AND_EXIT(ARG_FUNC_BAD_ARG_NUM);
 
     int argNum = ConvertToInt(memMngr.vterms[frag->offset].intNum);
 
@@ -35,11 +36,10 @@ struct func_result_t Arg(int* entryPoint, struct env_t* env, struct lterm_t* fie
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = chain, .callChain = 0};
 }
 
-// TO FIX: Убрать malloc.
 uint64_t initArgsData(uint64_t offset, int argc, char** argv)
 {
     refalProgramArgsCount = argc;
-    refalProgramArgs = (struct fragment_t*) malloc(argc * sizeof(struct fragment_t));
+    refalProgramArgs = (struct fragment_t*)malloc(argc * sizeof(struct fragment_t));
 
     int i = 0;
     for (i = 0; i < argc; ++i)
