@@ -12,7 +12,7 @@
 #include <allocators/vterm_alloc.h>
 #include <builtins/case_map_table.h>
 
-static struct func_result_t switchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView);
+static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView);
 
 struct func_result_t Arg(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
@@ -61,12 +61,12 @@ uint64_t initArgsData(uint64_t offset, int argc, char** argv)
 
 struct func_result_t Upper(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-    return switchCase(toUpperCase, fieldOfView);
+    return gcSwitchCase(toUpperCase, fieldOfView);
 }
 
 struct func_result_t Lower(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-    return switchCase(toLowerCase, fieldOfView);
+    return gcSwitchCase(toLowerCase, fieldOfView);
 }
 
 struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
@@ -81,7 +81,7 @@ struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
     mpz_t num;
     uint64_t size = calcBytesForIntCharArr(memMngr.vterms[frag->offset].intNum, &num);
-    checkAndCleanHeaps(size, BUILTINS_RESULT_SIZE + size + 1);  // +1 for 0 character!
+    checkAndCleanHeaps(size, MAX(BUILTINS_RESULT_SIZE, size + 1)); // +1 for 0 character!
 
     // No need to update memMngr.dataOffset, because using only in this function.
     char* buff = (char*)(memMngr.data + memMngr.dataOffset);
@@ -101,8 +101,7 @@ struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
 struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-    assembledFragInBuiltins = gcGetAssembliedChain(fieldOfView);
-    struct fragment_t* frag = assembledFragInBuiltins->fragment;
+    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
 
     if (frag->length == 0)
         PRINT_AND_EXIT(NUMB_BAD_ARG);
@@ -138,16 +137,13 @@ struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
     mpz_clear(num);
 
-    assembledFragInBuiltins = 0;
-
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
 // TO FIX: Using fieldOfView after gc! Fix: global var func_call_t
 struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-    assembledFragInBuiltins = gcGetAssembliedChain(fieldOfView);
-    struct fragment_t* frag = assembledFragInBuiltins->fragment;
+    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
 
     mpz_t num;
     mpz_t helper;
@@ -169,12 +165,10 @@ struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
     CONCAT_CHAINS(res, fieldOfView);
 
-    assembledFragInBuiltins = 0;
-
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
-static struct func_result_t switchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView)
+static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView)
 {
     assembledFragInBuiltins = gcGetAssembliedChain(fieldOfView);
 

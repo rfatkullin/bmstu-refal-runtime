@@ -152,19 +152,18 @@ static struct func_result_t _gcGet(FILE* file)
 static void _gcPut(struct lterm_t* fieldOfView)
 {
     assembledFragInBuiltins = gcGetAssembliedChain(fieldOfView);
-    struct fragment_t* frag = assembledFragInBuiltins->fragment;
 
-    if (frag->length < 1)
+    if (assembledFragInBuiltins->fragment->length < 1)
         PRINT_AND_EXIT(TOO_FEW_ARGUMENTS);
 
-    uint8_t descr = getDescr(frag);
+    uint8_t descr = getDescr(assembledFragInBuiltins->fragment);
 
     if (!descr)
-        printRange(stdout, frag);
+        printRange(stdout, assembledFragInBuiltins->fragment);
     else if (!files[descr].file)
         gcOpenDefaultFile(descr, WRITE_MODE);
 
-    printRange(files[descr].file, frag);
+    printRange(files[descr].file, assembledFragInBuiltins->fragment);
 
     assembledFragInBuiltins = 0;
 }
