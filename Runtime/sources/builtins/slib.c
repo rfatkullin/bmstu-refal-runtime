@@ -177,11 +177,11 @@ static struct func_result_t switchCase(uint32_t op(uint32_t ch), struct lterm_t*
 {
     assembledFrageInBuiltins = gcGetAssembliedChain(fieldOfView);
 
-    checkAndCleanData(CHAIN_LTERM_SIZE(1));
+    checkAndCleanData(SIMPLE_CHAIN_SIZE);
 
-    struct lterm_t* chainTerm = allocateChainLTerm(1);
+    struct lterm_t* chainTerm = allocateSimpleChain();
 
-    ADD_TO_CHAIN(chainTerm->chain, assembledFrageInBuiltins);
+    ADD_TO_CHAIN(chainTerm, assembledFrageInBuiltins);
 
     struct fragment_t* frag = assembledFrageInBuiltins->fragment;
     uint64_t i =0;
@@ -190,5 +190,5 @@ static struct func_result_t switchCase(uint32_t op(uint32_t ch), struct lterm_t*
 
     assembledFrageInBuiltins = 0;
 
-    return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm->chain, .callChain = 0};
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm, .callChain = 0};
 }

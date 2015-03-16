@@ -6,12 +6,11 @@
 #include <allocators/data_alloc.h>
 
 static struct lterm_t* copyFuncCallLTerm(struct lterm_t* term);
-static void addTerm(struct lterm_t* chain, struct lterm_t* term);
 static struct env_t* copyEnv(struct env_t* from, struct env_t* to);
 
 struct lterm_t* copyChainLTerm(struct lterm_t* chain)
 {
-    struct lterm_t* newChain = allocateChainLTerm(1);
+    struct lterm_t* newChain = allocateSimpleChain();
     struct lterm_t* newTerm = 0;
     struct lterm_t* currTerm = chain->next;
 
@@ -28,7 +27,7 @@ struct lterm_t* copyChainLTerm(struct lterm_t* chain)
             case L_TERM_CHAIN_TAG:
                 // TO FIX: Правильная обработка!
                 printf("[Warn]: Chain contains another chain!");
-                newTerm = copyChainLTerm(currTerm);
+                newTerm = copyChainLTerm(currTerm->chain);
                 break;
             case L_TERM_FUNC_CALL:
                 newTerm = copyFuncCallLTerm(currTerm);
@@ -37,7 +36,7 @@ struct lterm_t* copyChainLTerm(struct lterm_t* chain)
 
         if (newTerm)
         {
-            addTerm(newChain, newTerm);
+            ADD_TO_CHAIN(newChain, newTerm);
         }
         else
         {
@@ -50,7 +49,6 @@ struct lterm_t* copyChainLTerm(struct lterm_t* chain)
 
     return newChain;
 }
-
 
 static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
 {
@@ -103,10 +101,3 @@ struct lterm_t* copyFragmentLTerm(struct lterm_t* term)
     return newTerm;
 }
 
-static void addTerm(struct lterm_t* chain, struct lterm_t* term)
-{
-    chain->prev->next = term;
-    term->prev = chain->prev;
-    chain->prev = term;
-    term->next = chain;
-}

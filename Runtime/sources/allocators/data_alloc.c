@@ -152,7 +152,7 @@ struct lterm_t* allocateBuiltinsResult(uint64_t offset, uint64_t length)
     lterm->fragment->offset = offset;
     lterm->fragment->length = length;
 
-    chain = allocateChainLTerm(1);
+    chain = allocateSimpleChain();
     chain->next = lterm;
     chain->prev = lterm;
     lterm->next = chain;
@@ -223,4 +223,15 @@ struct lterm_t* allocateChainLTerm(uint32_t count)
     }
 
     return head;
+}
+
+struct lterm_t* allocateSimpleChain()
+{
+    struct lterm_t* chain = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(struct lterm_t);
+
+    chain->prev = chain;
+    chain->next = chain;
+
+    return chain;
 }
