@@ -7,12 +7,9 @@
 #include <allocators/vterm_alloc.h>
 #include <memory_manager.h>
 
-/// Функции выделения vterm'ов без проверок.
-static uint64_t allocateClosureVterm();
-
 int allocateVTerms(struct fragment_t* frag)
 {
-    if (checkVTermsOverflow(frag->length))
+    if (isHeapsOverflowed(frag->length, 0))
         return 0;
 
     uint64_t i = 0;
@@ -62,7 +59,7 @@ uint64_t chAllocateClosureVTerm(allocate_result* res)
 
     *res = OK;
 
-    return allocateClosureVterm();
+    return allocateClosureVTerm();
 }
 
 uint64_t allocateDoubleNumVTerm(double value)
@@ -72,46 +69,8 @@ uint64_t allocateDoubleNumVTerm(double value)
     return memMngr.vtermsOffset++;
 }
 
-uint64_t gcAllocateIntNumVTerm(struct v_int* value)
-{
-    checkAndCleanVTerms(1);
-
-    return allocateIntNumVTerm(value);
-}
-
-uint64_t gcAllocateDoubleNumVTerm(double value)
-{
-    checkAndCleanVTerms(1);
-
-    return allocateDoubleNumVTerm(value);
-}
-
-uint64_t gcAllocateClosureVTerm()
-{
-    checkAndCleanVTerms(1);
-
-    return allocateClosureVterm();
-}
-
-uint64_t gcAllocateOpenBracketVTerm(uint64_t length)
-{
-    checkAndCleanVTerms(1);
-
-    return allocateOpenBracketVTerm(length);
-}
-
-uint64_t gcAllocateCloseBracketVTerm(uint64_t length)
-{
-    checkAndCleanVTerms(1);
-
-    return allocateCloseBracketVTerm(length);
-}
-
-uint64_t gcAllocateUInt8VTerm(uint8_t val)
-{
-    checkAndCleanVTerms(1);
-    checkAndCleanData(VINT_STRUCT_SIZE(1));
-
+uint64_t allocateUInt8VTerm(uint8_t val)
+{    
     struct v_int* num = allocateIntStruct(1);
     num->sign = 0;
     *num->bytes = val;
@@ -119,7 +78,7 @@ uint64_t gcAllocateUInt8VTerm(uint8_t val)
     return allocateIntNumVTerm(num);
 }
 
-static uint64_t allocateClosureVterm()
+uint64_t allocateClosureVTerm()
 {
     memMngr.vterms[memMngr.vtermsOffset].tag = V_CLOSURE_TAG;
 

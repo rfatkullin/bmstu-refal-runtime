@@ -29,7 +29,7 @@ struct func_result_t Arg(int* entryPoint, struct env_t* env, struct lterm_t* fie
     if (argNum < 0 || argNum >= refalProgramArgsCount)
         FMT_PRINT_AND_EXIT(BAD_PROGRAM_ARG_NUM, refalProgramArgsCount, argNum, refalProgramArgsCount);
 
-    checkAndCleanData(BUILTINS_RESULT_SIZE);
+    checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
     struct lterm_t* chain = allocateBuiltinsResult(refalProgramArgs[argNum].offset, refalProgramArgs[argNum].length);
 
@@ -81,7 +81,7 @@ struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fi
 
     mpz_t num;
     uint64_t size = calcBytesForIntCharArr(memMngr.vterms[frag->offset].intNum, &num);
-    checkAndCleanTermsAndData(size, BUILTINS_RESULT_SIZE + size + 1);  // +1 for 0 character!
+    checkAndCleanHeaps(size, BUILTINS_RESULT_SIZE + size + 1);  // +1 for 0 character!
 
     // No need to update memMngr.dataOffset, because using only in this function.
     char* buff = (char*)(memMngr.data + memMngr.dataOffset);
@@ -177,7 +177,7 @@ static struct func_result_t switchCase(uint32_t op(uint32_t ch), struct lterm_t*
 {
     assembledFrageInBuiltins = gcGetAssembliedChain(fieldOfView);
 
-    checkAndCleanData(SIMPLE_CHAIN_SIZE);
+    checkAndCleanHeaps(0, SIMPLE_CHAIN_SIZE);
 
     struct lterm_t* chainTerm = allocateSimpleChain();
 

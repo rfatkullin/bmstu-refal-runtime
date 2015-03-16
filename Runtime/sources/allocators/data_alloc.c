@@ -64,28 +64,28 @@ struct v_closure* chAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCoun
 
 struct v_closure* gcAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct v_string* ident, int rollback)
 {
-    checkAndCleanData(CLOSURE_SIZE(paramsCount));
+    checkAndCleanHeaps(0, CLOSURE_SIZE(paramsCount));
 
     return allocateClosureStruct(funcPtr, paramsCount, ident, rollback);
 }
 
 struct v_int* gcAllocateIntStruct(uint64_t length)
 {
-    checkAndCleanData(VINT_STRUCT_SIZE(length));
+    checkAndCleanHeaps(0, VINT_STRUCT_SIZE(length));
 
     return allocateIntStruct(length);
 }
 
 struct lterm_t* gcAllocateFragmentLTerm(uint32_t count)
 {
-    checkAndCleanData(count * (sizeof(struct fragment_t) + sizeof(struct lterm_t)));
+    checkAndCleanHeaps(0, count * (sizeof(struct fragment_t) + sizeof(struct lterm_t)));
 
     return allocateFragmentLTerm(count);
 }
 
 struct env_t* gcAllocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount)
 {
-    checkAndCleanData(patternsCount * sizeof(struct lterm_t*) +
+    checkAndCleanHeaps(0,   patternsCount * sizeof(struct lterm_t*) +
                             patternsCount * sizeof(struct lterm_t*) +
                             patternsCount * sizeof(int));
 

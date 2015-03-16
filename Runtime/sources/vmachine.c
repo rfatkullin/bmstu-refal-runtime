@@ -30,6 +30,7 @@ static struct v_string* constructVStringFromASCIIName(const char* name)
     return ptr;
 }
 
+// TO FIX: Проверки на переполнение.
 static struct func_call_t* ConstructStartFunc(const char* funcName, RefalFunc entryFuncPointer)
 {
 	struct func_call_t* goCall = (struct func_call_t*)malloc(sizeof(struct func_call_t));
@@ -39,7 +40,7 @@ static struct func_call_t* ConstructStartFunc(const char* funcName, RefalFunc en
     struct v_string* ident = constructVStringFromASCIIName(funcName);
 	currTerm->tag = L_TERM_FRAGMENT_TAG;
 	currTerm->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
-    currTerm->fragment->offset = gcAllocateClosureVTerm();
+    currTerm->fragment->offset = allocateClosureVTerm();
     memMngr.vterms[currTerm->fragment->offset].closure = gcAllocateClosureStruct(entryFuncPointer, 0, ident, 0);
 	currTerm->fragment->length = 1;
     memMngr.vterms[currTerm->fragment->offset].closure->ident = ident;

@@ -29,61 +29,33 @@ void failWithMemoryOverflow()
     exit(1);
 }
 
-void strictCheckVTermsOverflow(uint64_t needVTermsCount)
-{
-    if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
-        failWithMemoryOverflow();
-}
-
-int checkAndCleanVTerms(uint64_t needVTermsCount)
-{
-    int collected = 0;
-
-    if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
-    {
-        collectGarbage();
-        collected = 1;
-    }
-
-    if (memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset)
-        failWithMemoryOverflow();
-
-    return collected;
-}
-
-int checkAndCleanData(uint64_t needDataSize)
-{
-    int collected = 0;
-
-    if (memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
-    {
-        collectGarbage();
-        collected = 1;
-    }
-
-    if (memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
-        failWithMemoryOverflow();
-
-    return collected;
-}
-
-
-int checkVTermsOverflow(uint64_t needVTermsCount)
-{
-    return memMngr.vtermsOffset + needVTermsCount > memMngr.vtermsMaxOffset;
-}
-
-int checkDataOverflow(uint64_t needDataSize)
-{
-    return memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset;
-}
-
-void checkAndCleanTermsAndData(uint64_t needTermCount, uint64_t needDataSize)
+void strictCheckHeaps(uint64_t needTermCount, uint64_t needDataSize)
 {
     if (memMngr.vtermsOffset + needTermCount > memMngr.vtermsMaxOffset ||
         memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
     {
+        failWithMemoryOverflow();
+    }
+}
+
+int isHeapsOverflowed(uint64_t needTermCount, uint64_t needDataSize)
+{
+    if (memMngr.vtermsOffset + needTermCount > memMngr.vtermsMaxOffset ||
+        memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
+        return 1;
+
+    return 0;
+}
+
+int checkAndCleanHeaps(uint64_t needTermCount, uint64_t needDataSize)
+{
+    int isCollect = 0;
+
+    if (memMngr.vtermsOffset + needTermCount > memMngr.vtermsMaxOffset ||
+        memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
+    {
         collectGarbage();
+        isCollect = 1;
     }
 
     if (memMngr.vtermsOffset + needTermCount > memMngr.vtermsMaxOffset ||
@@ -91,6 +63,8 @@ void checkAndCleanTermsAndData(uint64_t needTermCount, uint64_t needDataSize)
     {
         failWithMemoryOverflow();
     }
+
+    return isCollect;
 }
 
 

@@ -18,20 +18,20 @@ static void printUnicodeChar(uint32_t ch);
 static void printIntNumber(FILE* file, struct v_int* intNum);
 static uint64_t copySymbols(uint64_t first, uint64_t length);
 static char* getFileName();
-static char* assemblyFileName(struct fragment_t* frag);
-static void openFile(struct fragment_t* frag, uint8_t mode, uint8_t descr);
+static void gcAssemblyFileName(struct fragment_t* frag);
+static void gcOpenFile(struct fragment_t* frag, uint8_t mode, uint8_t descr);
 static uint64_t calcNeedBytesCount(struct fragment_t* frag);
 static uint8_t getOpenMode(struct fragment_t* frag);
 static uint8_t getDescr(struct fragment_t* frag);
-static void openDefaultFile(uint8_t descr, uint8_t mode);
+static void gcOpenDefaultFile(uint8_t descr, uint8_t mode);
 static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr);
-static void _put(struct lterm_t* fieldOfView);
-static struct func_result_t _get(FILE* file);
+static void _gcPut(struct lterm_t* fieldOfView);
+static struct func_result_t _gcGet(FILE* file);
 static getFileDescr(struct v_int* bigInt, uint8_t* descr);
 
 struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-    return _get(stdin);
+    return _gcGet(stdin);
 }
 
 struct func_result_t Get(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
@@ -44,12 +44,12 @@ struct func_result_t Get(int* entryPoint, struct env_t* env, struct lterm_t* fie
     uint8_t descr = getDescr(frag);
 
     if (!descr)
-        return _get(stdin);
+        return _gcGet(stdin);
 
     if (!files[descr].file)
-        openDefaultFile(descr, READ_MODE);
+        gcOpenDefaultFile(descr, READ_MODE);
 
-    return _get(files[descr].file);
+    return _gcGet(files[descr].file);
 }
 
 struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
@@ -61,6 +61,7 @@ struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* f
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
 
+// TO FIX: Using fieldOfView after gc! Fix: global var func_call_t
 struct func_result_t Print(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
     struct lterm_t* currExpr = gcGetAssembliedChain(fieldOfView);
@@ -83,32 +84,32 @@ struct func_result_t Open(int* entryPoint, struct env_t* env, struct lterm_t* fi
     uint8_t mode = getOpenMode(frag);
     uint8_t descr = getDescr(frag);
 
-    openFile(frag, mode, descr);
+    gcOpenFile(frag, mode, descr);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
 
 struct func_result_t Put(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-    _put(fieldOfView);
+    _gcPut(fieldOfView);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = fieldOfView, .callChain = 0};
 }
 
 struct func_result_t Putout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
 {
-    _put(fieldOfView);
+    _gcPut(fieldOfView);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
 
-static struct func_result_t _get(FILE* file)
+static struct func_result_t _gcGet(FILE* file)
 {
     uint64_t firstOffset = memMngr.vtermsOffset;
     uint64_t currOffset =  memMngr.vtermsOffset;
     struct lterm_t* mainChain = 0;
 
-    checkAndCleanData(BUILTINS_RESULT_SIZE);
+    checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
     uint32_t ch;
     while(1)
@@ -117,33 +118,41 @@ static struct func_result_t _get(FILE* file)
         if ( ch == '\n' || ch == 0)
             break;
 
-        if (checkAndCleanVTerms(1))
+        if (checkAndCleanHeaps(1, 0))
         {
             uint64_t length = currOffset - firstOffset + 1;
-            strictCheckVTermsOverflow(length + 1);
+            strictCheckHeaps(length + 1, 0);
+
+            // Copy earlier read chars.
             firstOffset = copySymbols(firstOffset, currOffset - firstOffset);
             currOffset = memMngr.vtermsOffset;
         }
+
+        // Checked --> may call func without gc prefix.
         allocateSymbolVTerm(ch);
         currOffset++;        
     }
 
     if (ch == '\n')
     {
+        // Checked --> may call func without gc prefix.
         mainChain = allocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);
     }
     else
-    {        
-        gcAllocateUInt8VTerm(0);
+    {
+        // There is no chars --> we can call garbage collector.
+        checkAndCleanHeaps(1, VINT_STRUCT_SIZE(1) + BUILTINS_RESULT_SIZE);
+        allocateUInt8VTerm(0);
         mainChain = allocateBuiltinsResult(firstOffset, 1);
     }
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
 }
 
-static void _put(struct lterm_t* fieldOfView)
+static void _gcPut(struct lterm_t* fieldOfView)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+    assembledFrageInBuiltins = gcGetAssembliedChain(fieldOfView);
+    struct fragment_t* frag = assembledFrageInBuiltins->fragment;
 
     if (frag->length < 1)
         PRINT_AND_EXIT(TOO_FEW_ARGUMENTS);
@@ -153,9 +162,11 @@ static void _put(struct lterm_t* fieldOfView)
     if (!descr)
         printRange(stdout, frag);
     else if (!files[descr].file)
-        openDefaultFile(descr, WRITE_MODE);
+        gcOpenDefaultFile(descr, WRITE_MODE);
 
     printRange(files[descr].file, frag);
+
+    assembledFrageInBuiltins = 0;
 }
 
 static uint8_t getOpenMode(struct fragment_t* frag)
@@ -209,31 +220,28 @@ static getFileDescr(struct v_int* bigInt, uint8_t* descr)
     return *descr < MAX_FILE_DESCR;
 }
 
-static void openFile(struct fragment_t* frag, uint8_t mode, uint8_t descr)
+static void gcOpenFile(struct fragment_t* frag, uint8_t mode, uint8_t descr)
 {
-    char* fileName = 0;
-    fileName = assemblyFileName(frag);
+    gcAssemblyFileName(frag);
+    char* fileName = (char*)(memMngr.data + memMngr.dataOffset);
 
     if (!fileName)
     {
-        openDefaultFile(descr, mode);
+        gcOpenDefaultFile(descr, mode);
         return;
     }
 
-    openFileWithName(fileName, mode, descr);
-
-    free(fileName);
+    openFileWithName(fileName, mode, descr);    
 }
 
-static void openDefaultFile(uint8_t descr, uint8_t mode)
-{
-    char* fileName = (char*)malloc(PATTERN_FILE_NAME_LENGHT);
+static void gcOpenDefaultFile(uint8_t descr, uint8_t mode)
+{    
+    checkAndCleanHeaps(0, PATTERN_FILE_NAME_LENGHT);
+    char* fileName = (char*)(memMngr.data + memMngr.dataOffset);
 
     snprintf(fileName, PATTERN_FILE_NAME_LENGHT, FILE_NAME_PATTERN, descr);
 
-    openFileWithName(fileName, mode, descr);
-
-    free(fileName);
+    openFileWithName(fileName, mode, descr);    
 }
 
 static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr)
@@ -252,11 +260,11 @@ static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr)
     files[descr].mode = mode;
 }
 
-static char* assemblyFileName(struct fragment_t* frag)
+static void gcAssemblyFileName(struct fragment_t* frag)
 {
     uint64_t needBytesCount = calcNeedBytesCount(frag);
-    char* fileName = (char*)malloc(needBytesCount + 1); // +1 for 0 character.
-    char* pointer = fileName;
+    checkAndCleanHeaps(0, needBytesCount + 1); // +1 for 0 character.
+    char* pointer = (char*)(memMngr.data + memMngr.dataOffset);
 
     uint64_t i = 0;
     for (i = 0; i < frag->length; ++i)
@@ -298,9 +306,7 @@ static char* assemblyFileName(struct fragment_t* frag)
         }
     }
 
-    *pointer++ = 0;
-
-    return fileName;
+    *pointer++ = 0;    
 }
 
 static uint64_t calcNeedBytesCount(struct fragment_t* frag)
@@ -470,7 +476,7 @@ static void printIntNumber(FILE* file, struct v_int* intNum)
     mpz_import(num, intNum->length, 1, sizeof(uint8_t), 1, 0, intNum->bytes);
 
     if (intNum->sign)
-        mpz_mul_si(num, num, -1);
+        mpz_neg(num, num);
 
     gmp_printf("%Zd ", num);
 

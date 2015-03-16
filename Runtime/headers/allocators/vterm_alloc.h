@@ -10,21 +10,14 @@
 /// в противном случае NEED_DATA_CLEAN
 uint64_t chAllocateClosureVTerm(allocate_result* res);
 
-/// Выдыляют память под vterm
-/// В процессе выполнения может быть вызван сборщик мусора для vterm'ов.
-uint64_t gcAllocateOpenBracketVTerm(uint64_t length);
-uint64_t gcAllocateCloseBracketVTerm(uint64_t length);
-uint64_t gcAllocateIntNumVTerm(struct v_int* value);
-uint64_t gcAllocateDoubleNumVTerm(double value);
-uint64_t gcAllocateClosureVTerm();
-uint64_t gcAllocateUInt8VTerm(uint8_t val);
-
 /// Выдыляет память под vterm без проверок.
 uint64_t allocateOpenBracketVTerm(uint64_t length);
 uint64_t allocateCloseBracketVTerm(uint64_t length);
 uint64_t allocateIntNumVTerm(struct v_int* value);
 uint64_t allocateDoubleNumVTerm(double value);
 uint64_t allocateSymbolVTerm(uint32_t ch);
+uint64_t allocateUInt8VTerm(uint8_t val);
+uint64_t allocateClosureVTerm();
 
 /// Копирует термы из фрагмента в новую область.
 int allocateVTerms(struct fragment_t* fragment_t);

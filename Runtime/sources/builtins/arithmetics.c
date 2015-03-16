@@ -149,8 +149,7 @@ struct lterm_t* constructIntNumBuiltinResult(mpz_t num)
     uint32_t numb = 8 * sizeof(uint8_t);
     uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
 
-    checkAndCleanVTerms(1);
-    checkAndCleanData(VINT_STRUCT_SIZE(length) + BUILTINS_RESULT_SIZE);
+    checkAndCleanHeaps(1, VINT_STRUCT_SIZE(length) + BUILTINS_RESULT_SIZE);
 
     struct v_int* intNum = allocateIntStruct(length);
 
@@ -164,8 +163,7 @@ struct lterm_t* constructIntNumBuiltinResult(mpz_t num)
 
 static struct lterm_t* constructDoubleNumLTerm(double val)
 {    
-    checkAndCleanVTerms(1);
-    checkAndCleanData(BUILTINS_RESULT_SIZE);
+    checkAndCleanHeaps(1, BUILTINS_RESULT_SIZE);
 
     return allocateBuiltinsResult(allocateDoubleNumVTerm(val), 1);
 }

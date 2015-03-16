@@ -13,22 +13,8 @@ void collectGarbage();
 
 struct lterm_t* copyFragmentLTerm(struct lterm_t* term);
 
-// TO FIX: Хрень какая-то! - НАЧАЛО
-void collectVTermGarbage();
-void collectDataGarbage();
-
-/// Проверка на переполнение и очистка хипов.
-int checkAndCleanVTerms(uint64_t);
-int checkAndCleanData(uint64_t);
-
-/// Проверка переполнения хипов
-int checkVTermsOverflow(uint64_t);
-int checkDataOverflow(uint64_t);
-
-void strictCheckVTermsOverflow(uint64_t needVTermsCount);
-
-// TO FIX: Хрень какая-то! - КОНЕЦ
-
-void checkAndCleanTermsAndData(uint64_t needTermCount, uint64_t needDataSize);
+void strictCheckHeaps(uint64_t needTermCount, uint64_t needDataSize);
+int isHeapsOverflowed(uint64_t needTermCount, uint64_t needDataSize);
+int checkAndCleanHeaps(uint64_t needTermCount, uint64_t needDataSize);
 
 #endif
