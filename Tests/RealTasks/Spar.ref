@@ -1,0 +1,28 @@
+$ENTRY Go 
+{ 
+	= <Prout <TestFunc<Spar '2*(3+7*(4))'>>>
+	  <Prout <Spar '2*(3+7*(4)))'>>
+	  <Prout <Spar '(2*(3+7*(4))'>>; 
+}
+
+Spar 
+{ 
+	e.1 = <Spar1 (L) e.1>; 
+}
+
+Spar1 
+{
+    (e.S) '(' e.T = <Spar1 ((e.S)) e.T>;
+    ((e.S) e.1) ')' e.T = 
+        <Spar1 (e.S (e.1)) e.T>;
+    (L e.S) ')' e.T = ERROR;
+    (e.S) s.X e.T = 
+        <Spar1 (e.S s.X) e.T>;
+    (L e.S) = e.S;
+    (e.S) = ERROR;
+}
+
+TestFunc
+{
+	e.1 (e.2 (e.3)) = e.1 e.2 e.3
+}

@@ -50,7 +50,8 @@ function RunTestsInDir
 	
 		#Запускаем испольняемый файл.
 		args=`cat ../${sourceFile%.*}.args 2>/dev/null`
-		./Project ${args} > ${RealOutputFile} 
+		input=`cat ../${sourceFile%.*}.input 2>/dev/null`
+		echo ${input} | ./Project ${args} > ${RealOutputFile}
 		AssertSuccess "[Bad exe file!]: ${sourceFile}"
 	
 		#Проверям ожидаемое с полученным

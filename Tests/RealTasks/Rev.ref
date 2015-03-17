@@ -1,0 +1,11 @@
+$ENTRY Go
+{
+	= <Prout <Rev '123'>>
+	  <Prout <Rev 'It\'s work!!!'>>
+}
+
+Rev
+{
+	s.1 e.1 = <Rev e.1> s.1;
+	=
+}

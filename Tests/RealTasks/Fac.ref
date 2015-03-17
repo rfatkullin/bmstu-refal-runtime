@@ -1,0 +1,12 @@
+$ENTRY Go
+{
+	= <Prout <Fac 50>>
+}
+
+Fac
+{
+	1 = 1;
+	s.1 = <Mul s.1 <Fac <Sub s.1 1>>>;
+	  = 1;
+	e.1 = 'Something go wrong!'
+}

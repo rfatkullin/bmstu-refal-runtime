@@ -1,0 +1,23 @@
+$ENTRY Go
+{
+	= <Prout <Numbers '120+10'>>
+	  <Prout <Numbers '1*20+10/0'>>
+}
+
+Numbers 
+{ 
+	e.1 = <N1 ('0123456789')e.1>; 
+}
+
+N1 
+{
+    (e.L s.X e.R) s.X e.1 = <N2 (e.L s.X e.R) (s.X) e.1>;
+    (e.S) s.X e.1 = s.X <N1 (e.S) e.1>;
+    (e.S) = ;
+}
+
+N2 
+{
+    (e.L s.X e.R) (e.N) s.X e.1 = <N2 (e.L s.X e.R) (e.N s.X) e.1>;
+    (e.S) (e.N) e.1 = <Numb e.N> <N1 (e.S) e.1>;
+}
