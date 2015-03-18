@@ -60,6 +60,7 @@ struct func_result_t Sub(int* entryPoint, struct env_t* env, struct lterm_t* fie
 struct func_result_t Mul(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Div(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Compare(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
 
 /// Case switching
 struct func_result_t Upper(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);

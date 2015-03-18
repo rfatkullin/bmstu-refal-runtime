@@ -1,0 +1,10 @@
+$ENTRY Go 
+{ 
+    = <Prout <Sort  -100 56 233 -9 7 90 2 12 1>>;
+}
+
+Sort 
+{
+    e.1 s.X e.2 s.Y e.3, <Compare 0 <Sub s.X s.Y>>: '-' = e.1 <Sort s.Y s.X e.2 e.3>;
+    e.1 = e.1;
+}

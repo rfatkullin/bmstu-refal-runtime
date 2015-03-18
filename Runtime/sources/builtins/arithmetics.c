@@ -52,6 +52,83 @@ struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fie
     return  gcApplyOp(mpz_mod, entryPoint, env, fieldOfView);
 }
 
+struct func_result_t Compare(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+{
+    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+
+    if (frag->length != 2)
+        PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER);
+
+    if (memMngr.vterms[frag->offset].tag != memMngr.vterms[frag->offset + 1].tag )
+        PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH);
+
+    int cmpRes = 0;
+    char resChar = '0';
+
+    if (memMngr.vterms[frag->offset].tag == V_INT_NUM_TAG)
+        cmpRes = intCmp(memMngr.vterms[frag->offset].intNum, memMngr.vterms[frag->offset + 1].intNum);
+    else if (memMngr.vterms[frag->offset].tag == V_DOUBLE_NUM_TAG)
+        cmpRes = doubleCmp(memMngr.vterms[frag->offset].doubleNum, memMngr.vterms[frag->offset + 1].doubleNum);
+    else
+        PRINT_AND_EXIT(OPERAND_BAD_TYPE);
+
+    switch (cmpRes)
+    {
+        case 0 :
+            resChar = '0';
+            break;
+        case 1 :
+            resChar = '+';
+            break;
+        case -1 :
+            resChar = '-';
+            break;
+    }
+
+    checkAndCleanHeaps(1, BUILTINS_RESULT_SIZE);
+
+    struct lterm_t* resChain = allocateBuiltinsResult(allocateSymbolVTerm(resChar), 1);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = resChain, .callChain = 0};
+}
+
+/// Проверка на равенство двух чисел. 1 - успех, 0 - неудача.
+int intCmp(struct v_int* a, struct v_int* b)
+{
+    if (a->length == 1 && b->length == 1 &&
+        a->bytes[0] == 0 && b->bytes[0] == 0)
+        return 0;
+
+    int invert = 1;
+
+    if (a->sign > b->sign)
+        return -1;
+
+    if (a->sign < b->sign)
+        return 1;
+
+    if (a->sign)
+        invert = -1;
+
+    if (a->length > b->length)
+        return 1 * invert;
+
+    if (a->length < b->length)
+        return -1 * invert;
+
+    uint64_t i = 0;
+    for (i = 0; i < a->length; ++i)
+    {
+        if (a->bytes[i] > b->bytes[i])
+            return 1 * invert;
+
+        if (a->bytes[i] < b->bytes[i])
+            return -1 * invert;
+    }
+
+    return 0;
+}
+
 int doubleCmp(double a, double b)
 {
     if (b + EPS < a)

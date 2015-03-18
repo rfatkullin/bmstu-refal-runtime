@@ -418,43 +418,6 @@ int ustrEq(struct v_string* a, struct v_string* b)
     return 1;
 }
 
-/// Проверка на равенство двух чисел. 1 - успех, 0 - неудача.
-int intCmp(struct v_int* a, struct v_int* b)
-{
-    if (a->length == 1 && b->length == 1 &&
-        a->bytes[0] == 0 && b->bytes[0] == 0)
-        return 0;
-
-    int invert = 1;
-
-    if (a->sign > b->sign)
-        return -1;
-
-    if (a->sign < b->sign)
-        return 1;
-
-    if (a->sign)
-        invert = -1;
-
-    if (a->length > b->length)
-        return 1 * invert;
-
-    if (a->length < b->length)
-        return -1 * invert;
-
-    uint64_t i = 0;
-    for (i = 0; i < a->length; ++i)
-    {
-        if (a->bytes[i] > b->bytes[i])
-            return 1 * invert;
-
-        if (a->bytes[i] < b->bytes[i])
-            return -1 * invert;
-    }
-
-    return 0;
-}
-
 void printUStr(FILE* file, struct v_string* str)
 {
     if (!str)
