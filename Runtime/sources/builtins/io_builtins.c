@@ -29,14 +29,14 @@ static void _gcPut(struct lterm_t* fieldOfView);
 static struct func_result_t _gcGet(FILE* file);
 static getFileDescr(struct v_int* bigInt, uint8_t* descr);
 
-struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Card(int entryStatus)
 {
     return _gcGet(stdin);
 }
 
-struct func_result_t Get(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Get(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
 
     if (frag->length != 1)
         PRINT_AND_EXIT(GET_WRONG_ARG_NUM);
@@ -52,28 +52,27 @@ struct func_result_t Get(int* entryPoint, struct env_t* env, struct lterm_t* fie
     return _gcGet(files[descr].file);
 }
 
-struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Prout(int entryStatus)
 {
-    struct lterm_t* currExpr = gcGetAssembliedChain(fieldOfView);
+    struct lterm_t* currExpr = gcGetAssembliedChain(_currFuncCall->fieldOfView);
 
     printRange(stdout, currExpr->fragment);
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
 
-// TO FIX: Using fieldOfView after gc! Fix: global var func_call_t
-struct func_result_t Print(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Print(int entryStatus)
 {
-    struct lterm_t* currExpr = gcGetAssembliedChain(fieldOfView);
+    struct lterm_t* currExpr = gcGetAssembliedChain(_currFuncCall->fieldOfView);
 
     printRange(stdout, currExpr->fragment);
 
-    return (struct func_result_t){.status = OK_RESULT, .fieldChain = fieldOfView, .callChain = 0};
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = _currFuncCall->fieldOfView, .callChain = 0};
 }
 
-struct func_result_t Open(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Open(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
 
     if (frag->length < 2)
         PRINT_AND_EXIT(TOO_FEW_ARGUMENTS);
@@ -89,16 +88,16 @@ struct func_result_t Open(int* entryPoint, struct env_t* env, struct lterm_t* fi
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
 
-struct func_result_t Put(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Put(int entryStatus)
 {
-    _gcPut(fieldOfView);
+    _gcPut(_currFuncCall->fieldOfView);
 
-    return (struct func_result_t){.status = OK_RESULT, .fieldChain = fieldOfView, .callChain = 0};
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = _currFuncCall->fieldOfView, .callChain = 0};
 }
 
-struct func_result_t Putout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Putout(int entryStatus)
 {
-    _gcPut(fieldOfView);
+    _gcPut(_currFuncCall->fieldOfView);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }

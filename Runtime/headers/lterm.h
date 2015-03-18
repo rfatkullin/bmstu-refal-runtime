@@ -20,7 +20,7 @@ do{                                 \
 }while(0)
 
 #define CONCAT_CHAINS(a, b)         \
-{                                   \
+do{                                 \
     a->prev->next = b->next;        \
     b->next->prev = a->prev;        \
     a->prev = b->prev;              \

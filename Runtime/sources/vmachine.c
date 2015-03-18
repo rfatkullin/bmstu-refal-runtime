@@ -113,7 +113,8 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
             }
         }
 
-        funcRes = callTerm->funcCall->funcPtr(&callTerm->funcCall->entryPoint, callTerm->funcCall->env, callTerm->funcCall->fieldOfView, entryStatus);
+        _currFuncCall = callTerm->funcCall;
+        funcRes = callTerm->funcCall->funcPtr(entryStatus);
 
         switch (funcRes.status)
         {

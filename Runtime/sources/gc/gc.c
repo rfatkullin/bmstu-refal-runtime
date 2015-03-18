@@ -6,6 +6,7 @@
 #include <memory_manager.h>
 #include <allocators/data_alloc.h>
 #include <builtins/builtins.h>
+#include <gc/gc.h>
 
 void collectGarbage()
 {
@@ -15,7 +16,7 @@ void collectGarbage()
 
     collectVTermGarbage(memMngr.fieldOfView);
 
-    copyChainLTerm(memMngr.fieldOfView);
+    copySimpleChain(memMngr.fieldOfView);
     assembledFragInBuiltins = copyFragmentLTerm(assembledFragInBuiltins);
 
     end = clock();

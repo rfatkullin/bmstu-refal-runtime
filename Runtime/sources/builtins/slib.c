@@ -14,9 +14,9 @@
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView);
 
-struct func_result_t Arg(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Arg(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
 
     if (frag->length != 1)
         PRINT_AND_EXIT(ARG_FUNC_BAD_ARG_NUM);
@@ -59,19 +59,19 @@ uint64_t initArgsData(uint64_t offset, int argc, char** argv)
     return offset;
 }
 
-struct func_result_t Upper(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Upper(int entryStatus)
 {
-    return gcSwitchCase(toUpperCase, fieldOfView);
+    return gcSwitchCase(toUpperCase, _currFuncCall->fieldOfView);
 }
 
-struct func_result_t Lower(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Lower(int entryStatus)
 {
-    return gcSwitchCase(toLowerCase, fieldOfView);
+    return gcSwitchCase(toLowerCase, _currFuncCall->fieldOfView);
 }
 
-struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Symb(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
 
     if (frag->length != 1)
         PRINT_AND_EXIT(SYMB_BAD_ARG);
@@ -99,9 +99,9 @@ struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fi
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
-struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Numb(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
 
     if (frag->length == 0)
         PRINT_AND_EXIT(NUMB_BAD_ARG);
@@ -141,9 +141,9 @@ struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fi
 }
 
 // TO FIX: Using fieldOfView after gc! Fix: global var func_call_t
-struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Lenw(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
 
     mpz_t num;
     mpz_t helper;
@@ -163,7 +163,7 @@ struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fi
     mpz_clear(num);
     mpz_clear(helper);
 
-    CONCAT_CHAINS(res, fieldOfView);
+    CONCAT_CHAINS(res, _currFuncCall->fieldOfView);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }

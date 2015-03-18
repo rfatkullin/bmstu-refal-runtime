@@ -25,36 +25,36 @@ static void readOperand(mpz_t num, struct v_term* term);
 static struct lterm_t* gcApplyOpToInt(ArithOp op, struct fragment_t* frag);
 static struct lterm_t* gcApplyOpToDouble(ArithOp op, struct fragment_t* currExpr);
 static struct lterm_t* gcConstructDoubleNumLTerm(double val);
-static struct func_result_t gcApplyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView);
+static struct func_result_t gcApplyOp(ArithOp op);
 
-struct func_result_t Add(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Add(int entryStatus)
 {
-    return  gcApplyOp(mpz_add, entryPoint, env, fieldOfView);
+    return  gcApplyOp(mpz_add);
 }
 
-struct func_result_t Sub(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Sub(int entryStatus)
 {
-    return  gcApplyOp(mpz_sub, entryPoint, env, fieldOfView);
+    return  gcApplyOp(mpz_sub);
 }
 
-struct func_result_t Mul(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Mul(int entryStatus)
 {
-    return  gcApplyOp(mpz_mul, entryPoint, env, fieldOfView);
+    return  gcApplyOp(mpz_mul);
 }
 
-struct func_result_t Div(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Div(int entryStatus)
 {
-    return  gcApplyOp(mpz_tdiv_q, entryPoint, env, fieldOfView);
+    return  gcApplyOp(mpz_tdiv_q);
 }
 
-struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Mod(int entryStatus)
 {
-    return  gcApplyOp(mpz_mod, entryPoint, env, fieldOfView);
+    return  gcApplyOp(mpz_mod);
 }
 
-struct func_result_t Compare(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall)
+struct func_result_t Compare(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
 
     if (frag->length != 2)
         PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER);
@@ -158,9 +158,9 @@ int ConvertToInt(struct v_int* numData)
     return res;
 }
 
-static struct func_result_t gcApplyOp(ArithOp op, int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView)
+static struct func_result_t gcApplyOp(ArithOp op)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(fieldOfView)->fragment;
+    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
     struct lterm_t* resChain = 0;
 
     if (frag->length != 2)

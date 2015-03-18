@@ -1,0 +1,17 @@
+$ENTRY Go
+{
+	= <Prout <Func1 'aa'>>
+}
+
+
+Func1
+{
+	e.1 e.2, <Dummy e.1> : e.3 = e.3
+}
+
+Dummy
+?{
+	s.1 s.1 = 'Ok!'
+}
+
+

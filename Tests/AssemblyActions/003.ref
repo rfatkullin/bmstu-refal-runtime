@@ -3,7 +3,6 @@ $ENTRY Go
 	= <Prout <Func1 'dBlabla bla Gena Bu'>>
 }
 
-
 Func1
 {
 	e.1 e.2, e.2 <Func2 e.1> : e.3 e.4 e.5, <Func3 e.4> : e.6  = e.6

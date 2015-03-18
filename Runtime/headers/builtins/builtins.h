@@ -44,36 +44,36 @@ struct lterm_t* assembledFragInBuiltins;
 struct file_info files[MAX_FILE_DESCR];
 
 /// Input/Output
-struct func_result_t Prout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-struct func_result_t Card(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-struct func_result_t Print(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Prout(int entryStatus);
+struct func_result_t Card(int entryStatus);
+struct func_result_t Print(int entryStatus);
 
-struct func_result_t Open(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Open(int entryStatus);
 
-struct func_result_t Get(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-struct func_result_t Put(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-struct func_result_t Putout(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Get(int entryStatus);
+struct func_result_t Put(int entryStatus);
+struct func_result_t Putout(int entryStatus);
 
 /// Arithmetics.
-struct func_result_t Add(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-struct func_result_t Sub(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-struct func_result_t Mul(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-struct func_result_t Div(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-struct func_result_t Mod(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-struct func_result_t Compare(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Add(int entryStatus);
+struct func_result_t Sub(int entryStatus);
+struct func_result_t Mul(int entryStatus);
+struct func_result_t Div(int entryStatus);
+struct func_result_t Mod(int entryStatus);
+struct func_result_t Compare(int entryStatus);
 
 /// Case switching
-struct func_result_t Upper(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-struct func_result_t Lower(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Upper(int entryStatus);
+struct func_result_t Lower(int entryStatus);
 
 /// Others
 uint64_t initArgsData(uint64_t offset, int argc, char** argv);
-struct func_result_t Arg(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Arg(int entryStatus);
 
-struct func_result_t Symb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
-struct func_result_t Numb(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Symb(int entryStatus);
+struct func_result_t Numb(int entryStatus);
 
-struct func_result_t Lenw(int* entryPoint, struct env_t* env, struct lterm_t* fieldOfView, int firstCall);
+struct func_result_t Lenw(int entryStatus);
 
 struct lterm_t* gcConstructIntNumBuiltinResult(mpz_t num);
 
