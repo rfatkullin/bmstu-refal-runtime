@@ -39,7 +39,8 @@ function RunTestsInDir
 	do	
 		cp ${sourceFile} ${TmpRefSourceFile}
 		#Компилируем рефал программу
-		refalc ${TmpRefSourceFile} 1>/dev/null 
+		compilerArgs=`cat ${sourceFile%.*}.compiler.args 2>/dev/null`
+		refalc ${compilerArgs} ${TmpRefSourceFile} 1>/dev/null 
 		AssertSuccess "Can't compile refal source ${sourceFile}"		
 	
 		#Собираем весь проект - линкуем сгенерированный файл с библиотекой исполнения.

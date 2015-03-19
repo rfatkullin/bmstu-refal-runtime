@@ -188,7 +188,7 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     callTerm->funcCall->env->params = closure->params;
     callTerm->funcCall->env->paramsCount = closure->paramsCount;
     callTerm->funcCall->rollback = closure->rollback;
-
+/*
     if (closure->ident)
     {
         printf("^");
@@ -197,7 +197,7 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     }
     else
         printf("Builtin!\n");
-
+*/
     // Remove fragment with closure => lost closure => GC will clean it.
     fieldOfView->next = fieldOfView->next->next;
     fieldOfView->next->prev = fieldOfView;

@@ -1,0 +1,17 @@
+$ENTRY Go
+{
+	= <Prout <Func 100 200>>
+	  <Prout <Func 200 100>>
+	  <Prout <Func 0 0>>
+}
+
+Func
+{
+	s.1 s.2, <Compare s.1 s.2> : {
+									'+' = 'Larger';
+									'-' = 'Less';
+									'0' = 'Equal';
+								 };	
+	e.1 = e.1;
+}
+
