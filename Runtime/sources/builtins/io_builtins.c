@@ -12,7 +12,6 @@
 #include <allocators/vterm_alloc.h>
 #include <builtins/case_map_table.h>
 
-static void printRange(FILE* file, struct fragment_t* frag);
 static void printSymbol(FILE* file, struct v_term* term);
 static void printUnicodeChar(uint32_t ch);
 static void printIntNumber(FILE* file, struct v_int* intNum);
@@ -56,7 +55,7 @@ struct func_result_t Prout(int entryStatus)
 {
     struct lterm_t* currExpr = gcGetAssembliedChain(_currFuncCall->fieldOfView);
 
-    printRange(stdout, currExpr->fragment);
+    printFragment(stdout, currExpr->fragment);
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
@@ -65,7 +64,7 @@ struct func_result_t Print(int entryStatus)
 {
     struct lterm_t* currExpr = gcGetAssembliedChain(_currFuncCall->fieldOfView);
 
-    printRange(stdout, currExpr->fragment);
+    printFragment(stdout, currExpr->fragment);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = _currFuncCall->fieldOfView, .callChain = 0};
 }
@@ -113,8 +112,10 @@ static struct func_result_t _gcGet(FILE* file)
     uint32_t ch;
     while(1)
     {
-        ch = readUTF8Char(file);
-        if ( ch == '\n' || ch == 0)
+        // Simple fix of windows \r\n
+        while ((ch = readUTF8Char(file)) == '\r');
+
+        if (ch == '\n' || ch == 0)
             break;
 
         if (checkAndCleanHeaps(1, 0))
@@ -158,11 +159,11 @@ static void _gcPut(struct lterm_t* fieldOfView)
     uint8_t descr = getDescr(assembledFragInBuiltins->fragment);
 
     if (!descr)
-        printRange(stdout, assembledFragInBuiltins->fragment);
+        printFragment(stdout, assembledFragInBuiltins->fragment);
     else if (!files[descr].file)
         gcOpenDefaultFile(descr, WRITE_MODE);
 
-    printRange(files[descr].file, assembledFragInBuiltins->fragment);
+    printFragment(files[descr].file, assembledFragInBuiltins->fragment);
 
     assembledFragInBuiltins = 0;
 }
@@ -358,7 +359,7 @@ static uint64_t copySymbols(uint64_t first, uint64_t length)
     return firstOffset;
 }
 
-static void printRange(FILE* file, struct fragment_t* frag)
+void printFragment(FILE* file, struct fragment_t* frag)
 {
 	int i = 0;
 	struct v_term* currTerm = memMngr.vterms + frag->offset;

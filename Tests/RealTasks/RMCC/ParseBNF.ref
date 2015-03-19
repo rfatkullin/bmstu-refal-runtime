@@ -1,0 +1,102 @@
+$ENTRY GO 
+{
+    = <Open 'r' 1 <Arg 1>>      
+      <Prout <Parse <LoadFile 1>>>
+}
+
+LoadFile 
+{
+    s.1 = <LoadFile2 s.1 <Get s.1>>;
+}
+
+LoadFile2 
+{
+    s.1 0 = ;
+    s.1 e.2 0 = e.2;
+    s.1 e.2 = e.2 CAR_RET <LoadFile s.1>;
+}
+
+Parse {
+    e.1 = <Parse2 () () ()
+              <NormalizeBeginning
+                  <NormalizeEnding 
+                      <RemoveExtraSpace
+                          <ProcessLineWraps
+                              <RemoveComments e.1>
+                          >
+                      >
+                  >
+              >
+          >;
+    }
+
+RemoveComments {
+    e.1 '/*' e.2 '*/' e.3    = e.1 <RemoveComments e.3>;
+    e.1                      = e.1;
+    }
+
+ProcessLineWraps {
+    e.1 '\\' e.2 CAR_RET e.3 = e.1 <ProcessLineWraps e.3>;
+    e.1                      = e.1;
+    }
+
+RemoveExtraSpace {
+    '  ' e.1                 = <RemoveExtraSpace ' ' e.1>;
+    ' ' CAR_RET e.1          = <RemoveExtraSpace CAR_RET e.1>;
+    CAR_RET CAR_RET e.1      = <RemoveExtraSpace CAR_RET e.1>;
+    s.X e.1                  = s.X <RemoveExtraSpace e.1>;
+                             = ;
+    }
+
+NormalizeBeginning {
+    ' ' e.1                  = <NormalizeBeginning e.1>;
+    CAR_RET e.1              = <NormalizeBeginning e.1>;
+    e.1                      = e.1;
+    }
+
+NormalizeEnding {
+    e.1 ' '                  = <NormalizeEnding e.1>;
+    e.1 CAR_RET              = <NormalizeEnding e.1>;
+    e.1                      = e.1 CAR_RET;
+    }
+
+Parse2 {
+    (e.As) (e.Ts) (e.Ns) e.Name ' ::=' e.2 CAR_RET e.3
+        , <Parse3 (e.As) (e.Ts) (e.Name) (e.3)>: t.As_ t.Ts_ e.Rules (e.4)
+        = e.Rules <Parse2 t.As_ t.Ts_ (e.Ns (NS e.Name)) e.4>;
+    (e.As) (e.Ts) (e.Ns) = (e.As) (e.Ts) (e.Ns);
+    }
+
+Parse3 {
+    t.As t.Ts (e.Name) e.Rules (' ' e.1 CAR_RET e.2)
+        , <Parse4 (0) e.1>: s.N e.R
+        , <Update t.As t.Ts e.R>: t.As_ t.Ts_
+        = <Parse3 t.As_ t.Ts_ (e.Name) e.Rules ((NS e.Name) s.N e.R) (e.2)>;
+
+    t.As t.Ts (e.Name) e.Rules (e.2) = t.As t.Ts e.Rules (e.2);
+    }
+
+Parse4 {
+    (0) '_epsilon_' = 0;
+    (s.N e.R) e.X ' ' e.Y = <Parse4 (<Add s.N 1> e.R <RecognizeSym e.X>) e.Y>;
+    (s.N e.R) e.X = <Add s.N 1> e.R <RecognizeSym e.X>;
+    }
+
+RecognizeSym {
+    '_action_' e.1 = (AS e.1);
+    'L_' e.1 = (TS e.1);
+    e.1 = (NS e.1);
+    }
+
+Update {
+    (e.As) (e.Ts) t.S e.1
+        , t.S: {
+              (AS e.2), e.As: e.L t.S e.R = <Update (e.As) (e.Ts) e.1>;
+              (AS e.2) = <Update (e.As t.S) (e.Ts) e.1>;
+              (TS e.2), e.Ts: e.L t.S e.R = <Update (e.As) (e.Ts) e.1>;
+              (TS e.2) = <Update (e.As) (e.Ts t.S) e.1>;
+              (NS e.2) = <Update (e.As) (e.Ts) e.1>;
+              };
+
+    (e.As) (e.Ts) = (e.As) (e.Ts);
+    }

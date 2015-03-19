@@ -75,6 +75,8 @@ struct func_result_t Numb(int entryStatus);
 
 struct func_result_t Lenw(int entryStatus);
 
+void printFragment(FILE* file, struct fragment_t* frag);
+
 struct lterm_t* gcConstructIntNumBuiltinResult(mpz_t num);
 
 /// Get int from mpz_t.

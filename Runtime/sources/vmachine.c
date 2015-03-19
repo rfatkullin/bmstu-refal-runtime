@@ -7,6 +7,7 @@
 #include <memory_manager.h>
 #include <allocators/vterm_alloc.h>
 #include <allocators/data_alloc.h>
+#include <builtins/builtins.h>
 
 static void printChainOfCalls(struct lterm_t* callTerm);
 static struct lterm_t* updateFieldOfView(struct lterm_t* mainChain, struct func_result_t* funcResult);
@@ -138,8 +139,10 @@ static void onFuncFail(struct lterm_t** callTerm, int failResult)
 {
     if ((failResult && !(*callTerm)->funcCall->rollback) || !(*callTerm)->funcCall->parentCall || (*callTerm)->funcCall->failEntryPoint == -1)
     {
-        printf("%s\n", FUNC_CALL_FAILED);
-        exit(0);
+        // TO FIX: Must work!
+        // struct lterm_t* assembledFOV = gcGetAssembliedChain(memMngr.fieldOfView);
+        // printFragment(stdout, assembledFOV->fragment);
+        PRINT_AND_EXIT(FUNC_CALL_FAILED);
     }
     else
     {
@@ -186,11 +189,16 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     callTerm->funcCall->env->paramsCount = closure->paramsCount;
     callTerm->funcCall->rollback = closure->rollback;
 
-//    struct v_string* ident = memMngr.vterms[fieldOfView->next->fragment->offset].closure->ident;
-//    printUStr(ident);
-//    printf("\n");
+    if (closure->ident)
+    {
+        printf("^");
+        printUStr(stdout, closure->ident);
+        printf("^\n");
+    }
+    else
+        printf("Builtin!\n");
 
-    // Удаляем функциональный терм из поля зрения.
+    // Remove fragment with closure => lost closure => GC will clean it.
     fieldOfView->next = fieldOfView->next->next;
     fieldOfView->next->prev = fieldOfView;
 

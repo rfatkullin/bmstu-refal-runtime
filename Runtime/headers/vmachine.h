@@ -9,7 +9,7 @@
 #define NEXT_ENTRYPOINT	2
 
 #define BAD_EVAL_EXPR       "Can't execute expr in evaluate brackets!"
-#define FUNC_CALL_FAILED    "Func call failed!"
+#define FUNC_CALL_FAILED    "Func call failed!\n"
 #define MEMORY_OVERFLOW     "Memory overflow!"
 
 /// Главный цикл программы.

@@ -1,0 +1,66 @@
+$ENTRY GO 
+{
+    = <Open 'r' 1 <Arg 1>>
+      <Prout <ParseTok<LoadFile 1>>>
+}
+
+ParseTok 
+{
+    e.1 = <ParseTok2
+              <NormalizeBeginning
+                  <NormalizeEnding 
+                      <RemoveExtraSpace e.1>
+                  >
+              >
+          >;
+}
+
+ParseTok2 
+{
+    e.Name ' ' e.Num CAR_RET e.1 
+        = (<Numb e.Num> (TS <FixName e.Name>)) <ParseTok2 e.1>;
+
+    = ;
+}
+
+FixName 
+{
+    'END_OF_SLK_INPUT_' = 'END_OF_INPUT';
+    'L_' e.1 = e.1;
+    e.1 = e.1;
+}
+
+NormalizeBeginning 
+{
+    ' ' e.1                  = <NormalizeBeginning e.1>;
+    CAR_RET e.1              = <NormalizeBeginning e.1>;
+    e.1                      = e.1;
+}
+
+NormalizeEnding 
+{
+    e.1 ' '                  = <NormalizeEnding e.1>;
+    e.1 CAR_RET              = <NormalizeEnding e.1>;
+    e.1                      = e.1 CAR_RET;
+}
+
+RemoveExtraSpace 
+{
+    '  ' e.1                 = <RemoveExtraSpace ' ' e.1>;
+    ' ' CAR_RET e.1          = <RemoveExtraSpace CAR_RET e.1>;
+    CAR_RET CAR_RET e.1      = <RemoveExtraSpace CAR_RET e.1>;
+    s.X e.1                  = s.X <RemoveExtraSpace e.1>;
+                             = ;
+}
+
+LoadFile 
+{
+    s.1 = <LoadFile2 s.1 <Get s.1>>;
+}
+
+LoadFile2 
+{
+    s.1 0 = ;
+    s.1 e.2 0 = e.2;
+    s.1 e.2 = e.2 CAR_RET <LoadFile s.1>;
+}

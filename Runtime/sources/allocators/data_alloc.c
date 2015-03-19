@@ -109,6 +109,7 @@ struct env_t* gcAllocateEnvData(struct env_t* env, uint32_t localsCount, uint32_
     return allocateEnvData(env, localsCount, patternsCount);
 }
 
+// Params sets in mainLoop.
 struct env_t* allocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount)
 {
     env->locals = allocateFragmentLTerm(localsCount);
