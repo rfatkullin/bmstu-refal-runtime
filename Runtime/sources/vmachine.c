@@ -139,9 +139,6 @@ static void onFuncFail(struct lterm_t** callTerm, int failResult)
 {
     if ((failResult && !(*callTerm)->funcCall->rollback) || !(*callTerm)->funcCall->parentCall || (*callTerm)->funcCall->failEntryPoint == -1)
     {
-        // TO FIX: Must work!
-        // struct lterm_t* assembledFOV = gcGetAssembliedChain(memMngr.fieldOfView);
-        // printFragment(stdout, assembledFOV->fragment);
         PRINT_AND_EXIT(FUNC_CALL_FAILED);
     }
     else
@@ -188,7 +185,8 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     callTerm->funcCall->env->params = closure->params;
     callTerm->funcCall->env->paramsCount = closure->paramsCount;
     callTerm->funcCall->rollback = closure->rollback;
-/*
+
+    /*
     if (closure->ident)
     {
         printf("^");
@@ -196,11 +194,17 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
         printf("^\n");
     }
     else
-        printf("Builtin!\n");
-*/
+        printf("\n");
+    */
+
     // Remove fragment with closure => lost closure => GC will clean it.
     fieldOfView->next = fieldOfView->next->next;
     fieldOfView->next->prev = fieldOfView;
+
+    /*
+    struct lterm_t* assembledFOV = gcGetAssembliedChain(callTerm->funcCall->fieldOfView);
+    printFragment(stdout, assembledFOV->fragment);
+    */
 
 	return newFuncPointer;
 }

@@ -1,0 +1,18 @@
+$ENTRY GO 
+{
+    = <Prout <Update ()()>>
+}
+
+Update 
+{
+    (e.As) (e.Ts) t.S e.1
+        , t.S: {
+              (AS e.2), e.As: e.L t.S e.R = <Update (e.As) (e.Ts) e.1>;
+              (AS e.2) = <Update (e.As t.S) (e.Ts) e.1>;
+              (TS e.2), e.Ts: e.L t.S e.R = <Update (e.As) (e.Ts) e.1>;
+              (TS e.2) = <Update (e.As) (e.Ts t.S) e.1>;
+              (NS e.2) = <Update (e.As) (e.Ts) e.1>;
+              };
+
+    (e.As) (e.Ts) = (e.As) (e.Ts);
+}
