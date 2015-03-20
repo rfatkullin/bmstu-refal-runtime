@@ -54,12 +54,15 @@ static void processVTermsInChain(struct lterm_t* chain)
                 processVTermsInFragment(currTerm->fragment);
                 break;
 
-            case L_TERM_CHAIN_TAG:
+            case L_TERM_CHAIN_KEEPER_TAG:
                 processVTermsInChain(currTerm);
                 break;
             case L_TERM_FUNC_CALL:
                 processVTermsInFuncCall(currTerm->funcCall);
                 break;
+
+            default:
+                PRINT_AND_EXIT("BEDA!");
         }
 
         currTerm = currTerm->next;

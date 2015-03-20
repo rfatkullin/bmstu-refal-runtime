@@ -27,7 +27,7 @@ struct lterm_t* copySimpleChain(struct lterm_t* chain)
                 newTerm = copyFragmentLTerm(currTerm);
                 break;
 
-            case L_TERM_CHAIN_TAG:                
+            case L_TERM_CHAIN_KEEPER_TAG:                
                 newTerm = copyChainVTerm(currTerm);
                 break;
             case L_TERM_FUNC_CALL:
@@ -51,7 +51,7 @@ static struct lterm_t* copyChainVTerm(struct lterm_t* term)
     GC_DATA_HEAP_CHECK_EXIT(SIMPLE_CHAIN_SIZE);
 
     struct lterm_t* chainTerm = allocateSimpleChain();
-    chainTerm->tag = L_TERM_CHAIN_TAG;
+    chainTerm->tag = L_TERM_CHAIN_KEEPER_TAG;
 
     chainTerm->chain = copySimpleChain(term->chain);
 

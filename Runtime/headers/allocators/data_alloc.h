@@ -23,7 +23,7 @@
 /// Если памяти хватило и она выделена,то в *res будет Ok,
 /// в противном случае NEED_DATA_CLEAN
 struct lterm_t*   chAllocateFragmentLTerm(uint32_t count, allocate_result* res);
-struct lterm_t*   chAllocateChainLTerm(uint32_t count, allocate_result* res);
+struct lterm_t*   chAllocateChainKeeperLTerm(uint32_t count, allocate_result* res);
 struct lterm_t*   chAllocateSimpleChain(allocate_result* res);
 struct lterm_t*   chAllocateFuncCallLTerm(allocate_result* res);
 struct lterm_t*   chAllocateBuiltinsResult(uint64_t offset, uint64_t length, allocate_result* res);
@@ -46,7 +46,7 @@ struct lterm_t*   allocateFuncCallLTerm();
 struct env_t*     allocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount);
 
 // TO FIX:
-struct lterm_t*   allocateChainLTerm(uint32_t count);
+struct lterm_t*   allocateChainKeeperLTerm(uint32_t count);
 struct lterm_t*   allocateSimpleChain();
 
 /// Выделяют память с помощью malloc'а

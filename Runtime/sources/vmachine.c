@@ -261,7 +261,7 @@ static int assemblyChain(struct lterm_t* chain)
                     return 0;
                 break;
             }
-            case L_TERM_CHAIN_TAG:
+            case L_TERM_CHAIN_KEEPER_TAG:
             {
                 if (memMngr.vtermsOffset + 1 > memMngr.vtermsMaxOffset)
                     return 0;
