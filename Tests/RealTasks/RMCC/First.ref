@@ -1,0 +1,58 @@
+$ENTRY GO 
+{
+    = <Prout <FIRST ((NS declaration)(NS program))
+( ((NS program)EPS )
+  ((NS declaration))
+  ((NS decl-tail))
+  ((NS ext-tail))
+  ((NS ext-tail2))
+  ((NS mod)EPS )
+  ((NS names)EPS )
+  ((NS f-name))
+  ((NS e-name))
+  ((NS body))
+  ((NS semicolons))
+  ((NS opt-semicolons)EPS )
+  ((NS extra-semicolons)EPS )
+  ((NS block))
+  ((NS rep-sentence))
+  ((NS tl-rep-sentence))
+  ((NS sentence))
+  ((NS rep-action)EPS )
+  ((NS action))
+  ((NS operation))
+  ((NS expr))
+  ((NS tl-expr)EPS )
+  ((NS rep-expr)EPS )
+)>>
+}
+
+FIRST {
+    () (e.First) = EPS;
+
+    (t.X e.Xs) (e.First)
+        , t.X: {
+              (AS e.1) = <FIRST (e.Xs) (e.First)>;
+              (TS e.1) = t.X;
+              (NS e.1)
+                  , e.First: e.L (t.X e.Fx) e.R
+                  , e.Fx: {
+                        EPS e.2 = <Merge (e.2) <FIRST (e.Xs) (e.First)>>;
+                        e.2 = e.2;
+                        }
+              };
+    }
+
+Merge {
+    (EPS e.1) EPS e.2 = <Merge (EPS e.1) e.2>;
+    (e.1) EPS e.2 = <Merge (EPS e.1) e.2>;
+
+    (e.1) = e.1;
+
+    (e.1) t.X e.2
+        , e.1: {
+              e.L t.X e.R = <Merge (e.1) e.2>;
+              e.3 = <Merge (e.1 t.X) e.2>;
+              };
+    }
+

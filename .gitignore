@@ -6,3 +6,5 @@ Project/main.c
 Project/CMakeLists.txt.user
 
 RoomOfTesting/*
+
+*.rsl

@@ -201,10 +201,8 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     fieldOfView->next = fieldOfView->next->next;
     fieldOfView->next->prev = fieldOfView;
 
-    /*
-    struct lterm_t* assembledFOV = gcGetAssembliedChain(callTerm->funcCall->fieldOfView);
-    printFragment(stdout, assembledFOV->fragment);
-    */
+    //struct lterm_t* assembledFOV = gcGetAssembliedChain(callTerm->funcCall->fieldOfView);
+    //printFragment(stdout, assembledFOV->fragment);
 
 	return newFuncPointer;
 }
@@ -309,17 +307,3 @@ static int assemblyChain(struct lterm_t* chain)
 
     return 1;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
