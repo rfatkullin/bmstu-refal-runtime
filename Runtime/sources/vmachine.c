@@ -63,7 +63,7 @@ static struct func_call_t* ConstructStartFunc(const char* funcName, RefalFunc en
 
 static struct lterm_t* ConstructStartFieldOfView(const char* funcName, RefalFunc entryFuncPointer)
 {
-	struct lterm_t* fieldOfView = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+    struct lterm_t* fieldOfView = (struct lterm_t*)malloc(sizeof(struct lterm_t));
 	struct lterm_t* term = (struct lterm_t*)malloc(sizeof(struct lterm_t));
 
 	fieldOfView->next = term;
@@ -138,7 +138,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 static void onFuncFail(struct lterm_t** callTerm, int failResult)
 {
     if ((failResult && !(*callTerm)->funcCall->rollback) || !(*callTerm)->funcCall->parentCall || (*callTerm)->funcCall->failEntryPoint == -1)
-    {
+    {        
         PRINT_AND_EXIT(FUNC_CALL_FAILED);
     }
     else

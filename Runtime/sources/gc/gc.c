@@ -11,6 +11,7 @@
 void collectGarbage()
 {
     clock_t start, end;
+    printMemoryInfo();
     printf("Start garbage collection.\n");
     start = clock();
 

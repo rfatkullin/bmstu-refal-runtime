@@ -7,8 +7,7 @@
 #include "lterm.h"
 
 //Сколько процентов памяти выдялется тому или иному типу данных
-//Память для дерева отрезков берется из памяти для v_term'ов.
-#define V_TERMS_HEAP_SIZE_FACTOR 		0.4f
+#define VTERMS_HEAP_SIZE_FACTOR 		0.4f
 #define DATA_HEAP_SIZE_FACTOR 			0.6f
 
 struct memory_manager
@@ -57,7 +56,6 @@ void initAllocator(uint64_t size);
 /// т.е. инциализирует поля activeTermsHeap, inactiveTermsHeap и т.д.
 void initHeaps(uint64_t literalsNumber);
 
-/// Дебажный вывод vterm
-void debugLiteralsPrint();
+void printMemoryInfo();
 
 #endif

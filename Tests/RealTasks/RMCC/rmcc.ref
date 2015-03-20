@@ -179,7 +179,7 @@ FormatAs {
     s.C (t.X e.Xs)
         = <LeftJustify 33 '#define ' <FormatAsName t.X>> 
           '(short)(-' <Symb s.C> ')' CAR_RET
-          <FormatAs <Add (s.C) 1> (e.Xs)>;
+          <FormatAs <Add s.C 1> (e.Xs)>;
 
     s.C () = ;
     }
@@ -210,7 +210,7 @@ FormatNs {
     s.C (t.X e.Xs)
         = <LeftJustify 33 '#define ' <FormatNsName t.X>> 
           '(short)' <Symb s.C> CAR_RET
-          <FormatNs <Add (s.C) 1> (e.Xs)>;
+          <FormatNs <Add s.C 1> (e.Xs)>;
 
     s.C () = ;
     }
@@ -256,7 +256,7 @@ FormatRows {
 FormatRows2 {
     s.C s.X e.Xs
         = <LeftJustify 5 <Symb s.X> <FormatRows3 e.Xs>>
-          <FormatRows <Add (s.C) 1> e.Xs>;
+          <FormatRows <Add s.C 1> e.Xs>;
 
     1 = ;
 
@@ -287,7 +287,7 @@ FormatEps2 {
 
 FormatEps3 {
     s.N s.X = <Symb s.X> CAR_RET;
-    s.N s.X e.1 = <Symb s.X> ', ' <FormatEps2 <Add (s.N) 1> e.1>;
+    s.N s.X e.1 = <Symb s.X> ', ' <FormatEps2 <Add s.N 1> e.1>;
     }
 
 FormatProductionTable {
@@ -689,7 +689,7 @@ BuildMatrix {
         , t.Tokens: ((s.1 t.X) e.M (s.2 t.Y))
         , <Group e.Table>: e.Groups
         , <Lenw e.Groups>: s.Height e.3
-        , <Add (<Sub (s.2) s.1>) 1>: s.Width
+        , <Add <Sub s.2 s.1> 1>: s.Width
         = (s.Height s.Width <BuildMatrix2 s.1 s.2 t.Tokens (e.Groups)>);
     }
 
@@ -719,9 +719,9 @@ BuildMatrix2 {
 
 BuildRow {
     (e.Row) s.i s.max t.Tokens t.G
-        , <Sub (s.max) s.i>: s.1
+        , <Sub s.max s.i>: s.1
         , <SearchGroup s.i t.Tokens t.G>: s.R
-        = <BuildRow (e.Row s.R) <Add (s.i) 1> s.max t.Tokens t.G>;
+        = <BuildRow (e.Row s.R) <Add s.i 1> s.max t.Tokens t.G>;
 
     (e.Row) e.2 = (e.Row);
     }
@@ -770,9 +770,9 @@ BuildProductions2 {
     s.Pos (e.Prod) s.RowsSize (e.Rows) (t.X s.Size e.Ys) e.Rules
         , <BuildProdRow s.RowsSize t.X s.Size e.Ys>: t.Row
         = <BuildProductions2 
-              <Add (<Add (s.Pos) s.Size>) 1>
+              <Add (<Add s.Pos s.Size>) 1>
               (e.Prod t.Row)
-              <Add (s.RowsSize) 1>
+              <Add s.RowsSize 1>
               (e.Rows s.Pos) 
               e.Rules
           >;
@@ -814,13 +814,13 @@ ToCode {
 
 LeftJustify {
     0 e.S = e.S;
-    s.Width s.X e.S = s.X <LeftJustify <Sub (s.Width) 1> e.S>;
-    s.Width = ' ' <LeftJustify <Sub (s.Width) 1>>;
+    s.Width s.X e.S = s.X <LeftJustify <Sub s.Width 1> e.S>;
+    s.Width = ' ' <LeftJustify <Sub s.Width 1>>;
     }
 
 
 RightJustify {
     0 e.S = e.S;
-    s.Width e.S s.X = <RightJustify <Sub (s.Width) 1> e.S> s.X;
-    s.Width = <RightJustify <Sub (s.Width) 1>> ' ';
+    s.Width e.S s.X = <RightJustify <Sub s.Width 1> e.S> s.X;
+    s.Width = <RightJustify <Sub s.Width 1>> ' ';
     }

@@ -164,7 +164,9 @@ static struct func_result_t gcApplyOp(ArithOp op)
     struct lterm_t* resChain = 0;
 
     if (frag->length != 2)
+    {
         PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER);
+    }
 
     if (memMngr.vterms[frag->offset].tag != memMngr.vterms[frag->offset + 1].tag )
         PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH);
