@@ -1,0 +1,64 @@
+$ENTRY GO 
+{
+    = 	<Prout <EvalFirst_Process (((NS declaration)3 (AS decl_start)(NS mod)(NS decl-tail))((NS declaration)3 (AS ext_start)(TS EXTERN)(NS ext-tail))((NS decl-tail)4 
+	(AS err_fname)(NS block)(NS opt-semicolons)(AS decl_end))((NS decl-tail)3 (NS f-name)(NS body)(AS decl_end))((NS ext-tail)1 (NS ext-tail2))((NS ext-tail)3 (AS set_se)
+	(TS SE)(NS ext-tail2))((NS ext-tail2)4 (NS e-name)(NS names)(AS ext_end)(NS semicolons))((NS ext-tail2)3 (AS err_fname)(AS ext_end)(NS semicolons))((NS mod)3 (AS set_se)
+	(TS SE)(NS mod))((NS mod)3 (AS set_entry)(TS ENTRY)(NS mod))((NS names)3 (TS COMMA)(NS e-name)(NS names))((NS f-name)2 (AS set_fname)(TS COMPOUND))((NS e-name)2 (AS add_ename)
+	(TS COMPOUND))((NS body)2 (NS block)(NS opt-semicolons))((NS body)18 (AS r5_lbrace)(AS block_start)(AS aux_push)(AS sent_start)(AS aux_push)(NS "expr'")(AS aux_pop)(AS aux_push)
+	(AS act_start)(NS action)(AS act_end)(NS rep-action)(AS aux_pop)(AS sent_end)(AS aux_pop)(AS block_end)(AS r5_rbrace)(NS semicolons))((NS semicolons)2 (TS SEMICOLON)(NS extra-semicolons))
+	((NS opt-semicolons)1 (NS semicolons))((NS extra-semicolons)2 (AS err_semicolon)(NS semicolons))((NS block)6 (AS block_start)(TS LBRACE)(AS aux_push)(NS rep-sentence)
+	(AS aux_pop)(AS block_end))((NS block)8 (AS block_start)(TS QMARK)(AS set_rollback)(TS LBRACE)(AS aux_push)(NS rep-sentence)(AS aux_pop)(AS block_end))((NS rep-sentence)2 
+	(NS sentence)(NS tl-rep-sentence))((NS rep-sentence)1 (TS RBRACE))((NS tl-rep-sentence)2 (NS semicolons)(NS rep-sentence))((NS tl-rep-sentence)1 (TS RBRACE))
+	((NS sentence)11 (AS sent_start)(AS aux_push)(NS expr)(AS aux_pop)(AS aux_push)(AS act_start)(NS action)(AS act_end)(NS rep-action)(AS aux_pop)(AS sent_end))
+	((NS rep-action)4 (AS act_start)(NS action)(AS act_end)(NS rep-action))((NS action)4 (NS operation)(AS aux_push)(NS expr)(AS aux_pop))((NS operation)2 (TS COMMA)
+	(AS op_comma))((NS operation)2 (TS REPLACE)(AS op_replace))((NS operation)2 (TS COLON)(AS op_colon))((NS operation)2 (TS DCOLON)(AS op_dcolon))((NS operation)2 
+	(TS TARROW)(AS op_tarrow))((NS operation)2 (TS ARROW)(AS op_arrow))((NS expr)5 (AS expr_start)(AS aux_push)(NS tl-expr)(AS aux_pop)(AS expr_end))((NS "expr'")5 
+	(AS expr_start)(AS aux_push)(NS "tl-expr'")(AS aux_pop)(AS expr_end))((NS "tl-expr'")4 (AS term_start)(NS "term'")(AS term_end)(NS tl-expr))((NS tl-expr)4 
+	(AS term_start)(NS term)(AS term_end)(NS tl-expr))((NS term)1 (NS "term'"))((NS term)2 (AS set_func_term)(NS block))((NS "term'")2 (AS set_l_term)(TS L))((NS "term'")2 
+	(AS set_r_term)(TS R))((NS "term'")2 (AS set_str_term)(TS STRING))((NS "term'")2 (AS set_comp_term)(TS COMPOUND))((NS "term'")2 (AS set_int_term)(TS INTEGER))((NS "term'")2 
+	(AS set_fl_term)(TS FLOAT))((NS "term'")2 (AS set_var_term)(TS VAR))((NS "term'")6 (AS set_expr_term)(TS LPAREN)(AS aux_push)(NS expr)(AS aux_pop)(TS RPAREN))((NS "term'")7 
+	(AS set_eval_term)(TS LEVAL)(AS aux_push)(NS expr)(NS rep-expr)(AS aux_pop)(TS REVAL))((NS "term'")4 (AS set_func_term)(TS FUNC)(NS f-name)(NS block))((NS rep-expr)3 (TS TILDE)
+	(NS expr)(NS rep-expr)))(((NS program)EPS )((NS declaration))((NS decl-tail))((NS ext-tail))((NS ext-tail2))((NS mod)EPS )((NS names)EPS )((NS f-name))((NS e-name))((NS body))
+	((NS semicolons))((NS opt-semicolons)EPS )((NS extra-semicolons)EPS )((NS block))((NS rep-sentence))((NS tl-rep-sentence))((NS sentence))((NS rep-action)EPS )((NS action))((NS operation))
+	((NS expr))((NS "expr'"))((NS "tl-expr'")EPS )((NS tl-expr)EPS )((NS term))((NS "term'"))((NS rep-expr)EPS ))>>
+}
+
+FIRST {
+    () (e.First) = EPS;
+
+    (t.X e.Xs) (e.First)
+        , t.X: {
+              (AS e.1) = <FIRST (e.Xs) (e.First)>;
+              (TS e.1) = t.X;
+              (NS e.1)
+                  , e.First: e.L (t.X e.Fx) e.R
+                  , e.Fx: {
+                        EPS e.2 = <Merge (e.2) <FIRST (e.Xs) (e.First)>>;
+                        e.2 = e.2;
+                        }
+              };
+    }
+
+Merge {
+    (EPS e.1) EPS e.2 = <Merge (EPS e.1) e.2>;
+    (e.1) EPS e.2 = <Merge (EPS e.1) e.2>;
+
+    (e.1) = e.1;
+
+    (e.1) t.X e.2
+        , e.1: {
+              e.L t.X e.R = <Merge (e.1) e.2>;
+              e.3 = <Merge (e.1 t.X) e.2>;
+              };
+    }
+
+
+
+EvalFirst_Process {
+    ((t.X s.N e.Ys) e.Rules) (e.First)
+        , e.First: e.L (t.X e.Fx) e.R
+        , <Merge (e.Fx) <FIRST (e.Ys) (e.First)>>: e.Fx_
+        = <EvalFirst_Process (e.Rules) (e.L (t.X e.Fx_) e.R)>;
+
+    () t.First = t.First;
+    }

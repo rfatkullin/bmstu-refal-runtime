@@ -31,7 +31,7 @@ cp ${1} ${TmpRefSourceFile}
 
 #Компилируем рефал программу
 compilerArgs=`cat ${1%.*}.compiler.args 2>/dev/null`
-refalc ${compilerArgs} ${TmpRefSourceFile} #1>/dev/null 
+refalc ${compilerArgs} ${TmpRefSourceFile} 1>/dev/null 
 AssertSuccess "Can't compile refal source ${1}"
 
 #Собираем весь проект - линкуем сгенерированный файл с библиотекой исполнения.

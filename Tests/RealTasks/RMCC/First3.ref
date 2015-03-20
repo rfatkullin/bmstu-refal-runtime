@@ -1,38 +1,14 @@
 $ENTRY GO 
 {
-    = <Prout <FIRST ((AS decl_start)(NS mod)(NS decl-tail))
-	(
-		((NS program)EPS )
-		((NS declaration))
-		((NS decl-tail))
-		((NS ext-tail))
-		((NS ext-tail2))
-		((NS mod)EPS )
-		((NS names)EPS )
-		((NS f-name))
-		((NS e-name))
-		((NS body))
-		((NS semicolons))
-		((NS opt-semicolons)EPS )
-		((NS extra-semicolons)EPS )
-		((NS block))
-		((NS rep-sentence))
-		((NS tl-rep-sentence))
-		((NS sentence))
-		((NS rep-action)EPS )
-		((NS action))
-		((NS operation))
-		((NS expr))
-		((NS "expr'"))
-		((NS "tl-expr'")EPS )
-		((NS tl-expr)EPS )
-		((NS term))
-		((NS "term'"))
-		((NS rep-expr)EPS )
+    = 	<Prout <FIRST ((NS mod ))
+	(		
+		((NS mod )EPS )
+		
 	)>>
 }
 
-FIRST {
+FIRST 
+{
     () (e.First) = EPS;
 
     (t.X e.Xs) (e.First)
@@ -46,7 +22,7 @@ FIRST {
                         e.2 = e.2;
                         }
               };
-    }
+}
 
 Merge {
     (EPS e.1) EPS e.2 = <Merge (EPS e.1) e.2>;
@@ -60,4 +36,6 @@ Merge {
               e.3 = <Merge (e.1 t.X) e.2>;
               };
     }
+
+
 
