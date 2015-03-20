@@ -15,6 +15,9 @@ void collectGarbage()
     printf("Start garbage collection.\n");
     start = clock();
 
+    struct lterm_t* assembledFOV = gcGetAssembliedChain(memMngr.fieldOfView);
+    printFragment(stdout, assembledFOV->fragment);
+
     collectVTermGarbage(memMngr.fieldOfView);
 
     copySimpleChain(memMngr.fieldOfView);

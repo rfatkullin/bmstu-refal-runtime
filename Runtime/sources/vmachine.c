@@ -31,56 +31,37 @@ static struct v_string* constructVStringFromASCIIName(const char* name)
     return ptr;
 }
 
-// TO FIX: Проверки на переполнение.
-static struct func_call_t* ConstructStartFunc(const char* funcName, RefalFunc entryFuncPointer)
+static struct lterm_t* ConstructStartFunc(const char* funcName, RefalFunc entryFuncPointer)
 {
-	struct func_call_t* goCall = (struct func_call_t*)malloc(sizeof(struct func_call_t));
+    struct lterm_t* gofuncCallTerm = allocateFuncCallLTerm();
+    gofuncCallTerm->funcCall->fieldOfView = allocateSimpleChain();
 
-	struct lterm_t* fieldOfView = (struct lterm_t*)malloc(sizeof(struct lterm_t));
-	struct lterm_t* currTerm = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+    struct lterm_t* fragTerm = allocateFragmentLTerm(1);
+    fragTerm->fragment->offset = allocateClosureVTerm();
+    fragTerm->fragment->length = 1;
+
     struct v_string* ident = constructVStringFromASCIIName(funcName);
-	currTerm->tag = L_TERM_FRAGMENT_TAG;
-	currTerm->fragment = (struct fragment_t*)malloc(sizeof(struct fragment_t));
-    currTerm->fragment->offset = allocateClosureVTerm();
-    memMngr.vterms[currTerm->fragment->offset].closure = gcAllocateClosureStruct(entryFuncPointer, 0, ident, 0);
-	currTerm->fragment->length = 1;
-    memMngr.vterms[currTerm->fragment->offset].closure->ident = ident;
+    memMngr.vterms[fragTerm->fragment->offset].closure = gcAllocateClosureStruct(entryFuncPointer, 0, ident, 0);
 
-	fieldOfView->next = currTerm;
-	fieldOfView->prev = currTerm;
-	currTerm->prev = fieldOfView;
-	currTerm->next = fieldOfView;
+    ADD_TO_CHAIN(gofuncCallTerm->funcCall->fieldOfView, fragTerm);
 
-	goCall->env = (struct env_t*)malloc(sizeof(struct env_t));
-	goCall->env->params = 0;
-
-	goCall->fieldOfView = fieldOfView;
-	goCall->entryPoint = 0;
-	goCall->next = 0;
-
-	return goCall;
+    return gofuncCallTerm;
 }
 
 static struct lterm_t* ConstructStartFieldOfView(const char* funcName, RefalFunc entryFuncPointer)
 {
-    struct lterm_t* fieldOfView = (struct lterm_t*)malloc(sizeof(struct lterm_t));
-	struct lterm_t* term = (struct lterm_t*)malloc(sizeof(struct lterm_t));
+    struct lterm_t* fieldOfView = allocateSimpleChain();
+    struct lterm_t* gofuncCallTerm = ConstructStartFunc(funcName, entryFuncPointer);
 
-	fieldOfView->next = term;
-	fieldOfView->prev = term;
-	term->prev = fieldOfView;
-	term->next = fieldOfView;
+    ADD_TO_CHAIN(fieldOfView, gofuncCallTerm);
 
-	term->tag = L_TERM_FUNC_CALL;
-	term->funcCall = ConstructStartFunc(funcName, entryFuncPointer);
-
-	return term;
+    return fieldOfView;
 }
 
 void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 {
     memMngr.fieldOfView = ConstructStartFieldOfView(entryFuncName, entryFuncPointer);
-    struct lterm_t* callTerm = memMngr.fieldOfView;
+    struct lterm_t* callTerm = memMngr.fieldOfView->next;
 	struct func_result_t funcRes;    
     struct lterm_t* parentCall = 0;
     int entryStatus = 0;
@@ -200,7 +181,7 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     fieldOfView->next->prev = fieldOfView;
 
     //struct lterm_t* assembledFOV = gcGetAssembliedChain(callTerm->funcCall->fieldOfView);
-    //printFragment(stdout, assembledFOV->fragment);
+    //printFragment(stdout, assembledFOV->fragment);    
 
 	return newFuncPointer;
 }
