@@ -23,7 +23,7 @@ static uint8_t getOpenMode(struct fragment_t* frag);
 static uint8_t getDescr(struct fragment_t* frag);
 static void gcOpenDefaultFile(uint8_t descr, uint8_t mode);
 static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr);
-static void _gcPut(struct lterm_t* fieldOfView);
+static void _gcPut();
 static struct func_result_t _gcGet(FILE* file);
 static getFileDescr(struct v_int* bigInt, uint8_t* descr);
 static void printChain(FILE* file, struct lterm_t* chain);
@@ -36,12 +36,12 @@ struct func_result_t Card(int entryStatus)
 
 struct func_result_t Get(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
+    gcInitBuiltin();
 
-    if (frag->length != 1)            
+    if (BUILTIN_FRAG->length != 1)
         PRINT_AND_EXIT(GET_WRONG_ARG_NUM);    
 
-    uint8_t descr = getDescr(frag);
+    uint8_t descr = getDescr(BUILTIN_FRAG);
 
     if (!descr)
         return _gcGet(stdin);
@@ -54,43 +54,43 @@ struct func_result_t Get(int entryStatus)
 
 struct func_result_t Prout(int entryStatus)
 {
-    struct lterm_t* currExpr = gcGetAssembliedChain(_currFuncCall->fieldOfView);
+    gcInitBuiltin();
 
-    printFragment(stdout, currExpr->fragment);
+    printFragment(stdout, BUILTIN_FRAG);
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
 
 struct func_result_t Print(int entryStatus)
 {
-    struct lterm_t* currExpr = gcGetAssembliedChain(_currFuncCall->fieldOfView);
+    gcInitBuiltin();
 
-    printFragment(stdout, currExpr->fragment);
+    printFragment(stdout, BUILTIN_FRAG);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = _currFuncCall->fieldOfView, .callChain = 0};
 }
 
 struct func_result_t Open(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
+    gcInitBuiltin();
 
-    if (frag->length < 2)
+    if (BUILTIN_FRAG->length < 2)
         PRINT_AND_EXIT(TOO_FEW_ARGUMENTS);
 
-    if (memMngr.vterms[frag->offset].tag != V_CHAR_TAG)
+    if (memMngr.vterms[BUILTIN_FRAG->offset].tag != V_CHAR_TAG)
         PRINT_AND_EXIT(BAD_FILE_OPEN_MODE);
 
-    uint8_t mode = getOpenMode(frag);
-    uint8_t descr = getDescr(frag);
+    uint8_t mode = getOpenMode(BUILTIN_FRAG);
+    uint8_t descr = getDescr(BUILTIN_FRAG);
 
-    gcOpenFile(frag, mode, descr);
+    gcOpenFile(BUILTIN_FRAG, mode, descr);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
 
 struct func_result_t Put(int entryStatus)
 {
-    _gcPut(_currFuncCall->fieldOfView);
+    _gcPut();
 
     // Remove descr vterm
     _currFuncCall->fieldOfView->next->fragment->offset++;
@@ -101,7 +101,7 @@ struct func_result_t Put(int entryStatus)
 
 struct func_result_t Putout(int entryStatus)
 {
-    _gcPut(_currFuncCall->fieldOfView);
+    _gcPut();
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = 0, .callChain = 0};
 }
@@ -153,28 +153,25 @@ static struct func_result_t _gcGet(FILE* file)
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
 }
 
-static void _gcPut(struct lterm_t* fieldOfView)
+static void _gcPut()
 {
-    assembledFragInBuiltins = gcGetAssembliedChain(fieldOfView);
+    gcInitBuiltin();
 
-    if (assembledFragInBuiltins->fragment->length < 1)
+    if (BUILTIN_FRAG->length < 1)
         PRINT_AND_EXIT(TOO_FEW_ARGUMENTS);
 
-    uint8_t descr = getDescr(assembledFragInBuiltins->fragment);
+    uint8_t descr = getDescr(BUILTIN_FRAG);
 
     if (!descr)
     {
-        printFragment(stdout, assembledFragInBuiltins->fragment);
-        assembledFragInBuiltins = 0;
+        printFragment(stdout, BUILTIN_FRAG);
         return;
     }
 
     if (!files[descr].file)
         gcOpenDefaultFile(descr, WRITE_MODE);
 
-    printFragment(files[descr].file, assembledFragInBuiltins->fragment);
-
-    assembledFragInBuiltins = 0;
+    printFragment(files[descr].file, BUILTIN_FRAG);
 }
 
 static uint8_t getOpenMode(struct fragment_t* frag)

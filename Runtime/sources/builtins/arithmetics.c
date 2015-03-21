@@ -20,10 +20,10 @@
 
 typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
 
-static void readIntOperands(mpz_t x, mpz_t y, struct fragment_t* frag);
+static void readIntOperands(mpz_t x, mpz_t y);
 static void readOperand(mpz_t num, struct v_term* term);
-static struct lterm_t* gcApplyOpToInt(ArithOp op, struct fragment_t* frag);
-static struct lterm_t* gcApplyOpToDouble(ArithOp op, struct fragment_t* currExpr);
+static struct lterm_t* gcApplyOpToInt(ArithOp op);
+static struct lterm_t* gcApplyOpToDouble(ArithOp op);
 static struct lterm_t* gcConstructDoubleNumLTerm(double val);
 static struct func_result_t gcApplyOp(ArithOp op);
 
@@ -54,21 +54,21 @@ struct func_result_t Mod(int entryStatus)
 
 struct func_result_t Compare(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
+    gcInitBuiltin();
 
-    if (frag->length != 2)
+    if (BUILTIN_FRAG->length != 2)
         PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER);
 
-    if (memMngr.vterms[frag->offset].tag != memMngr.vterms[frag->offset + 1].tag )
+    if (memMngr.vterms[BUILTIN_FRAG->offset].tag != memMngr.vterms[BUILTIN_FRAG->offset + 1].tag )
         PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH);
 
     int cmpRes = 0;
     char resChar = '0';
 
-    if (memMngr.vterms[frag->offset].tag == V_INT_NUM_TAG)
-        cmpRes = intCmp(memMngr.vterms[frag->offset].intNum, memMngr.vterms[frag->offset + 1].intNum);
-    else if (memMngr.vterms[frag->offset].tag == V_DOUBLE_NUM_TAG)
-        cmpRes = doubleCmp(memMngr.vterms[frag->offset].doubleNum, memMngr.vterms[frag->offset + 1].doubleNum);
+    if (memMngr.vterms[BUILTIN_FRAG->offset].tag == V_INT_NUM_TAG)
+        cmpRes = intCmp(memMngr.vterms[BUILTIN_FRAG->offset].intNum, memMngr.vterms[BUILTIN_FRAG->offset + 1].intNum);
+    else if (memMngr.vterms[BUILTIN_FRAG->offset].tag == V_DOUBLE_NUM_TAG)
+        cmpRes = doubleCmp(memMngr.vterms[BUILTIN_FRAG->offset].doubleNum, memMngr.vterms[BUILTIN_FRAG->offset + 1].doubleNum);
     else
         PRINT_AND_EXIT(OPERAND_BAD_TYPE);
 
@@ -160,28 +160,28 @@ int ConvertToInt(struct v_int* numData)
 
 static struct func_result_t gcApplyOp(ArithOp op)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
+    gcInitBuiltin();
     struct lterm_t* resChain = 0;
 
-    if (frag->length != 2)
+    if (BUILTIN_FRAG->length != 2)
     {
         PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER);
     }
 
-    if (memMngr.vterms[frag->offset].tag != memMngr.vterms[frag->offset + 1].tag )
+    if (memMngr.vterms[BUILTIN_FRAG->offset].tag != memMngr.vterms[BUILTIN_FRAG->offset + 1].tag )
         PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH);
 
-    if (memMngr.vterms[frag->offset].tag == V_INT_NUM_TAG)
-        resChain = gcApplyOpToInt(op, frag);
-    else if (memMngr.vterms[frag->offset].tag == V_DOUBLE_NUM_TAG)
-        resChain = gcApplyOpToDouble(op, frag);
+    if (memMngr.vterms[BUILTIN_FRAG->offset].tag == V_INT_NUM_TAG)
+        resChain = gcApplyOpToInt(op);
+    else if (memMngr.vterms[BUILTIN_FRAG->offset].tag == V_DOUBLE_NUM_TAG)
+        resChain = gcApplyOpToDouble(op);
     else
         PRINT_AND_EXIT(OPERAND_BAD_TYPE);
 
 	return (struct func_result_t){.status = OK_RESULT, .fieldChain = resChain, .callChain = 0};
 }
 
-static struct lterm_t* gcApplyOpToInt(ArithOp op, struct fragment_t* frag)
+static struct lterm_t* gcApplyOpToInt(ArithOp op)
 {
     mpz_t x;
     mpz_t y;
@@ -191,7 +191,7 @@ static struct lterm_t* gcApplyOpToInt(ArithOp op, struct fragment_t* frag)
     mpz_init(y);
     mpz_init(res);
 
-    readIntOperands(x, y, frag);
+    readIntOperands(x, y);
 
     op(res, x, y);
 
@@ -204,10 +204,10 @@ static struct lterm_t* gcApplyOpToInt(ArithOp op, struct fragment_t* frag)
     return resChain;
 }
 
-static struct lterm_t* gcApplyOpToDouble(ArithOp op, struct fragment_t* frag)
+static struct lterm_t* gcApplyOpToDouble(ArithOp op)
 {
-    double a = memMngr.vterms[frag->offset].doubleNum;
-    double b = memMngr.vterms[frag->offset+1].doubleNum;
+    double a = memMngr.vterms[BUILTIN_FRAG->offset].doubleNum;
+    double b = memMngr.vterms[BUILTIN_FRAG->offset+1].doubleNum;
 
     if (op == mpz_add)
         return gcConstructDoubleNumLTerm(a + b);
@@ -256,10 +256,10 @@ static void readOperand(mpz_t num, struct v_term* term)
 }
 
 /// Вычисляет операнды x и y для бинарной операции.
-/// frag - фрагмент, с помощью которого нужно вычислить операнды.
-static void readIntOperands(mpz_t x, mpz_t y, struct fragment_t* frag)
+/// BUILTIN_FRAG - фрагмент, с помощью которого нужно вычислить операнды.
+static void readIntOperands(mpz_t x, mpz_t y)
 {
-    struct v_term* term = memMngr.vterms + frag->offset;
+    struct v_term* term = memMngr.vterms + BUILTIN_FRAG->offset;
 
     readOperand(x, term);
     term++;

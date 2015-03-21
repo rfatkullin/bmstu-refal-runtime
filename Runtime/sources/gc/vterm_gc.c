@@ -34,8 +34,8 @@ void collectVTermGarbage(struct lterm_t* fieldOfView)
 
     //TO FIX: Правильно обрабатывать _currFuncCall.
     //TO FIX: Будет обрабатываться в рамках _currFuncCall
-    if (assembledFragInBuiltins)
-        processVTermsInFragment(assembledFragInBuiltins->fragment);
+    //if (assembledFragInBuiltins)
+    //    processVTermsInFragment(assembledFragInBuiltins->fragment);
 
     copyVTerms();
 
@@ -44,8 +44,8 @@ void collectVTermGarbage(struct lterm_t* fieldOfView)
 
     //TO FIX: Правильно обрабатывать _currFuncCall.
     //TO FIX: Будет обрабатываться в рамках _currFuncCall
-    if (assembledFragInBuiltins)
-        processVTermsInFragment(assembledFragInBuiltins->fragment);
+    //if (assembledFragInBuiltins)
+    //    processVTermsInFragment(assembledFragInBuiltins->fragment);
 }
 
 static void processVTermsInChain(struct lterm_t* chain)

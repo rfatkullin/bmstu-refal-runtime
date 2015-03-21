@@ -23,8 +23,8 @@ void collectGarbage()
 
     printFieldOfView(stdout, memMngr.fieldOfView);
 
-    if (assembledFragInBuiltins)
-        assembledFragInBuiltins = copyFragmentLTerm(assembledFragInBuiltins);
+    //if (assembledFragInBuiltins)
+     //   assembledFragInBuiltins = copyFragmentLTerm(assembledFragInBuiltins);
 
     printf("End garbage collection.\n");
     printMemoryInfo();    

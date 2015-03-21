@@ -26,6 +26,8 @@
 #define SYMB_BAD_ARG                "Symb takes 1 argument - int number!\n"
 #define NUMB_BAD_ARG                "Numb can't parse int from string!\n"
 
+#define BUILTIN_FRAG   (_currFuncCall->env->assembledFOVs[0]->fragment)
+
 static const char* modeStr[2] = {"r", "w"};
 
 struct file_info
@@ -36,9 +38,6 @@ struct file_info
 
 int refalProgramArgsCount;
 struct fragment_t* refalProgramArgs;
-
-/// To save from garbage collection;
-struct lterm_t* assembledFragInBuiltins;
 
 /// Opend files info.
 struct file_info files[MAX_FILE_DESCR];

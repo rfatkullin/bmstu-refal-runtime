@@ -35,15 +35,15 @@ void gcInitBuiltin()
 
 struct func_result_t Arg(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
+    gcInitBuiltin();
 
-    if (frag->length != 1)
+    if (BUILTIN_FRAG->length != 1)
         PRINT_AND_EXIT(ARG_FUNC_BAD_ARG_NUM);
 
-    if (memMngr.vterms[frag->offset].tag != V_INT_NUM_TAG)
+    if (memMngr.vterms[BUILTIN_FRAG->offset].tag != V_INT_NUM_TAG)
         PRINT_AND_EXIT(ARG_FUNC_BAD_ARG_NUM);
 
-    int argNum = ConvertToInt(memMngr.vterms[frag->offset].intNum);
+    int argNum = ConvertToInt(memMngr.vterms[BUILTIN_FRAG->offset].intNum);
 
     if (argNum < 0 || argNum >= refalProgramArgsCount)
         FMT_PRINT_AND_EXIT(BAD_PROGRAM_ARG_NUM, refalProgramArgsCount, argNum, refalProgramArgsCount);
@@ -90,16 +90,16 @@ struct func_result_t Lower(int entryStatus)
 
 struct func_result_t Symb(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
+    gcInitBuiltin();
 
-    if (frag->length != 1)
+    if (BUILTIN_FRAG->length != 1)
         PRINT_AND_EXIT(SYMB_BAD_ARG);
 
-    if (memMngr.vterms[frag->offset].tag != V_INT_NUM_TAG)
+    if (memMngr.vterms[BUILTIN_FRAG->offset].tag != V_INT_NUM_TAG)
         PRINT_AND_EXIT(SYMB_BAD_ARG);
 
     mpz_t num;
-    uint64_t size = calcBytesForIntCharArr(memMngr.vterms[frag->offset].intNum, &num);
+    uint64_t size = calcBytesForIntCharArr(memMngr.vterms[BUILTIN_FRAG->offset].intNum, &num);
     checkAndCleanHeaps(size, MAX(BUILTINS_RESULT_SIZE, size + 1)); // +1 for 0 character!
 
     // No need to update memMngr.dataOffset, because using only in this function.
@@ -120,33 +120,33 @@ struct func_result_t Symb(int entryStatus)
 
 struct func_result_t Numb(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
+    gcInitBuiltin();
 
-    if (frag->length == 0)
+    if (BUILTIN_FRAG->length == 0)
         PRINT_AND_EXIT(NUMB_BAD_ARG);
 
     int sign = 0;
-    if (memMngr.vterms[frag->offset].tag == V_CHAR_TAG && memMngr.vterms[frag->offset].ch == '-')
+    if (memMngr.vterms[BUILTIN_FRAG->offset].tag == V_CHAR_TAG && memMngr.vterms[BUILTIN_FRAG->offset].ch == '-')
     {
         sign = 1;
-        frag->offset++;
-        frag->length--;
+        BUILTIN_FRAG->offset++;
+        BUILTIN_FRAG->length--;
     }
 
     mpz_t num;
     mpz_init_set_si(num, 0);
 
     uint64_t i = 0;
-    for (i = 0; i < frag->length; ++i)
+    for (i = 0; i < BUILTIN_FRAG->length; ++i)
     {
-        if (memMngr.vterms[frag->offset + i].tag != V_CHAR_TAG)
+        if (memMngr.vterms[BUILTIN_FRAG->offset + i].tag != V_CHAR_TAG)
             PRINT_AND_EXIT(NUMB_BAD_ARG);
 
-        if (memMngr.vterms[frag->offset + i].ch < '0' || memMngr.vterms[frag->offset + i].ch > '9')        
+        if (memMngr.vterms[BUILTIN_FRAG->offset + i].ch < '0' || memMngr.vterms[BUILTIN_FRAG->offset + i].ch > '9')
             PRINT_AND_EXIT(NUMB_BAD_ARG);        
 
         mpz_mul_ui(num, num, 10);
-        mpz_add_ui(num, num, memMngr.vterms[frag->offset + i].ch -  '0');
+        mpz_add_ui(num, num, memMngr.vterms[BUILTIN_FRAG->offset + i].ch -  '0');
     }
 
     if (sign)
@@ -162,7 +162,7 @@ struct func_result_t Numb(int entryStatus)
 // TO FIX: Using fieldOfView after gc! Fix: global var func_call_t
 struct func_result_t Lenw(int entryStatus)
 {
-    struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
+    gcInitBuiltin();
 
     mpz_t num;
     mpz_t helper;
@@ -174,35 +174,36 @@ struct func_result_t Lenw(int entryStatus)
 
     uint64_t div = (uint64_t)UINT32_MAX + 1;
 
-    mpz_addmul_ui(num, helper, frag->length / div);
-    mpz_add_ui(num, num, frag->length % div);
+    mpz_addmul_ui(num, helper, BUILTIN_FRAG->length / div);
+    mpz_add_ui(num, num, BUILTIN_FRAG->length % div);
 
     struct lterm_t* res = gcConstructIntNumBuiltinResult(num);
 
     mpz_clear(num);
     mpz_clear(helper);
 
-    CONCAT_CHAINS(res, _currFuncCall->fieldOfView);
+    CONCAT_CHAINS(res, _currFuncCall->env->fovs[0]);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView)
 {
-    assembledFragInBuiltins = gcGetAssembliedChain(fieldOfView);
+    gcInitBuiltin();
 
-    checkAndCleanHeaps(0, CHAIN_LTERM_SIZE);
+    checkAndCleanHeaps(0, CHAIN_LTERM_SIZE + FRAGMENT_LTERM_SIZE(1));
 
     struct lterm_t* chainTerm = allocateSimpleChain();
+    struct lterm_t* fragTerm = allocateFragmentLTerm(1);
 
-    ADD_TO_CHAIN(chainTerm, assembledFragInBuiltins);
+    fragTerm->fragment->offset = BUILTIN_FRAG->offset;
+    fragTerm->fragment->length = BUILTIN_FRAG->length;
 
-    struct fragment_t* frag = assembledFragInBuiltins->fragment;
+    ADD_TO_CHAIN(chainTerm, fragTerm);
+
     uint64_t i =0;
-    for (i = 0; i < frag->length; ++i)
-        memMngr.vterms[frag->offset + i].ch = op(memMngr.vterms[frag->offset + i].ch);
-
-    assembledFragInBuiltins = 0;
+    for (i = 0; i < fragTerm->fragment->length; ++i)
+        memMngr.vterms[fragTerm->fragment->offset + i].ch = op(memMngr.vterms[fragTerm->fragment->offset + i].ch);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm, .callChain = 0};
 }
