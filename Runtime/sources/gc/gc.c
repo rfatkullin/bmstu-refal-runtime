@@ -13,7 +13,7 @@ void collectGarbage()
     printf("Start garbage collection.\n");
     printMemoryInfo();
 
-    //printFieldOfView(stdout, memMngr.fieldOfView);
+    printFieldOfView(stdout, memMngr.fieldOfView);
 
     collectVTermGarbage(memMngr.fieldOfView);
 
@@ -23,11 +23,8 @@ void collectGarbage()
 
     printFieldOfView(stdout, memMngr.fieldOfView);
 
-    //if (assembledFragInBuiltins)
-     //   assembledFragInBuiltins = copyFragmentLTerm(assembledFragInBuiltins);
-
     printf("End garbage collection.\n");
-    printMemoryInfo();    
+    printMemoryInfo();        
 }
 
 void failWithMemoryOverflow()

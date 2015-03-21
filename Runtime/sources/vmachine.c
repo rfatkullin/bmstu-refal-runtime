@@ -61,20 +61,22 @@ static struct lterm_t* ConstructStartFieldOfView(const char* funcName, RefalFunc
 void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 {
     memMngr.fieldOfView = ConstructStartFieldOfView(entryFuncName, entryFuncPointer);
-    struct lterm_t* callTerm = memMngr.fieldOfView->next;
+
 	struct func_result_t funcRes;    
     struct lterm_t* parentCall = 0;
     int entryStatus = 0;
 
-	while (callTerm)
+    _currCallTerm = memMngr.fieldOfView->next;
+
+    while (_currCallTerm)
 	{
         // Указатель на функцию проставлен --> функция вызывается повторно.
-        if (callTerm->funcCall->funcPtr)
+        if (_currCallTerm->funcCall->funcPtr)
         {
             // Предыдущий результат успешен --> все скобки активации обработаны, можно передавать функции-потребителю.
             if (funcRes.status != FAIL_RESULT)
             {
-                callTerm->funcCall->fieldOfView = callTerm->funcCall->subCall;
+                _currCallTerm->funcCall->fieldOfView = _currCallTerm->funcCall->subCall;
                 entryStatus = NEXT_ENTRYPOINT;
             }
             else // Обработка скобок активаций завершилась неудачно --> откат.
@@ -85,34 +87,33 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
         else // Указатель на функцию не проставлен --> первый вызов.
         {
             entryStatus = FIRST_CALL;
-            callTerm->funcCall->funcPtr = getFuncPointer(callTerm);
+            _currCallTerm->funcCall->funcPtr = getFuncPointer(_currCallTerm);
 
             // Первый терм в скобках аткивации не является функциональным --> откат.
-            if (callTerm->funcCall->funcPtr == 0)
+            if (_currCallTerm->funcCall->funcPtr == 0)
             {
-                onFuncFail(&callTerm, 0);
+                onFuncFail(&_currCallTerm, 0);
                 entryStatus = ROLL_BACK;
             }
         }
 
-        _currFuncCall = callTerm->funcCall;
-        funcRes = callTerm->funcCall->funcPtr(entryStatus);
+        funcRes = CURR_FUNC_CALL->funcPtr(entryStatus);
 
         switch (funcRes.status)
         {
             case OK_RESULT:
                 //printFieldOfView(stdout, memMngr.fieldOfView);
-                callTerm = updateFieldOfView(callTerm, &funcRes);
+                _currCallTerm = updateFieldOfView(_currCallTerm, &funcRes);
                 //printFieldOfView(stdout, memMngr.fieldOfView);
                 break;
 
             case CALL_RESULT:
-                parentCall = callTerm;
-                callTerm = addFuncCallFiledOfView(callTerm, &funcRes);
-                callTerm->funcCall->parentCall = parentCall;
+                parentCall = _currCallTerm;
+                _currCallTerm = addFuncCallFiledOfView(_currCallTerm, &funcRes);
+                _currCallTerm->funcCall->parentCall = parentCall;
                 break;
             case FAIL_RESULT:
-                onFuncFail(&callTerm, 1);
+                onFuncFail(&_currCallTerm, 1);
                 break;
         }
 	}

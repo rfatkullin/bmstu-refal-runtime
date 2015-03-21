@@ -1,14 +1,11 @@
 // file:source.ref
-
 #include <stdlib.h>
 #include <stdio.h>
-
 #include <memory_manager.h>
 #include <allocators/vterm_alloc.h>
 #include <allocators/data_alloc.h>
 #include <vmachine.h>
 #include <builtins/builtins.h>
-
 struct func_result_t func_0(int entryStatus);
 struct func_result_t func_1(int entryStatus);
 struct func_result_t func_2(int entryStatus);

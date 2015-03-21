@@ -67,7 +67,7 @@ struct func_result_t Print(int entryStatus)
 
     printFragment(stdout, BUILTIN_FRAG);
 
-    return (struct func_result_t){.status = OK_RESULT, .fieldChain = _currFuncCall->fieldOfView, .callChain = 0};
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = CURR_FUNC_CALL->fieldOfView, .callChain = 0};
 }
 
 struct func_result_t Open(int entryStatus)
@@ -93,10 +93,10 @@ struct func_result_t Put(int entryStatus)
     _gcPut();
 
     // Remove descr vterm
-    _currFuncCall->fieldOfView->next->fragment->offset++;
-    _currFuncCall->fieldOfView->next->fragment->length--;
+    CURR_FUNC_CALL->fieldOfView->next->fragment->offset++;
+    CURR_FUNC_CALL->fieldOfView->next->fragment->length--;
 
-    return (struct func_result_t){.status = OK_RESULT, .fieldChain = _currFuncCall->fieldOfView, .callChain = 0};
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = CURR_FUNC_CALL->fieldOfView, .callChain = 0};
 }
 
 struct func_result_t Putout(int entryStatus)

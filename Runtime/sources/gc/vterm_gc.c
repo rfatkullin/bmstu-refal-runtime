@@ -29,23 +29,12 @@ void collectVTermGarbage(struct lterm_t* fieldOfView)
     memset(memMngr.gcInUseVTerms, 0, memMngr.vtermsMaxOffset * sizeof(uint8_t));
 
     stage = MARK_STAGE;
-
     processVTermsInChain(fieldOfView);
-
-    //TO FIX: Правильно обрабатывать _currFuncCall.
-    //TO FIX: Будет обрабатываться в рамках _currFuncCall
-    //if (assembledFragInBuiltins)
-    //    processVTermsInFragment(assembledFragInBuiltins->fragment);
 
     copyVTerms();
 
     stage = POINTER_CORRECTING_STAGE;    
-    processVTermsInChain(fieldOfView);    
-
-    //TO FIX: Правильно обрабатывать _currFuncCall.
-    //TO FIX: Будет обрабатываться в рамках _currFuncCall
-    //if (assembledFragInBuiltins)
-    //    processVTermsInFragment(assembledFragInBuiltins->fragment);
+    processVTermsInChain(fieldOfView);
 }
 
 static void processVTermsInChain(struct lterm_t* chain)

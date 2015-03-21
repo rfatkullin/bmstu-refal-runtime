@@ -84,7 +84,7 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
     if (from->fieldOfView)
         to->fieldOfView = copySimpleChain(from->fieldOfView);
 
-    to->env = copyEnv(!from->funcPtr, from->env, to->env);
+    to->env = copyEnv(from->funcPtr != 0, from->env, to->env);
 
     if (from->subCall)
         to->subCall = copySimpleChain(from->subCall);
@@ -118,12 +118,20 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
 
 static struct env_t* copyEnv(int isFuncCalled, struct env_t* from, struct env_t* to)
 {
-    GC_DATA_HEAP_CHECK_EXIT(ENV_SIZE(from->localsCount, from->paramsCount));
+    GC_DATA_HEAP_CHECK_EXIT(ENV_SIZE(from->localsCount, from->fovsCount) +  // ENV
+                            FRAGMENT_LTERM_SIZE(from->paramsCount));        // params
 
-    allocateEnvData(from, from->localsCount, from->fovsCount);
+    uint32_t i =0;
+
+    allocateEnvData(to, from->localsCount, from->fovsCount);
 
     if (from->params)
-        memcpy(to->params, from->params, from->paramsCount * sizeof(struct lterm_t));
+    {
+        to->params = allocateFragmentLTerm(from->paramsCount);
+
+        for (i = 0; i < from->paramsCount; ++i)
+            memcpy(to->params[i].fragment, from->params[i].fragment, sizeof(struct fragment_t));
+    }
 
     if (isFuncCalled)
     {
@@ -131,7 +139,6 @@ static struct env_t* copyEnv(int isFuncCalled, struct env_t* from, struct env_t*
         memcpy(to->stretchVarsNumber, from->stretchVarsNumber, from->fovsCount * sizeof(int));
     }
 
-    uint32_t i =0;
     for (i = 0; i < from->fovsCount; ++i)
     {
         if (from->fovs[i])

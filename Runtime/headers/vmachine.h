@@ -16,6 +16,8 @@
 #define BAD_TAG_AT_ASSEMBLY         "Bad tag when assembly!\n"
 #define FUNC_CALL_AT_ASSEMBLY       "Func call term when assembly!\n"
 
+#define CURR_FUNC_CALL (_currCallTerm->funcCall)
+
 /// Главный цикл программы.
 void mainLoop(const char*, RefalFunc);
 
@@ -23,6 +25,7 @@ void mainLoop(const char*, RefalFunc);
 /// В процессе выполнения могут быть вызваны сборщики мусора vterm'ов и lterm'ов.
 struct lterm_t* gcGetAssembliedChain(struct lterm_t* oldChain);
 
-struct func_call_t* _currFuncCall;
+//struct func_call_t* _currFuncCall;
+struct lterm_t* _currCallTerm;
 
 #endif

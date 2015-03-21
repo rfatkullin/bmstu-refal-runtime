@@ -16,21 +16,21 @@ static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch), struct lterm_
 
 void gcInitBuiltin()
 {
-    _currFuncCall->env->locals = 0;
-    _currFuncCall->env->stretchVarsNumber = 0;
-    _currFuncCall->env->localsCount = 0;
-    _currFuncCall->env->fovsCount = 1;
+    CURR_FUNC_CALL->env->locals = 0;
+    CURR_FUNC_CALL->env->stretchVarsNumber = 0;
+    CURR_FUNC_CALL->env->localsCount = 0;
+    CURR_FUNC_CALL->env->fovsCount = 1;
 
-    _currFuncCall->env->fovs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
+    CURR_FUNC_CALL->env->fovs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += sizeof(struct lterm_t*);
 
-    _currFuncCall->env->assembledFOVs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
+    CURR_FUNC_CALL->env->assembledFOVs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += sizeof(struct lterm_t*);
 
-    _currFuncCall->env->assembledFOVs[0] = gcGetAssembliedChain(_currFuncCall->fieldOfView);
-    _currFuncCall->env->fovs[0] = _currFuncCall->fieldOfView;
+    CURR_FUNC_CALL->env->assembledFOVs[0] = gcGetAssembliedChain(CURR_FUNC_CALL->fieldOfView);
+    CURR_FUNC_CALL->env->fovs[0] = CURR_FUNC_CALL->fieldOfView;
 
-    _currFuncCall->fieldOfView = 0;
+    CURR_FUNC_CALL->fieldOfView = 0;
 }
 
 struct func_result_t Arg(int entryStatus)
@@ -80,12 +80,12 @@ uint64_t initArgsData(uint64_t offset, int argc, char** argv)
 
 struct func_result_t Upper(int entryStatus)
 {
-    return gcSwitchCase(toUpperCase, _currFuncCall->fieldOfView);
+    return gcSwitchCase(toUpperCase, CURR_FUNC_CALL->fieldOfView);
 }
 
 struct func_result_t Lower(int entryStatus)
 {
-    return gcSwitchCase(toLowerCase, _currFuncCall->fieldOfView);
+    return gcSwitchCase(toLowerCase, CURR_FUNC_CALL->fieldOfView);
 }
 
 struct func_result_t Symb(int entryStatus)
@@ -182,7 +182,7 @@ struct func_result_t Lenw(int entryStatus)
     mpz_clear(num);
     mpz_clear(helper);
 
-    CONCAT_CHAINS(res, _currFuncCall->env->fovs[0]);
+    CONCAT_CHAINS(res, CURR_FUNC_CALL->env->fovs[0]);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
