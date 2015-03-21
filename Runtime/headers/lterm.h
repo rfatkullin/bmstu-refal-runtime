@@ -8,8 +8,9 @@
 #define L_TERM_FRAGMENT_TAG     1
 #define L_TERM_CHAIN_KEEPER_TAG	2
 #define L_TERM_FUNC_CALL        3
+#define L_TERM_CHAIN_TAG        4
 
-#define GC_MOVED                4
+#define GC_MOVED                5
 
 #define ADD_TO_CHAIN(chain, term)   \
 do{                                 \

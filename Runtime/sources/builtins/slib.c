@@ -172,7 +172,7 @@ static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch), struct lterm_
 {
     assembledFragInBuiltins = gcGetAssembliedChain(fieldOfView);
 
-    checkAndCleanHeaps(0, SIMPLE_CHAIN_SIZE);
+    checkAndCleanHeaps(0, CHAIN_LTERM_SIZE);
 
     struct lterm_t* chainTerm = allocateSimpleChain();
 

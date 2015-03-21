@@ -9,13 +9,15 @@ typedef int  allocate_result;
 #define OK          0
 #define NEED_CLEAN  1
 
-#define MEMORY_OVERFLOW_MSG     "Memory overflow!\n"
-#define CANT_COPY_TERM          "GC Can't copy term!\n"
+#define MEMORY_OVERFLOW_MSG             "Memory overflow!\n"
+#define CANT_COPY_TERM                  "GC Can't copy term!\n"
+#define GC_VTERM_PROCESS_BAD_CHAIN_TAG  "Bad lterm chain tag at GC vterm process. Chains can't contains simple chain without chain keeper!\n"
+#define GC_VTERM_PROCESS_BAD_TAG        "Bad lterm tag at GC vterm process!\n"
 
 #define GC_VTERM_HEAP_CHECK_RETURN(needCount, statusVar)    \
 do{                                                         \
     if (memMngr.vtermsOffset + needCount >                  \
-        memMngr.vtermsMaxOffset)                            \
+        memMngr.vtActiveOffset + memMngr.vtermsMaxOffset)                            \
     {                                                       \
         statusVar = NEED_CLEAN;                             \
         return 0;                                           \
@@ -26,7 +28,7 @@ do{                                                         \
 #define GC_DATA_HEAP_CHECK_RETURN(needDataSize, statusVar)  \
 do{                                                         \
     if (memMngr.dataOffset + needDataSize >                 \
-        memMngr.dataMaxOffset)                              \
+        memMngr.dtActiveOffset + memMngr.dataMaxOffset)                              \
     {                                                       \
         statusVar = NEED_CLEAN;                             \
         return 0;                                           \
@@ -54,14 +56,14 @@ do{                                                     \
 #define GC_VTERM_HEAP_CHECK_EXIT(needCount)     \
 do{                                             \
     if (memMngr.vtermsOffset + needCount >      \
-        memMngr.vtermsMaxOffset)                \
+        memMngr.vtActiveOffset + memMngr.vtermsMaxOffset)                \
         PRINT_AND_EXIT(MEMORY_OVERFLOW_MSG);    \
 }while(0)
 
 #define GC_DATA_HEAP_CHECK_EXIT(needDataSize)   \
 do{                                             \
     if (memMngr.dataOffset + needDataSize >     \
-        memMngr.dataMaxOffset)                  \
+        memMngr.dtActiveOffset + memMngr.dataMaxOffset)                  \
         PRINT_AND_EXIT(MEMORY_OVERFLOW_MSG);    \
 }while(0)
 

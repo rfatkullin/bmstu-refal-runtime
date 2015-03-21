@@ -30,7 +30,8 @@ void collectVTermGarbage(struct lterm_t* fieldOfView)
 
     //TO FIX: Правильно обрабатывать _currFuncCall.
     //TO FIX: Будет обрабатываться в рамках _currFuncCall
-    processVTermsInFragment(assembledFragInBuiltins->fragment);
+    if (assembledFragInBuiltins)
+        processVTermsInFragment(assembledFragInBuiltins->fragment);
 
     copyVTerms();
 
@@ -39,7 +40,8 @@ void collectVTermGarbage(struct lterm_t* fieldOfView)
 
     //TO FIX: Правильно обрабатывать _currFuncCall.
     //TO FIX: Будет обрабатываться в рамках _currFuncCall
-    processVTermsInFragment(assembledFragInBuiltins->fragment);
+    if (assembledFragInBuiltins)
+        processVTermsInFragment(assembledFragInBuiltins->fragment);
 }
 
 static void processVTermsInChain(struct lterm_t* chain)
@@ -61,8 +63,12 @@ static void processVTermsInChain(struct lterm_t* chain)
                 processVTermsInFuncCall(currTerm->funcCall);
                 break;
 
+            case L_TERM_CHAIN_TAG:
+                PRINT_AND_EXIT(GC_VTERM_PROCESS_BAD_CHAIN_TAG);
+
             default:
-                PRINT_AND_EXIT("BEDA!");
+                PRINT_AND_EXIT(GC_VTERM_PROCESS_BAD_TAG);
+
         }
 
         currTerm = currTerm->next;
@@ -86,6 +92,9 @@ static void processVTermsInFragment(struct fragment_t* frag)
     }
     else
     {
+       // if (!memMngr.gcInUseVTerms[frag->offset - memMngr.vtInactiveOffset])
+         //   printf("Warn %d!\n", frag->offset);
+
         // Ставим новый offset.
         frag->offset = memMngr.vterms[frag->offset].inBracketLength;
     }
@@ -97,9 +106,11 @@ static void processVTermsInFuncCall(struct func_call_t* funcCall)
         processVTermsInChain(funcCall->fieldOfView);
 
     if (funcCall->subCall)
-        processVTermsInChain(funcCall->subCall);
+        processVTermsInChain(funcCall->subCall);    
 
-    processEnvVTerms(funcCall->env);
+    // Func called --> fovs inited
+    if (funcCall->funcPtr)
+        processEnvVTerms(funcCall->env);
 }
 
 static void processEnvVTerms(struct env_t* env)
@@ -107,12 +118,14 @@ static void processEnvVTerms(struct env_t* env)
     uint32_t i = 0;
     for (i = 0; i < env->fovsCount; ++i)
     {
-        processVTermsInChain(env->fovs[i]);
-        processVTermsInFragment(env->assembledFOVs[i]->fragment);
+        if (env->fovs[i])
+            processVTermsInChain(env->fovs[i]);
+        if (env->assembledFOVs[i])
+            processVTermsInFragment(env->assembledFOVs[i]->fragment);
     }
 
     for (i = 0; i < env->paramsCount; ++i)
-        processVTermsInFragment((env->params + i)->fragment);
+        processVTermsInFragment(env->params[i].fragment);
 }
 
 static void processClosureVTerms(struct v_closure* closure)
@@ -123,12 +136,30 @@ static void processClosureVTerms(struct v_closure* closure)
         processVTermsInFragment((closure->params + i)->fragment);
 }
 
+static void swap(uint64_t* a, uint64_t* b)
+{
+    uint64_t tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
 static void copyVTerms()
 {
     uint64_t i = 0;
 
-    memMngr.vtermsOffset = memMngr.vtInactiveOffset;
-    memMngr.dataOffset = memMngr.dtInactiveOffset;
+    swap(&memMngr.vtInactiveOffset, &memMngr.vtActiveOffset);
+    swap(&memMngr.dtInactiveOffset, &memMngr.dtActiveOffset);
+
+    memMngr.vtermsOffset = memMngr.vtActiveOffset;
+    memMngr.dataOffset = memMngr.dtActiveOffset;
+
+    uint64_t toCopy = 0;
+
+    for (i = 0; i < memMngr.vtermsMaxOffset; ++i)
+        if (memMngr.gcInUseVTerms[i])
+            toCopy++;
+
+    printf("To copy: %d\n", toCopy);
 
     for (i = 0; i < memMngr.vtermsMaxOffset; ++i)
     {
@@ -137,7 +168,7 @@ static void copyVTerms()
             GC_VTERM_HEAP_CHECK_EXIT(1);
 
             uint64_t to = memMngr.vtermsOffset;
-            uint64_t from = memMngr.vtActiveOffset + i;
+            uint64_t from = memMngr.vtInactiveOffset + i;
 
             memMngr.vterms[to] = memMngr.vterms[from];
             memMngr.vterms[to].inBracketLength = memMngr.vtermsOffset;
@@ -171,9 +202,15 @@ static void copyIntVTerm(uint64_t to, struct v_int* intNum)
 {
     GC_DATA_HEAP_CHECK_EXIT(VINT_STRUCT_SIZE(intNum->length));
 
+    printIntNumber(stdout, intNum);
+
     struct v_int* newIntNum = allocateIntStruct(intNum->length);
-    memcpy(newIntNum, intNum, sizeof(struct v_int) + intNum->length);
+    newIntNum->sign = intNum->sign;
+    memcpy(newIntNum->bytes, intNum->bytes, intNum->length);
     memMngr.vterms[memMngr.vtermsOffset].intNum = newIntNum;
+
+
+    //printIntNumber(stdout, newIntNum);
 }
 
 

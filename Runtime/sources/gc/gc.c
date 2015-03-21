@@ -15,9 +15,6 @@ void collectGarbage()
     printf("Start garbage collection.\n");
     start = clock();
 
-    struct lterm_t* assembledFOV = gcGetAssembliedChain(memMngr.fieldOfView);
-    printFragment(stdout, assembledFOV->fragment);
-
     collectVTermGarbage(memMngr.fieldOfView);
 
     copySimpleChain(memMngr.fieldOfView);
@@ -26,6 +23,7 @@ void collectGarbage()
     end = clock();
 
     printf("End garbage collection. Time elapsed: %f\n", ((float)(end - start)) / CLOCKS_PER_SEC);
+    printMemoryInfo();
 }
 
 void failWithMemoryOverflow()

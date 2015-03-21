@@ -89,6 +89,9 @@ int ustrEq(struct v_string* a, struct v_string* b);
 /// Вывод Unicode строки.
 void printUStr(FILE* file, struct v_string* str);
 
+/// Вывод целого числа.
+void printIntNumber(FILE* file, struct v_int* intNum);
+
 /// Проверка на равенство двух чисел. 1: a > b, -1 a < b, 0 a == b
 int intCmp(struct v_int* a, struct v_int* b);
 

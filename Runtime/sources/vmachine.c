@@ -227,6 +227,9 @@ struct lterm_t* gcGetAssembliedChain(struct lterm_t* chain)
 
     if (chain != 0)
     {
+        if (chain->tag != L_TERM_CHAIN_TAG)
+            PRINT_AND_EXIT(ASSEMBLY_NOT_CHAIN);
+
         assembledChain = gcAllocateFragmentLTerm(1);
         assembledChain->fragment->offset = memMngr.vtermsOffset;
 
@@ -235,10 +238,7 @@ struct lterm_t* gcGetAssembliedChain(struct lterm_t* chain)
             collectGarbage();
 
             if (!assemblyChain(chain))
-            {
-                printf("%s\n", MEMORY_OVERFLOW);
-                exit(0);
-            }
+                PRINT_AND_EXIT(MEMORY_OVERFLOW);
         }
 
         assembledChain->fragment->length = memMngr.vtermsOffset - assembledChain->fragment->offset;
@@ -262,7 +262,7 @@ static int assemblyChain(struct lterm_t* chain)
                 break;
             }
             case L_TERM_CHAIN_KEEPER_TAG:
-            {
+            {                
                 if (memMngr.vtermsOffset + 1 > memMngr.vtermsMaxOffset)
                     return 0;
 
@@ -279,6 +279,17 @@ static int assemblyChain(struct lterm_t* chain)
                 allocateCloseBracketVTerm(memMngr.vtermsOffset - openBracketOffset + 1);
                 break;
             }
+
+            case L_TERM_FUNC_CALL:
+                //TO FIX:
+                break;
+
+            case L_TERM_CHAIN_TAG:
+                PRINT_AND_EXIT(SIMPLE_CHAIN_IN_ASSEMBLY);
+                break;
+
+            default:
+                PRINT_AND_EXIT(BAD_TAG_IN_ASSEMBLY);
         }
 
         currTerm = currTerm->next;

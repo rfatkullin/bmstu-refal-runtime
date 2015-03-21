@@ -1,0 +1,18 @@
+$ENTRY Go
+{
+	=	<Open 'r' 1 <Arg 1>>
+		<Open 'w' 2 <Arg 2>>		
+		<LoadFile 1>
+}
+
+LoadFile 
+{
+    s.1 = <LoadFile2 s.1 <Get s.1>>;
+}
+
+LoadFile2 
+{
+    s.1 0 = ;
+    s.1 e.2 0 = <Put 2 e.2>;
+    s.1 e.2 = <Put 2 e.2><LoadFile s.1>;
+}

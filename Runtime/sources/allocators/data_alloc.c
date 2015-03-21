@@ -6,7 +6,7 @@
 #include <memory_manager.h>
 #include <allocators/data_alloc.h>
 
-static struct lterm_t* chCopyChainVTerm(struct lterm_t* term, allocate_result* res);
+static struct lterm_t* chCopyChainKeeperLTerm(struct lterm_t* term, allocate_result* res);
 static struct lterm_t* chCopyFragmentLTerm(struct lterm_t* term, allocate_result* res);
 
 struct lterm_t* chAllocateFuncCallLTerm(allocate_result* res)
@@ -18,14 +18,14 @@ struct lterm_t* chAllocateFuncCallLTerm(allocate_result* res)
 
 struct lterm_t* chAllocateChainKeeperLTerm(uint32_t count, allocate_result* res)
 {
-    GC_DATA_HEAP_CHECK_RETURN(CHAIN_LTERM_SIZE(count), *res);
+    GC_DATA_HEAP_CHECK_RETURN(CHAIN_KEEPER_LTERM_SIZE(count), *res);
 
     return allocateChainKeeperLTerm(count);
 }
 
-struct lterm_t* chAllocateSimpleChain(allocate_result* res)
+struct lterm_t* chAllocateSimpleChainLTerm(allocate_result* res)
 {
-    GC_DATA_HEAP_CHECK_RETURN(SIMPLE_CHAIN_SIZE, *res);
+    GC_DATA_HEAP_CHECK_RETURN(CHAIN_LTERM_SIZE, *res);
 
     return allocateSimpleChain();
 }
@@ -50,7 +50,7 @@ struct lterm_t* chCopyFieldOfView(struct lterm_t* chain, allocate_result* result
     struct lterm_t* newTerm = 0;
     struct lterm_t* currTerm = chain->next;
 
-    CHECK_ALLOCATION_RETURN(newChain, chAllocateSimpleChain(result), *result);
+    CHECK_ALLOCATION_RETURN(newChain, chAllocateSimpleChainLTerm(result), *result);
 
     while (currTerm != chain)
     {
@@ -63,10 +63,15 @@ struct lterm_t* chCopyFieldOfView(struct lterm_t* chain, allocate_result* result
                 break;
 
             case L_TERM_CHAIN_KEEPER_TAG:
-                CHECK_ALLOCATION_RETURN(newTerm, chCopyChainVTerm(currTerm, result), *result);
+                CHECK_ALLOCATION_RETURN(newTerm, chCopyChainKeeperLTerm(currTerm, result), *result);
                 break;
+
             case L_TERM_FUNC_CALL:
                 PRINT_AND_EXIT(FOV_CONTAINS_FUNC_CALL);
+                break;
+
+            case L_TERM_CHAIN_TAG:
+                PRINT_AND_EXIT(FOV_CONTAINS_SIMPLE_CHAIN);
                 break;
         }
 
@@ -163,17 +168,13 @@ struct v_int* allocateIntStruct(uint64_t length)
 
 struct lterm_t* allocateBuiltinsResult(uint64_t offset, uint64_t length)
 {
-    struct lterm_t* chain = 0;
+    struct lterm_t* fragmentLTerm = allocateFragmentLTerm(1);
+    fragmentLTerm->fragment->offset = offset;
+    fragmentLTerm->fragment->length = length;
 
-    struct lterm_t* lterm = allocateFragmentLTerm(1);
-    lterm->fragment->offset = offset;
-    lterm->fragment->length = length;
+    struct lterm_t* chain = allocateSimpleChain();
 
-    chain = allocateSimpleChain();
-    chain->next = lterm;
-    chain->prev = lterm;
-    lterm->next = chain;
-    lterm->prev = chain;
+    ADD_TO_CHAIN(chain, fragmentLTerm);
 
     return chain;
 }
@@ -220,23 +221,18 @@ struct lterm_t* allocateFuncCallLTerm()
 
 struct lterm_t* allocateChainKeeperLTerm(uint32_t count)
 {
-    struct lterm_t* lterm = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += 2 * count * sizeof(struct lterm_t);
+    struct lterm_t* chainKeeperTerm = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += count * sizeof(struct lterm_t);
 
-    struct lterm_t* chain = lterm + count;
-    struct lterm_t* head = lterm;
+    struct lterm_t* head = chainKeeperTerm;
 
     uint32_t i = 0;
 
     for (i = 0; i < count; ++i)
     {
-        lterm->tag = L_TERM_CHAIN_KEEPER_TAG;
-        lterm->chain = chain;
-        lterm->chain->next = lterm->chain;
-        lterm->chain->prev = lterm->chain;
-
-        lterm++;
-        chain++;
+        chainKeeperTerm->tag = L_TERM_CHAIN_KEEPER_TAG;
+        chainKeeperTerm->chain = allocateSimpleChain();
+        chainKeeperTerm++;
     }
 
     return head;
@@ -247,22 +243,22 @@ struct lterm_t* allocateSimpleChain()
     struct lterm_t* chain = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += sizeof(struct lterm_t);
 
+    chain->tag = L_TERM_CHAIN_TAG;
     chain->prev = chain;
     chain->next = chain;
 
     return chain;
 }
 
-static struct lterm_t* chCopyChainVTerm(struct lterm_t* term, allocate_result* res)
+static struct lterm_t* chCopyChainKeeperLTerm(struct lterm_t* term, allocate_result* res)
 {
-    GC_DATA_HEAP_CHECK_RETURN(SIMPLE_CHAIN_SIZE, *res);
+    GC_DATA_HEAP_CHECK_RETURN(CHAIN_KEEPER_LTERM_SIZE(1), *res);
 
-    struct lterm_t* chainTerm = allocateSimpleChain();
-    chainTerm->tag = L_TERM_CHAIN_KEEPER_TAG;
+    struct lterm_t* chainKeeperTerm = allocateChainKeeperLTerm(1);
 
-    CHECK_ALLOCATION_RETURN(chainTerm->chain, chCopyFieldOfView(term->chain, res), *res);
+    CHECK_ALLOCATION_RETURN(chainKeeperTerm->chain, chCopyFieldOfView(term->chain, res), *res);
 
-    return chainTerm;
+    return chainKeeperTerm;
 }
 
 static struct lterm_t* chCopyFragmentLTerm(struct lterm_t* term, allocate_result* res)

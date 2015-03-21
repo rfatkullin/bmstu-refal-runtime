@@ -8,9 +8,12 @@
 #define ROLL_BACK       1
 #define NEXT_ENTRYPOINT	2
 
-#define BAD_EVAL_EXPR       "Can't execute expr in evaluate brackets!"
-#define FUNC_CALL_FAILED    "Func call failed!\n"
-#define MEMORY_OVERFLOW     "Memory overflow!"
+#define BAD_EVAL_EXPR               "Can't execute expr in evaluate brackets!"
+#define FUNC_CALL_FAILED            "Func call failed!\n"
+#define MEMORY_OVERFLOW             "Memory overflow!"
+#define ASSEMBLY_NOT_CHAIN          "Trying assembly not chain!\n"
+#define SIMPLE_CHAIN_IN_ASSEMBLY    "Chain tag when assembly. Chains contains only chains keepers, not chains!\n"
+#define BAD_TAG_IN_ASSEMBLY         "Bad tag when assembly!\n"
 
 /// Главный цикл программы.
 void mainLoop(const char*, RefalFunc);

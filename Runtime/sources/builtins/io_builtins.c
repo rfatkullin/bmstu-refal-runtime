@@ -14,7 +14,6 @@
 
 static void printSymbol(FILE* file, struct v_term* term);
 static void printUnicodeChar(uint32_t ch);
-static void printIntNumber(FILE* file, struct v_int* intNum);
 static uint64_t copySymbols(uint64_t first, uint64_t length);
 static char* getFileName();
 static void gcAssemblyFileName(struct fragment_t* frag);
@@ -429,7 +428,7 @@ void printUStr(FILE* file, struct v_string* str)
         printUTF32(file, str->head[i]);
 }
 
-static void printIntNumber(FILE* file, struct v_int* intNum)
+void printIntNumber(FILE* file, struct v_int* intNum)
 {
     mpz_t num;
     mpz_init(num);
@@ -439,7 +438,7 @@ static void printIntNumber(FILE* file, struct v_int* intNum)
     if (intNum->sign)
         mpz_neg(num, num);
 
-    gmp_printf("%Zd ", num);
+    gmp_fprintf(file, "%Zd ", num);
 
     mpz_clear(num);
 }

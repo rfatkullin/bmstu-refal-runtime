@@ -11,7 +11,7 @@ static struct lterm_t* copyChainVTerm(struct lterm_t* term);
 
 struct lterm_t* copySimpleChain(struct lterm_t* chain)
 {
-    GC_DATA_HEAP_CHECK_EXIT(SIMPLE_CHAIN_SIZE);
+    GC_DATA_HEAP_CHECK_EXIT(CHAIN_LTERM_SIZE);
 
     struct lterm_t* newChain = allocateSimpleChain();
     struct lterm_t* newTerm = 0;
@@ -48,7 +48,7 @@ struct lterm_t* copySimpleChain(struct lterm_t* chain)
 
 static struct lterm_t* copyChainVTerm(struct lterm_t* term)
 {
-    GC_DATA_HEAP_CHECK_EXIT(SIMPLE_CHAIN_SIZE);
+    GC_DATA_HEAP_CHECK_EXIT(CHAIN_LTERM_SIZE);
 
     struct lterm_t* chainTerm = allocateSimpleChain();
     chainTerm->tag = L_TERM_CHAIN_KEEPER_TAG;
