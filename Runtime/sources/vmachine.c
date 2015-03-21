@@ -101,7 +101,9 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
         switch (funcRes.status)
         {
             case OK_RESULT:
+                //printFieldOfView(stdout, memMngr.fieldOfView);
                 callTerm = updateFieldOfView(callTerm, &funcRes);
+                //printFieldOfView(stdout, memMngr.fieldOfView);
                 break;
 
             case CALL_RESULT:
@@ -201,9 +203,8 @@ static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_r
 {
 	struct lterm_t* newCurrNode = currNode->funcCall->next;
 
-	if (funcResult->fieldChain)
-	{
-		//Обновляем поле зрения
+    if (funcResult->fieldChain)  // Insertn chain in the middle
+	{		
 		struct lterm_t* insertChain = funcResult->fieldChain;
 
 		currNode->prev->next = insertChain->next;
@@ -218,7 +219,13 @@ static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_r
 			newCurrNode = funcResult->callChain->next;
 			funcResult->callChain->prev->funcCall->next = currNode->funcCall->next;
 		}
-	}	
+    }
+    else
+    {
+        // Just exclude call node from fieldOfView
+        currNode->prev->next = currNode->next;
+        currNode->next->prev = currNode->prev;
+    }
 
 	return newCurrNode;
 }
@@ -280,17 +287,16 @@ static allocate_result assemblyChain(struct lterm_t* chain)
                 break;
             }
 
-            case L_TERM_FUNC_CALL:
-                //TO FIX:
+            case L_TERM_FUNC_CALL:            
+                PRINT_AND_EXIT(FUNC_CALL_AT_ASSEMBLY);
                 break;
 
             case L_TERM_CHAIN_TAG:
-                PRINT_AND_EXIT(SIMPLE_CHAIN_IN_ASSEMBLY);
+                PRINT_AND_EXIT(SIMPLE_CHAIN_AT_ASSEMBLY);
                 break;
 
-            default:
-                printf("Tag: %d\n", currTerm->tag);
-                PRINT_AND_EXIT(BAD_TAG_IN_ASSEMBLY);
+            default:                
+                PRINT_AND_EXIT(BAD_TAG_AT_ASSEMBLY);
         }
 
         currTerm = currTerm->next;

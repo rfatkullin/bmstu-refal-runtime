@@ -14,7 +14,7 @@
 #define PATTERN_FILE_NAME_LENGHT    12
 
 #define TOO_FEW_ARGUMENTS           "Too few arguments to function!\n"
-#define BAD_DESCR                   "Bad file descriptor! Descriptor must be in range [1,%d)!\n"
+#define BAD_DESCR                   "Bad file descriptor! Descriptor must be in range [1,%d)! Descr: %d\n"
 #define BAD_FILE_OPEN_MODE          "Bad file open mode! Expected 'W','w', 'R' or 'r'\n"
 #define FILE_OPEN_ERROR             "Can't open file %s in '%s' mode! The reason: %s\n"
 #define DESCR_ALREADY_IN_USE        "Descriptor %u already in use!\n"
@@ -79,9 +79,12 @@ void printFragment(FILE* file, struct fragment_t* frag);
 
 struct lterm_t* gcConstructIntNumBuiltinResult(mpz_t num);
 
+void printFieldOfView(FILE* file, struct lterm_t* fov);
+
 /// Get int from mpz_t.
 int ConvertToInt(struct v_int* numData);
 
+void gcInitBuiltin();
 
 /// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
 int ustrEq(struct v_string* a, struct v_string* b);

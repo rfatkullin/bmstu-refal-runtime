@@ -25,7 +25,7 @@ static void swap(uint64_t* a, uint64_t* b);
 static int stage;
 
 void collectVTermGarbage(struct lterm_t* fieldOfView)
-{
+{    
     memset(memMngr.gcInUseVTerms, 0, memMngr.vtermsMaxOffset * sizeof(uint8_t));
 
     stage = MARK_STAGE;
@@ -120,7 +120,7 @@ static void processVTermsInFragment(struct fragment_t* frag)
         */
 
         // Set new offset, stored in field inBracketLength.
-        frag->offset = memMngr.vterms[frag->offset].inBracketLength;
+        frag->offset = memMngr.vterms[frag->offset].inBracketLength;        
     }
 }
 
@@ -224,8 +224,9 @@ static void copyVTerms()
                     break;
             }
 
-            memMngr.vterms[from].inBracketLength = memMngr.vtermsOffset;
+            memMngr.vterms[to].tag = memMngr.vterms[from].tag;
             memMngr.vtermsOffset++;
+            memMngr.vterms[from].inBracketLength = to;
         }
     }
 }
@@ -247,7 +248,7 @@ static void copyIntVTerm(uint64_t to, struct v_int* intNum)
     struct v_int* newIntNum = allocateIntStruct(intNum->length);
     newIntNum->sign = intNum->sign;
     memcpy(newIntNum->bytes, intNum->bytes, intNum->length);
-    memMngr.vterms[memMngr.vtermsOffset].intNum = newIntNum;
+    memMngr.vterms[memMngr.vtermsOffset].intNum = newIntNum;    
 }
 
 

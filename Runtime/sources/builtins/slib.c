@@ -14,6 +14,25 @@
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView);
 
+void gcInitBuiltin()
+{
+    _currFuncCall->env->locals = 0;
+    _currFuncCall->env->stretchVarsNumber = 0;
+    _currFuncCall->env->localsCount = 0;
+    _currFuncCall->env->fovsCount = 1;
+
+    _currFuncCall->env->fovs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(struct lterm_t*);
+
+    _currFuncCall->env->assembledFOVs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(struct lterm_t*);
+
+    _currFuncCall->env->assembledFOVs[0] = gcGetAssembliedChain(_currFuncCall->fieldOfView);
+    _currFuncCall->env->fovs[0] = _currFuncCall->fieldOfView;
+
+    _currFuncCall->fieldOfView = 0;
+}
+
 struct func_result_t Arg(int entryStatus)
 {
     struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;

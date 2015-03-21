@@ -13,6 +13,6 @@ LoadFile
 LoadFile2 
 {
     s.1 0 = ;
-    s.1 e.2 0 = <Put 0 e.2>;
-    s.1 e.2 = <Put 0 e.2><LoadFile s.1>;
+    s.1 e.2 0 = <Putout 0 e.2>;
+    s.1 e.2 = <Putout 0 e.2><LoadFile s.1>;
 }

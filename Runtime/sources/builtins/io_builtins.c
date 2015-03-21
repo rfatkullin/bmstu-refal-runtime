@@ -26,6 +26,8 @@ static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr);
 static void _gcPut(struct lterm_t* fieldOfView);
 static struct func_result_t _gcGet(FILE* file);
 static getFileDescr(struct v_int* bigInt, uint8_t* descr);
+static void printChain(FILE* file, struct lterm_t* chain);
+static void printFragmentTogether(FILE* file, struct fragment_t* frag);
 
 struct func_result_t Card(int entryStatus)
 {
@@ -89,6 +91,10 @@ struct func_result_t Open(int entryStatus)
 struct func_result_t Put(int entryStatus)
 {
     _gcPut(_currFuncCall->fieldOfView);
+
+    // Remove descr vterm
+    _currFuncCall->fieldOfView->next->fragment->offset++;
+    _currFuncCall->fieldOfView->next->fragment->length--;
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = _currFuncCall->fieldOfView, .callChain = 0};
 }
@@ -204,7 +210,7 @@ static uint8_t getDescr(struct fragment_t* frag)
 
     uint8_t descr = 0;
     if (!getFileDescr(memMngr.vterms[frag->offset].intNum, &descr))
-        FMT_PRINT_AND_EXIT(BAD_DESCR, MAX_FILE_DESCR);
+        FMT_PRINT_AND_EXIT(BAD_DESCR, MAX_FILE_DESCR, descr);
 
     frag->offset++;
     frag->length--;
@@ -362,6 +368,73 @@ static uint64_t copySymbols(uint64_t first, uint64_t length)
     return firstOffset;
 }
 
+void printFieldOfView(FILE* file, struct lterm_t* fov)
+{
+    fprintf(file, "FOV START-----------------\n");
+    printChain(file, fov);
+    fprintf(file, "\n\n");
+}
+
+static void printChain(FILE* file, struct lterm_t* chain)
+{
+    if (chain->tag != L_TERM_CHAIN_TAG)
+        PRINT_AND_EXIT("[Print chain]: Must be chain");
+
+    struct lterm_t* currTerm = chain->next;
+
+    while (currTerm != chain)
+    {
+        switch (currTerm->tag)
+        {
+            case L_TERM_FRAGMENT_TAG :
+            {
+                printFragmentTogether(file, currTerm->fragment);
+                break;
+            }
+            case L_TERM_CHAIN_KEEPER_TAG:
+            {
+                fprintf(file, "(");
+                printChain(file, currTerm->chain);
+                fprintf(file, ")");
+                break;
+            }
+
+            case L_TERM_FUNC_CALL:
+            {
+                fprintf(file, "<");
+
+                if (currTerm->funcCall->funcPtr)
+                    fprintf(file, "[FuncCalled]");
+
+                if (currTerm->funcCall->fieldOfView)
+                    printChain(file, currTerm->funcCall->fieldOfView);
+                else
+                    printChain(file, currTerm->funcCall->env->fovs[0]);
+
+                if (currTerm->funcCall->subCall)
+                {
+                    fprintf(file, "[Func subCall]");
+                    printChain(file, currTerm->funcCall->subCall);
+                }
+
+                fprintf(file, ">");
+                break;
+            }
+        }
+
+        currTerm = currTerm->next;
+    }
+}
+
+static void printFragmentTogether(FILE* file, struct fragment_t* frag)
+{
+    int i = 0;
+    struct v_term* currTerm = memMngr.vterms + frag->offset;
+
+    for (i = 0; i < frag->length; ++i)
+        printSymbol(file, currTerm + i);
+}
+
 void printFragment(FILE* file, struct fragment_t* frag)
 {
 	int i = 0;
@@ -394,10 +467,10 @@ static void printSymbol(FILE* file, struct v_term* term)
         printUStr(file, term->closure->ident);
 		break;
     case V_BRACKET_OPEN_TAG:
-        fprintf(file, "%c", '(' );
+        fprintf(file, "(");
 		break;
     case V_BRACKET_CLOSE_TAG:
-        fprintf(file, "%c", ')' );
+        fprintf(file, ")");
         break;
 	}
 }

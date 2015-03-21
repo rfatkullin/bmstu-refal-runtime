@@ -122,7 +122,8 @@ static struct env_t* copyEnv(int isFuncCalled, struct env_t* from, struct env_t*
 
     allocateEnvData(from, from->localsCount, from->fovsCount);
 
-    memcpy(to->params, from->params, from->paramsCount * sizeof(struct lterm_t));
+    if (from->params)
+        memcpy(to->params, from->params, from->paramsCount * sizeof(struct lterm_t));
 
     if (isFuncCalled)
     {
@@ -135,10 +136,7 @@ static struct env_t* copyEnv(int isFuncCalled, struct env_t* from, struct env_t*
     {
         if (from->fovs[i])
             to->fovs[i] = copySimpleChain(from->fovs[i]);
-    }
 
-    for (i = 0; i < from->fovsCount; ++i)
-    {
         if (from->assembledFOVs[i])
             to->assembledFOVs[i] = copyFragmentLTerm(from->assembledFOVs[i]);
     }

@@ -31,7 +31,7 @@ struct env_t
     struct lterm_t** fovs;
 
     // Собранные FieldOfView. Каждый элемент - фрагмент.
-	struct lterm_t** assembledFOVs;
+    struct lterm_t** assembledFOVs;
 
     // Какие переменные в шаблонах были удлинены в последний раз. Т.е
     // указывает какую переменную нужно удлинять.

@@ -107,13 +107,6 @@ struct lterm_t* gcAllocateFragmentLTerm(uint32_t count)
     return allocateFragmentLTerm(count);
 }
 
-struct env_t* gcAllocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount)
-{
-    checkAndCleanHeaps(0, ENV_SIZE(localsCount, patternsCount));
-
-    return allocateEnvData(env, localsCount, patternsCount);
-}
-
 // Params sets in mainLoop.
 struct env_t* allocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount)
 {

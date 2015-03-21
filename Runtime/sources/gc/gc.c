@@ -13,18 +13,21 @@ void collectGarbage()
     printf("Start garbage collection.\n");
     printMemoryInfo();
 
+    //printFieldOfView(stdout, memMngr.fieldOfView);
+
     collectVTermGarbage(memMngr.fieldOfView);
 
+    printFieldOfView(stdout, memMngr.fieldOfView);
+
     memMngr.fieldOfView = copySimpleChain(memMngr.fieldOfView);
+
+    printFieldOfView(stdout, memMngr.fieldOfView);
 
     if (assembledFragInBuiltins)
         assembledFragInBuiltins = copyFragmentLTerm(assembledFragInBuiltins);
 
     printf("End garbage collection.\n");
-    printMemoryInfo();
-
-    struct lterm_t* assembledFOV = gcGetAssembliedChain(memMngr.fieldOfView);
-    printFragment(stdout, assembledFOV->fragment);
+    printMemoryInfo();    
 }
 
 void failWithMemoryOverflow()

@@ -34,7 +34,6 @@ struct lterm_t*   chCopyFieldOfView(struct lterm_t* fieldOfView, allocate_result
 /// В процессе выполнения может быть вызван сборщик мусора для данных.
 struct lterm_t*   gcAllocateFragmentLTerm(uint32_t count);
 struct v_int*     gcAllocateIntStruct(uint64_t length);
-struct env_t*     gcAllocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount);
 struct v_closure* gcAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct v_string* ident, int rollback);
 
 /// Выделяют память в хипе данных без проверок

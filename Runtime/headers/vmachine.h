@@ -12,8 +12,9 @@
 #define FUNC_CALL_FAILED            "Func call failed!\n"
 #define MEMORY_OVERFLOW             "Memory overflow!"
 #define ASSEMBLY_NOT_CHAIN          "Trying assembly not chain!\n"
-#define SIMPLE_CHAIN_IN_ASSEMBLY    "Chain tag when assembly. Chains contains only chains keepers, not chains!\n"
-#define BAD_TAG_IN_ASSEMBLY         "Bad tag when assembly!\n"
+#define SIMPLE_CHAIN_AT_ASSEMBLY    "Chain tag when assembly. Chains contains only chains keepers, not chains!\n"
+#define BAD_TAG_AT_ASSEMBLY         "Bad tag when assembly!\n"
+#define FUNC_CALL_AT_ASSEMBLY       "Func call term when assembly!\n"
 
 /// Главный цикл программы.
 void mainLoop(const char*, RefalFunc);
