@@ -11,8 +11,8 @@ static struct lterm_t* copyChainVTerm(struct lterm_t* term);
 
 struct lterm_t* copySimpleChain(struct lterm_t* chain)
 {
-    //if (!chain)
-      //  PRINT_AND_EXIT(GC_NULL_CHAIN_SIMPLE_CHAIN_COPY);
+    if (!chain)
+        PRINT_AND_EXIT(GC_NULL_CHAIN_SIMPLE_CHAIN_COPY);
 
     if (chain->tag != L_TERM_CHAIN_TAG)
         PRINT_AND_EXIT(GC_BAD_CHAIN_SIMPLE_CHAIN_COPY);

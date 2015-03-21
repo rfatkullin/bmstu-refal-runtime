@@ -123,8 +123,8 @@ struct func_result_t Numb(int entryStatus)
         if (memMngr.vterms[frag->offset + i].tag != V_CHAR_TAG)
             PRINT_AND_EXIT(NUMB_BAD_ARG);
 
-        if (memMngr.vterms[frag->offset + i].ch < '0' || memMngr.vterms[frag->offset + i].ch > '9')
-            PRINT_AND_EXIT(NUMB_BAD_ARG);
+        if (memMngr.vterms[frag->offset + i].ch < '0' || memMngr.vterms[frag->offset + i].ch > '9')        
+            PRINT_AND_EXIT(NUMB_BAD_ARG);        
 
         mpz_mul_ui(num, num, 10);
         mpz_add_ui(num, num, memMngr.vterms[frag->offset + i].ch -  '0');

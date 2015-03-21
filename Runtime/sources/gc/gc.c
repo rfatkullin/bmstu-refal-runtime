@@ -15,13 +15,16 @@ void collectGarbage()
 
     collectVTermGarbage(memMngr.fieldOfView);
 
-    copySimpleChain(memMngr.fieldOfView);
+    memMngr.fieldOfView = copySimpleChain(memMngr.fieldOfView);
 
     if (assembledFragInBuiltins)
         assembledFragInBuiltins = copyFragmentLTerm(assembledFragInBuiltins);
 
     printf("End garbage collection.\n");
     printMemoryInfo();
+
+    struct lterm_t* assembledFOV = gcGetAssembliedChain(memMngr.fieldOfView);
+    printFragment(stdout, assembledFOV->fragment);
 }
 
 void failWithMemoryOverflow()

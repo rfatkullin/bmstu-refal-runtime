@@ -12,7 +12,7 @@
 static void printChainOfCalls(struct lterm_t* callTerm);
 static struct lterm_t* updateFieldOfView(struct lterm_t* mainChain, struct func_result_t* funcResult);
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
-static int assemblyChain(struct lterm_t* chain);
+static allocate_result assemblyChain(struct lterm_t* chain);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm);
 static void onFuncFail(struct lterm_t** callTerm, int failResult);
@@ -166,7 +166,8 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     callTerm->funcCall->env->params = closure->params;
     callTerm->funcCall->env->paramsCount = closure->paramsCount;
     callTerm->funcCall->rollback = closure->rollback;
-/*
+
+    /*
     if (closure->ident)
     {
         printf("^");
@@ -175,13 +176,14 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     }
     else
         printf("\n");    
-*/
+    */
+
     // Remove fragment with closure => lost closure => GC will clean it.
     fieldOfView->next = fieldOfView->next->next;
     fieldOfView->next->prev = fieldOfView;
 
     //struct lterm_t* assembledFOV = gcGetAssembliedChain(callTerm->funcCall->fieldOfView);
-    //printFragment(stdout, assembledFOV->fragment);    
+    //printFragment(stdout, assembledFOV->fragment);
 
 	return newFuncPointer;
 }
@@ -233,11 +235,11 @@ struct lterm_t* gcGetAssembliedChain(struct lterm_t* chain)
         assembledChain = gcAllocateFragmentLTerm(1);
         assembledChain->fragment->offset = memMngr.vtermsOffset;
 
-        if(!assemblyChain(chain))
+        if(assemblyChain(chain) == GC_NEED_CLEAN)
         {            
             collectGarbage();
 
-            if (!assemblyChain(chain))
+            if (assemblyChain(chain) == GC_NEED_CLEAN)
                 PRINT_AND_EXIT(MEMORY_OVERFLOW);
         }
 
@@ -247,7 +249,7 @@ struct lterm_t* gcGetAssembliedChain(struct lterm_t* chain)
 	return assembledChain;
 }
 
-static int assemblyChain(struct lterm_t* chain)
+static allocate_result assemblyChain(struct lterm_t* chain)
 {
     struct lterm_t* currTerm = chain->next;
 
@@ -257,24 +259,22 @@ static int assemblyChain(struct lterm_t* chain)
         {
             case L_TERM_FRAGMENT_TAG :
             {
-                if (!allocateVTerms(currTerm->fragment))
-                    return 0;
+                GC_RETURN_ON_FAIL(allocateVTerms(currTerm->fragment));
                 break;
             }
             case L_TERM_CHAIN_KEEPER_TAG:
-            {                
-                if (memMngr.vtermsOffset + 1 > memMngr.vtermsMaxOffset)
-                    return 0;
+            {
+                if (GC_VTERM_OV(1))
+                    return GC_NEED_CLEAN;
 
                 uint64_t openBracketOffset = allocateOpenBracketVTerm(0);
 
-                if (!assemblyChain(currTerm->chain))
-                    return 0;
+                GC_RETURN_ON_FAIL(assemblyChain(currTerm->chain));
 
                 changeBracketLength(openBracketOffset, memMngr.vtermsOffset - openBracketOffset + 1);
 
-                if (memMngr.vtermsOffset + 1 > memMngr.vtermsMaxOffset)
-                    return 0;
+                if (GC_VTERM_OV(1))
+                    return GC_NEED_CLEAN;
 
                 allocateCloseBracketVTerm(memMngr.vtermsOffset - openBracketOffset + 1);
                 break;
@@ -289,11 +289,12 @@ static int assemblyChain(struct lterm_t* chain)
                 break;
 
             default:
+                printf("Tag: %d\n", currTerm->tag);
                 PRINT_AND_EXIT(BAD_TAG_IN_ASSEMBLY);
         }
 
         currTerm = currTerm->next;
     }
 
-    return 1;
+    return GC_OK;
 }

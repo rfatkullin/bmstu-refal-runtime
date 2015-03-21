@@ -7,10 +7,10 @@
 #include <allocators/vterm_alloc.h>
 #include <memory_manager.h>
 
-int allocateVTerms(struct fragment_t* frag)
-{
-    if (isHeapsOverflowed(frag->length, 0))
-        return 0;
+allocate_result allocateVTerms(struct fragment_t* frag)
+{    
+    if (GC_VTERM_OV(frag->length))
+        return GC_NEED_CLEAN;
 
     uint64_t i = 0;
     for (i = 0; i < frag->length; ++i)
@@ -46,7 +46,7 @@ int allocateVTerms(struct fragment_t* frag)
         }        
     }
 
-    return 1;
+    return GC_OK;
 }
 
 uint64_t chAllocateClosureVTerm(allocate_result* res)

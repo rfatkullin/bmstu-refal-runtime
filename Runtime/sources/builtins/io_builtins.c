@@ -36,8 +36,8 @@ struct func_result_t Get(int entryStatus)
 {
     struct fragment_t* frag = gcGetAssembliedChain(_currFuncCall->fieldOfView)->fragment;
 
-    if (frag->length != 1)
-        PRINT_AND_EXIT(GET_WRONG_ARG_NUM);
+    if (frag->length != 1)            
+        PRINT_AND_EXIT(GET_WRONG_ARG_NUM);    
 
     uint8_t descr = getDescr(frag);
 
@@ -129,7 +129,7 @@ static struct func_result_t _gcGet(FILE* file)
 
         // Checked --> may call func without gc prefix.
         allocateSymbolVTerm(ch);
-        currOffset++;        
+        currOffset++;
     }
 
     if (ch == '\n')
@@ -137,12 +137,11 @@ static struct func_result_t _gcGet(FILE* file)
         // Checked --> may call func without gc prefix.
         mainChain = allocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);
     }
-    else
-    {
-        // There is no chars --> we can call garbage collector.
+    else // ch == 0
+    {        
         checkAndCleanHeaps(1, VINT_STRUCT_SIZE(1) + BUILTINS_RESULT_SIZE);
         allocateUInt8VTerm(0);
-        mainChain = allocateBuiltinsResult(firstOffset, 1);
+        mainChain = allocateBuiltinsResult(firstOffset, memMngr.vtermsOffset - firstOffset);
     }
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};

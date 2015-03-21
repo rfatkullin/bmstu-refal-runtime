@@ -6,8 +6,8 @@
 
 typedef int  allocate_result;
 
-#define OK          0
-#define NEED_CLEAN  1
+#define GC_OK          0
+#define GC_NEED_CLEAN  1
 
 #define MEMORY_OVERFLOW_MSG             "[GC]: Memory overflow!\n"
 #define CANT_COPY_TERM                  "[GC]: Can't copy term!\n"
@@ -15,8 +15,7 @@ typedef int  allocate_result;
 #define GC_VTERM_PROCESS_BAD_TAG        "[GC]: Bad lterm tag at GC vterm process!\n"
 #define GC_BAD_CHAIN_SIMPLE_CHAIN_COPY  "[GC]: Bad chain term passed to copy simple chain func!\n"
 #define GC_NULL_CHAIN_SIMPLE_CHAIN_COPY "[GC]: Null chain passed to copy simple chain func!\n"
-#define GC_PARENT_CALL_NOT_MOVED        "[GC]: Parent call must be moved at subcall copy\n!"
-
+#define GC_PARENT_CALL_NOT_MOVED        "[GC]: Parent call must be moved at subcall copy!\n"
 
 #define GC_VTERM_OV(needCount)      (memMngr.vtermsOffset + needCount > memMngr.vtActiveOffset + memMngr.vtermsMaxOffset)
 #define GC_LTERM_OV(needDataSize)   (memMngr.dataOffset + needDataSize > memMngr.dtActiveOffset + memMngr.dataMaxOffset)
@@ -25,33 +24,33 @@ typedef int  allocate_result;
 do{                                                         \
     if (GC_VTERM_OV(needCount))                             \
     {                                                       \
-        statusVar = NEED_CLEAN;                             \
+        statusVar = GC_NEED_CLEAN;                          \
         return 0;                                           \
     }                                                       \
-    statusVar = OK;                                         \
+    statusVar = GC_OK;                                      \
 }while(0)
 
 #define GC_DATA_HEAP_CHECK_RETURN(needDataSize, statusVar)  \
 do{                                                         \
     if (GC_LTERM_OV(needDataSize))                          \
     {                                                       \
-        statusVar = NEED_CLEAN;                             \
+        statusVar = GC_NEED_CLEAN;                          \
         return 0;                                           \
     }                                                       \
-    statusVar = OK;                                         \
+    statusVar = GC_OK;                                      \
 }while(0)
 
 #define CHECK_ALLOCATION_RETURN(var, expr, statusVar)   \
 do{                                                     \
     var = expr;                                         \
-    if (statusVar == NEED_CLEAN)                        \
+    if (statusVar == GC_NEED_CLEAN)                     \
         return 0;                                       \
 }while(0)
 
 #define CHECK_ALLOCATION_CONTINUE(var, expr, statusVar) \
 do{                                                     \
     var = expr;                                         \
-    if (statusVar == NEED_CLEAN)                        \
+    if (statusVar == GC_NEED_CLEAN)                     \
     {                                                   \
         statusVar = 0;                                  \
         continue;                                       \
@@ -69,6 +68,13 @@ do{                                                         \
     if (GC_LTERM_OV(needDataSize))                          \
         PRINT_AND_EXIT(MEMORY_OVERFLOW_MSG);                \
 }while(0)
+
+
+#define GC_RETURN_ON_FAIL(res)                              \
+do{                                                         \
+    if (res == GC_NEED_CLEAN)                               \
+        return res;                                         \
+}while(0)                                                   \
 
 /// Собирает мусор.
 void collectGarbage();
