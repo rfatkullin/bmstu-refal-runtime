@@ -10,19 +10,17 @@
 
 void collectGarbage()
 {
-    clock_t start, end;
-    printMemoryInfo();
     printf("Start garbage collection.\n");
-    start = clock();
+    printMemoryInfo();
 
     collectVTermGarbage(memMngr.fieldOfView);
 
     copySimpleChain(memMngr.fieldOfView);
-    assembledFragInBuiltins = copyFragmentLTerm(assembledFragInBuiltins);
 
-    end = clock();
+    if (assembledFragInBuiltins)
+        assembledFragInBuiltins = copyFragmentLTerm(assembledFragInBuiltins);
 
-    printf("End garbage collection. Time elapsed: %f\n", ((float)(end - start)) / CLOCKS_PER_SEC);
+    printf("End garbage collection.\n");
     printMemoryInfo();
 }
 
@@ -34,8 +32,7 @@ void failWithMemoryOverflow()
 
 void strictCheckHeaps(uint64_t needTermCount, uint64_t needDataSize)
 {
-    if (memMngr.vtermsOffset + needTermCount > memMngr.vtermsMaxOffset ||
-        memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
+    if (GC_VTERM_OV(needTermCount) || GC_LTERM_OV(needDataSize))
     {
         failWithMemoryOverflow();
     }
@@ -43,8 +40,7 @@ void strictCheckHeaps(uint64_t needTermCount, uint64_t needDataSize)
 
 int isHeapsOverflowed(uint64_t needTermCount, uint64_t needDataSize)
 {
-    if (memMngr.vtermsOffset + needTermCount > memMngr.vtermsMaxOffset ||
-        memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
+    if (GC_VTERM_OV(needTermCount) || GC_LTERM_OV(needDataSize))
         return 1;
 
     return 0;
@@ -54,15 +50,13 @@ int checkAndCleanHeaps(uint64_t needTermCount, uint64_t needDataSize)
 {
     int isCollect = 0;
 
-    if (memMngr.vtermsOffset + needTermCount > memMngr.vtermsMaxOffset ||
-        memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
+    if (GC_VTERM_OV(needTermCount) || GC_LTERM_OV(needDataSize))
     {
         collectGarbage();
         isCollect = 1;
     }
 
-    if (memMngr.vtermsOffset + needTermCount > memMngr.vtermsMaxOffset ||
-        memMngr.dataOffset + needDataSize > memMngr.dataMaxOffset)
+    if (GC_VTERM_OV(needTermCount) || GC_LTERM_OV(needDataSize))
     {
         failWithMemoryOverflow();
     }

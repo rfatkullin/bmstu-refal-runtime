@@ -9,15 +9,21 @@ typedef int  allocate_result;
 #define OK          0
 #define NEED_CLEAN  1
 
-#define MEMORY_OVERFLOW_MSG             "Memory overflow!\n"
-#define CANT_COPY_TERM                  "GC Can't copy term!\n"
-#define GC_VTERM_PROCESS_BAD_CHAIN_TAG  "Bad lterm chain tag at GC vterm process. Chains can't contains simple chain without chain keeper!\n"
-#define GC_VTERM_PROCESS_BAD_TAG        "Bad lterm tag at GC vterm process!\n"
+#define MEMORY_OVERFLOW_MSG             "[GC]: Memory overflow!\n"
+#define CANT_COPY_TERM                  "[GC]: Can't copy term!\n"
+#define GC_VTERM_PROCESS_BAD_CHAIN_TAG  "[GC]: Bad lterm chain tag at GC vterm process. Chains can't contains simple chain without chain keeper!\n"
+#define GC_VTERM_PROCESS_BAD_TAG        "[GC]: Bad lterm tag at GC vterm process!\n"
+#define GC_BAD_CHAIN_SIMPLE_CHAIN_COPY  "[GC]: Bad chain term passed to copy simple chain func!\n"
+#define GC_NULL_CHAIN_SIMPLE_CHAIN_COPY "[GC]: Null chain passed to copy simple chain func!\n"
+#define GC_PARENT_CALL_NOT_MOVED        "[GC]: Parent call must be moved at subcall copy\n!"
+
+
+#define GC_VTERM_OV(needCount)      (memMngr.vtermsOffset + needCount > memMngr.vtActiveOffset + memMngr.vtermsMaxOffset)
+#define GC_LTERM_OV(needDataSize)   (memMngr.dataOffset + needDataSize > memMngr.dtActiveOffset + memMngr.dataMaxOffset)
 
 #define GC_VTERM_HEAP_CHECK_RETURN(needCount, statusVar)    \
 do{                                                         \
-    if (memMngr.vtermsOffset + needCount >                  \
-        memMngr.vtActiveOffset + memMngr.vtermsMaxOffset)                            \
+    if (GC_VTERM_OV(needCount))                             \
     {                                                       \
         statusVar = NEED_CLEAN;                             \
         return 0;                                           \
@@ -27,8 +33,7 @@ do{                                                         \
 
 #define GC_DATA_HEAP_CHECK_RETURN(needDataSize, statusVar)  \
 do{                                                         \
-    if (memMngr.dataOffset + needDataSize >                 \
-        memMngr.dtActiveOffset + memMngr.dataMaxOffset)                              \
+    if (GC_LTERM_OV(needDataSize))                          \
     {                                                       \
         statusVar = NEED_CLEAN;                             \
         return 0;                                           \
@@ -53,18 +58,16 @@ do{                                                     \
     }                                                   \
 }while(0)
 
-#define GC_VTERM_HEAP_CHECK_EXIT(needCount)     \
-do{                                             \
-    if (memMngr.vtermsOffset + needCount >      \
-        memMngr.vtActiveOffset + memMngr.vtermsMaxOffset)                \
-        PRINT_AND_EXIT(MEMORY_OVERFLOW_MSG);    \
+#define GC_VTERM_HEAP_CHECK_EXIT(needCount)                 \
+do{                                                         \
+    if (GC_VTERM_OV(needCount))                             \
+    PRINT_AND_EXIT(MEMORY_OVERFLOW_MSG);                    \
 }while(0)
 
-#define GC_DATA_HEAP_CHECK_EXIT(needDataSize)   \
-do{                                             \
-    if (memMngr.dataOffset + needDataSize >     \
-        memMngr.dtActiveOffset + memMngr.dataMaxOffset)                  \
-        PRINT_AND_EXIT(MEMORY_OVERFLOW_MSG);    \
+#define GC_DATA_HEAP_CHECK_EXIT(needDataSize)               \
+do{                                                         \
+    if (GC_LTERM_OV(needDataSize))                          \
+        PRINT_AND_EXIT(MEMORY_OVERFLOW_MSG);                \
 }while(0)
 
 /// Собирает мусор.

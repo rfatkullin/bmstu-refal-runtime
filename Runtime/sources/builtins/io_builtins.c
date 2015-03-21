@@ -158,8 +158,13 @@ static void _gcPut(struct lterm_t* fieldOfView)
     uint8_t descr = getDescr(assembledFragInBuiltins->fragment);
 
     if (!descr)
+    {
         printFragment(stdout, assembledFragInBuiltins->fragment);
-    else if (!files[descr].file)
+        assembledFragInBuiltins = 0;
+        return;
+    }
+
+    if (!files[descr].file)
         gcOpenDefaultFile(descr, WRITE_MODE);
 
     printFragment(files[descr].file, assembledFragInBuiltins->fragment);

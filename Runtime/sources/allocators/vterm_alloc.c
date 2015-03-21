@@ -51,13 +51,7 @@ int allocateVTerms(struct fragment_t* frag)
 
 uint64_t chAllocateClosureVTerm(allocate_result* res)
 {
-    if (memMngr.vtermsOffset + 1 > memMngr.vtermsMaxOffset)
-    {
-        *res = NEED_CLEAN;
-        return 0;
-    }
-
-    *res = OK;
+    GC_VTERM_HEAP_CHECK_RETURN(1, *res);
 
     return allocateClosureVTerm();
 }
