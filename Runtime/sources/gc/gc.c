@@ -17,14 +17,24 @@ void collectGarbage()
 
     collectVTermGarbage(memMngr.fieldOfView);
 
-    printFieldOfView(stdout, memMngr.fieldOfView);
+    //printFieldOfView(stdout, memMngr.fieldOfView);
 
     memMngr.fieldOfView = copySimpleChain(memMngr.fieldOfView);
 
     printFieldOfView(stdout, memMngr.fieldOfView);
 
     printf("End garbage collection.\n");
-    printMemoryInfo();        
+    printMemoryInfo();
+
+    _currCallTerm = _currCallTerm->prev;
+
+    struct func_call_t* funcCall = _currCallTerm->funcCall;
+
+    while (funcCall->next)
+    {
+        funcCall->next = funcCall->next->prev;
+        funcCall = funcCall->next->funcCall;
+    }
 }
 
 void failWithMemoryOverflow()

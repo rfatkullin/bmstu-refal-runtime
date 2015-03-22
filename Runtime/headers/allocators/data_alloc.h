@@ -15,6 +15,8 @@
 #define VSTRING_SIZE(length)                    (sizeof(struct v_string) + length * sizeof(uint32_t))
 #define ENV_SIZE(localsCount, patternsCount)    (FRAGMENT_LTERM_SIZE(localsCount) + patternsCount * sizeof(struct lterm_t*) + \
                                                 patternsCount * sizeof(struct lterm_t*) + patternsCount * sizeof(int))
+
+
 #define FOV_CONTAINS_FUNC_CALL      "FieldOfView passed in funcation contains func call term!\n"
 #define FOV_CONTAINS_SIMPLE_CHAIN   "FieldOfView can't contains simple chain without chain keeper!\n"
 

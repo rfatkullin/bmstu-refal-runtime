@@ -134,8 +134,11 @@ static void processEnvVTerms(struct env_t* env)
         if (env->fovs[i])
             processVTermsInChain(env->fovs[i]);
         if (env->assembledFOVs[i])
-            processVTermsInFragment(env->assembledFOVs[i]->fragment);
+            processVTermsInFragment(env->assembledFOVs[i]->fragment);        
     }
+
+    for (i = 0; i < env->localsCount; ++i)
+        processVTermsInFragment(env->locals[i].fragment);
 
     for (i = 0; i < env->paramsCount; ++i)
         processVTermsInFragment(env->params[i].fragment);
@@ -221,11 +224,12 @@ static void copyVTerms()
 }
 
 // TO FIX: Должно копироваться только один раз.
+// Параметры копируются криво.
 static void copyClosureVTerm(uint64_t to, struct v_closure* closure)
 {    
     GC_DATA_HEAP_CHECK_EXIT(VCLOSURE_SIZE(closure->paramsCount));
 
-    memMngr.vterms[memMngr.vtermsOffset].closure =
+    memMngr.vterms[to].closure =
             allocateClosureStruct(closure->funcPtr, closure->paramsCount, closure->ident, closure->rollback);
 }
 
@@ -237,7 +241,7 @@ static void copyIntVTerm(uint64_t to, struct v_int* intNum)
     struct v_int* newIntNum = allocateIntStruct(intNum->length);
     newIntNum->sign = intNum->sign;
     memcpy(newIntNum->bytes, intNum->bytes, intNum->length);
-    memMngr.vterms[memMngr.vtermsOffset].intNum = newIntNum;    
+    memMngr.vterms[to].intNum = newIntNum;
 }
 
 

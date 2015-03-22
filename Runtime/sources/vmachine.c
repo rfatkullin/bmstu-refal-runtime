@@ -102,9 +102,14 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
         switch (funcRes.status)
         {
             case OK_RESULT:
-                //printFieldOfView(stdout, memMngr.fieldOfView);
+                printf("Before: ");
+                printFieldOfView(stdout, memMngr.fieldOfView);
+                printf("Insert chain: ");
+                if (funcRes.fieldChain)
+                    printFieldOfView(stdout, funcRes.fieldChain);
                 _currCallTerm = updateFieldOfView(_currCallTerm, &funcRes);
-                //printFieldOfView(stdout, memMngr.fieldOfView);
+                printf("After: ");
+                printFieldOfView(stdout, memMngr.fieldOfView);
                 break;
 
             case CALL_RESULT:
@@ -241,17 +246,30 @@ struct lterm_t* gcGetAssembliedChain(struct lterm_t* chain)
             PRINT_AND_EXIT(ASSEMBLY_NOT_CHAIN);
 
         assembledChain = gcAllocateFragmentLTerm(1);
-        assembledChain->fragment->offset = memMngr.vtermsOffset;
+
+        if (chain->tag == GC_MOVED)
+            chain = chain->prev;
+
+        uint64_t offset = memMngr.vtermsOffset;
 
         if(assemblyChain(chain) == GC_NEED_CLEAN)
         {            
             collectGarbage();
 
+            chain = chain->prev;
+            offset = memMngr.vtermsOffset;
+
             if (assemblyChain(chain) == GC_NEED_CLEAN)
                 PRINT_AND_EXIT(MEMORY_OVERFLOW);
+
+            if (GC_LTERM_OV(FRAGMENT_LTERM_SIZE(1)))
+                PRINT_AND_EXIT(MEMORY_OVERFLOW);
+
+            assembledChain = allocateFragmentLTerm(1);
         }
 
-        assembledChain->fragment->length = memMngr.vtermsOffset - assembledChain->fragment->offset;
+        assembledChain->fragment->offset = offset;
+        assembledChain->fragment->length = memMngr.vtermsOffset - offset;
     }
 
 	return assembledChain;
@@ -296,7 +314,8 @@ static allocate_result assemblyChain(struct lterm_t* chain)
                 PRINT_AND_EXIT(SIMPLE_CHAIN_AT_ASSEMBLY);
                 break;
 
-            default:                
+            default:
+                printf("Tag: %d\n", currTerm->tag);
                 PRINT_AND_EXIT(BAD_TAG_AT_ASSEMBLY);
         }
 

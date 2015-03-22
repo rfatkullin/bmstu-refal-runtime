@@ -1,13 +1,20 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include <memory_manager.h>
 #include <allocators/data_alloc.h>
 
 static struct lterm_t* copyFuncCallLTerm(struct lterm_t* term);
-static struct env_t* copyEnv(int funcCalled, struct env_t* from, struct env_t* to);
+static struct env_t* copyEnv(struct env_t* from, struct env_t* to);
 static struct lterm_t* copyChainVTerm(struct lterm_t* term);
+
+#define SET_MOVED(oldTerm, newTerm) \
+do{                                 \
+    oldTerm->prev = newTerm;        \
+    oldTerm->tag = GC_MOVED;        \
+}while(0)
 
 struct lterm_t* copySimpleChain(struct lterm_t* chain)
 {
@@ -15,7 +22,7 @@ struct lterm_t* copySimpleChain(struct lterm_t* chain)
         PRINT_AND_EXIT(GC_NULL_CHAIN_SIMPLE_CHAIN_COPY);
 
     if (chain->tag != L_TERM_CHAIN_TAG)
-        PRINT_AND_EXIT(GC_BAD_CHAIN_SIMPLE_CHAIN_COPY);
+        PRINT_AND_EXIT(GC_BAD_CHAIN_SIMPLE_CHAIN_COPY);    
 
     GC_DATA_HEAP_CHECK_EXIT(CHAIN_LTERM_SIZE);
 
@@ -40,32 +47,39 @@ struct lterm_t* copySimpleChain(struct lterm_t* chain)
                 newTerm = copyFuncCallLTerm(currTerm);
                 break;
 
-            case GC_MOVED:
-                newTerm = currTerm->chain;
+            case GC_MOVED:                
+                newTerm = currTerm->prev;
                 break;
         }
 
-        if (newTerm)        
+        if (newTerm)
+        {            
+            SET_MOVED(currTerm, newTerm);
             ADD_TO_CHAIN(newChain, newTerm);        
+        }
         else                 
             PRINT_AND_EXIT(CANT_COPY_TERM);
 
         currTerm = currTerm->next;
     }
 
+    SET_MOVED(chain, newChain);
+
     return newChain;
 }
 
-static struct lterm_t* copyChainVTerm(struct lterm_t* term)
+static struct lterm_t* copyChainVTerm(struct lterm_t* oldChainTerm)
 {
     GC_DATA_HEAP_CHECK_EXIT(CHAIN_LTERM_SIZE);
 
-    struct lterm_t* chainTerm = allocateSimpleChain();
-    chainTerm->tag = L_TERM_CHAIN_KEEPER_TAG;
+    struct lterm_t* newChainTerm = allocateSimpleChain();
+    newChainTerm->tag = L_TERM_CHAIN_KEEPER_TAG;
 
-    chainTerm->chain = copySimpleChain(term->chain);
+    newChainTerm->chain = copySimpleChain(oldChainTerm->chain);
 
-    return chainTerm;
+    SET_MOVED(oldChainTerm, newChainTerm);
+
+    return newChainTerm;
 }
 
 static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
@@ -82,9 +96,10 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
     to->rollback        = from->rollback;
 
     if (from->fieldOfView)
-        to->fieldOfView = copySimpleChain(from->fieldOfView);
+        to->fieldOfView = copySimpleChain(from->fieldOfView);    
 
-    to->env = copyEnv(from->funcPtr != 0, from->env, to->env);
+    if (from->funcPtr)
+        to->env = copyEnv(from->env, to->env);
 
     if (from->subCall)
         to->subCall = copySimpleChain(from->subCall);
@@ -97,32 +112,17 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
         to->parentCall = from->parentCall->chain;
     }
 
-    if (from->next)
-    {
-        if (from->next->tag != GC_MOVED)
-            to->next = copyFuncCallLTerm(from->next);
-        else
-            to->next = from->next->chain;
-    }
-    else
-    {
-        to->next = 0;
-    }
-
     newTerm->tag = L_TERM_FUNC_CALL;
-    oldTerm->tag = GC_MOVED;
-    oldTerm->chain = newTerm;
 
     return newTerm;
 }
 
-static struct env_t* copyEnv(int isFuncCalled, struct env_t* from, struct env_t* to)
+static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
 {
     GC_DATA_HEAP_CHECK_EXIT(ENV_SIZE(from->localsCount, from->fovsCount) +  // ENV
                             FRAGMENT_LTERM_SIZE(from->paramsCount));        // params
 
-    uint32_t i =0;
-
+    uint32_t i = 0;
     allocateEnvData(to, from->localsCount, from->fovsCount);
 
     if (from->params)
@@ -133,11 +133,8 @@ static struct env_t* copyEnv(int isFuncCalled, struct env_t* from, struct env_t*
             memcpy(to->params[i].fragment, from->params[i].fragment, sizeof(struct fragment_t));
     }
 
-    if (isFuncCalled)
-    {
-        memcpy(to->locals, from->locals, from->localsCount * sizeof(struct lterm_t));
-        memcpy(to->stretchVarsNumber, from->stretchVarsNumber, from->fovsCount * sizeof(int));
-    }
+    for (i = 0; i < from->localsCount; ++i)
+        memcpy(to->locals[i].fragment, from->locals[i].fragment, sizeof(struct fragment_t));
 
     for (i = 0; i < from->fovsCount; ++i)
     {
@@ -148,15 +145,19 @@ static struct env_t* copyEnv(int isFuncCalled, struct env_t* from, struct env_t*
             to->assembledFOVs[i] = copyFragmentLTerm(from->assembledFOVs[i]);
     }
 
+    memcpy(to->stretchVarsNumber, from->stretchVarsNumber, from->fovsCount * sizeof(int));
+
     return to;
 }
 
-struct lterm_t* copyFragmentLTerm(struct lterm_t* term)
+struct lterm_t* copyFragmentLTerm(struct lterm_t* oldTerm)
 {
     GC_DATA_HEAP_CHECK_EXIT(FRAGMENT_LTERM_SIZE(1));
 
     struct lterm_t* newTerm = allocateFragmentLTerm(1);
-    memcpy(newTerm->fragment, term->fragment, sizeof(struct fragment_t));
+    memcpy(newTerm->fragment, oldTerm->fragment, sizeof(struct fragment_t));
+
+    SET_MOVED(oldTerm, newTerm);
 
     return newTerm;
 }

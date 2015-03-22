@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Clear 'qwertyuiopasdfghjklzxcvbnm'>
+}
+
+Clear
+{
+	= Over;
+	s.1 e.1	= <Clear e.1>;	
+}

@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Countdown 10>
+}
+
+Countdown
+{
+	0	= Over;
+	s.1 = <Countdown <Sub s.1 1>>
+}

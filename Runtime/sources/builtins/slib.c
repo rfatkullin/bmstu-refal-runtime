@@ -17,8 +17,11 @@ static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch), struct lterm_
 void gcInitBuiltin()
 {
     CURR_FUNC_CALL->env->locals = 0;
-    CURR_FUNC_CALL->env->stretchVarsNumber = 0;
     CURR_FUNC_CALL->env->localsCount = 0;
+
+    CURR_FUNC_CALL->env->params = 0;
+    CURR_FUNC_CALL->env->paramsCount = 0;
+
     CURR_FUNC_CALL->env->fovsCount = 1;
 
     CURR_FUNC_CALL->env->fovs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
@@ -27,7 +30,11 @@ void gcInitBuiltin()
     CURR_FUNC_CALL->env->assembledFOVs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += sizeof(struct lterm_t*);
 
-    CURR_FUNC_CALL->env->assembledFOVs[0] = gcGetAssembliedChain(CURR_FUNC_CALL->fieldOfView);
+    CURR_FUNC_CALL->env->stretchVarsNumber = (int*)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(int);
+
+    struct lterm_t* tmpFragmentTerm = gcGetAssembliedChain(CURR_FUNC_CALL->fieldOfView);
+    CURR_FUNC_CALL->env->assembledFOVs[0] = tmpFragmentTerm;
     CURR_FUNC_CALL->env->fovs[0] = CURR_FUNC_CALL->fieldOfView;
 
     CURR_FUNC_CALL->fieldOfView = 0;

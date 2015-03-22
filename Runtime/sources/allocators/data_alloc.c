@@ -112,6 +112,13 @@ struct env_t* allocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t 
 {
     env->locals = allocateFragmentLTerm(localsCount);
 
+    uint32_t i = 0;
+    for (i = 0; i < localsCount; ++i)
+    {
+        env->locals[i].fragment->offset = 0;
+        env->locals[i].fragment->length = 0;
+    }
+
     env->fovs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += patternsCount * sizeof(struct lterm_t*);
 
@@ -206,6 +213,8 @@ struct lterm_t* allocateFuncCallLTerm()
 
     lterm->funcCall->env = (struct env_t*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += sizeof(struct env_t);
+
+    memset(lterm->funcCall->env, 0, sizeof(struct env_t));
 
     lterm->tag = L_TERM_FUNC_CALL;
 
