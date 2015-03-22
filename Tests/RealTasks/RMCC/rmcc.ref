@@ -719,7 +719,7 @@ BuildMatrix2 {
 
 BuildRow {
     (e.Row) s.i s.max t.Tokens t.G
-        , <Sub s.max s.i>: s.1
+        , <Compare s.i s.max>: '-'
         , <SearchGroup s.i t.Tokens t.G>: s.R
         = <BuildRow (e.Row s.R) <Add s.i 1> s.max t.Tokens t.G>;
 

@@ -93,10 +93,10 @@ struct func_result_t Put(int entryStatus)
     _gcPut();
 
     // Remove descr vterm
-    CURR_FUNC_CALL->fieldOfView->next->fragment->offset++;
-    CURR_FUNC_CALL->fieldOfView->next->fragment->length--;
+    BUILTIN_FRAG->offset++;
+    BUILTIN_FRAG->length--;
 
-    return (struct func_result_t){.status = OK_RESULT, .fieldChain = CURR_FUNC_CALL->fieldOfView, .callChain = 0};
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = CURR_FUNC_CALL->env->fovs[0], .callChain = 0};
 }
 
 struct func_result_t Putout(int entryStatus)

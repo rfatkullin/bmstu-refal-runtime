@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <inttypes.h>
 
 #include <helpers.h>
 #include <vmachine.h>
@@ -13,6 +14,7 @@
 #include <builtins/case_map_table.h>
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch));
+static uint64_t getTermsCount(struct fragment_t* frag);
 
 void gcInitBuiltin()
 {
@@ -180,10 +182,13 @@ struct func_result_t Numb(int entryStatus)
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
-// TO FIX: Using fieldOfView after gc! Fix: global var func_call_t
 struct func_result_t Lenw(int entryStatus)
 {
     gcInitBuiltin();
+
+//    printFieldOfView(stdout, CURR_FUNC_CALL->env->fovs[0]);
+
+    uint64_t termsCount = getTermsCount(BUILTIN_FRAG);
 
     mpz_t num;
     mpz_t helper;
@@ -195,8 +200,8 @@ struct func_result_t Lenw(int entryStatus)
 
     uint64_t div = (uint64_t)UINT32_MAX + 1;
 
-    mpz_addmul_ui(num, helper, BUILTIN_FRAG->length / div);
-    mpz_add_ui(num, num, BUILTIN_FRAG->length % div);
+    mpz_addmul_ui(num, helper, termsCount / div);
+    mpz_add_ui(num, num, termsCount % div);
 
     struct lterm_t* res = gcConstructIntNumBuiltinResult(num);
 
@@ -206,6 +211,24 @@ struct func_result_t Lenw(int entryStatus)
     CONCAT_CHAINS(res, CURR_FUNC_CALL->env->fovs[0]);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
+}
+
+static uint64_t getTermsCount(struct fragment_t* frag)
+{
+    uint64_t termsNumber = 0;
+    uint64_t i = 0;
+
+    while (i < frag->length)
+    {
+        if (memMngr.vterms[frag->offset + i].tag == V_BRACKET_OPEN_TAG)
+            i += memMngr.vterms[frag->offset + i].inBracketLength;
+        else
+            ++i;
+
+        termsNumber++;
+    }
+
+    return termsNumber;
 }
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch))
