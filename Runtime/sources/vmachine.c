@@ -99,6 +99,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
             if (funcRes.status != FAIL_RESULT)
             {
                 _currCallTerm->funcCall->fieldOfView = _currCallTerm->funcCall->subCall;
+                _currCallTerm->funcCall->subCall = 0;
                 entryStatus = NEXT_ENTRYPOINT;
             }
             else // Обработка скобок активаций завершилась неудачно --> откат.
@@ -128,7 +129,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
                 //printFieldOfView(stdout, memMngr.fieldOfView);
                 //printf("Insert chain: ");
                 //if (funcRes.fieldChain)
-                    //printFieldOfView(stdout, funcRes.fieldChain);
+                //    printFieldOfView(stdout, funcRes.fieldChain);
                 _currCallTerm = updateFieldOfView(_currCallTerm, &funcRes);
                 //printf("After: ");
                 //printFieldOfView(stdout, memMngr.fieldOfView);
@@ -336,8 +337,7 @@ static allocate_result assemblyChain(struct lterm_t* chain)
                 PRINT_AND_EXIT(SIMPLE_CHAIN_AT_ASSEMBLY);
                 break;
 
-            default:
-                printf("Tag: %d\n", currTerm->tag);
+            default:                
                 PRINT_AND_EXIT(BAD_TAG_AT_ASSEMBLY);
         }
 

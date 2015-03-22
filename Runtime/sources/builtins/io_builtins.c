@@ -410,13 +410,19 @@ static void printChain(FILE* file, struct lterm_t* chain)
 
                 if (currTerm->funcCall->subCall)
                 {
-                    fprintf(file, "[Func subCall]");
+                    fprintf(file, "<");
+                    fprintf(file, "[Func subCall]:");
                     printChain(file, currTerm->funcCall->subCall);
+                    fprintf(file, ">");
                 }
 
                 fprintf(file, ">");
                 break;
             }
+
+            default:
+                PRINT_AND_EXIT(BAD_TAG_AT_ASSEMBLY);
+
         }
 
         currTerm = currTerm->next;

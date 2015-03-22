@@ -120,7 +120,7 @@ Evaluate {
               '/*' CAR_RET
               ' * LL(1) parse table.' CAR_RET
               ' */' CAR_RET
-              <FormatMatrix ('p7_table') t.ParseMatrix ('-' 1)> CAR_RET
+              <FormatMatrix ('p7_table') t.ParseMatrix <Sub 0 1>> CAR_RET
 
 *              '/*' CAR_RET
 *              ' * FIRST sets table.' CAR_RET
@@ -138,7 +138,7 @@ Evaluate {
               <FormatMatrix
                   ('p7_sync') 
                   <BuildMatrix_FirstFollow (e.First) (e.Follow) t.Tokens> 
-                  (0)
+                  0
               > CAR_RET
 
               '/*' CAR_RET
@@ -770,7 +770,7 @@ BuildProductions2 {
     s.Pos (e.Prod) s.RowsSize (e.Rows) (t.X s.Size e.Ys) e.Rules
         , <BuildProdRow s.RowsSize t.X s.Size e.Ys>: t.Row
         = <BuildProductions2 
-              <Add (<Add s.Pos s.Size>) 1>
+              <Add <Add s.Pos s.Size> 1>
               (e.Prod t.Row)
               <Add s.RowsSize 1>
               (e.Rows s.Pos) 

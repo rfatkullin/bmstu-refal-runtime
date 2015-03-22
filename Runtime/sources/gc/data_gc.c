@@ -43,7 +43,8 @@ struct lterm_t* copySimpleChain(struct lterm_t* chain)
             case L_TERM_CHAIN_KEEPER_TAG:                
                 newTerm = copyChainVTerm(currTerm);
                 break;
-            case L_TERM_FUNC_CALL:
+
+        case L_TERM_FUNC_CALL:
                 newTerm = copyFuncCallLTerm(currTerm);
                 break;
 
@@ -99,10 +100,7 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
         to->fieldOfView = copySimpleChain(from->fieldOfView);    
 
     if (from->funcPtr)
-        to->env = copyEnv(from->env, to->env);
-
-    if (from->subCall)
-        to->subCall = copySimpleChain(from->subCall);
+        to->env = copyEnv(from->env, to->env);    
 
     if (from->parentCall)
     {
@@ -115,6 +113,11 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
     to->next = from->next;
 
     newTerm->tag = L_TERM_FUNC_CALL;
+
+    SET_MOVED(oldTerm, newTerm);
+
+    if (from->subCall)
+        to->subCall = copySimpleChain(from->subCall);
 
     return newTerm;
 }

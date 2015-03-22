@@ -50,7 +50,7 @@ static void processVTermsInChain(struct lterm_t* chain)
                 break;
 
             case L_TERM_CHAIN_KEEPER_TAG:
-                processVTermsInChain(currTerm);
+                processVTermsInChain(currTerm->chain);
                 break;
             case L_TERM_FUNC_CALL:
                 processVTermsInFuncCall(currTerm->funcCall);
@@ -61,7 +61,6 @@ static void processVTermsInChain(struct lterm_t* chain)
 
             default:
                 PRINT_AND_EXIT(GC_VTERM_PROCESS_BAD_TAG);
-
         }
 
         currTerm = currTerm->next;
@@ -84,9 +83,7 @@ static void processVTermsInFragment(struct fragment_t* frag)
             memMngr.gcInUseVTerms[i - memMngr.vtActiveOffset] = 1;
 
             if (memMngr.vterms[i].tag == V_CLOSURE_TAG)
-                processClosureVTerms(memMngr.vterms[i].closure);
-
-            //printf("%" PRIu64 " ", i - memMngr.vtActiveOffset);
+                processClosureVTerms(memMngr.vterms[i].closure);            
         }
     }
     else
@@ -97,16 +94,7 @@ static void processVTermsInFragment(struct fragment_t* frag)
 
         // Nothing to copy. It can be fragment of expression variable.
         if (frag->length == 0)
-            return;
-
-        /*printf("(%" PRIu64 ", %" PRIu64 ") ", frag->offset - memMngr.vtInactiveOffset, frag->length);
-
-        if (!memMngr.gcInUseVTerms[frag->offset - memMngr.vtInactiveOffset])
-        {
-            printf("Warn %d!\n", frag->offset - memMngr.vtInactiveOffset);
-            fflush(stdout);
-        }
-        */
+            return;        
 
         // Set new offset, stored in field inBracketLength.
         frag->offset = memMngr.vterms[frag->offset].inBracketLength;        
