@@ -191,16 +191,9 @@ static struct lterm_t* gcApplyOpToInt(ArithOp op)
     mpz_init(y);
     mpz_init(res);
 
-    //printIntNumber(stdout, memMngr.vterms[BUILTIN_FRAG->offset].intNum);
-    //printf("\n");
-    //printIntNumber(stdout, memMngr.vterms[BUILTIN_FRAG->offset + 1].intNum);
-    //printf("\n");
-
     readIntOperands(x, y);
 
     op(res, x, y);
-
-    //gmp_printf("Res: %Zd\n", res);
 
     struct lterm_t* resChain = gcConstructIntNumBuiltinResult(res);
 
@@ -244,11 +237,6 @@ struct lterm_t* gcConstructIntNumBuiltinResult(mpz_t num)
 
     uint64_t offset = allocateIntNumVTerm(intNum);
 
-    //printf("Res, Res:\n\t");
-    //printf("Offset: %d, Max offset: %d\n", offset, memMngr.vtermsMaxOffset);
-    //printIntNumber(stdout, intNum);
-    //printf("\n");
-
     return allocateBuiltinsResult(offset, 1);
 }
 
@@ -275,8 +263,5 @@ static void readIntOperands(mpz_t x, mpz_t y)
 
     readOperand(x, term);
     term++;
-    readOperand(y, term);
-
-    //gmp_printf("%Zd\n", x);
-    //gmp_printf("%Zd\n", y);
+    readOperand(y, term);    
 }

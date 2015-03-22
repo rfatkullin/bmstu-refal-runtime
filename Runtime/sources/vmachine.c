@@ -102,14 +102,14 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
         switch (funcRes.status)
         {
             case OK_RESULT:
-                printf("Before: ");
-                printFieldOfView(stdout, memMngr.fieldOfView);
-                printf("Insert chain: ");
-                if (funcRes.fieldChain)
-                    printFieldOfView(stdout, funcRes.fieldChain);
+                //printf("Before: ");
+                //printFieldOfView(stdout, memMngr.fieldOfView);
+                //printf("Insert chain: ");
+                //if (funcRes.fieldChain)
+                    //printFieldOfView(stdout, funcRes.fieldChain);
                 _currCallTerm = updateFieldOfView(_currCallTerm, &funcRes);
-                printf("After: ");
-                printFieldOfView(stdout, memMngr.fieldOfView);
+                //printf("After: ");
+                //printFieldOfView(stdout, memMngr.fieldOfView);
                 break;
 
             case CALL_RESULT:

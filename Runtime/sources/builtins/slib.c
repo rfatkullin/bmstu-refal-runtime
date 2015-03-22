@@ -12,7 +12,7 @@
 #include <allocators/vterm_alloc.h>
 #include <builtins/case_map_table.h>
 
-static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView);
+static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch));
 
 void gcInitBuiltin()
 {
@@ -87,12 +87,12 @@ uint64_t initArgsData(uint64_t offset, int argc, char** argv)
 
 struct func_result_t Upper(int entryStatus)
 {
-    return gcSwitchCase(toUpperCase, CURR_FUNC_CALL->fieldOfView);
+    return gcSwitchCase(toUpperCase);
 }
 
 struct func_result_t Lower(int entryStatus)
 {
-    return gcSwitchCase(toLowerCase, CURR_FUNC_CALL->fieldOfView);
+    return gcSwitchCase(toLowerCase);
 }
 
 struct func_result_t Symb(int entryStatus)
@@ -194,23 +194,18 @@ struct func_result_t Lenw(int entryStatus)
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
-static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch), struct lterm_t* fieldOfView)
+static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch))
 {
     gcInitBuiltin();
 
-    checkAndCleanHeaps(0, CHAIN_LTERM_SIZE + FRAGMENT_LTERM_SIZE(1));
+    checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
-    struct lterm_t* chainTerm = allocateSimpleChain();
-    struct lterm_t* fragTerm = allocateFragmentLTerm(1);
-
-    fragTerm->fragment->offset = BUILTIN_FRAG->offset;
-    fragTerm->fragment->length = BUILTIN_FRAG->length;
-
-    ADD_TO_CHAIN(chainTerm, fragTerm);
+    struct lterm_t* chainTerm = allocateBuiltinsResult(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);
+    struct fragment_t* frag = chainTerm->next->fragment;
 
     uint64_t i =0;
-    for (i = 0; i < fragTerm->fragment->length; ++i)
-        memMngr.vterms[fragTerm->fragment->offset + i].ch = op(memMngr.vterms[fragTerm->fragment->offset + i].ch);
+    for (i = 0; i < frag->length; ++i)
+        memMngr.vterms[frag->offset + i].ch = op(memMngr.vterms[frag->offset + i].ch);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm, .callChain = 0};
 }

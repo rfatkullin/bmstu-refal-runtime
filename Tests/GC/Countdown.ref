@@ -1,10 +1,10 @@
 $ENTRY Go
 {
-	= <Countdown 10>
+	= <Countdown 50>
 }
 
 Countdown
 {
-	0	= Over;
-	s.1 = <Countdown <Sub s.1 1>>
+	0	= <Prout 'Over'>;
+	s.1 = <Prout 'Countdown: ' s.1><Countdown <Sub s.1 1>>
 }

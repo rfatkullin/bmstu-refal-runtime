@@ -10,10 +10,10 @@
 
 void collectGarbage()
 {
-    printf("Start garbage collection.\n");
-    printMemoryInfo();
+    //printf("Start garbage collection.\n");
+    //printMemoryInfo();
 
-    printFieldOfView(stdout, memMngr.fieldOfView);
+    //printFieldOfView(stdout, memMngr.fieldOfView);
 
     collectVTermGarbage(memMngr.fieldOfView);
 
@@ -21,10 +21,10 @@ void collectGarbage()
 
     memMngr.fieldOfView = copySimpleChain(memMngr.fieldOfView);
 
-    printFieldOfView(stdout, memMngr.fieldOfView);
+    //printFieldOfView(stdout, memMngr.fieldOfView);
 
-    printf("End garbage collection.\n");
-    printMemoryInfo();
+    //printf("End garbage collection.\n");
+    //printMemoryInfo();
 
     _currCallTerm = _currCallTerm->prev;
 

@@ -112,6 +112,8 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
         to->parentCall = from->parentCall->chain;
     }
 
+    to->next = from->next;
+
     newTerm->tag = L_TERM_FUNC_CALL;
 
     return newTerm;

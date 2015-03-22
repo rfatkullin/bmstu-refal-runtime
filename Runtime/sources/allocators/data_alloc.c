@@ -161,6 +161,8 @@ struct v_int* allocateIntStruct(uint64_t length)
     pointer->bytes = (uint8_t*)(memMngr.data + memMngr.dataOffset);
     pointer->length = length;
 
+    memset(pointer->bytes, 0, length);
+
     memMngr.dataOffset += length;
 
     return pointer;
