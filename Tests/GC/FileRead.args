@@ -1,1 +1,1 @@
-../../Tests/GC/Input.txt ../../Tests/GC/tmp.txt
+-heapSize=30720 ../../Tests/GC/Input.txt 

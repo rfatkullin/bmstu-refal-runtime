@@ -33,6 +33,10 @@ void gcInitBuiltin()
     CURR_FUNC_CALL->env->stretchVarsNumber = (int*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += sizeof(int);
 
+    memset(CURR_FUNC_CALL->env->fovs, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(struct lterm_t*));
+    memset(CURR_FUNC_CALL->env->assembledFOVs, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(struct lterm_t*));
+    memset(CURR_FUNC_CALL->env->stretchVarsNumber, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(int));
+
     struct lterm_t* tmpFragmentTerm = gcGetAssembliedChain(CURR_FUNC_CALL->fieldOfView);
     CURR_FUNC_CALL->env->assembledFOVs[0] = tmpFragmentTerm;
     CURR_FUNC_CALL->env->fovs[0] = CURR_FUNC_CALL->fieldOfView;
@@ -52,7 +56,7 @@ struct func_result_t Arg(int entryStatus)
 
     int argNum = ConvertToInt(memMngr.vterms[BUILTIN_FRAG->offset].intNum);
 
-    if (argNum < 0 || argNum >= refalProgramArgsCount)
+    if (argNum < 1 || argNum >= refalProgramArgsCount)
         FMT_PRINT_AND_EXIT(BAD_PROGRAM_ARG_NUM, refalProgramArgsCount, argNum, refalProgramArgsCount);
 
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
@@ -67,10 +71,18 @@ uint64_t initArgsData(uint64_t offset, int argc, char** argv)
     refalProgramArgsCount = argc;
     refalProgramArgs = (struct fragment_t*)malloc(argc * sizeof(struct fragment_t));
 
+    int argIndex = 1;
+
     int i = 0;
-    for (i = 0; i < argc; ++i)
+    for (i = 1; i < argc; ++i)
     {
-        refalProgramArgs[i].offset = offset;
+        if (argv[i][0] == '-')
+        {
+            refalProgramArgsCount--;
+            continue;
+        }
+
+        refalProgramArgs[argIndex].offset = offset;
         char* curr = argv[i];
 
         while (*curr)
@@ -78,8 +90,10 @@ uint64_t initArgsData(uint64_t offset, int argc, char** argv)
             uint32_t ch;
             curr = readUTF8CharFromStr(curr, &ch);
             memMngr.vterms[offset++] = (struct v_term){.tag = V_CHAR_TAG, .ch = ch};
-            refalProgramArgs[i].length++;
+            refalProgramArgs[argIndex].length++;
         }
+
+        ++argIndex;
     }
 
     return offset;

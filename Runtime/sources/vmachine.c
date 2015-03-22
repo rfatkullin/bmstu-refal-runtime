@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include <func_call.h>
 #include <vmachine.h>
@@ -8,6 +9,7 @@
 #include <allocators/vterm_alloc.h>
 #include <allocators/data_alloc.h>
 #include <builtins/builtins.h>
+#include <gc/gc.h>
 
 static void printChainOfCalls(struct lterm_t* callTerm);
 static struct lterm_t* updateFieldOfView(struct lterm_t* mainChain, struct func_result_t* funcResult);
@@ -16,6 +18,26 @@ static allocate_result assemblyChain(struct lterm_t* chain);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm);
 static void onFuncFail(struct lterm_t** callTerm, int failResult);
+
+uint64_t getHeapSize(int argc, char** argv)
+{
+    uint64_t heapSize = 0;
+    int i = 0;
+
+    for (i = 0; i < argc; ++i)
+    {
+        if (argv[i][0] == '-')
+        {
+            if (sscanf(argv[i], "-heapSize=%" PRIu64 , &heapSize) == 1)
+            {
+                printf("Heap size: %" PRIu64 "\n", heapSize);
+                return heapSize;
+            }
+        }
+    }
+
+    return DEFAULT_HEAP_SIZE;
+}
 
 static struct v_string* constructVStringFromASCIIName(const char* name)
 {
@@ -260,10 +282,10 @@ struct lterm_t* gcGetAssembliedChain(struct lterm_t* chain)
             offset = memMngr.vtermsOffset;
 
             if (assemblyChain(chain) == GC_NEED_CLEAN)
-                PRINT_AND_EXIT(MEMORY_OVERFLOW);
+                PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
 
             if (GC_LTERM_OV(FRAGMENT_LTERM_SIZE(1)))
-                PRINT_AND_EXIT(MEMORY_OVERFLOW);
+                PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
 
             assembledChain = allocateFragmentLTerm(1);
         }

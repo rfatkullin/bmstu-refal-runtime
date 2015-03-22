@@ -1,0 +1,8 @@
+Heap size: 2048
+Start garbage collection.
+In use 1 vterms from 21: 0.047619
+In use 364 data bytes from 547: 0.665448
+End garbage collection.
+In use 0 vterms from 21: 0.000000
+In use 284 data bytes from 547: 0.519196
+[GC]: Memory overflow!

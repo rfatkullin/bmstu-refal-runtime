@@ -58,7 +58,7 @@ struct lterm_t* copySimpleChain(struct lterm_t* chain)
             ADD_TO_CHAIN(newChain, newTerm);        
         }
         else                 
-            PRINT_AND_EXIT(CANT_COPY_TERM);
+            PRINT_AND_EXIT(GC_CANT_COPY_TERM);
 
         currTerm = currTerm->next;
     }

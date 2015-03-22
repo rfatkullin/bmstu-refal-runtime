@@ -1,6 +1,6 @@
 $ENTRY Go
 {
-	= <Clear 'qwertyuiopasdfghjklzxcvbnm'>
+	= <Clear 'qwertyuiopasdfghjklzxcvbnm'><Prout 'Ok!'>
 }
 
 Clear

@@ -22,7 +22,7 @@
 #define TRY_TO_TAKE_TERMINAL_DESCR  "Trying to bind file to terminal descriptor! Descriptor must be in range [1,%d)!\n"
 #define GET_WRONG_ARG_NUM           "Get take 1 argument - file descriptor!\n"
 #define ARG_FUNC_BAD_ARG_NUM        "Arg take 1 argument - number of argument!\'n"
-#define BAD_PROGRAM_ARG_NUM         "Bad program argument number! Program args count: %d. Passed arg num: %d. But must in range [0, %d).\n"
+#define BAD_PROGRAM_ARG_NUM         "Bad program argument number! Program args count: %d. Passed arg num: %d. But must in range [1, %d).\n"
 #define SYMB_BAD_ARG                "Symb takes 1 argument - int number!\n"
 #define NUMB_BAD_ARG                "Numb can't parse int from string!\n"
 

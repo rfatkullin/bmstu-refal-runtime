@@ -10,8 +10,8 @@
 
 void collectGarbage()
 {
-    //printf("Start garbage collection.\n");
-    //printMemoryInfo();
+    printf("Start garbage collection.\n");
+    printMemoryInfo();
 
     //printFieldOfView(stdout, memMngr.fieldOfView);
 
@@ -23,8 +23,8 @@ void collectGarbage()
 
     //printFieldOfView(stdout, memMngr.fieldOfView);
 
-    //printf("End garbage collection.\n");
-    //printMemoryInfo();
+    printf("End garbage collection.\n");
+    printMemoryInfo();
 
     _currCallTerm = _currCallTerm->prev;
 
@@ -37,18 +37,10 @@ void collectGarbage()
     }
 }
 
-void failWithMemoryOverflow()
-{
-    printf("Failed with memory overflow!");
-    exit(1);
-}
-
 void strictCheckHeaps(uint64_t needTermCount, uint64_t needDataSize)
 {
     if (GC_VTERM_OV(needTermCount) || GC_LTERM_OV(needDataSize))
-    {
-        failWithMemoryOverflow();
-    }
+        PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
 }
 
 int isHeapsOverflowed(uint64_t needTermCount, uint64_t needDataSize)
@@ -70,9 +62,7 @@ int checkAndCleanHeaps(uint64_t needTermCount, uint64_t needDataSize)
     }
 
     if (GC_VTERM_OV(needTermCount) || GC_LTERM_OV(needDataSize))
-    {
-        failWithMemoryOverflow();
-    }
+        PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
 
     return isCollect;
 }
