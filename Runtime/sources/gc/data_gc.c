@@ -107,7 +107,7 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
         if (from->parentCall->tag != GC_MOVED)
             PRINT_AND_EXIT(GC_PARENT_CALL_NOT_MOVED);
 
-        to->parentCall = from->parentCall->chain;
+        to->parentCall = from->parentCall->prev;
     }
 
     to->next = from->next;
