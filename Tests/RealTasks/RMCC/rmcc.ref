@@ -44,16 +44,15 @@ $ENTRY GO {
     = <Prout 'Real Men Compiler Constructor'>
       <Prout '    source-file : ' <Arg 1>>
       <Prout '    token-file  : ' <Arg 2>>
-      <Prout '    dest-file   : ' <Arg 3>>
-      <Prout '    report-file : ' <Arg 4>>
+      <Prout '    dest-file   : ' 'stdout'>
+      <Prout '    report-file : ' <Arg 3>>
       <Prout '----------------/'>
       <Open 'r' 1 <Arg 1>>
       <Open 'r' 2 <Arg 2>>
       <Evaluate
           (<SortTok <ParseTok <LoadFile 2>>>)
           <Parse <LoadFile 1>>
-          <Open 'w' 3 <Arg 3>>
-          <Open 'w' 4 <Arg 4>>
+          <Open 'w' 3 <Arg 3>>          
       >;
     }
 
@@ -67,13 +66,13 @@ Evaluate {
         , <EvalParse (e.Rules) (e.First) (e.Follow)>: (e.Cells)
         , <BuildMatrix (e.Cells) t.Tokens>: t.ParseMatrix
         , <BuildProductions e.Rules>: s.ProdSize (e.Prod) s.RowsSize (e.Rows)
-        = <SaveFile 4
+        = <SaveFile 3
               '**** TOKENS' CAR_RET t.Tokens CAR_RET CAR_RET
               '**** FIRST' CAR_RET <DbgFormatSet e.First> CAR_RET
               '**** FOLLOW' CAR_RET <DbgFormatSet e.Follow> CAR_RET
               '**** PARSE TABLE' CAR_RET <DbgFormatParse e.Cells> CAR_RET
           >
-          <SaveFile 3
+          <SaveFile 0
               CAR_RET
 
               '/*' CAR_RET
@@ -719,7 +718,7 @@ BuildMatrix2 {
 
 BuildRow {
     (e.Row) s.i s.max t.Tokens t.G
-        , <Compare s.i s.max>: '-'
+        , <Compare s.i <Add s.max 1>>: '-'
         , <SearchGroup s.i t.Tokens t.G>: s.R
         = <BuildRow (e.Row s.R) <Add s.i 1> s.max t.Tokens t.G>;
 
