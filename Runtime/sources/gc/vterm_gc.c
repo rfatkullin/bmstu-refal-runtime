@@ -12,10 +12,10 @@ static void copyVTerms();
 static void processVTermsInChain(struct lterm_t* expr);
 static void processVTermsInFragment(struct fragment_t* frag);
 static void processVTermsInFuncCall(struct func_call_t* funcCall);
-static void processClosureVTerms(struct v_closure* closure);
+static void processClosureVTerms(struct vclosure_t* closure);
 static void processEnvVTerms(struct env_t* env);
-static void copyClosureVTerm(uint64_t to, struct v_closure* closure);
-static void copyIntVTerm(uint64_t to, struct v_int* intNum);
+static void copyClosureVTerm(uint64_t to, struct vclosure_t* closure);
+static void copyIntVTerm(uint64_t to, struct vint_t* intNum);
 static void printToCopyVTermsOffsets(uint64_t activeOffset);
 static void swap(uint64_t* a, uint64_t* b);
 
@@ -132,7 +132,7 @@ static void processEnvVTerms(struct env_t* env)
         processVTermsInFragment(env->params[i].fragment);
 }
 
-static void processClosureVTerms(struct v_closure* closure)
+static void processClosureVTerms(struct vclosure_t* closure)
 {
     uint64_t i = 0;
 
@@ -213,7 +213,7 @@ static void copyVTerms()
 
 // TO FIX: Должно копироваться только один раз.
 // Параметры копируются криво.
-static void copyClosureVTerm(uint64_t to, struct v_closure* closure)
+static void copyClosureVTerm(uint64_t to, struct vclosure_t* closure)
 {    
     GC_DATA_HEAP_CHECK_EXIT(VCLOSURE_SIZE(closure->paramsCount));
 
@@ -222,11 +222,11 @@ static void copyClosureVTerm(uint64_t to, struct v_closure* closure)
 }
 
 // TO FIX: Должно копироваться только один раз.
-static void copyIntVTerm(uint64_t to, struct v_int* intNum)
+static void copyIntVTerm(uint64_t to, struct vint_t* intNum)
 {
     GC_DATA_HEAP_CHECK_EXIT(VINT_STRUCT_SIZE(intNum->length));
 
-    struct v_int* newIntNum = allocateIntStruct(intNum->length);
+    struct vint_t* newIntNum = allocateIntStruct(intNum->length);
     newIntNum->sign = intNum->sign;
     memcpy(newIntNum->bytes, intNum->bytes, intNum->length);
     memMngr.vterms[to].intNum = newIntNum;

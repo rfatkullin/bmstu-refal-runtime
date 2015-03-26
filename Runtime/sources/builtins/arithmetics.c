@@ -21,7 +21,7 @@
 typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
 
 static void readIntOperands(mpz_t x, mpz_t y);
-static void readOperand(mpz_t num, struct v_term* term);
+static void readOperand(mpz_t num, struct vterm_t* term);
 static struct lterm_t* gcApplyOpToInt(ArithOp op);
 static struct lterm_t* gcApplyOpToDouble(ArithOp op);
 static struct lterm_t* gcConstructDoubleNumLTerm(double val);
@@ -93,7 +93,7 @@ struct func_result_t Compare(int entryStatus)
 }
 
 /// Проверка на равенство двух чисел. 1 - успех, 0 - неудача.
-int intCmp(struct v_int* a, struct v_int* b)
+int intCmp(struct vint_t* a, struct vint_t* b)
 {
     if (a->length == 1 && b->length == 1 &&
         a->bytes[0] == 0 && b->bytes[0] == 0)
@@ -140,7 +140,7 @@ int doubleCmp(double a, double b)
     return 0;
 }
 
-int ConvertToInt(struct v_int* numData)
+int ConvertToInt(struct vint_t* numData)
 {
     mpz_t num;
 
@@ -230,7 +230,7 @@ struct lterm_t* gcConstructIntNumBuiltinResult(mpz_t num)
 
     checkAndCleanHeaps(1, VINT_STRUCT_SIZE(length) + BUILTINS_RESULT_SIZE);
 
-    struct v_int* intNum = allocateIntStruct(length);
+    struct vint_t* intNum = allocateIntStruct(length);
 
     mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
     intNum->sign = mpz_sgn(num) < 0;
@@ -247,7 +247,7 @@ static struct lterm_t* gcConstructDoubleNumLTerm(double val)
     return allocateBuiltinsResult(allocateDoubleNumVTerm(val), 1);
 }
 
-static void readOperand(mpz_t num, struct v_term* term)
+static void readOperand(mpz_t num, struct vterm_t* term)
 {
     mpz_import(num, term->intNum->length, 1, sizeof(uint8_t), 1, 0, term->intNum->bytes);
 
@@ -259,7 +259,7 @@ static void readOperand(mpz_t num, struct v_term* term)
 /// BUILTIN_FRAG - фрагмент, с помощью которого нужно вычислить операнды.
 static void readIntOperands(mpz_t x, mpz_t y)
 {
-    struct v_term* term = memMngr.vterms + BUILTIN_FRAG->offset;
+    struct vterm_t* term = memMngr.vterms + BUILTIN_FRAG->offset;
 
     readOperand(x, term);
     term++;

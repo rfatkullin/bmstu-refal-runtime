@@ -37,7 +37,7 @@ struct lterm_t* chAllocateFragmentLTerm(uint32_t count, allocate_result *res)
     return allocateFragmentLTerm(count);
 }
 
-struct v_closure* chAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct v_string* ident, int rollback, allocate_result *res)
+struct vclosure_t* chAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback, allocate_result *res)
 {
     GC_DATA_HEAP_CHECK_RETURN(VCLOSURE_SIZE(paramsCount), *res);
 
@@ -86,14 +86,14 @@ struct lterm_t* chCopyFieldOfView(struct lterm_t* chain, allocate_result* result
     return newChain;
 }
 
-struct v_closure* gcAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct v_string* ident, int rollback)
+struct vclosure_t* gcAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback)
 {
     checkAndCleanHeaps(0, VCLOSURE_SIZE(paramsCount));
 
     return allocateClosureStruct(funcPtr, paramsCount, ident, rollback);
 }
 
-struct v_int* gcAllocateIntStruct(uint64_t length)
+struct vint_t* gcAllocateIntStruct(uint64_t length)
 {
     checkAndCleanHeaps(0, VINT_STRUCT_SIZE(length));
 
@@ -138,10 +138,10 @@ struct env_t* allocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t 
     return env;
 }
 
-struct v_closure* allocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct v_string* ident, int rollback)
+struct vclosure_t* allocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback)
 {
-    struct v_closure* closure = (struct v_closure*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct v_closure);
+    struct vclosure_t* closure = (struct vclosure_t*)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(struct vclosure_t);
 
     closure->params = allocateFragmentLTerm(paramsCount);
 
@@ -153,10 +153,10 @@ struct v_closure* allocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount,
     return closure;
 }
 
-struct v_int* allocateIntStruct(uint64_t length)
+struct vint_t* allocateIntStruct(uint64_t length)
 {
-    struct v_int* pointer = (struct v_int*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct v_int);
+    struct vint_t* pointer = (struct vint_t*)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(struct vint_t);
 
     pointer->bytes = (uint8_t*)(memMngr.data + memMngr.dataOffset);
     pointer->length = length;

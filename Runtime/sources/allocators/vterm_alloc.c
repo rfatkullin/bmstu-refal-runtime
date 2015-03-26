@@ -65,7 +65,7 @@ uint64_t allocateDoubleNumVTerm(double value)
 
 uint64_t allocateUInt8VTerm(uint8_t val)
 {    
-    struct v_int* num = allocateIntStruct(1);
+    struct vint_t* num = allocateIntStruct(1);
     num->sign = 0;
     *num->bytes = val;
 
@@ -87,7 +87,7 @@ uint64_t allocateSymbolVTerm(uint32_t ch)
     return memMngr.vtermsOffset++;
 }
 
-uint64_t allocateIntNumVTerm(struct v_int* value)
+uint64_t allocateIntNumVTerm(struct vint_t* value)
 {
     memMngr.vterms[memMngr.vtermsOffset].tag = V_INT_NUM_TAG;
     memMngr.vterms[memMngr.vtermsOffset].intNum = value;
@@ -116,9 +116,9 @@ void changeBracketLength(uint64_t offset, uint64_t newLength)
 }
 
 /// Память для литералов выделяется с помощью malloc'а. Т.е. не в куче данных.
-struct v_string* allocateVStringLiteral(uint32_t* runes, uint64_t length)
+struct vstring_t* allocateVStringLiteral(uint32_t* runes, uint64_t length)
 {
-    struct v_string* pointer = (struct v_string*)malloc(sizeof(struct v_string));
+    struct vstring_t* pointer = (struct vstring_t*)malloc(sizeof(struct vstring_t));
 
     pointer->head = (uint32_t*) malloc(length * sizeof(uint32_t));
     pointer->length = length;
@@ -129,9 +129,9 @@ struct v_string* allocateVStringLiteral(uint32_t* runes, uint64_t length)
 }
 
 /// Память для литералов выделяется с помощью malloc'а. Т.е. не в куче данных.
-struct v_int* allocateIntNumberLiteral(uint8_t* bytes, uint8_t sign, uint64_t length)
+struct vint_t* allocateIntNumberLiteral(uint8_t* bytes, uint8_t sign, uint64_t length)
 {
-    struct v_int* pointer = (struct v_int*)malloc(sizeof(struct v_int));
+    struct vint_t* pointer = (struct vint_t*)malloc(sizeof(struct vint_t));
 
     pointer->bytes = (uint8_t*) malloc(length * sizeof(uint8_t));
     pointer->length = length;

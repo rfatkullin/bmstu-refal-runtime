@@ -16,17 +16,17 @@
 #include "vmachine.h"
 
 /// vterm функций.
-struct v_closure
+struct vclosure_t
 {
 	RefalFunc funcPtr;
     struct lterm_t* params;
-    struct v_string* ident;
+    struct vstring_t* ident;
     uint32_t paramsCount;
     int rollback;
 };
 
 /// vterm строк Юникода.
-struct v_string
+struct vstring_t
 {
     /// Для хранения кодовых точек Юникода.
     uint32_t* head;
@@ -36,7 +36,7 @@ struct v_string
 };
 
 /// vterm целочисленных чисел.
-struct v_int
+struct vint_t
 {
     /// Байты для хранения большого числа.
     uint8_t* bytes;
@@ -48,7 +48,7 @@ struct v_int
     uint64_t length;
 };
 
-struct v_term
+struct vterm_t
 {
 	int tag;
 
@@ -56,9 +56,9 @@ struct v_term
 	{
 		uint32_t ch;
         double doubleNum;
-        struct v_string* str;
-		struct v_closure* closure;
-        struct v_int* intNum;
+        struct vstring_t* str;
+        struct vclosure_t* closure;
+        struct vint_t* intNum;
 
 		// Хранит длину всей скобочной последовательности. Для () равна 2, для (1 2) равна 4 и т.д.
         uint64_t inBracketLength;

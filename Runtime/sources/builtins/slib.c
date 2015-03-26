@@ -91,7 +91,7 @@ uint64_t initArgsData(uint64_t offset, int argc, char** argv)
         {
             uint32_t ch;
             curr = readUTF8CharFromStr(curr, &ch);
-            memMngr.vterms[offset++] = (struct v_term){.tag = V_CHAR_TAG, .ch = ch};
+            memMngr.vterms[offset++] = (struct vterm_t){.tag = V_CHAR_TAG, .ch = ch};
             refalProgramArgs[argIndex].length++;
         }
 

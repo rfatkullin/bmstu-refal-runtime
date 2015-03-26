@@ -6,7 +6,7 @@
 
 #define BAD_BUFF  "Bad buffer passed to char array converter!"
 
-uint64_t calcBytesForIntCharArr(struct v_int* intNum, mpz_t* outputNum)
+uint64_t calcBytesForIntCharArr(struct vint_t* intNum, mpz_t* outputNum)
 {
     mpz_t num;
     mpz_init(num);
@@ -26,7 +26,7 @@ uint64_t calcBytesForIntCharArr(struct v_int* intNum, mpz_t* outputNum)
     return size;
 }
 
-uint64_t calcBytesForVStringCharArr(struct v_string* str)
+uint64_t calcBytesForVStringCharArr(struct vstring_t* str)
 {
     if (!str)
         return 0;
@@ -34,7 +34,7 @@ uint64_t calcBytesForVStringCharArr(struct v_string* str)
     return  sizeof(uint32_t) * str->length;
 }
 
-char* vIntToCharArr(struct v_int* intNum, char* buff)
+char* vIntToCharArr(struct vint_t* intNum, char* buff)
 {
     mpz_t num;
     uint64_t size = calcBytesForIntCharArr(intNum, &num);
@@ -49,7 +49,7 @@ char* vIntToCharArr(struct v_int* intNum, char* buff)
     return buff + size;
 }
 
-char* vStringToCharArr(struct v_string* str, char* buff)
+char* vStringToCharArr(struct vstring_t* str, char* buff)
 {
     uint64_t i = 0;
     for (i = 0; i < str->length; ++i)

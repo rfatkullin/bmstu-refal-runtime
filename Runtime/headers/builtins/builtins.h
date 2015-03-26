@@ -81,21 +81,21 @@ struct lterm_t* gcConstructIntNumBuiltinResult(mpz_t num);
 void printFieldOfView(FILE* file, struct lterm_t* fov);
 
 /// Get int from mpz_t.
-int ConvertToInt(struct v_int* numData);
+int ConvertToInt(struct vint_t* numData);
 
 void gcInitBuiltin();
 
 /// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
-int ustrEq(struct v_string* a, struct v_string* b);
+int ustrEq(struct vstring_t* a, struct vstring_t* b);
 
 /// Вывод Unicode строки.
-void printUStr(FILE* file, struct v_string* str);
+void printUStr(FILE* file, struct vstring_t* str);
 
 /// Вывод целого числа.
-void printIntNumber(FILE* file, struct v_int* intNum);
+void printIntNumber(FILE* file, struct vint_t* intNum);
 
 /// Проверка на равенство двух чисел. 1: a > b, -1 a < b, 0 a == b
-int intCmp(struct v_int* a, struct v_int* b);
+int intCmp(struct vint_t* a, struct vint_t* b);
 
 /// Проверка на равенство двух чисел. 1: a > b, -1 a < b, 0 a == b
 int doubleCmp(double a, double b);

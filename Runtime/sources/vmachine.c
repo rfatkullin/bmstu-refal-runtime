@@ -39,9 +39,9 @@ uint64_t getHeapSize(int argc, char** argv)
     return DEFAULT_HEAP_SIZE;
 }
 
-static struct v_string* constructVStringFromASCIIName(const char* name)
+static struct vstring_t* constructVStringFromASCIIName(const char* name)
 {
-    struct v_string* ptr = (struct v_string*)malloc(sizeof(struct v_string));
+    struct vstring_t* ptr = (struct vstring_t*)malloc(sizeof(struct vstring_t));
     ptr->length = strlen(name);
     ptr->head = (uint32_t*)malloc(ptr->length * sizeof(uint32_t));
 
@@ -62,7 +62,7 @@ static struct lterm_t* ConstructStartFunc(const char* funcName, RefalFunc entryF
     fragTerm->fragment->offset = allocateClosureVTerm();
     fragTerm->fragment->length = 1;
 
-    struct v_string* ident = constructVStringFromASCIIName(funcName);
+    struct vstring_t* ident = constructVStringFromASCIIName(funcName);
     memMngr.vterms[fragTerm->fragment->offset].closure = gcAllocateClosureStruct(entryFuncPointer, 0, ident, 0);
 
     ADD_TO_CHAIN(gofuncCallTerm->funcCall->fieldOfView, fragTerm);
@@ -191,7 +191,7 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
         exit(0);
     }
 
-    struct v_closure* closure = memMngr.vterms[fieldOfView->next->fragment->offset].closure;
+    struct vclosure_t* closure = memMngr.vterms[fieldOfView->next->fragment->offset].closure;
 
     RefalFunc newFuncPointer = closure->funcPtr;
     callTerm->funcCall->env->params = closure->params;

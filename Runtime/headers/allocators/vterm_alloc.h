@@ -13,7 +13,7 @@ uint64_t chAllocateClosureVTerm(allocate_result* res);
 /// Выдыляет память под vterm без проверок.
 uint64_t allocateOpenBracketVTerm(uint64_t length);
 uint64_t allocateCloseBracketVTerm(uint64_t length);
-uint64_t allocateIntNumVTerm(struct v_int* value);
+uint64_t allocateIntNumVTerm(struct vint_t* value);
 uint64_t allocateDoubleNumVTerm(double value);
 uint64_t allocateSymbolVTerm(uint32_t ch);
 uint64_t allocateUInt8VTerm(uint8_t val);

@@ -14,13 +14,13 @@ static double bytes2Gb(uint64_t bytesCount);
 
 void initAllocator(uint64_t size)
 {
-	memMngr.vterms = (struct v_term*)malloc(size);
+	memMngr.vterms = (struct vterm_t*)malloc(size);
 	memMngr.totalSize = size;
 }
 
 void initHeaps(uint64_t literalsNumber)
 {    
-    int64_t size = memMngr.totalSize - literalsNumber * sizeof(struct v_term);
+    int64_t size = memMngr.totalSize - literalsNumber * sizeof(struct vterm_t);
     uint64_t dataHeapSize = DATA_HEAP_SIZE_FACTOR * size;
     uint64_t vtermsHeapSize = VTERMS_HEAP_SIZE_FACTOR * size;
 
@@ -60,7 +60,7 @@ static void printMemoryAllocationInfo()
 
     printf("%-20s%fGB\n", "Allocated: ", totalMemoryGb);
     printf("%-20s%" PRIu64 " terms (x2 = %" PRIu64 " vterms, memory: %f GB)\n", "Max vterms count: ",
-           memMngr.vtermsMaxOffset, 2 * memMngr.vtermsMaxOffset, 2 * bytes2Gb(memMngr.vtermsMaxOffset * sizeof(struct v_term)));
+           memMngr.vtermsMaxOffset, 2 * memMngr.vtermsMaxOffset, 2 * bytes2Gb(memMngr.vtermsMaxOffset * sizeof(struct vterm_t)));
     printf("%-20s%" PRIu64 " bytes, %f GB (x2 = %f GB)\n", "Max data size: ", memMngr.dataMaxOffset, dataSizeGb, 2 * dataSizeGb);
 }
 
@@ -77,7 +77,7 @@ static double bytes2Gb(uint64_t bytesCount)
 // sizeof(uint8_t) - для gc.
 static uint64_t getTermsMaxNumber(uint64_t size)
 {
-    return size / (sizeof(struct v_term) + sizeof(uint8_t));
+    return size / (sizeof(struct vterm_t) + sizeof(uint8_t));
 }
 
 static void allocateMemoryForVTerms(uint64_t size, uint8_t** pointer)
@@ -90,8 +90,8 @@ static void allocateMemoryForVTerms(uint64_t size, uint8_t** pointer)
 
     memMngr.vtermsMaxOffset = maxTermsNumber;
 
-    *pointer += memMngr.vtermsBeginOffset * sizeof(struct v_term);
-	*pointer += 2 * maxTermsNumber * sizeof(struct v_term);
+    *pointer += memMngr.vtermsBeginOffset * sizeof(struct vterm_t);
+	*pointer += 2 * maxTermsNumber * sizeof(struct vterm_t);
     *pointer += maxTermsNumber * sizeof(uint8_t);
 }
 

@@ -12,7 +12,7 @@
 #include <allocators/vterm_alloc.h>
 #include <builtins/case_map_table.h>
 
-static void printSymbol(FILE* file, struct v_term* term);
+static void printSymbol(FILE* file, struct vterm_t* term);
 static void printUnicodeChar(uint32_t ch);
 static uint64_t copySymbols(uint64_t first, uint64_t length);
 static char* getFileName();
@@ -25,7 +25,7 @@ static void gcOpenDefaultFile(uint8_t descr, uint8_t mode);
 static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr);
 static void _gcPut();
 static struct func_result_t _gcGet(FILE* file);
-static getFileDescr(struct v_int* bigInt, uint8_t* descr);
+static getFileDescr(struct vint_t* bigInt, uint8_t* descr);
 static void printChain(FILE* file, struct lterm_t* chain);
 static void printFragmentTogether(FILE* file, struct fragment_t* frag);
 
@@ -215,7 +215,7 @@ static uint8_t getDescr(struct fragment_t* frag)
     return descr;
 }
 
-static getFileDescr(struct v_int* bigInt, uint8_t* descr)
+static getFileDescr(struct vint_t* bigInt, uint8_t* descr)
 {
     if (bigInt->sign || bigInt->length > 1)
         return 0;
@@ -274,7 +274,7 @@ static void gcAssemblyFileName(struct fragment_t* frag)
     uint64_t i = 0;
     for (i = 0; i < frag->length; ++i)
     {
-        struct v_term* term = memMngr.vterms + frag->offset + i;
+        struct vterm_t* term = memMngr.vterms + frag->offset + i;
 
         switch (term->tag)
         {
@@ -320,7 +320,7 @@ static uint64_t calcNeedBytesCount(struct fragment_t* frag)
     uint64_t i = 0;
     for (i = 0; i < frag->length; ++i)
     {
-        struct v_term* term = memMngr.vterms + frag->offset + i;
+        struct vterm_t* term = memMngr.vterms + frag->offset + i;
 
         switch (term->tag)
         {
@@ -432,7 +432,7 @@ static void printChain(FILE* file, struct lterm_t* chain)
 static void printFragmentTogether(FILE* file, struct fragment_t* frag)
 {
     int i = 0;
-    struct v_term* currTerm = memMngr.vterms + frag->offset;
+    struct vterm_t* currTerm = memMngr.vterms + frag->offset;
 
     for (i = 0; i < frag->length; ++i)
         printSymbol(file, currTerm + i);
@@ -441,7 +441,7 @@ static void printFragmentTogether(FILE* file, struct fragment_t* frag)
 void printFragment(FILE* file, struct fragment_t* frag)
 {
 	int i = 0;
-	struct v_term* currTerm = memMngr.vterms + frag->offset;
+	struct vterm_t* currTerm = memMngr.vterms + frag->offset;
 
 	for (i = 0; i < frag->length; ++i)	
         printSymbol(file, currTerm + i);
@@ -449,7 +449,7 @@ void printFragment(FILE* file, struct fragment_t* frag)
     fprintf(file, "\n");
 }
 
-static void printSymbol(FILE* file, struct v_term* term)
+static void printSymbol(FILE* file, struct vterm_t* term)
 {
 	switch (term->tag)
 	{
@@ -479,7 +479,7 @@ static void printSymbol(FILE* file, struct v_term* term)
 }
 
 /// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
-int ustrEq(struct v_string* a, struct v_string* b)
+int ustrEq(struct vstring_t* a, struct vstring_t* b)
 {
     if (!a || !b)
         return 0;
@@ -497,7 +497,7 @@ int ustrEq(struct v_string* a, struct v_string* b)
     return 1;
 }
 
-void printUStr(FILE* file, struct v_string* str)
+void printUStr(FILE* file, struct vstring_t* str)
 {
     if (!str)
         return;
@@ -508,7 +508,7 @@ void printUStr(FILE* file, struct v_string* str)
         printUTF32(file, str->head[i]);
 }
 
-void printIntNumber(FILE* file, struct v_int* intNum)
+void printIntNumber(FILE* file, struct vint_t* intNum)
 {
     mpz_t num;
     mpz_init(num);

@@ -3,8 +3,6 @@
 
 #include <func_result.h>
 
-struct env_t;
-
 typedef struct func_result_t (*RefalFunc)(int);
 
 /*

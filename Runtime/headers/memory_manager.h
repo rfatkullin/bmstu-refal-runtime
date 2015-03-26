@@ -13,7 +13,7 @@
 struct memory_manager
 {
 	// Указатель на начало vterm'ов
-	struct v_term* vterms;
+	struct vterm_t* vterms;
     uint64_t vtActiveOffset;
     uint64_t vtInactiveOffset;
 
