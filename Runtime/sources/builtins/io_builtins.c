@@ -376,7 +376,7 @@ void printFieldOfView(FILE* file, struct lterm_t* fov)
 {
     fprintf(file, "FOV START-----------------\n");
     printChain(file, fov);
-    fprintf(file, "\n\n");
+    fprintf(file, "\n");
 }
 
 static void printChain(FILE* file, struct lterm_t* chain)

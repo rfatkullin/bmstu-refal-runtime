@@ -85,12 +85,13 @@ int eqFragment(uint64_t a, uint64_t b, uint64_t length)
     uint64_t i = 0;
     for (i = 0; i < length; i++)
     {
-        if (!eqSymbol(a + i, b + i))
+        if (memMngr.vterms[a + i].tag == V_BRACKETS_TAG)
+        {
+            if ((VTERM_BRACKETS(a + i)->length != VTERM_BRACKETS(b + i)->length)
+             || !eqFragment(VTERM_BRACKETS(a + i)->offset, VTERM_BRACKETS(b + i)->offset, VTERM_BRACKETS(b + i)->length))
             return 0;
-
-        if (memMngr.vterms[a + i].tag == V_BRACKETS_TAG &&
-            ((VTERM_BRACKETS(a + i)->length != VTERM_BRACKETS(b + i)->length)
-             || !eqFragment(VTERM_BRACKETS(a + i)->offset, VTERM_BRACKETS(b + i)->offset, VTERM_BRACKETS(b + i)->length)))
+        }
+        else if (!eqSymbol(a + i, b + i))
             return 0;
     }
 
@@ -239,21 +240,20 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     callTerm->funcCall->env->paramsCount = closure->paramsCount;
     callTerm->funcCall->rollback = closure->rollback;
 
-    /*
-    if (closure->ident)
+    /*if (closure->ident)
     {
         printf("^");
         printUStr(stdout, closure->ident);
         printf("^\n");
     }
     else
-        printf("\n");    
-    */
+        printf("AnonymFunc\n");*/
 
     // Remove fragment with closure => lost closure => GC will clean it.
     fieldOfView->next = fieldOfView->next->next;
     fieldOfView->next->prev = fieldOfView;
 
+    //printFieldOfView(stdout, fieldOfView);
     //struct lterm_t* assembledFOV = gcGetAssembliedChain(callTerm->funcCall->fieldOfView);
     //printFragment(stdout, assembledFOV->fragment);
 
