@@ -25,15 +25,20 @@ struct env_t
     // Число необходимых FieldOfView.
     uint32_t fovsCount;
 
+    // TO FIX: Можно обойтись двумя fovs.
     // FieldOfView. Каждый элемент - цепочка lterm'ов.
     struct lterm_t** fovs;
 
     // Собранные FieldOfView. Каждый элемент - фрагмент.
-    struct lterm_t** assembledFOVs;
+    uint64_t* assembled;
 
     // Какие переменные в шаблонах были удлинены в последний раз. Т.е
     // указывает какую переменную нужно удлинять.
 	int* stretchVarsNumber;
+
+    // Offset для скобок.
+    uint64_t* bracketsOffset;
+    uint32_t bracketsCount;
 };
 
 /*

@@ -128,7 +128,7 @@ static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
                             FRAGMENT_LTERM_SIZE(from->paramsCount));        // params
 
     uint32_t i = 0;
-    allocateEnvData(to, from->localsCount, from->fovsCount);
+    initEnvData(to, from->localsCount, from->fovsCount, from->bracketsCount);
 
     if (from->params)
     {
@@ -146,8 +146,8 @@ static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
         if (from->fovs[i])
             to->fovs[i] = copySimpleChain(from->fovs[i]);
 
-        if (from->assembledFOVs[i])
-            to->assembledFOVs[i] = copyFragmentLTerm(from->assembledFOVs[i]);
+        if (from->assembled[i])
+            to->assembled[i] = from->assembled[i];
     }
 
     memcpy(to->stretchVarsNumber, from->stretchVarsNumber, from->fovsCount * sizeof(int));

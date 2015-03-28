@@ -26,7 +26,7 @@
 #define SYMB_BAD_ARG                "Symb takes 1 argument - int number!\n"
 #define NUMB_BAD_ARG                "Numb can't parse int from string!\n"
 
-#define BUILTIN_FRAG   (CURR_FUNC_CALL->env->assembledFOVs[0]->fragment)
+#define BUILTIN_FRAG   (VTERM_BRACKETS(CURR_FUNC_CALL->env->assembled[0]))
 
 static const char* modeStr[2] = {"r", "w"};
 
@@ -75,6 +75,7 @@ struct func_result_t Numb(int entryStatus);
 struct func_result_t Lenw(int entryStatus);
 
 void printFragment(FILE* file, struct fragment_t* frag);
+void printFragmentLn(FILE* file, struct fragment_t* frag);
 
 struct lterm_t* gcConstructIntNumBuiltinResult(mpz_t num);
 

@@ -14,7 +14,7 @@
 static void printChainOfCalls(struct lterm_t* callTerm);
 static struct lterm_t* updateFieldOfView(struct lterm_t* mainChain, struct func_result_t* funcResult);
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
-static allocate_result assemblyChain(struct lterm_t* chain);
+static allocate_result assemblyChain(struct lterm_t* chain, uint64_t* length);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm);
 static void onFuncFail(struct lterm_t** callTerm, int failResult);
@@ -78,6 +78,47 @@ static struct lterm_t* ConstructStartFieldOfView(const char* funcName, RefalFunc
     ADD_TO_CHAIN(fieldOfView, gofuncCallTerm);
 
     return fieldOfView;
+}
+
+int eqFragment(uint64_t a, uint64_t b, uint64_t length)
+{
+    uint64_t i = 0;
+    for (i = 0; i < length; i++)
+    {
+        if (!eqSymbol(a + i, b + i))
+            return 0;
+
+        if (memMngr.vterms[a + i].tag == V_BRACKETS_TAG &&
+            ((VTERM_BRACKETS(a + i)->length != VTERM_BRACKETS(b + i)->length)
+             || !eqFragment(VTERM_BRACKETS(a + i)->offset, VTERM_BRACKETS(b + i)->offset, VTERM_BRACKETS(b + i)->length)))
+            return 0;
+    }
+
+    return 1;
+}
+
+int eqSymbol(uint64_t a, uint64_t b)
+{
+    return
+        (memMngr.vterms[a].tag == memMngr.vterms[b].tag)
+        &&
+        (
+            (memMngr.vterms[a].tag == V_CHAR_TAG
+                && memMngr.vterms[a].ch == memMngr.vterms[b].ch)
+
+            || (memMngr.vterms[a].tag == V_IDENT_TAG
+                && ustrEq(memMngr.vterms[a].str, memMngr.vterms[b].str))
+
+            || (memMngr.vterms[a].tag == V_INT_NUM_TAG
+                && !intCmp(memMngr.vterms[a].intNum, memMngr.vterms[b].intNum))
+
+            || (memMngr.vterms[a].tag == V_DOUBLE_NUM_TAG
+                && !doubleCmp(memMngr.vterms[a].doubleNum, memMngr.vterms[b].doubleNum))
+
+            || (memMngr.vterms[a].tag == V_CLOSURE_TAG
+                && ustrEq(memMngr.vterms[a].closure->ident, memMngr.vterms[b].closure->ident))
+        );
+
 }
 
 void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
@@ -259,48 +300,50 @@ static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_r
 	return newCurrNode;
 }
 
-struct lterm_t* gcGetAssembliedChain(struct lterm_t* chain)
+uint64_t gcGetAssembliedChain(struct lterm_t* chain)
 {    
-	struct lterm_t* assembledChain = 0;
+    uint64_t assembledVtermOffset = 0;
+    uint64_t length = 0;
 
     if (chain != 0)
     {
         if (chain->tag != L_TERM_CHAIN_TAG)
             PRINT_AND_EXIT(ASSEMBLY_NOT_CHAIN);
 
-        assembledChain = gcAllocateFragmentLTerm(1);
+        assembledVtermOffset = gcAllocateBracketVterm();
 
         if (chain->tag == GC_MOVED)
             chain = chain->prev;
 
         uint64_t offset = memMngr.vtermsOffset;
 
-        if(assemblyChain(chain) == GC_NEED_CLEAN)
+        if(assemblyChain(chain, &length) == GC_NEED_CLEAN)
         {            
             collectGarbage();
 
             chain = chain->prev;
             offset = memMngr.vtermsOffset;
 
-            if (assemblyChain(chain) == GC_NEED_CLEAN)
+            if (assemblyChain(chain, &length) == GC_NEED_CLEAN)
                 PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
 
-            if (GC_LTERM_OV(FRAGMENT_LTERM_SIZE(1)))
+            if (GC_VTERM_OV(1) || GC_LTERM_OV(sizeof(struct fragment_t)))
                 PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
 
-            assembledChain = allocateFragmentLTerm(1);
+            assembledVtermOffset = allocateBracketsVTerm();
         }
 
-        assembledChain->fragment->offset = offset;
-        assembledChain->fragment->length = memMngr.vtermsOffset - offset;
+        VTERM_BRACKETS(assembledVtermOffset)->offset = offset;
+        VTERM_BRACKETS(assembledVtermOffset)->length = length;
     }
 
-	return assembledChain;
+    return assembledVtermOffset;
 }
 
-static allocate_result assemblyChain(struct lterm_t* chain)
+static allocate_result assemblyTopVTerms(struct lterm_t* chain, uint64_t* length)
 {
     struct lterm_t* currTerm = chain->next;
+     *length= 0;
 
     while (currTerm != chain)
     {
@@ -309,27 +352,20 @@ static allocate_result assemblyChain(struct lterm_t* chain)
             case L_TERM_FRAGMENT_TAG :
             {
                 GC_RETURN_ON_FAIL(allocateVTerms(currTerm->fragment));
+                *length += currTerm->fragment->length;
                 break;
             }
             case L_TERM_CHAIN_KEEPER_TAG:
             {
-                if (GC_VTERM_OV(1))
+                if (GC_VTERM_OV(1) || GC_LTERM_OV(sizeof(struct fragment_t)))
                     return GC_NEED_CLEAN;
 
-                uint64_t openBracketOffset = allocateOpenBracketVTerm(0);
-
-                GC_RETURN_ON_FAIL(assemblyChain(currTerm->chain));
-
-                changeBracketLength(openBracketOffset, memMngr.vtermsOffset - openBracketOffset + 1);
-
-                if (GC_VTERM_OV(1))
-                    return GC_NEED_CLEAN;
-
-                allocateCloseBracketVTerm(memMngr.vtermsOffset - openBracketOffset + 1);
+                allocateBracketsVTerm();
+                ++*length;
                 break;
             }
 
-            case L_TERM_FUNC_CALL:            
+            case L_TERM_FUNC_CALL:
                 PRINT_AND_EXIT(FUNC_CALL_AT_ASSEMBLY);
                 break;
 
@@ -337,8 +373,47 @@ static allocate_result assemblyChain(struct lterm_t* chain)
                 PRINT_AND_EXIT(SIMPLE_CHAIN_AT_ASSEMBLY);
                 break;
 
-            default:                
+            default:
                 PRINT_AND_EXIT(BAD_TAG_AT_ASSEMBLY);
+        }
+
+        currTerm = currTerm->next;
+    }
+
+    return GC_OK;
+}
+
+static allocate_result assemblyChain(struct lterm_t* chain, uint64_t* length)
+{
+    struct lterm_t* currTerm = chain->next;
+    uint64_t topVTermsOffset = memMngr.vtermsOffset;
+
+    GC_RETURN_ON_FAIL(assemblyTopVTerms(chain, length));
+
+    while (currTerm != chain)
+    {
+        switch (currTerm->tag)
+        {
+            case L_TERM_FRAGMENT_TAG :
+            {                
+                topVTermsOffset += currTerm->fragment->length;
+                break;
+            }
+            case L_TERM_CHAIN_KEEPER_TAG:
+            {
+                if (GC_VTERM_OV(1) || GC_LTERM_OV(sizeof(struct fragment_t)))
+                    return GC_NEED_CLEAN;
+
+                uint64_t offset = memMngr.vtermsOffset;
+                uint64_t tmpLength = 0;
+                GC_RETURN_ON_FAIL(assemblyChain(currTerm->chain, &tmpLength));
+
+                setBracketsData(topVTermsOffset, offset, tmpLength);
+
+                ++topVTermsOffset;
+                break;
+            }
+
         }
 
         currTerm = currTerm->next;

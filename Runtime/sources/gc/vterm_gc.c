@@ -97,7 +97,7 @@ static void processVTermsInFragment(struct fragment_t* frag)
             return;        
 
         // Set new offset, stored in field inBracketLength.
-        frag->offset = memMngr.vterms[frag->offset].inBracketLength;        
+        frag->offset = memMngr.vterms[frag->offset].brackets;
     }
 }
 
@@ -121,8 +121,8 @@ static void processEnvVTerms(struct env_t* env)
     {
         if (env->fovs[i])
             processVTermsInChain(env->fovs[i]);
-        if (env->assembledFOVs[i])
-            processVTermsInFragment(env->assembledFOVs[i]->fragment);        
+        if (env->assembled[i])
+            processVTermsInFragment(VTERM_BRACKETS(env->assembled[i]));
     }
 
     for (i = 0; i < env->localsCount; ++i)
@@ -191,8 +191,7 @@ static void copyVTerms()
                     copyClosureVTerm(to, memMngr.vterms[from].closure);
                     break;
 
-                case V_BRACKET_CLOSE_TAG:
-                case V_BRACKET_OPEN_TAG:
+                case V_BRACKETS_TAG:
                 case V_CHAR_TAG:
                 case V_DOUBLE_NUM_TAG:
                     memMngr.vterms[to] = memMngr.vterms[from];
@@ -206,7 +205,7 @@ static void copyVTerms()
 
             memMngr.vterms[to].tag = memMngr.vterms[from].tag;
             memMngr.vtermsOffset++;
-            memMngr.vterms[from].inBracketLength = to;
+            memMngr.vterms[from].brackets = to;
         }
     }
 }

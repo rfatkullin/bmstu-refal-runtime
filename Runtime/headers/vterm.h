@@ -6,8 +6,7 @@
 #define V_INT_NUM_TAG       2
 #define V_DOUBLE_NUM_TAG    3
 #define V_CLOSURE_TAG       4
-#define V_BRACKET_OPEN_TAG	5
-#define V_BRACKET_CLOSE_TAG	6
+#define V_BRACKETS_TAG      5
 
 #include <stdint.h>
 
@@ -59,9 +58,7 @@ struct vterm_t
         struct vstring_t* str;
         struct vclosure_t* closure;
         struct vint_t* intNum;
-
-		// Хранит длину всей скобочной последовательности. Для () равна 2, для (1 2) равна 4 и т.д.
-        uint64_t inBracketLength;
+        struct fragment_t* brackets;
 	};
 };
 

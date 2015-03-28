@@ -14,8 +14,8 @@
 #include <builtins/case_map_table.h>
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch));
-static uint64_t getTermsCount(struct fragment_t* frag);
 
+// TO FIX: Нет проверки на переполнение памяти. Можно все инициализировать с помощью initEnvData.
 void gcInitBuiltin()
 {
     CURR_FUNC_CALL->env->locals = 0;
@@ -29,18 +29,18 @@ void gcInitBuiltin()
     CURR_FUNC_CALL->env->fovs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += sizeof(struct lterm_t*);
 
-    CURR_FUNC_CALL->env->assembledFOVs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct lterm_t*);
+    CURR_FUNC_CALL->env->assembled = (uint64_t*)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(uint64_t);
 
     CURR_FUNC_CALL->env->stretchVarsNumber = (int*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += sizeof(int);
 
     memset(CURR_FUNC_CALL->env->fovs, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(struct lterm_t*));
-    memset(CURR_FUNC_CALL->env->assembledFOVs, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(struct lterm_t*));
+    memset(CURR_FUNC_CALL->env->assembled, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(struct lterm_t*));
     memset(CURR_FUNC_CALL->env->stretchVarsNumber, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(int));
 
-    struct lterm_t* tmpFragmentTerm = gcGetAssembliedChain(CURR_FUNC_CALL->fieldOfView);
-    CURR_FUNC_CALL->env->assembledFOVs[0] = tmpFragmentTerm;
+    uint64_t tmpFragmentOffset = gcGetAssembliedChain(CURR_FUNC_CALL->fieldOfView);
+    CURR_FUNC_CALL->env->assembled[0] = tmpFragmentOffset;
     CURR_FUNC_CALL->env->fovs[0] = CURR_FUNC_CALL->fieldOfView;
 
     CURR_FUNC_CALL->fieldOfView = 0;
@@ -186,10 +186,6 @@ struct func_result_t Lenw(int entryStatus)
 {
     gcInitBuiltin();
 
-//    printFieldOfView(stdout, CURR_FUNC_CALL->env->fovs[0]);
-
-    uint64_t termsCount = getTermsCount(BUILTIN_FRAG);
-
     mpz_t num;
     mpz_t helper;
 
@@ -200,8 +196,8 @@ struct func_result_t Lenw(int entryStatus)
 
     uint64_t div = (uint64_t)UINT32_MAX + 1;
 
-    mpz_addmul_ui(num, helper, termsCount / div);
-    mpz_add_ui(num, num, termsCount % div);
+    mpz_addmul_ui(num, helper, BUILTIN_FRAG->length / div);
+    mpz_add_ui(num, num, BUILTIN_FRAG->length % div);
 
     struct lterm_t* res = gcConstructIntNumBuiltinResult(num);
 
@@ -211,24 +207,6 @@ struct func_result_t Lenw(int entryStatus)
     CONCAT_CHAINS(res, CURR_FUNC_CALL->env->fovs[0]);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
-}
-
-static uint64_t getTermsCount(struct fragment_t* frag)
-{
-    uint64_t termsNumber = 0;
-    uint64_t i = 0;
-
-    while (i < frag->length)
-    {
-        if (memMngr.vterms[frag->offset + i].tag == V_BRACKET_OPEN_TAG)
-            i += memMngr.vterms[frag->offset + i].inBracketLength;
-        else
-            ++i;
-
-        termsNumber++;
-    }
-
-    return termsNumber;
 }
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch))

@@ -8,6 +8,8 @@
 #define ROLL_BACK       1
 #define NEXT_ENTRYPOINT	2
 
+#define DEFAULT_HEAP_SIZE UINT64_C(1024 * 1024 * 1024)
+
 #define BAD_EVAL_EXPR               "Can't execute expr in evaluate brackets!"
 #define FUNC_CALL_FAILED            "Func call failed!\n"
 #define ASSEMBLY_NOT_CHAIN          "Trying assembly not chain!\n"
@@ -17,18 +19,23 @@
 
 #define CURR_FUNC_CALL (_currCallTerm->funcCall)
 
-#define DEFAULT_HEAP_SIZE UINT64_C(1024 * 1024 * 1024)
+#define VTERM_BRACKETS(vtermInd) (memMngr.vterms[vtermInd].brackets)
+
+#define RIGHT_BOUND(vtermInd) (memMngr.vterms[vtermInd].brackets->offset + memMngr.vterms[vtermInd].brackets->length)
 
 /// Главный цикл программы.
 void mainLoop(const char*, RefalFunc);
 
 /// Выполняет сборку lterm'ов в vterm'ы.
 /// В процессе выполнения могут быть вызваны сборщики мусора vterm'ов и lterm'ов.
-struct lterm_t* gcGetAssembliedChain(struct lterm_t* oldChain);
+uint64_t gcGetAssembliedChain(struct lterm_t* chain);
 
 //struct func_call_t* _currFuncCall;
 struct lterm_t* _currCallTerm;
 
 uint64_t getHeapSize(int argc, char** argv);
+
+int eqSymbol(uint64_t a, uint64_t b);
+int eqFragment(uint64_t a, uint64_t b, uint64_t length);
 
 #endif

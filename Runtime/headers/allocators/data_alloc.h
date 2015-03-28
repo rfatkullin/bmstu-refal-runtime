@@ -5,6 +5,7 @@
 #include <vterm.h>
 #include <gc/gc.h>
 
+// TO FIX: env data size was changed
 #define VINT_STRUCT_SIZE(length)                (sizeof(struct vint_t) + length)
 #define FUNC_CALL_LTERM_SIZE                    (sizeof(struct func_call_t) + sizeof(struct env_t) + sizeof(struct lterm_t))
 #define FRAGMENT_LTERM_SIZE(count)              (count * (sizeof(struct lterm_t) + sizeof(struct fragment_t)))
@@ -15,7 +16,6 @@
 #define VSTRING_SIZE(length)                    (sizeof(struct vstring_t) + length * sizeof(uint32_t))
 #define ENV_SIZE(localsCount, patternsCount)    (FRAGMENT_LTERM_SIZE(localsCount) + patternsCount * sizeof(struct lterm_t*) + \
                                                 patternsCount * sizeof(struct lterm_t*) + patternsCount * sizeof(int))
-
 
 #define FOV_CONTAINS_FUNC_CALL      "FieldOfView passed in funcation contains func call term!\n"
 #define FOV_CONTAINS_SIMPLE_CHAIN   "FieldOfView can't contains simple chain without chain keeper!\n"
@@ -44,7 +44,8 @@ struct lterm_t*   allocateBuiltinsResult(uint64_t offset, uint64_t length);
 struct vclosure_t* allocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback);
 struct lterm_t*   allocateFragmentLTerm(uint32_t count);
 struct lterm_t*   allocateFuncCallLTerm();
-struct env_t*     allocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount);
+struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount, uint32_t bracketsCount);
+void clearCurrFuncEnvData();
 
 // TO FIX:
 struct lterm_t*   allocateChainKeeperLTerm(uint32_t count);

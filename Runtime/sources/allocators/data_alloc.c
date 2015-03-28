@@ -108,10 +108,11 @@ struct lterm_t* gcAllocateFragmentLTerm(uint32_t count)
 }
 
 // Params sets in mainLoop.
-struct env_t* allocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount)
+struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount, uint32_t bracketsCount)
 {
     env->locals = allocateFragmentLTerm(localsCount);
 
+    // TO FIX: memset
     uint32_t i = 0;
     for (i = 0; i < localsCount; ++i)
     {
@@ -122,20 +123,45 @@ struct env_t* allocateEnvData(struct env_t* env, uint32_t localsCount, uint32_t 
     env->fovs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += patternsCount * sizeof(struct lterm_t*);
 
-    env->assembledFOVs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += patternsCount * sizeof(struct lterm_t*);
+    env->assembled = (uint64_t*)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += patternsCount * sizeof(uint64_t);
 
     env->stretchVarsNumber = (int*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += patternsCount * sizeof(int);
 
+    env->bracketsOffset = (uint64_t*)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += bracketsCount * sizeof(uint64_t);
+
     env->localsCount = localsCount;
     env->fovsCount = patternsCount;
+    env->bracketsCount = bracketsCount;
 
     memset(env->fovs, 0, patternsCount * sizeof(struct lterm_t*));
-    memset(env->assembledFOVs, 0, patternsCount * sizeof(struct lterm_t*));
+    memset(env->assembled, 0, patternsCount * sizeof(struct lterm_t*));
     memset(env->stretchVarsNumber, 0, patternsCount * sizeof(int));
 
     return env;
+}
+
+void clearCurrFuncEnvData()
+{
+    CURR_FUNC_CALL->env->stretchVarsNumber[0] = 0;
+
+    uint32_t i = 0;
+    for (i = 1; i < CURR_FUNC_CALL->env->fovsCount; ++i)  // first field of view and assembled field of view must be saved.
+    {
+        // No need to set to 0 ?
+        CURR_FUNC_CALL->env->stretchVarsNumber[i] = 0;
+
+        CURR_FUNC_CALL->env->fovs[i] = 0;
+        CURR_FUNC_CALL->env->assembled[i] = 0;
+    }
+
+    // No need to set to 0 ?
+    for (i = 1; i < CURR_FUNC_CALL->env->bracketsCount; ++i)
+    {
+        CURR_FUNC_CALL->env->bracketsOffset[i] = 0;
+    }
 }
 
 struct vclosure_t* allocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback)

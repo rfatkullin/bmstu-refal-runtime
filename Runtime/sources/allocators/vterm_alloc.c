@@ -7,6 +7,13 @@
 #include <allocators/vterm_alloc.h>
 #include <memory_manager.h>
 
+uint64_t gcAllocateBracketVterm()
+{
+    checkAndCleanHeaps(1, sizeof(struct fragment_t));
+
+    return allocateBracketsVTerm();
+}
+
 allocate_result allocateVTerms(struct fragment_t* frag)
 {    
     if (GC_VTERM_OV(frag->length))
@@ -39,9 +46,8 @@ allocate_result allocateVTerms(struct fragment_t* frag)
                 memMngr.vterms[memMngr.vtermsOffset++].closure = memMngr.vterms[frag->offset + i].closure;
                 break;
 
-            case V_BRACKET_OPEN_TAG:
-            case V_BRACKET_CLOSE_TAG:
-                memMngr.vterms[memMngr.vtermsOffset++].inBracketLength = memMngr.vterms[frag->offset + i].inBracketLength;
+            case V_BRACKETS_TAG:
+                memMngr.vterms[memMngr.vtermsOffset++].brackets = memMngr.vterms[frag->offset + i].brackets;
                 break;
         }        
     }
@@ -94,25 +100,19 @@ uint64_t allocateIntNumVTerm(struct vint_t* value)
     return memMngr.vtermsOffset++;
 }
 
-uint64_t allocateOpenBracketVTerm(uint64_t length)
+uint64_t allocateBracketsVTerm()
 {
-    memMngr.vterms[memMngr.vtermsOffset].tag = V_BRACKET_OPEN_TAG;
-    memMngr.vterms[memMngr.vtermsOffset].inBracketLength = length;
+    memMngr.vterms[memMngr.vtermsOffset].tag = V_BRACKETS_TAG;    
+    memMngr.vterms[memMngr.vtermsOffset].brackets = (struct fragment_t*)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(struct fragment_t);
 
     return memMngr.vtermsOffset++;
 }
 
-uint64_t allocateCloseBracketVTerm(uint64_t length)
-{
-    memMngr.vterms[memMngr.vtermsOffset].tag = V_BRACKET_CLOSE_TAG;
-    memMngr.vterms[memMngr.vtermsOffset].inBracketLength = length;
-
-    return memMngr.vtermsOffset++;
-}
-
-void changeBracketLength(uint64_t offset, uint64_t newLength)
-{
-    memMngr.vterms[offset].inBracketLength = newLength;
+void setBracketsData(uint64_t bracketsTermoffset, uint64_t offset, uint64_t length)
+{    
+    memMngr.vterms[bracketsTermoffset].brackets->offset = offset;
+    memMngr.vterms[bracketsTermoffset].brackets->length = length;
 }
 
 /// Память для литералов выделяется с помощью malloc'а. Т.е. не в куче данных.

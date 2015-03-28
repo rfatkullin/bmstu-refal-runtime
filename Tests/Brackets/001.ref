@@ -1,0 +1,9 @@
+$ENTRY Go
+{
+	= <Prout <Func 'a' ('b' 'c') 'd'>>
+}
+
+Func
+{
+	'a' (e.1) 'd' = e.1
+}
