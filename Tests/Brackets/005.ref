@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Prout <TestFunc ('Gena')('Not Gena')>>
+}
+
+TestFunc
+{	
+	(e.1) e.2 s.1 (e.3) = 'Error!';
+	(e.1)(e.2) e.3 : (e.4) e.5, e.4 : 'Gena' = 'Ok!';
+}
