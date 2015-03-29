@@ -9,13 +9,18 @@
 #define VINT_STRUCT_SIZE(length)                (sizeof(struct vint_t) + length)
 #define FUNC_CALL_LTERM_SIZE                    (sizeof(struct func_call_t) + sizeof(struct env_t) + sizeof(struct lterm_t))
 #define FRAGMENT_LTERM_SIZE(count)              (count * (sizeof(struct lterm_t) + sizeof(struct fragment_t)))
+#define FRAGMENT_STRUCT_SIZE(count)             (count * sizeof(struct fragment_t))
 #define CHAIN_KEEPER_LTERM_SIZE(count)          (count * sizeof(struct lterm_t) + count * CHAIN_LTERM_SIZE)
 #define CHAIN_LTERM_SIZE                        (sizeof(struct lterm_t))
 #define BUILTINS_RESULT_SIZE                    (FRAGMENT_LTERM_SIZE(1) + CHAIN_LTERM_SIZE)
-#define VCLOSURE_SIZE(paramsCount)              (sizeof(struct vclosure_t) + FRAGMENT_LTERM_SIZE(paramsCount))
+#define VCLOSURE_SIZE(paramsCount)              (sizeof(struct vclosure_t) + FRAGMENT_STRUCT_SIZE(paramsCount))
 #define VSTRING_SIZE(length)                    (sizeof(struct vstring_t) + length * sizeof(uint32_t))
-#define ENV_SIZE(localsCount, patternsCount)    (FRAGMENT_LTERM_SIZE(localsCount) + patternsCount * sizeof(struct lterm_t*) + \
-                                                patternsCount * sizeof(struct lterm_t*) + patternsCount * sizeof(int))
+#define ENV_SIZE(localsCount, patternsCount, bracketsCount)     \
+        ( FRAGMENT_STRUCT_SIZE(localsCount)                     \
+        + patternsCount * sizeof(struct lterm_t*)               \
+        + patternsCount * sizeof(struct lterm_t*)               \
+        + patternsCount * sizeof(int)                           \
+        + bracketsCount * sizeof(uint64_t))                     \
 
 #define FOV_CONTAINS_FUNC_CALL      "FieldOfView passed in funcation contains func call term!\n"
 #define FOV_CONTAINS_SIMPLE_CHAIN   "FieldOfView can't contains simple chain without chain keeper!\n"
@@ -54,5 +59,7 @@ struct lterm_t*   allocateSimpleChain();
 /// Выделяют память с помощью malloc'а
 struct vstring_t* allocateVStringLiteral(uint32_t* runes, uint64_t length);
 struct vint_t* allocateIntNumberLiteral(uint8_t* bytes, uint8_t sign, uint64_t length);
+
+struct fragment_t* allocateFragment(uint32_t count);
 
 #endif

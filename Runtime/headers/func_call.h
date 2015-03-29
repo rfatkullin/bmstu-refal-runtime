@@ -11,13 +11,13 @@ typedef struct func_result_t (*RefalFunc)(int);
 struct env_t
 {
     // Переменные окружения.
-	struct lterm_t* params;
+    struct fragment_t* params;
 
     // Число переменных окружения.
     uint32_t paramsCount;
 
     // Локальные переменные. Содержимое постоянно изменяется.
-    struct lterm_t* locals;
+    struct fragment_t* locals;
 
     // Число локальных переменных.
     uint32_t localsCount;
@@ -29,7 +29,7 @@ struct env_t
     // FieldOfView. Каждый элемент - цепочка lterm'ов.
     struct lterm_t** fovs;
 
-    // Собранные FieldOfView. Каждый элемент - фрагмент.
+    // Собранные FieldOfView. Offset'ы для vterm-фрагментов (т.е. V_BRACKETS_TAG).
     uint64_t* assembled;
 
     // Какие переменные в шаблонах были удлинены в последний раз. Т.е

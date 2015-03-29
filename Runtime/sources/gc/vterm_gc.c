@@ -97,7 +97,7 @@ static void processVTermsInFragment(struct fragment_t* frag)
             return;        
 
         // Set new offset, stored in field inBracketLength.
-        frag->offset = memMngr.vterms[frag->offset].brackets;
+        frag->offset = (uint64_t)memMngr.vterms[frag->offset].brackets; // Casting to hide warn! Get new offset from 'brackets' field.
     }
 }
 
@@ -126,10 +126,10 @@ static void processEnvVTerms(struct env_t* env)
     }
 
     for (i = 0; i < env->localsCount; ++i)
-        processVTermsInFragment(env->locals[i].fragment);
+        processVTermsInFragment(env->locals + i);
 
     for (i = 0; i < env->paramsCount; ++i)
-        processVTermsInFragment(env->params[i].fragment);
+        processVTermsInFragment(env->params + i);
 }
 
 static void processClosureVTerms(struct vclosure_t* closure)
@@ -137,7 +137,7 @@ static void processClosureVTerms(struct vclosure_t* closure)
     uint64_t i = 0;
 
     for (i  = 0; i < closure->paramsCount; ++i)
-        processVTermsInFragment((closure->params + i)->fragment);
+        processVTermsInFragment(closure->params + i);
 }
 
 static void swap(uint64_t* a, uint64_t* b)
@@ -205,7 +205,7 @@ static void copyVTerms()
 
             memMngr.vterms[to].tag = memMngr.vterms[from].tag;
             memMngr.vtermsOffset++;
-            memMngr.vterms[from].brackets = to;
+            memMngr.vterms[from].brackets = (struct fragment_t*)to; // Casting to hide warn! Save new offset in 'brackets' field.
         }
     }
 }

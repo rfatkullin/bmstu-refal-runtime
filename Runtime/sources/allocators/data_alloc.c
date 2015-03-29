@@ -110,15 +110,7 @@ struct lterm_t* gcAllocateFragmentLTerm(uint32_t count)
 // Params sets in mainLoop.
 struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount, uint32_t bracketsCount)
 {
-    env->locals = allocateFragmentLTerm(localsCount);
-
-    // TO FIX: memset
-    uint32_t i = 0;
-    for (i = 0; i < localsCount; ++i)
-    {
-        env->locals[i].fragment->offset = 0;
-        env->locals[i].fragment->length = 0;
-    }
+    env->locals = allocateFragment(localsCount);
 
     env->fovs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += patternsCount * sizeof(struct lterm_t*);
@@ -136,6 +128,7 @@ struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patt
     env->fovsCount = patternsCount;
     env->bracketsCount = bracketsCount;
 
+    memset(env->locals, 0, localsCount * sizeof(struct fragment_t));
     memset(env->fovs, 0, patternsCount * sizeof(struct lterm_t*));
     memset(env->assembled, 0, patternsCount * sizeof(struct lterm_t*));
     memset(env->stretchVarsNumber, 0, patternsCount * sizeof(int));
@@ -169,7 +162,7 @@ struct vclosure_t* allocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount
     struct vclosure_t* closure = (struct vclosure_t*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += sizeof(struct vclosure_t);
 
-    closure->params = allocateFragmentLTerm(paramsCount);
+    closure->params = allocateFragment(paramsCount);
 
     closure->funcPtr = funcPtr;
     closure->ident = ident;
@@ -227,6 +220,14 @@ struct lterm_t* allocateFragmentLTerm(uint32_t count)
     }
 
     return head;
+}
+
+struct fragment_t* allocateFragment(uint32_t count)
+{
+    struct fragment_t* fragment = (struct fragment_t*)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += count * sizeof(struct fragment_t);
+
+    return fragment;
 }
 
 struct lterm_t* allocateFuncCallLTerm()

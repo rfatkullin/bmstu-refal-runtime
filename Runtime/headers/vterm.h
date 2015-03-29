@@ -17,11 +17,11 @@
 /// vterm функций.
 struct vclosure_t
 {
-	RefalFunc funcPtr;
-    struct lterm_t* params;
-    struct vstring_t* ident;
-    uint32_t paramsCount;
-    int rollback;
+    RefalFunc           funcPtr;
+    struct fragment_t*  params;
+    struct vstring_t*   ident;
+    uint32_t            paramsCount;
+    int                 rollback;
 };
 
 /// vterm строк Юникода.

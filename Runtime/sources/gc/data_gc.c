@@ -124,22 +124,22 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
 
 static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
 {
-    GC_DATA_HEAP_CHECK_EXIT(ENV_SIZE(from->localsCount, from->fovsCount) +  // ENV
-                            FRAGMENT_LTERM_SIZE(from->paramsCount));        // params
+    GC_DATA_HEAP_CHECK_EXIT(ENV_SIZE(from->localsCount, from->fovsCount, from->bracketsCount) + // ENV
+                            FRAGMENT_STRUCT_SIZE(from->paramsCount));                           // params
 
     uint32_t i = 0;
     initEnvData(to, from->localsCount, from->fovsCount, from->bracketsCount);
 
     if (from->params)
     {
-        to->params = allocateFragmentLTerm(from->paramsCount);
+        to->params = allocateFragment(from->paramsCount);
 
         for (i = 0; i < from->paramsCount; ++i)
-            memcpy(to->params[i].fragment, from->params[i].fragment, sizeof(struct fragment_t));
+            memcpy(to->params + i, from->params + i, sizeof(struct fragment_t));
     }
 
     for (i = 0; i < from->localsCount; ++i)
-        memcpy(to->locals[i].fragment, from->locals[i].fragment, sizeof(struct fragment_t));
+        memcpy(to->locals + i, from->locals + i, sizeof(struct fragment_t));
 
     for (i = 0; i < from->fovsCount; ++i)
     {
