@@ -117,10 +117,9 @@ static void processVTermsInFuncCall(struct func_call_t* funcCall)
 static void processEnvVTerms(struct env_t* env)
 {
     uint32_t i = 0;
+
     for (i = 0; i < env->fovsCount; ++i)
     {
-        if (env->fovs[i])
-            processVTermsInChain(env->fovs[i]);
         if (env->assembled[i])
             processVTermsInFragment(VTERM_BRACKETS(env->assembled[i]));
     }

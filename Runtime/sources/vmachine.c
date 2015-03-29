@@ -12,7 +12,7 @@
 #include <gc/gc.h>
 
 static void printChainOfCalls(struct lterm_t* callTerm);
-static struct lterm_t* updateFieldOfView(struct lterm_t* mainChain, struct func_result_t* funcResult);
+static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult, struct lterm_t** lastCallFuncFOV);
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
 static allocate_result assemblyChain(struct lterm_t* chain, uint64_t* length);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
@@ -129,6 +129,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 	struct func_result_t funcRes;    
     struct lterm_t* parentCall = 0;
     int entryStatus = 0;
+    struct lterm_t* lastCallFuncFOV = 0;
 
     _currCallTerm = memMngr.fieldOfView->next;
 
@@ -139,8 +140,15 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
         {
             // Предыдущий результат успешен --> все скобки активации обработаны, можно передавать функции-потребителю.
             if (funcRes.status != FAIL_RESULT)
-            {
-                _currCallTerm->funcCall->fieldOfView = _currCallTerm->funcCall->subCall;
+            {                
+                if (!_currCallTerm->funcCall->fieldOfView)
+                {
+                    if (lastCallFuncFOV == 0)
+                        PRINT_AND_EXIT("BEDA!!!\n");
+
+                    _currCallTerm->funcCall->fieldOfView = lastCallFuncFOV;
+                }
+                _currCallTerm->funcCall->env->workFieldOfView = _currCallTerm->funcCall->subCall;
                 _currCallTerm->funcCall->subCall = 0;
                 entryStatus = NEXT_ENTRYPOINT;
             }
@@ -172,7 +180,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
                 //printf("Insert chain: ");
                 //if (funcRes.fieldChain)
                 //    printFieldOfView(stdout, funcRes.fieldChain);
-                _currCallTerm = updateFieldOfView(_currCallTerm, &funcRes);
+                _currCallTerm = updateFieldOfView(_currCallTerm, &funcRes, &lastCallFuncFOV);
                 //printf("After: ");
                 //printFieldOfView(stdout, memMngr.fieldOfView);
                 break;
@@ -198,6 +206,10 @@ static void onFuncFail(struct lterm_t** callTerm, int failResult)
     else
     {
         (*callTerm)->funcCall->parentCall->funcCall->entryPoint = (*callTerm)->funcCall->failEntryPoint;
+
+        if ((*callTerm)->funcCall->parentCall->funcCall->fieldOfView == 0)
+            (*callTerm)->funcCall->parentCall->funcCall->fieldOfView = (*callTerm)->funcCall->fieldOfView;
+
         (*callTerm) = (*callTerm)->funcCall->parentCall;
     }
 }
@@ -269,9 +281,11 @@ static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct f
 	return newCallNode;
 }
 
-static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult)
+static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult, struct lterm_t** lastCallFuncFOV)
 {
 	struct lterm_t* newCurrNode = currNode->funcCall->next;
+
+    *lastCallFuncFOV = currNode->funcCall->fieldOfView;
 
     if (funcResult->fieldChain)  // Insertn chain in the middle
 	{		

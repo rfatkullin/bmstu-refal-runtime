@@ -25,9 +25,7 @@ struct env_t
     // Число необходимых FieldOfView.
     uint32_t fovsCount;
 
-    // TO FIX: Можно обойтись двумя fovs.
-    // FieldOfView. Каждый элемент - цепочка lterm'ов.
-    struct lterm_t** fovs;
+    struct lterm_t* workFieldOfView;
 
     // Собранные FieldOfView. Offset'ы для vterm-фрагментов (т.е. V_BRACKETS_TAG).
     uint64_t* assembled;

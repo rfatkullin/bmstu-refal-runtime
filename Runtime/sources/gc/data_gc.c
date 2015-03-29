@@ -143,9 +143,6 @@ static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
 
     for (i = 0; i < from->fovsCount; ++i)
     {
-        if (from->fovs[i])
-            to->fovs[i] = copySimpleChain(from->fovs[i]);
-
         if (from->assembled[i])
             to->assembled[i] = from->assembled[i];
     }

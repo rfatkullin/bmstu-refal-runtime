@@ -26,8 +26,8 @@ void gcInitBuiltin()
 
     CURR_FUNC_CALL->env->fovsCount = 1;
 
-    CURR_FUNC_CALL->env->fovs = (struct lterm_t**)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct lterm_t*);
+    CURR_FUNC_CALL->env->workFieldOfView = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
+    memMngr.dataOffset += sizeof(struct lterm_t);
 
     CURR_FUNC_CALL->env->assembled = (uint64_t*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += sizeof(uint64_t);
@@ -35,15 +35,12 @@ void gcInitBuiltin()
     CURR_FUNC_CALL->env->stretchVarsNumber = (int*)(memMngr.data + memMngr.dataOffset);
     memMngr.dataOffset += sizeof(int);
 
-    memset(CURR_FUNC_CALL->env->fovs, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(struct lterm_t*));
+    memset(CURR_FUNC_CALL->env->workFieldOfView, 0, sizeof(struct lterm_t));
     memset(CURR_FUNC_CALL->env->assembled, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(struct lterm_t*));
     memset(CURR_FUNC_CALL->env->stretchVarsNumber, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(int));
 
     uint64_t tmpFragmentOffset = gcGetAssembliedChain(CURR_FUNC_CALL->fieldOfView);
-    CURR_FUNC_CALL->env->assembled[0] = tmpFragmentOffset;
-    CURR_FUNC_CALL->env->fovs[0] = CURR_FUNC_CALL->fieldOfView;
-
-    CURR_FUNC_CALL->fieldOfView = 0;
+    CURR_FUNC_CALL->env->assembled[0] = tmpFragmentOffset;    
 }
 
 struct func_result_t Arg(int entryStatus)
@@ -204,7 +201,7 @@ struct func_result_t Lenw(int entryStatus)
     mpz_clear(num);
     mpz_clear(helper);
 
-    CONCAT_CHAINS(res, CURR_FUNC_CALL->env->fovs[0]);
+    CONCAT_CHAINS(res, CURR_FUNC_CALL->fieldOfView);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
