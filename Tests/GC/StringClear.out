@@ -1,164 +1,29 @@
 Heap size: 5120
 Start garbage collection.
-In use 29 vterms from 54: 0.537037
-In use 1312 data bytes from 1377: 0.952796
-End garbage collection.
-In use 27 vterms from 54: 0.500000
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 53 vterms from 54: 0.981481
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 51 vterms from 54: 0.944444
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 52 vterms from 54: 0.962963
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 25 vterms from 54: 0.462963
-In use 692 data bytes from 1377: 0.502542
 Start garbage collection.
-In use 50 vterms from 54: 0.925926
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 24 vterms from 54: 0.444444
-In use 692 data bytes from 1377: 0.502542
 Start garbage collection.
-In use 48 vterms from 54: 0.888889
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 23 vterms from 54: 0.425926
-In use 692 data bytes from 1377: 0.502542
 Start garbage collection.
-In use 46 vterms from 54: 0.851852
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 22 vterms from 54: 0.407407
-In use 692 data bytes from 1377: 0.502542
 Start garbage collection.
-In use 44 vterms from 54: 0.814815
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 21 vterms from 54: 0.388889
-In use 692 data bytes from 1377: 0.502542
 Start garbage collection.
-In use 42 vterms from 54: 0.777778
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 20 vterms from 54: 0.370370
-In use 692 data bytes from 1377: 0.502542
 Start garbage collection.
-In use 40 vterms from 54: 0.740741
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 19 vterms from 54: 0.351852
-In use 692 data bytes from 1377: 0.502542
 Start garbage collection.
-In use 38 vterms from 54: 0.703704
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 18 vterms from 54: 0.333333
-In use 692 data bytes from 1377: 0.502542
 Start garbage collection.
-In use 52 vterms from 54: 0.962963
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 33 vterms from 54: 0.611111
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 49 vterms from 54: 0.907407
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 31 vterms from 54: 0.574074
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 46 vterms from 54: 0.851852
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 29 vterms from 54: 0.537037
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 43 vterms from 54: 0.796296
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 27 vterms from 54: 0.500000
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 40 vterms from 54: 0.740741
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 25 vterms from 54: 0.462963
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 37 vterms from 54: 0.685185
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 23 vterms from 54: 0.425926
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 34 vterms from 54: 0.629630
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 21 vterms from 54: 0.388889
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 31 vterms from 54: 0.574074
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 19 vterms from 54: 0.351852
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 28 vterms from 54: 0.518519
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 17 vterms from 54: 0.314815
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 25 vterms from 54: 0.462963
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 15 vterms from 54: 0.277778
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 22 vterms from 54: 0.407407
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 13 vterms from 54: 0.240741
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 19 vterms from 54: 0.351852
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 11 vterms from 54: 0.203704
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 16 vterms from 54: 0.296296
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 9 vterms from 54: 0.166667
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 13 vterms from 54: 0.240741
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 7 vterms from 54: 0.129630
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 10 vterms from 54: 0.185185
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 5 vterms from 54: 0.092593
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 7 vterms from 54: 0.129630
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 3 vterms from 54: 0.055556
-In use 740 data bytes from 1377: 0.537400
 Start garbage collection.
-In use 4 vterms from 54: 0.074074
-In use 1344 data bytes from 1377: 0.976035
-End garbage collection.
-In use 1 vterms from 54: 0.018519
-In use 740 data bytes from 1377: 0.537400
 Ok!

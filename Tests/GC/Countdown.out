@@ -1,346 +1,101 @@
 Heap size: 10240
 Countdown: 50 
 Start garbage collection.
-In use 23 vterms from 116: 0.198276
-In use 2885 data bytes from 2961: 0.974333
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 49 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 48 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 47 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 46 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 45 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 44 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 43 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 42 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 41 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 40 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 39 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 38 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 37 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 36 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 35 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 34 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 33 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 32 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 31 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 30 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 29 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 28 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 27 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 26 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 25 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 24 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 23 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 22 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 21 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 20 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 19 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 18 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 17 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 16 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 15 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 14 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 13 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 12 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 11 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 10 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 9 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 8 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 7 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 6 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 5 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 4 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 3 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 2 
 Start garbage collection.
-In use 24 vterms from 116: 0.206897
-In use 2835 data bytes from 2961: 0.957447
-End garbage collection.
-In use 2 vterms from 116: 0.017241
-In use 430 data bytes from 2961: 0.145221
 Countdown: 1 
 Over

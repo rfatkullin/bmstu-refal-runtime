@@ -11,7 +11,7 @@
 void collectGarbage()
 {
     printf("Start garbage collection.\n");
-    printMemoryInfo();
+    //printMemoryInfo();
 
     //printFieldOfView(stdout, memMngr.fieldOfView);
 
@@ -23,8 +23,8 @@ void collectGarbage()
 
     //printFieldOfView(stdout, memMngr.fieldOfView);
 
-    printf("End garbage collection.\n");
-    printMemoryInfo();
+    //printf("End garbage collection.\n");
+    //printMemoryInfo();
 
     _currCallTerm = _currCallTerm->prev;
 
