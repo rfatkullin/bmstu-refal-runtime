@@ -18,8 +18,9 @@ static void copyClosureVTerm(uint64_t to, struct vclosure_t* closure);
 static void copyIntVTerm(uint64_t to, struct vint_t* intNum);
 static void printToCopyVTermsOffsets(uint64_t activeOffset);
 static void copyBracketsVTerm(uint64_t to, struct fragment_t* frag);
-static int updateFragmentOffset(struct fragment_t* frag);
+static void setActualFragmentOffset(struct fragment_t* frag);
 static void swap(uint64_t* a, uint64_t* b);
+static void setActualDataInVTerms();
 
 #define MARK_STAGE                  0
 #define POINTER_CORRECTING_STAGE    1
@@ -35,7 +36,8 @@ void collectVTermGarbage(struct lterm_t* fieldOfView)
 
     copyVTerms();
 
-    stage = POINTER_CORRECTING_STAGE;    
+    stage = POINTER_CORRECTING_STAGE;
+    setActualDataInVTerms();
     processVTermsInChain(fieldOfView);
 }
 
@@ -99,52 +101,26 @@ static void processVTermsInFragment(struct fragment_t* frag)
     }
     else
     {
-        if (!updateFragmentOffset(frag))
-            return;
-
-        for (i = begin; i < end; ++i)
-        {
-            // Pass literals vterms. No need copy them.
-            if (i < memMngr.vtermsBeginOffset)
-                continue;
-
-            switch (memMngr.vterms[i].tag)
-            {
-                case V_CLOSURE_TAG:
-                {
-                    struct vclosure_t* closure = memMngr.vterms[(uint64_t)memMngr.vterms[i].brackets].closure;
-                    processClosureVTerms(closure);
-                    break;
-                }
-                case V_BRACKETS_TAG:
-                {
-                    struct fragment_t* newBrackets = memMngr.vterms[(uint64_t)memMngr.vterms[i].brackets].brackets;
-                    updateFragmentOffset(newBrackets);
-                    break;
-                }
-            }
-        }
+        setActualFragmentOffset(frag);
     }
 }
 
-static int updateFragmentOffset(struct fragment_t* frag)
+static void setActualFragmentOffset(struct fragment_t* frag)
 {
     // Fixed
     if (memMngr.vtActiveOffset <= frag->offset && frag->offset < memMngr.vtActiveOffset + memMngr.vtermsMaxOffset)
-        return 0;
+        return;
 
     // Pass literals vterms --> No need fix reference to them.
     if (frag->offset < memMngr.vtermsBeginOffset)
-        return 0;
+        return;
 
     // Nothing to copy. It can be fragment of expression variable.
     if (frag->length == 0)
-        return 0;
+        return;
 
     // Set new offset, stored in field brackets.
     frag->offset = (uint64_t)memMngr.vterms[frag->offset].brackets; // Casting to hide warn! Get new offset from 'brackets' field.
-
-    return 1;
 }
 
 static void processVTermsInFuncCall(struct func_call_t* funcCall)
@@ -251,9 +227,34 @@ static void copyVTerms()
                     break;
             }
 
-            memMngr.vterms[to].tag = memMngr.vterms[from].tag;            
+            memMngr.vterms[to].tag = memMngr.vterms[from].tag;
             memMngr.vtermsOffset++;
             memMngr.vterms[from].brackets = (struct fragment_t*)to; // Casting to hide warn! Save new offset in 'brackets' field.
+        }
+    }
+}
+
+static void setActualDataInVTerms()
+{
+    uint64_t i;
+    for (i = memMngr.vtActiveOffset; i < memMngr.vtermsOffset; ++i)
+    {
+        // Pass literals vterms. No need copy them.
+        if (i < memMngr.vtermsBeginOffset)
+            continue;
+
+        switch (memMngr.vterms[i].tag)
+        {
+            case V_CLOSURE_TAG:
+            {
+                processClosureVTerms(memMngr.vterms[i].closure);
+                break;
+            }
+            case V_BRACKETS_TAG:
+            {
+                setActualFragmentOffset(memMngr.vterms[i].brackets);
+                break;
+            }
         }
     }
 }

@@ -1,10 +1,20 @@
-Heap size: 3221225472
+Heap size: 104857600
 Real Men Compiler Constructor
     source-file : ../../Tests/RealTasks/RMCC/refal7.bnf
     token-file  : ../../Tests/RealTasks/RMCC/refal7.tokens
     dest-file   : stdout
     report-file : /dev/null
 ----------------/
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
 
 /*
  * Terminal symbols.
@@ -48,6 +58,8 @@ static char *ts_str[] =
     "TS_STRING",
     "TS_COMPOUND",
     "TS_INTEGER",
+Start garbage collection.
+End garbage collection.
     "TS_FLOAT",
     "TS_VAR",
     "TS_ENTRY",
@@ -123,6 +135,8 @@ static char *ns_str[] =
     "NS_F_NAME",
     "NS_E_NAME",
     "NS_BODY",
+Start garbage collection.
+End garbage collection.
     "NS_SEMICOLONS",
     "NS_OPT_SEMICOLONS",
     "NS_EXTRA_SEMICOLONS",
@@ -212,6 +226,8 @@ static short p7_table[27][29] =
     { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,14,-1,-1,-1,-1,-1,-1,13,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
     { -1,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
     { -1,16,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+Start garbage collection.
+End garbage collection.
     { 18,18,18,18,18,-1,-1,-1,18,18,18,17,-1,18,-1,17,-1,18,-1,18,18,18,18,18,18,-1,-1,-1,-1 },
     { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,19,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
     { -1,21,-1,-1,-1,21,21,21,-1,-1,-1,21,20,-1,-1,21,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,21 },
@@ -413,6 +429,8 @@ static short p7_prod[230] =
     0,
 
     /* 44. tl-expr ::= _action_term_start term _action_term_end tl-expr */
+Start garbage collection.
+End garbage collection.
     4, AS_TERM_START, NS_TERM, AS_TERM_END, NS_TL_EXPR,
 
     /* 45. tl-expr ::= */
