@@ -10,7 +10,7 @@
 #define L_TERM_FUNC_CALL        3
 #define L_TERM_CHAIN_TAG        4
 
-#define GC_MOVED                5
+#define GC_MOVED                6
 
 #define ADD_TO_CHAIN(chain, term)   \
 do{                                 \

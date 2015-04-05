@@ -76,6 +76,21 @@ do{                                                         \
         return res;                                         \
 }while(0)                                                   \
 
+
+#define SET_MOVED(oldTerm, newTerm) \
+do{                                 \
+    oldTerm->prev = newTerm;        \
+    oldTerm->tag = GC_MOVED;        \
+}while(0)
+
+
+#define SET_ACTUAL(lterm)       \
+do{                             \
+    if (lterm->tag == GC_MOVED) \
+        lterm = lterm->prev;    \
+}while(0)
+
+
 /// Собирает мусор.
 void collectGarbage();
 

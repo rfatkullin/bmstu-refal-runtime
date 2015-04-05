@@ -326,8 +326,7 @@ uint64_t gcGetAssembliedChain(struct lterm_t* chain)
 
         assembledVtermOffset = gcAllocateBracketVterm();
 
-        if (chain->tag == GC_MOVED)
-            chain = chain->prev;
+        SET_ACTUAL(chain);
 
         uint64_t offset = memMngr.vtermsOffset;
 
@@ -335,7 +334,7 @@ uint64_t gcGetAssembliedChain(struct lterm_t* chain)
         {            
             collectGarbage();
 
-            chain = chain->prev;
+            SET_ACTUAL(chain);
             offset = memMngr.vtermsOffset;
 
             if (assemblyChain(chain, &length) == GC_NEED_CLEAN)

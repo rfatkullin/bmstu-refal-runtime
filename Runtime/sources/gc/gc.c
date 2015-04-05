@@ -11,30 +11,30 @@
 void collectGarbage()
 {
     printf("Start garbage collection.\n");
-    //printMemoryInfo();
-
-    //printFieldOfView(stdout, memMngr.fieldOfView);
+    printFieldOfView(stdout, memMngr.fieldOfView);
 
     collectVTermGarbage(memMngr.fieldOfView);
 
-    //printFieldOfView(stdout, memMngr.fieldOfView);
-
     memMngr.fieldOfView = copySimpleChain(memMngr.fieldOfView);
 
-    //printFieldOfView(stdout, memMngr.fieldOfView);
+    // Get node from new heap
+    SET_ACTUAL(_currCallTerm);
 
-    //printf("End garbage collection.\n");
-    //printMemoryInfo();
-
-    _currCallTerm = _currCallTerm->prev;
-
+    // Fix pointers in func call chain
     struct func_call_t* funcCall = _currCallTerm->funcCall;
-
     while (funcCall->next)
     {
-        funcCall->next = funcCall->next->prev;
+        SET_ACTUAL(funcCall->next);
         funcCall = funcCall->next->funcCall;
     }
+
+    // To catch bugs
+    // Can't set to zero data heap, because target program get net lterms through old lterms (GET_ACTUAL)
+    memset(memMngr.vterms + memMngr.vtInactiveOffset, 0, memMngr.vtermsMaxOffset * sizeof(struct vterm_t));
+
+    printf("End garbage collection.\n");
+    printFieldOfView(stdout, memMngr.fieldOfView);
+    fflush(stdout);
 }
 
 void strictCheckHeaps(uint64_t needTermCount, uint64_t needDataSize)

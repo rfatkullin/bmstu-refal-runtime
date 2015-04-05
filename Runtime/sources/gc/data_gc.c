@@ -10,12 +10,6 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* term);
 static struct env_t* copyEnv(struct env_t* from, struct env_t* to);
 static struct lterm_t* copyChainVTerm(struct lterm_t* term);
 
-#define SET_MOVED(oldTerm, newTerm) \
-do{                                 \
-    oldTerm->prev = newTerm;        \
-    oldTerm->tag = GC_MOVED;        \
-}while(0)
-
 struct lterm_t* copySimpleChain(struct lterm_t* chain)
 {
     if (!chain)
@@ -44,7 +38,7 @@ struct lterm_t* copySimpleChain(struct lterm_t* chain)
                 newTerm = copyChainVTerm(currTerm);
                 break;
 
-        case L_TERM_FUNC_CALL:
+            case L_TERM_FUNC_CALL:
                 newTerm = copyFuncCallLTerm(currTerm);
                 break;
 
