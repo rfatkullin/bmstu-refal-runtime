@@ -149,6 +149,11 @@ void clearCurrFuncEnvData()
     {
         CURR_FUNC_CALL->env->bracketsOffset[i] = 0;
     }
+
+    for (i = 0; i < CURR_FUNC_CALL->env->localsCount; ++i)
+    {
+        memset(CURR_FUNC_CALL->env->locals + i, 0, FRAGMENT_STRUCT_SIZE(1));
+    }
 }
 
 struct vclosure_t* allocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback)

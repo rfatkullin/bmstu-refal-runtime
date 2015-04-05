@@ -126,11 +126,12 @@ static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
 
     if (from->params)
     {
+        to->paramsCount = from->paramsCount;
         to->params = allocateFragment(from->paramsCount);
         memcpy(to->params, from->params, FRAGMENT_STRUCT_SIZE(from->paramsCount));
     }
 
-    if (from->params)
+    if (from->locals)
         memcpy(to->locals, from->locals, FRAGMENT_STRUCT_SIZE(from->localsCount));
 
     memcpy(to->assembled, from->assembled, from->fovsCount * sizeof(uint64_t));

@@ -124,7 +124,7 @@ static void setActualFragmentOffset(struct fragment_t* frag)
 }
 
 static void processVTermsInFuncCall(struct func_call_t* funcCall)
-{
+{    
     if (funcCall->fieldOfView)
         processVTermsInChain(funcCall->fieldOfView);
 
@@ -132,8 +132,8 @@ static void processVTermsInFuncCall(struct func_call_t* funcCall)
         processVTermsInChain(funcCall->subCall);    
 
     // Func called --> fovs inited
-    if (funcCall->funcPtr)
-        processEnvVTerms(funcCall->env);
+    if (funcCall->funcPtr)            
+        processEnvVTerms(funcCall->env);    
 }
 
 static void processEnvVTerms(struct env_t* env)
@@ -149,8 +149,12 @@ static void processEnvVTerms(struct env_t* env)
     for (i = 0; i < env->localsCount; ++i)
         processVTermsInFragment(env->locals + i);
 
-    for (i = 0; i < env->paramsCount; ++i)
+    for (i = 0; i < env->paramsCount; ++i)    
         processVTermsInFragment(env->params + i);
+
+
+    if (env->workFieldOfView)
+        processVTermsInChain(env->workFieldOfView);
 }
 
 static void processClosureVTerms(struct vclosure_t* closure)

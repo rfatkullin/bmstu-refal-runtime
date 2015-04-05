@@ -85,6 +85,9 @@ int eqFragment(uint64_t a, uint64_t b, uint64_t length)
     uint64_t i = 0;
     for (i = 0; i < length; i++)
     {
+        if (_memMngr.vterms[a + i].tag != _memMngr.vterms[b + i].tag)
+            return 0;
+
         if (_memMngr.vterms[a + i].tag == V_BRACKETS_TAG)
         {
             if ((VTERM_BRACKETS(a + i)->length != VTERM_BRACKETS(b + i)->length)
@@ -100,9 +103,6 @@ int eqFragment(uint64_t a, uint64_t b, uint64_t length)
 
 int eqSymbol(uint64_t a, uint64_t b)
 {
-//    if (memMngr.vtActiveOffset <= a && a < memMngr.vtActiveOffset + memMngr.vtermsMaxOffset)
-  //      PRINT_AND_EXIT("BEDA!!!\n");
-
     return
         (_memMngr.vterms[a].tag == _memMngr.vterms[b].tag)
         &&
@@ -140,7 +140,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 	{
         // Указатель на функцию проставлен --> функция вызывается повторно.
         if (_currCallTerm->funcCall->funcPtr)
-        {
+        {            
             // Предыдущий результат успешен --> все скобки активации обработаны, можно передавать функции-потребителю.
             if (funcRes.status != FAIL_RESULT)
             {                
@@ -393,6 +393,9 @@ static uint64_t gcAssemblyChain(struct lterm_t* chain, uint64_t* length, allocat
                 CHECK_ALLOCATION_RETURN(offset, gcAssemblyChain(currTerm->chain, &tmpLength, res), *res);
 
                 setBracketsData(topVTermsOffset, offset, tmpLength);
+
+//                if (!(_memMngr.vtActiveOffset <= offset && offset < _memMngr.vtActiveOffset + _memMngr.vtermsMaxOffset))
+//                    PRINT_AND_EXIT("BEDA!!!\n");
 
                 ++topVTermsOffset;
                 break;

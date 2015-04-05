@@ -2,6 +2,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include <memory_manager.h>
 #include <allocators/data_alloc.h>
@@ -31,7 +32,7 @@ void collectGarbage()
     // Fix pointers in func call chain
     struct func_call_t* funcCall = _currCallTerm->funcCall;
     while (funcCall->next)
-    {
+    {        
         funcCall->next = getActual(funcCall->next);
         funcCall = funcCall->next->funcCall;
     }
