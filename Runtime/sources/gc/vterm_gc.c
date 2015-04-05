@@ -29,7 +29,7 @@ static int stage;
 
 void collectVTermGarbage(struct lterm_t* fieldOfView)
 {    
-    memset(memMngr.gcInUseVTerms, 0, memMngr.vtermsMaxOffset * sizeof(uint8_t));
+    memset(_memMngr.gcInUseVTerms, 0, _memMngr.vtermsMaxOffset * sizeof(uint8_t));
 
     stage = MARK_STAGE;
     processVTermsInChain(fieldOfView);
@@ -82,19 +82,19 @@ static void processVTermsInFragment(struct fragment_t* frag)
         for (i = begin; i < end; ++i)
         {
             // Pass literals vterms. No need copy them.
-            if (i < memMngr.vtermsBeginOffset)
+            if (i < _memMngr.vtermsBeginOffset)
                 continue;
 
-            memMngr.gcInUseVTerms[i - memMngr.vtActiveOffset] = 1;
+            _memMngr.gcInUseVTerms[i - _memMngr.vtActiveOffset] = 1;
 
-            switch (memMngr.vterms[i].tag)
+            switch (_memMngr.vterms[i].tag)
             {
                 case V_CLOSURE_TAG:
-                    processClosureVTerms(memMngr.vterms[i].closure);
+                    processClosureVTerms(_memMngr.vterms[i].closure);
                     break;
 
                 case V_BRACKETS_TAG:
-                    processVTermsInFragment(memMngr.vterms[i].brackets);
+                    processVTermsInFragment(_memMngr.vterms[i].brackets);
                     break;
             }
         }
@@ -108,11 +108,11 @@ static void processVTermsInFragment(struct fragment_t* frag)
 static void setActualFragmentOffset(struct fragment_t* frag)
 {
     // Fixed
-    if (memMngr.vtActiveOffset <= frag->offset && frag->offset < memMngr.vtActiveOffset + memMngr.vtermsMaxOffset)
+    if (_memMngr.vtActiveOffset <= frag->offset && frag->offset < _memMngr.vtActiveOffset + _memMngr.vtermsMaxOffset)
         return;
 
     // Pass literals vterms --> No need fix reference to them.
-    if (frag->offset < memMngr.vtermsBeginOffset)
+    if (frag->offset < _memMngr.vtermsBeginOffset)
         return;
 
     // Nothing to copy. It can be fragment of expression variable.
@@ -120,7 +120,7 @@ static void setActualFragmentOffset(struct fragment_t* frag)
         return;
 
     // Set new offset, stored in field brackets.
-    frag->offset = (uint64_t)memMngr.vterms[frag->offset].brackets; // Casting to hide warn! Get new offset from 'brackets' field.
+    frag->offset = (uint64_t)_memMngr.vterms[frag->offset].brackets; // Casting to hide warn! Get new offset from 'brackets' field.
 }
 
 static void processVTermsInFuncCall(struct func_call_t* funcCall)
@@ -173,9 +173,9 @@ static void printToCopyVTermsOffsets(uint64_t activeOffset)
     uint64_t toCopy = 0;
     uint64_t i = 0;
 
-    for (i = 0; i < memMngr.vtermsMaxOffset; ++i)
+    for (i = 0; i < _memMngr.vtermsMaxOffset; ++i)
     {
-        if (memMngr.gcInUseVTerms[i])
+        if (_memMngr.gcInUseVTerms[i])
         {
             printf("%" PRIu64 " ", activeOffset + i);
             toCopy++;
@@ -187,49 +187,49 @@ static void printToCopyVTermsOffsets(uint64_t activeOffset)
 
 static void copyVTerms()
 {
-    swap(&memMngr.vtInactiveOffset, &memMngr.vtActiveOffset);
-    swap(&memMngr.dtInactiveOffset, &memMngr.dtActiveOffset);
+    swap(&_memMngr.vtInactiveOffset, &_memMngr.vtActiveOffset);
+    swap(&_memMngr.dtInactiveOffset, &_memMngr.dtActiveOffset);
 
-    memMngr.vtermsOffset = memMngr.vtActiveOffset;
-    memMngr.dataOffset = memMngr.dtActiveOffset;
+    _memMngr.vtermsOffset = _memMngr.vtActiveOffset;
+    _memMngr.dataOffset = _memMngr.dtActiveOffset;
 
     uint64_t i = 0;
-    for (i = 0; i < memMngr.vtermsMaxOffset; ++i)
+    for (i = 0; i < _memMngr.vtermsMaxOffset; ++i)
     {
-        if (memMngr.gcInUseVTerms[i])
+        if (_memMngr.gcInUseVTerms[i])
         {
             GC_VTERM_HEAP_CHECK_EXIT(1);
 
-            uint64_t to = memMngr.vtermsOffset;
-            uint64_t from = memMngr.vtInactiveOffset + i;            
+            uint64_t to = _memMngr.vtermsOffset;
+            uint64_t from = _memMngr.vtInactiveOffset + i;
 
-            switch (memMngr.vterms[from].tag)
+            switch (_memMngr.vterms[from].tag)
             {
                 case V_INT_NUM_TAG:                    
-                    copyIntVTerm(to, memMngr.vterms[from].intNum);
+                    copyIntVTerm(to, _memMngr.vterms[from].intNum);
                     break;
                 case V_CLOSURE_TAG:
-                    copyClosureVTerm(to, memMngr.vterms[from].closure);
+                    copyClosureVTerm(to, _memMngr.vterms[from].closure);
                     break;
 
                 case V_BRACKETS_TAG:                    
-                    copyBracketsVTerm(to, memMngr.vterms[from].brackets);
+                    copyBracketsVTerm(to, _memMngr.vterms[from].brackets);
                     break;
 
                 case V_CHAR_TAG:
                 case V_DOUBLE_NUM_TAG:
-                    memMngr.vterms[to] = memMngr.vterms[from];
+                    _memMngr.vterms[to] = _memMngr.vterms[from];
                     break;
 
                 case V_IDENT_TAG:
                     // Ident structs only in literals data area --> no need to copy to new place. Just copy.
-                    memMngr.vterms[to] = memMngr.vterms[from];
+                    _memMngr.vterms[to] = _memMngr.vterms[from];
                     break;
             }
 
-            memMngr.vterms[to].tag = memMngr.vterms[from].tag;
-            memMngr.vtermsOffset++;
-            memMngr.vterms[from].brackets = (struct fragment_t*)to; // Casting to hide warn! Save new offset in 'brackets' field.
+            _memMngr.vterms[to].tag = _memMngr.vterms[from].tag;
+            _memMngr.vtermsOffset++;
+            _memMngr.vterms[from].brackets = (struct fragment_t*)to; // Casting to hide warn! Save new offset in 'brackets' field.
         }
     }
 }
@@ -237,25 +237,25 @@ static void copyVTerms()
 static void setActualDataInVTerms()
 {
     uint64_t i;
-    for (i = memMngr.vtActiveOffset; i < memMngr.vtermsOffset; ++i)
+    for (i = _memMngr.vtActiveOffset; i < _memMngr.vtermsOffset; ++i)
     {
         printf("For term: %" PRIu64 " \n", i);
 
         // Pass literals vterms. No need copy them.
-        if (i < memMngr.vtermsBeginOffset)
+        if (i < _memMngr.vtermsBeginOffset)
             continue;
 
-        switch (memMngr.vterms[i].tag)
+        switch (_memMngr.vterms[i].tag)
         {
             case V_CLOSURE_TAG:
             {
-                processClosureVTerms(memMngr.vterms[i].closure);
+                processClosureVTerms(_memMngr.vterms[i].closure);
                 break;
             }
             case V_BRACKETS_TAG:
             {
-                setActualFragmentOffset(memMngr.vterms[i].brackets);
-                printf("\tNew brackets offset: %" PRIu64 " \n", memMngr.vterms[i].brackets->offset);
+                setActualFragmentOffset(_memMngr.vterms[i].brackets);
+                printf("\tNew brackets offset: %" PRIu64 " \n", _memMngr.vterms[i].brackets->offset);
                 break;
             }
         }
@@ -268,10 +268,10 @@ static void copyClosureVTerm(uint64_t to, struct vclosure_t* closure)
 {    
     GC_DATA_HEAP_CHECK_EXIT(VCLOSURE_SIZE(closure->paramsCount));
 
-    memMngr.vterms[to].closure =
+    _memMngr.vterms[to].closure =
             allocateClosureStruct(closure->funcPtr, closure->paramsCount, closure->ident, closure->rollback);
 
-    memcpy(memMngr.vterms[to].closure->params, closure->params, closure->paramsCount * sizeof(struct fragment_t));
+    memcpy(_memMngr.vterms[to].closure->params, closure->params, closure->paramsCount * sizeof(struct fragment_t));
 }
 
 // TO FIX: Должно копироваться только один раз.
@@ -282,13 +282,13 @@ static void copyIntVTerm(uint64_t to, struct vint_t* intNum)
     struct vint_t* newIntNum = allocateIntStruct(intNum->length);
     newIntNum->sign = intNum->sign;
     memcpy(newIntNum->bytes, intNum->bytes, intNum->length);
-    memMngr.vterms[to].intNum = newIntNum;
+    _memMngr.vterms[to].intNum = newIntNum;
 }
 
 static void copyBracketsVTerm(uint64_t to, struct fragment_t* frag)
 {
     GC_DATA_HEAP_CHECK_EXIT(FRAGMENT_STRUCT_SIZE(1));
 
-    memMngr.vterms[to].brackets = allocateFragment(1);
-    memcpy(memMngr.vterms[to].brackets, frag, FRAGMENT_STRUCT_SIZE(1));
+    _memMngr.vterms[to].brackets = allocateFragment(1);
+    memcpy(_memMngr.vterms[to].brackets, frag, FRAGMENT_STRUCT_SIZE(1));
 }

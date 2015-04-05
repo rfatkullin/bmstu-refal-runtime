@@ -17,8 +17,8 @@ typedef int  allocate_result;
 #define GC_NULL_CHAIN_SIMPLE_CHAIN_COPY "[GC]: Null chain passed to copy simple chain func!\n"
 #define GC_PARENT_CALL_NOT_MOVED        "[GC]: Parent call must be moved at subcall copy!\n"
 
-#define GC_VTERM_OV(needCount)      (memMngr.vtermsOffset + needCount > memMngr.vtActiveOffset + memMngr.vtermsMaxOffset)
-#define GC_LTERM_OV(needDataSize)   (memMngr.dataOffset + needDataSize > memMngr.dtActiveOffset + memMngr.dataMaxOffset)
+#define GC_VTERM_OV(needCount)      (_memMngr.vtermsOffset + needCount > _memMngr.vtActiveOffset + _memMngr.vtermsMaxOffset)
+#define GC_LTERM_OV(needDataSize)   (_memMngr.dataOffset + needDataSize > _memMngr.dtActiveOffset + _memMngr.dataMaxOffset)
 
 #define GC_VTERM_HEAP_CHECK_RETURN(needCount, statusVar)    \
 do{                                                         \

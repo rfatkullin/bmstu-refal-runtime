@@ -45,7 +45,7 @@ struct memory_manager
     struct lterm_t* fieldOfView;
 };
 
-struct memory_manager memMngr;
+struct memory_manager _memMngr;
 
 /// Выделяет память размера size
 /// и сохраняет указатель на выделенный участок

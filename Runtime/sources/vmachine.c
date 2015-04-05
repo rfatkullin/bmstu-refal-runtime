@@ -63,7 +63,7 @@ static struct lterm_t* ConstructStartFunc(const char* funcName, RefalFunc entryF
     fragTerm->fragment->length = 1;
 
     struct vstring_t* ident = constructVStringFromASCIIName(funcName);
-    memMngr.vterms[fragTerm->fragment->offset].closure = gcAllocateClosureStruct(entryFuncPointer, 0, ident, 0);
+    _memMngr.vterms[fragTerm->fragment->offset].closure = gcAllocateClosureStruct(entryFuncPointer, 0, ident, 0);
 
     ADD_TO_CHAIN(gofuncCallTerm->funcCall->fieldOfView, fragTerm);
 
@@ -85,7 +85,7 @@ int eqFragment(uint64_t a, uint64_t b, uint64_t length)
     uint64_t i = 0;
     for (i = 0; i < length; i++)
     {
-        if (memMngr.vterms[a + i].tag == V_BRACKETS_TAG)
+        if (_memMngr.vterms[a + i].tag == V_BRACKETS_TAG)
         {
             if ((VTERM_BRACKETS(a + i)->length != VTERM_BRACKETS(b + i)->length)
              || !eqFragment(VTERM_BRACKETS(a + i)->offset, VTERM_BRACKETS(b + i)->offset, VTERM_BRACKETS(b + i)->length))
@@ -104,37 +104,37 @@ int eqSymbol(uint64_t a, uint64_t b)
   //      PRINT_AND_EXIT("BEDA!!!\n");
 
     return
-        (memMngr.vterms[a].tag == memMngr.vterms[b].tag)
+        (_memMngr.vterms[a].tag == _memMngr.vterms[b].tag)
         &&
         (
-            (memMngr.vterms[a].tag == V_CHAR_TAG
-                && memMngr.vterms[a].ch == memMngr.vterms[b].ch)
+            (_memMngr.vterms[a].tag == V_CHAR_TAG
+                && _memMngr.vterms[a].ch == _memMngr.vterms[b].ch)
 
-            || (memMngr.vterms[a].tag == V_IDENT_TAG
-                && ustrEq(memMngr.vterms[a].str, memMngr.vterms[b].str))
+            || (_memMngr.vterms[a].tag == V_IDENT_TAG
+                && ustrEq(_memMngr.vterms[a].str, _memMngr.vterms[b].str))
 
-            || (memMngr.vterms[a].tag == V_INT_NUM_TAG
-                && !intCmp(memMngr.vterms[a].intNum, memMngr.vterms[b].intNum))
+            || (_memMngr.vterms[a].tag == V_INT_NUM_TAG
+                && !intCmp(_memMngr.vterms[a].intNum, _memMngr.vterms[b].intNum))
 
-            || (memMngr.vterms[a].tag == V_DOUBLE_NUM_TAG
-                && !doubleCmp(memMngr.vterms[a].doubleNum, memMngr.vterms[b].doubleNum))
+            || (_memMngr.vterms[a].tag == V_DOUBLE_NUM_TAG
+                && !doubleCmp(_memMngr.vterms[a].doubleNum, _memMngr.vterms[b].doubleNum))
 
-            || (memMngr.vterms[a].tag == V_CLOSURE_TAG
-                && ustrEq(memMngr.vterms[a].closure->ident, memMngr.vterms[b].closure->ident))
+            || (_memMngr.vterms[a].tag == V_CLOSURE_TAG
+                && ustrEq(_memMngr.vterms[a].closure->ident, _memMngr.vterms[b].closure->ident))
         );
 
 }
 
 void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 {
-    memMngr.fieldOfView = ConstructStartFieldOfView(entryFuncName, entryFuncPointer);
+    _memMngr.fieldOfView = ConstructStartFieldOfView(entryFuncName, entryFuncPointer);
 
 	struct func_result_t funcRes;    
     struct lterm_t* parentCall = 0;
     int entryStatus = 0;
     struct lterm_t* lastCallFuncFOV = 0;
 
-    _currCallTerm = memMngr.fieldOfView->next;
+    _currCallTerm = _memMngr.fieldOfView->next;
 
     while (_currCallTerm)
 	{
@@ -235,13 +235,13 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
         return 0;
 
     //Fatal error!
-    if (memMngr.vterms[fieldOfView->next->fragment->offset].tag != V_CLOSURE_TAG)
+    if (_memMngr.vterms[fieldOfView->next->fragment->offset].tag != V_CLOSURE_TAG)
     {
         printf("%s\n", BAD_EVAL_EXPR);
         exit(0);
     }
 
-    struct vclosure_t* closure = memMngr.vterms[fieldOfView->next->fragment->offset].closure;
+    struct vclosure_t* closure = _memMngr.vterms[fieldOfView->next->fragment->offset].closure;
 
     RefalFunc newFuncPointer = closure->funcPtr;
     callTerm->funcCall->env->params = closure->params;
@@ -324,14 +324,14 @@ uint64_t gcGetAssembliedChain(struct lterm_t* chain)
 
         SET_ACTUAL(chain);
 
-        uint64_t offset = memMngr.vtermsOffset;
+        uint64_t offset = _memMngr.vtermsOffset;
 
         if(gcAssemblyChain(chain, &length) == GC_NEED_CLEAN)
         {            
             collectGarbage();
 
             SET_ACTUAL(chain);
-            offset = memMngr.vtermsOffset;
+            offset = _memMngr.vtermsOffset;
 
             if (gcAssemblyChain(chain, &length) == GC_NEED_CLEAN)
                 PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
@@ -395,7 +395,7 @@ static allocate_result assemblyTopVTerms(struct lterm_t* chain, uint64_t* length
 static allocate_result gcAssemblyChain(struct lterm_t* chain, uint64_t* length)
 {
     struct lterm_t* currTerm = chain->next;
-    uint64_t topVTermsOffset = memMngr.vtermsOffset;
+    uint64_t topVTermsOffset = _memMngr.vtermsOffset;
 
     GC_RETURN_ON_FAIL(assemblyTopVTerms(chain, length));
 
@@ -413,7 +413,7 @@ static allocate_result gcAssemblyChain(struct lterm_t* chain, uint64_t* length)
                 if (GC_VTERM_OV(1) || GC_LTERM_OV(sizeof(struct fragment_t)))
                     return GC_NEED_CLEAN;
 
-                uint64_t offset = memMngr.vtermsOffset;
+                uint64_t offset = _memMngr.vtermsOffset;
                 uint64_t tmpLength = 0;
                 GC_RETURN_ON_FAIL(gcAssemblyChain(currTerm->chain, &tmpLength));
 

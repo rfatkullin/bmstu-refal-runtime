@@ -13,9 +13,9 @@ void collectGarbage()
     printf("Start garbage collection.\n");
     printMemoryInfo();
 
-    collectVTermGarbage(memMngr.fieldOfView);
+    collectVTermGarbage(_memMngr.fieldOfView);
 
-    memMngr.fieldOfView = copySimpleChain(memMngr.fieldOfView);
+    _memMngr.fieldOfView = copySimpleChain(_memMngr.fieldOfView);
 
     // Get node from new heap
     SET_ACTUAL(_currCallTerm);

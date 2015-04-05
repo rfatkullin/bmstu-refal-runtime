@@ -112,17 +112,17 @@ struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patt
 {
     env->locals = allocateFragment(localsCount);
 
-    env->workFieldOfView = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct lterm_t);
+    env->workFieldOfView = (struct lterm_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += sizeof(struct lterm_t);
 
-    env->assembled = (uint64_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += patternsCount * sizeof(uint64_t);
+    env->assembled = (uint64_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += patternsCount * sizeof(uint64_t);
 
-    env->stretchVarsNumber = (int*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += patternsCount * sizeof(int);
+    env->stretchVarsNumber = (int*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += patternsCount * sizeof(int);
 
-    env->bracketsOffset = (uint64_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += bracketsCount * sizeof(uint64_t);
+    env->bracketsOffset = (uint64_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += bracketsCount * sizeof(uint64_t);
 
     env->localsCount = localsCount;
     env->fovsCount = patternsCount;
@@ -157,8 +157,8 @@ void clearCurrFuncEnvData()
 
 struct vclosure_t* allocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback)
 {
-    struct vclosure_t* closure = (struct vclosure_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct vclosure_t);
+    struct vclosure_t* closure = (struct vclosure_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += sizeof(struct vclosure_t);
 
     closure->params = allocateFragment(paramsCount);
 
@@ -172,15 +172,15 @@ struct vclosure_t* allocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount
 
 struct vint_t* allocateIntStruct(uint64_t length)
 {
-    struct vint_t* pointer = (struct vint_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct vint_t);
+    struct vint_t* pointer = (struct vint_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += sizeof(struct vint_t);
 
-    pointer->bytes = (uint8_t*)(memMngr.data + memMngr.dataOffset);
+    pointer->bytes = (uint8_t*)(_memMngr.data + _memMngr.dataOffset);
     pointer->length = length;
 
     memset(pointer->bytes, 0, length);
 
-    memMngr.dataOffset += length;
+    _memMngr.dataOffset += length;
 
     return pointer;
 }
@@ -200,11 +200,11 @@ struct lterm_t* allocateBuiltinsResult(uint64_t offset, uint64_t length)
 
 struct lterm_t* allocateFragmentLTerm(uint32_t count)
 {
-    struct lterm_t* lterm = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += count * sizeof(struct lterm_t);
+    struct lterm_t* lterm = (struct lterm_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += count * sizeof(struct lterm_t);
 
-    struct fragment_t* fragment = (struct fragment_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += count * sizeof(struct fragment_t);
+    struct fragment_t* fragment = (struct fragment_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += count * sizeof(struct fragment_t);
 
     struct lterm_t* head = lterm;
 
@@ -222,24 +222,24 @@ struct lterm_t* allocateFragmentLTerm(uint32_t count)
 
 struct fragment_t* allocateFragment(uint32_t count)
 {
-    struct fragment_t* fragment = (struct fragment_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += count * sizeof(struct fragment_t);
+    struct fragment_t* fragment = (struct fragment_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += count * sizeof(struct fragment_t);
 
     return fragment;
 }
 
 struct lterm_t* allocateFuncCallLTerm()
 {
-    struct lterm_t* lterm = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset +=  sizeof(struct lterm_t);
+    struct lterm_t* lterm = (struct lterm_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset +=  sizeof(struct lterm_t);
 
-    lterm->funcCall = (struct func_call_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct func_call_t);
+    lterm->funcCall = (struct func_call_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += sizeof(struct func_call_t);
 
     memset(lterm->funcCall, 0, sizeof(struct func_call_t));
 
-    lterm->funcCall->env = (struct env_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct env_t);
+    lterm->funcCall->env = (struct env_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += sizeof(struct env_t);
 
     memset(lterm->funcCall->env, 0, sizeof(struct env_t));
 
@@ -250,8 +250,8 @@ struct lterm_t* allocateFuncCallLTerm()
 
 struct lterm_t* allocateChainKeeperLTerm(uint32_t count)
 {
-    struct lterm_t* chainKeeperTerm = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += count * sizeof(struct lterm_t);
+    struct lterm_t* chainKeeperTerm = (struct lterm_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += count * sizeof(struct lterm_t);
 
     struct lterm_t* head = chainKeeperTerm;
 
@@ -269,8 +269,8 @@ struct lterm_t* allocateChainKeeperLTerm(uint32_t count)
 
 struct lterm_t* allocateSimpleChain()
 {
-    struct lterm_t* chain = (struct lterm_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct lterm_t);
+    struct lterm_t* chain = (struct lterm_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += sizeof(struct lterm_t);
 
     chain->tag = L_TERM_CHAIN_TAG;
     chain->prev = chain;

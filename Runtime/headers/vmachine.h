@@ -19,9 +19,9 @@
 
 #define CURR_FUNC_CALL (_currCallTerm->funcCall)
 
-#define VTERM_BRACKETS(vtermInd) (memMngr.vterms[vtermInd].brackets)
+#define VTERM_BRACKETS(vtermInd) (_memMngr.vterms[vtermInd].brackets)
 
-#define RIGHT_BOUND(vtermInd) (memMngr.vterms[vtermInd].brackets->offset + memMngr.vterms[vtermInd].brackets->length)
+#define RIGHT_BOUND(vtermInd) (_memMngr.vterms[vtermInd].brackets->offset + _memMngr.vterms[vtermInd].brackets->length)
 
 /// Главный цикл программы.
 void mainLoop(const char*, RefalFunc);
@@ -30,7 +30,6 @@ void mainLoop(const char*, RefalFunc);
 /// В процессе выполнения могут быть вызваны сборщики мусора vterm'ов и lterm'ов.
 uint64_t gcGetAssembliedChain(struct lterm_t* chain);
 
-//struct func_call_t* _currFuncCall;
 struct lterm_t* _currCallTerm;
 
 uint64_t getHeapSize(int argc, char** argv);

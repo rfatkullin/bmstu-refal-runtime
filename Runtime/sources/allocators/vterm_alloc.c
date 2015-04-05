@@ -22,32 +22,32 @@ allocate_result allocateVTerms(struct fragment_t* frag)
     uint64_t i = 0;
     for (i = 0; i < frag->length; ++i)
     {
-        memMngr.vterms[memMngr.vtermsOffset].tag = memMngr.vterms[frag->offset + i].tag;
+        _memMngr.vterms[_memMngr.vtermsOffset].tag = _memMngr.vterms[frag->offset + i].tag;
 
-        switch (memMngr.vterms[frag->offset + i].tag)
+        switch (_memMngr.vterms[frag->offset + i].tag)
         {
             case V_CHAR_TAG:
-                memMngr.vterms[memMngr.vtermsOffset++].ch = memMngr.vterms[frag->offset + i].ch;
+                _memMngr.vterms[_memMngr.vtermsOffset++].ch = _memMngr.vterms[frag->offset + i].ch;
                 break;
 
             case V_IDENT_TAG :
-                memMngr.vterms[memMngr.vtermsOffset++].str = memMngr.vterms[frag->offset + i].str;
+                _memMngr.vterms[_memMngr.vtermsOffset++].str = _memMngr.vterms[frag->offset + i].str;
                 break;
 
             case V_INT_NUM_TAG:
-                memMngr.vterms[memMngr.vtermsOffset++].intNum = memMngr.vterms[frag->offset + i].intNum;
+                _memMngr.vterms[_memMngr.vtermsOffset++].intNum = _memMngr.vterms[frag->offset + i].intNum;
                 break;
 
             case V_DOUBLE_NUM_TAG:
-                memMngr.vterms[memMngr.vtermsOffset++].doubleNum = memMngr.vterms[frag->offset + i].doubleNum;
+                _memMngr.vterms[_memMngr.vtermsOffset++].doubleNum = _memMngr.vterms[frag->offset + i].doubleNum;
                 break;
 
             case V_CLOSURE_TAG:
-                memMngr.vterms[memMngr.vtermsOffset++].closure = memMngr.vterms[frag->offset + i].closure;
+                _memMngr.vterms[_memMngr.vtermsOffset++].closure = _memMngr.vterms[frag->offset + i].closure;
                 break;
 
             case V_BRACKETS_TAG:
-                memMngr.vterms[memMngr.vtermsOffset++].brackets = memMngr.vterms[frag->offset + i].brackets;
+                _memMngr.vterms[_memMngr.vtermsOffset++].brackets = _memMngr.vterms[frag->offset + i].brackets;
                 break;
         }        
     }
@@ -64,9 +64,9 @@ uint64_t chAllocateClosureVTerm(allocate_result* res)
 
 uint64_t allocateDoubleNumVTerm(double value)
 {
-    memMngr.vterms[memMngr.vtermsOffset].tag = V_DOUBLE_NUM_TAG;
-    memMngr.vterms[memMngr.vtermsOffset].doubleNum = value;
-    return memMngr.vtermsOffset++;
+    _memMngr.vterms[_memMngr.vtermsOffset].tag = V_DOUBLE_NUM_TAG;
+    _memMngr.vterms[_memMngr.vtermsOffset].doubleNum = value;
+    return _memMngr.vtermsOffset++;
 }
 
 uint64_t allocateUInt8VTerm(uint8_t val)
@@ -80,39 +80,39 @@ uint64_t allocateUInt8VTerm(uint8_t val)
 
 uint64_t allocateClosureVTerm()
 {
-    memMngr.vterms[memMngr.vtermsOffset].tag = V_CLOSURE_TAG;
+    _memMngr.vterms[_memMngr.vtermsOffset].tag = V_CLOSURE_TAG;
 
-    return memMngr.vtermsOffset++;
+    return _memMngr.vtermsOffset++;
 }
 
 uint64_t allocateSymbolVTerm(uint32_t ch)
 {
-    memMngr.vterms[memMngr.vtermsOffset].tag = V_CHAR_TAG;
-    memMngr.vterms[memMngr.vtermsOffset].ch = ch;
+    _memMngr.vterms[_memMngr.vtermsOffset].tag = V_CHAR_TAG;
+    _memMngr.vterms[_memMngr.vtermsOffset].ch = ch;
 
-    return memMngr.vtermsOffset++;
+    return _memMngr.vtermsOffset++;
 }
 
 uint64_t allocateIntNumVTerm(struct vint_t* value)
 {
-    memMngr.vterms[memMngr.vtermsOffset].tag = V_INT_NUM_TAG;
-    memMngr.vterms[memMngr.vtermsOffset].intNum = value;
-    return memMngr.vtermsOffset++;
+    _memMngr.vterms[_memMngr.vtermsOffset].tag = V_INT_NUM_TAG;
+    _memMngr.vterms[_memMngr.vtermsOffset].intNum = value;
+    return _memMngr.vtermsOffset++;
 }
 
 uint64_t allocateBracketsVTerm()
 {
-    memMngr.vterms[memMngr.vtermsOffset].tag = V_BRACKETS_TAG;    
-    memMngr.vterms[memMngr.vtermsOffset].brackets = (struct fragment_t*)(memMngr.data + memMngr.dataOffset);
-    memMngr.dataOffset += sizeof(struct fragment_t);
+    _memMngr.vterms[_memMngr.vtermsOffset].tag = V_BRACKETS_TAG;
+    _memMngr.vterms[_memMngr.vtermsOffset].brackets = (struct fragment_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += sizeof(struct fragment_t);
 
-    return memMngr.vtermsOffset++;
+    return _memMngr.vtermsOffset++;
 }
 
 void setBracketsData(uint64_t bracketsTermoffset, uint64_t offset, uint64_t length)
 {    
-    memMngr.vterms[bracketsTermoffset].brackets->offset = offset;
-    memMngr.vterms[bracketsTermoffset].brackets->length = length;
+    _memMngr.vterms[bracketsTermoffset].brackets->offset = offset;
+    _memMngr.vterms[bracketsTermoffset].brackets->length = length;
 }
 
 /// Память для литералов выделяется с помощью malloc'а. Т.е. не в куче данных.
