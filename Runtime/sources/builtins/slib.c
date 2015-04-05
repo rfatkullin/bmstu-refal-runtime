@@ -39,8 +39,7 @@ void gcInitBuiltin()
     memset(CURR_FUNC_CALL->env->assembled, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(struct lterm_t*));
     memset(CURR_FUNC_CALL->env->stretchVarsNumber, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(int));
 
-    uint64_t tmpFragmentOffset = gcGetAssembliedChain(CURR_FUNC_CALL->fieldOfView);
-    CURR_FUNC_CALL->env->assembled[0] = tmpFragmentOffset;    
+    ASSEMBLY_FIELD(0, CURR_FUNC_CALL->fieldOfView);
 }
 
 struct func_result_t Arg(int entryStatus)

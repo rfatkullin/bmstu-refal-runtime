@@ -117,7 +117,7 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
 }
 
 static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
-{
+{    
     GC_DATA_HEAP_CHECK_EXIT(ENV_SIZE(from->localsCount, from->fovsCount, from->bracketsCount) + // ENV
                             FRAGMENT_STRUCT_SIZE(from->paramsCount));                           // params
 
@@ -127,21 +127,17 @@ static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
     if (from->params)
     {
         to->params = allocateFragment(from->paramsCount);
-
-        for (i = 0; i < from->paramsCount; ++i)
-            memcpy(to->params + i, from->params + i, sizeof(struct fragment_t));
+        memcpy(to->params, from->params, FRAGMENT_STRUCT_SIZE(from->paramsCount));
     }
 
-    for (i = 0; i < from->localsCount; ++i)
-        memcpy(to->locals + i, from->locals + i, sizeof(struct fragment_t));
+    if (from->params)
+        memcpy(to->locals, from->locals, FRAGMENT_STRUCT_SIZE(from->localsCount));
 
-    for (i = 0; i < from->fovsCount; ++i)
-    {
-        if (from->assembled[i])
-            to->assembled[i] = from->assembled[i];
-    }
-
+    memcpy(to->assembled, from->assembled, from->fovsCount * sizeof(uint64_t));
     memcpy(to->stretchVarsNumber, from->stretchVarsNumber, from->fovsCount * sizeof(int));
+
+    if (from->workFieldOfView)
+        to->workFieldOfView = copySimpleChain(from->workFieldOfView);
 
     return to;
 }

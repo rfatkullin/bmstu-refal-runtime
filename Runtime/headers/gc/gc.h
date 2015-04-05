@@ -70,7 +70,7 @@ do{                                                         \
 }while(0)
 
 
-#define GC_RETURN_ON_FAIL(res)                              \
+#define GC_RETURN_ON_NEED_CLEAN(res)                              \
 do{                                                         \
     if (res == GC_NEED_CLEAN)                               \
         return res;                                         \
@@ -83,13 +83,18 @@ do{                                 \
     oldTerm->tag = GC_MOVED;        \
 }while(0)
 
-
-#define SET_ACTUAL(lterm)       \
-do{                             \
-    if (lterm->tag == GC_MOVED) \
-        lterm = lterm->prev;    \
+#define DOUBLE_TRY(var, expr, statusVar)            \
+do                                                  \
+{                                                   \
+    var = expr;                                     \
+    if (statusVar == GC_NEED_CLEAN)               \
+    {                                               \
+        collectGarbage();                           \
+        var = expr;                                 \
+        if (statusVar == GC_NEED_CLEAN)           \
+            PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG); \
+    }                                               \
 }while(0)
-
 
 /// Собирает мусор.
 void collectGarbage();

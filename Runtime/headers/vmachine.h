@@ -1,6 +1,7 @@
 #ifndef __V_MACHINE_H__
 #define __V_MACHINE_H__
 
+#include "gc/gc.h"
 #include "lterm.h"
 #include "func_call.h"
 
@@ -23,12 +24,20 @@
 
 #define RIGHT_BOUND(vtermInd) (_memMngr.vterms[vtermInd].brackets->offset + _memMngr.vterms[vtermInd].brackets->length)
 
+#define ASSEMBLY_FIELD(index, chain)                                \
+do{                                                                 \
+    allocate_result res;                                            \
+    uint64_t tmpOffset;                                             \
+    DOUBLE_TRY(tmpOffset, gcGetAssembliedChain(chain, &res), res);  \
+    CURR_FUNC_CALL->env->assembled[index] = tmpOffset;              \
+}while(0)
+
 /// Главный цикл программы.
 void mainLoop(const char*, RefalFunc);
 
 /// Выполняет сборку lterm'ов в vterm'ы.
 /// В процессе выполнения могут быть вызваны сборщики мусора vterm'ов и lterm'ов.
-uint64_t gcGetAssembliedChain(struct lterm_t* chain);
+uint64_t gcGetAssembliedChain(struct lterm_t* chain, allocate_result *res);
 
 struct lterm_t* _currCallTerm;
 

@@ -7,17 +7,10 @@
 #include <allocators/vterm_alloc.h>
 #include <memory_manager.h>
 
-uint64_t gcAllocateBracketVterm()
+uint64_t allocateVTerms(struct fragment_t* frag, allocate_result* res)
 {
-    checkAndCleanHeaps(1, sizeof(struct fragment_t));
-
-    return allocateBracketsVTerm();
-}
-
-allocate_result allocateVTerms(struct fragment_t* frag)
-{    
-    if (GC_VTERM_OV(frag->length))
-        return GC_NEED_CLEAN;
+    uint64_t resOffset = _memMngr.vtermsOffset;
+    GC_VTERM_HEAP_CHECK_RETURN(frag->length, *res);
 
     uint64_t i = 0;
     for (i = 0; i < frag->length; ++i)
@@ -52,7 +45,15 @@ allocate_result allocateVTerms(struct fragment_t* frag)
         }        
     }
 
-    return GC_OK;
+    return resOffset;
+}
+
+uint64_t chAllocateBracketVterm(allocate_result* res)
+{
+    GC_VTERM_HEAP_CHECK_RETURN(1, *res);
+    GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_STRUCT_SIZE(1), *res);
+
+    return allocateBracketsVTerm();
 }
 
 uint64_t chAllocateClosureVTerm(allocate_result* res)

@@ -15,12 +15,11 @@
 #define BUILTINS_RESULT_SIZE                    (FRAGMENT_LTERM_SIZE(1) + CHAIN_LTERM_SIZE)
 #define VCLOSURE_SIZE(paramsCount)              (sizeof(struct vclosure_t) + FRAGMENT_STRUCT_SIZE(paramsCount))
 #define VSTRING_SIZE(length)                    (sizeof(struct vstring_t) + length * sizeof(uint32_t))
-#define ENV_SIZE(localsCount, patternsCount, bracketsCount)     \
-        ( FRAGMENT_STRUCT_SIZE(localsCount)                     \
-        + patternsCount * sizeof(struct lterm_t*)               \
-        + patternsCount * sizeof(struct lterm_t*)               \
-        + patternsCount * sizeof(int)                           \
-        + bracketsCount * sizeof(uint64_t))                     \
+#define ENV_SIZE(localsCount, patternsCount, bracketsCount)                     \
+        ( FRAGMENT_STRUCT_SIZE(localsCount)                     /*locals*/      \
+        + patternsCount * sizeof(uint64_t)                      /*assembleds*/  \
+        + patternsCount * sizeof(int)                           /*stretchs*/    \
+        + bracketsCount * sizeof(uint64_t))                     /*brackets*/    \
 
 #define FOV_CONTAINS_FUNC_CALL      "FieldOfView passed in funcation contains func call term!\n"
 #define FOV_CONTAINS_SIMPLE_CHAIN   "FieldOfView can't contains simple chain without chain keeper!\n"

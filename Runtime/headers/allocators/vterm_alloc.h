@@ -19,11 +19,11 @@ uint64_t allocateUInt8VTerm(uint8_t val);
 uint64_t allocateClosureVTerm();
 
 /// Копирует термы из фрагмента в новую область.
-allocate_result allocateVTerms(struct fragment_t* fragment_t);
+uint64_t allocateVTerms(struct fragment_t* frag, allocate_result* res);
 
 /// Изменяет длину выражения в скобках.
 void setBracketsData(uint64_t bracketsTermoffset, uint64_t offset, uint64_t length);
 
-uint64_t gcAllocateBracketVterm();
+uint64_t chAllocateBracketVterm(allocate_result* res);
 
 #endif

@@ -14,7 +14,7 @@
 static void printChainOfCalls(struct lterm_t* callTerm);
 static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult, struct lterm_t** lastCallFuncFOV);
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
-static allocate_result gcAssemblyChain(struct lterm_t* chain, uint64_t* length);
+static uint64_t gcAssemblyChain(struct lterm_t* chain, uint64_t* length, allocate_result* res);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm);
 static void onFuncFail(struct lterm_t** callTerm, int failResult);
@@ -248,22 +248,9 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     callTerm->funcCall->env->paramsCount = closure->paramsCount;
     callTerm->funcCall->rollback = closure->rollback;
 
-    /*if (closure->ident)
-    {
-        printf("^");
-        printUStr(stdout, closure->ident);
-        printf("^\n");
-    }
-    else
-        printf("AnonymFunc\n");*/
-
     // Remove fragment with closure => lost closure => GC will clean it.
     fieldOfView->next = fieldOfView->next->next;
     fieldOfView->next->prev = fieldOfView;
-
-    //printFieldOfView(stdout, fieldOfView);
-    //struct lterm_t* assembledFOV = gcGetAssembliedChain(callTerm->funcCall->fieldOfView);
-    //printFragment(stdout, assembledFOV->fragment);
 
 	return newFuncPointer;
 }
@@ -310,37 +297,20 @@ static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_r
 	return newCurrNode;
 }
 
-uint64_t gcGetAssembliedChain(struct lterm_t* chain)
+uint64_t gcGetAssembliedChain(struct lterm_t* chain, allocate_result *res)
 {    
     uint64_t assembledVtermOffset = 0;
     uint64_t length = 0;
+    uint64_t offset = 0;
 
     if (chain != 0)
     {
         if (chain->tag != L_TERM_CHAIN_TAG)
             PRINT_AND_EXIT(ASSEMBLY_NOT_CHAIN);
 
-        assembledVtermOffset = gcAllocateBracketVterm();
+        CHECK_ALLOCATION_RETURN(assembledVtermOffset, chAllocateBracketVterm(res), *res);
 
-        SET_ACTUAL(chain);
-
-        uint64_t offset = _memMngr.vtermsOffset;
-
-        if(gcAssemblyChain(chain, &length) == GC_NEED_CLEAN)
-        {            
-            collectGarbage();
-
-            SET_ACTUAL(chain);
-            offset = _memMngr.vtermsOffset;
-
-            if (gcAssemblyChain(chain, &length) == GC_NEED_CLEAN)
-                PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
-
-            if (GC_VTERM_OV(1) || GC_LTERM_OV(sizeof(struct fragment_t)))
-                PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
-
-            assembledVtermOffset = allocateBracketsVTerm();
-        }
+        CHECK_ALLOCATION_RETURN(offset, gcAssemblyChain(chain, &length, res), *res);
 
         VTERM_BRACKETS(assembledVtermOffset)->offset = offset;
         VTERM_BRACKETS(assembledVtermOffset)->length = length;
@@ -349,10 +319,11 @@ uint64_t gcGetAssembliedChain(struct lterm_t* chain)
     return assembledVtermOffset;
 }
 
-static allocate_result assemblyTopVTerms(struct lterm_t* chain, uint64_t* length)
+static uint64_t assemblyTopVTerms(struct lterm_t* chain, uint64_t* length, allocate_result* res)
 {
+    uint64_t resOffset = _memMngr.vtermsOffset;
     struct lterm_t* currTerm = chain->next;
-     *length= 0;
+    *length= 0;
 
     while (currTerm != chain)
     {
@@ -360,14 +331,15 @@ static allocate_result assemblyTopVTerms(struct lterm_t* chain, uint64_t* length
         {
             case L_TERM_FRAGMENT_TAG :
             {
-                GC_RETURN_ON_FAIL(allocateVTerms(currTerm->fragment));
+                uint64_t offset = 0;
+                CHECK_ALLOCATION_RETURN(offset, allocateVTerms(currTerm->fragment, res), *res);
                 *length += currTerm->fragment->length;
                 break;
             }
             case L_TERM_CHAIN_KEEPER_TAG:
             {
-                if (GC_VTERM_OV(1) || GC_LTERM_OV(sizeof(struct fragment_t)))
-                    return GC_NEED_CLEAN;
+                GC_VTERM_HEAP_CHECK_RETURN(1, *res);
+                GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_STRUCT_SIZE(1), *res);
 
                 allocateBracketsVTerm();
                 ++*length;
@@ -389,15 +361,17 @@ static allocate_result assemblyTopVTerms(struct lterm_t* chain, uint64_t* length
         currTerm = currTerm->next;
     }
 
-    return GC_OK;
+    return resOffset;
 }
 
-static allocate_result gcAssemblyChain(struct lterm_t* chain, uint64_t* length)
+static uint64_t gcAssemblyChain(struct lterm_t* chain, uint64_t* length, allocate_result* res)
 {
+    *res = GC_OK;
+    uint64_t resOffset = _memMngr.vtermsOffset;
     struct lterm_t* currTerm = chain->next;
-    uint64_t topVTermsOffset = _memMngr.vtermsOffset;
+    uint64_t topVTermsOffset = 0;
 
-    GC_RETURN_ON_FAIL(assemblyTopVTerms(chain, length));
+    CHECK_ALLOCATION_RETURN(topVTermsOffset, assemblyTopVTerms(chain, length, res), *res);
 
     while (currTerm != chain)
     {
@@ -410,12 +384,13 @@ static allocate_result gcAssemblyChain(struct lterm_t* chain, uint64_t* length)
             }
             case L_TERM_CHAIN_KEEPER_TAG:
             {
-                if (GC_VTERM_OV(1) || GC_LTERM_OV(sizeof(struct fragment_t)))
-                    return GC_NEED_CLEAN;
+                GC_VTERM_HEAP_CHECK_RETURN(1, *res);
+                GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_STRUCT_SIZE(1), *res);
 
-                uint64_t offset = _memMngr.vtermsOffset;
+                uint64_t offset = 0;
                 uint64_t tmpLength = 0;
-                GC_RETURN_ON_FAIL(gcAssemblyChain(currTerm->chain, &tmpLength));
+
+                CHECK_ALLOCATION_RETURN(offset, gcAssemblyChain(currTerm->chain, &tmpLength, res), *res);
 
                 setBracketsData(topVTermsOffset, offset, tmpLength);
 
@@ -428,5 +403,5 @@ static allocate_result gcAssemblyChain(struct lterm_t* chain, uint64_t* length)
         currTerm = currTerm->next;
     }
 
-    return GC_OK;
+    return resOffset;
 }

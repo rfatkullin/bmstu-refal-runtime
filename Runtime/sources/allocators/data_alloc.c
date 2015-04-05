@@ -112,9 +112,6 @@ struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patt
 {
     env->locals = allocateFragment(localsCount);
 
-    env->workFieldOfView = (struct lterm_t*)(_memMngr.data + _memMngr.dataOffset);
-    _memMngr.dataOffset += sizeof(struct lterm_t);
-
     env->assembled = (uint64_t*)(_memMngr.data + _memMngr.dataOffset);
     _memMngr.dataOffset += patternsCount * sizeof(uint64_t);
 
@@ -128,8 +125,7 @@ struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patt
     env->fovsCount = patternsCount;
     env->bracketsCount = bracketsCount;
 
-    memset(env->locals, 0, localsCount * sizeof(struct fragment_t));
-    memset(env->workFieldOfView, 0, sizeof(struct lterm_t));
+    memset(env->locals, 0, localsCount * sizeof(struct fragment_t));    
     memset(env->assembled, 0, patternsCount * sizeof(struct lterm_t*));
     memset(env->stretchVarsNumber, 0, patternsCount * sizeof(int));
 
