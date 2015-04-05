@@ -239,6 +239,8 @@ static void setActualDataInVTerms()
     uint64_t i;
     for (i = memMngr.vtActiveOffset; i < memMngr.vtermsOffset; ++i)
     {
+        printf("For term: %" PRIu64 " \n", i);
+
         // Pass literals vterms. No need copy them.
         if (i < memMngr.vtermsBeginOffset)
             continue;
@@ -253,6 +255,7 @@ static void setActualDataInVTerms()
             case V_BRACKETS_TAG:
             {
                 setActualFragmentOffset(memMngr.vterms[i].brackets);
+                printf("\tNew brackets offset: %" PRIu64 " \n", memMngr.vterms[i].brackets->offset);
                 break;
             }
         }

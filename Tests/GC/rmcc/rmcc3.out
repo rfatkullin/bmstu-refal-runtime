@@ -1,0 +1,525 @@
+Heap size: 36700160
+Real Men Compiler Constructor
+    source-file : ../../Tests/RealTasks/RMCC/refal7.bnf
+    token-file  : ../../Tests/RealTasks/RMCC/refal7.tokens
+    dest-file   : stdout
+    report-file : /dev/null
+----------------/
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+
+/*
+ * Terminal symbols.
+ */
+
+#define TS_STRING                (short)L_STRING
+#define TS_COMPOUND              (short)L_COMPOUND
+#define TS_INTEGER               (short)L_INTEGER
+#define TS_FLOAT                 (short)L_FLOAT
+#define TS_VAR                   (short)L_VAR
+Start garbage collection.
+End garbage collection.
+#define TS_ENTRY                 (short)L_ENTRY
+#define TS_SE                    (short)L_SE
+#define TS_EXTERN                (short)L_EXTERN
+#define TS_L                     (short)L_L
+#define TS_R                     (short)L_R
+#define TS_FUNC                  (short)L_FUNC
+#define TS_QMARK                 (short)L_QMARK
+#define TS_SEMICOLON             (short)L_SEMICOLON
+#define TS_LPAREN                (short)L_LPAREN
+#define TS_RPAREN                (short)L_RPAREN
+#define TS_LBRACE                (short)L_LBRACE
+#define TS_RBRACE                (short)L_RBRACE
+#define TS_LEVAL                 (short)L_LEVAL
+#define TS_REVAL                 (short)L_REVAL
+#define TS_COMMA                 (short)L_COMMA
+#define TS_REPLACE               (short)L_REPLACE
+#define TS_COLON                 (short)L_COLON
+#define TS_DCOLON                (short)L_DCOLON
+#define TS_TARROW                (short)L_TARROW
+#define TS_ARROW                 (short)L_ARROW
+#define TS_TILDE                 (short)L_TILDE
+#define TS_CR                    (short)L_CR
+#define TS_WS                    (short)L_WS
+Start garbage collection.
+End garbage collection.
+#define TS_END_OF_INPUT          (short)L_END_OF_INPUT
+
+/*
+ * Terminal symbols strings.
+ */
+static char *ts_str[] =
+{
+    "TS_STRING",
+    "TS_COMPOUND",
+    "TS_INTEGER",
+    "TS_FLOAT",
+    "TS_VAR",
+    "TS_ENTRY",
+    "TS_SE",
+    "TS_EXTERN",
+    "TS_L",
+    "TS_R",
+    "TS_FUNC",
+    "TS_QMARK",
+    "TS_SEMICOLON",
+    "TS_LPAREN",
+    "TS_RPAREN",
+    "TS_LBRACE",
+    "TS_RBRACE",
+Start garbage collection.
+End garbage collection.
+    "TS_LEVAL",
+    "TS_REVAL",
+    "TS_COMMA",
+    "TS_REPLACE",
+    "TS_COLON",
+    "TS_DCOLON",
+    "TS_TARROW",
+    "TS_ARROW",
+    "TS_TILDE",
+    "TS_CR",
+    "TS_WS",
+    "TS_END_OF_INPUT"
+};
+
+/*
+ * Nonterminal symbols.
+ */
+
+#define NS_PROGRAM               (short)1000
+#define NS_DECLARATION           (short)1001
+#define NS_DECL_TAIL             (short)1002
+#define NS_EXT_TAIL              (short)1003
+#define NS_EXT_TAIL2             (short)1004
+#define NS_MOD                   (short)1005
+Start garbage collection.
+End garbage collection.
+#define NS_NAMES                 (short)1006
+#define NS_F_NAME                (short)1007
+#define NS_E_NAME                (short)1008
+#define NS_BODY                  (short)1009
+#define NS_SEMICOLONS            (short)1010
+#define NS_OPT_SEMICOLONS        (short)1011
+#define NS_EXTRA_SEMICOLONS      (short)1012
+#define NS_BLOCK                 (short)1013
+#define NS_REP_SENTENCE          (short)1014
+#define NS_TL_REP_SENTENCE       (short)1015
+#define NS_SENTENCE              (short)1016
+#define NS_REP_ACTION            (short)1017
+#define NS_ACTION                (short)1018
+#define NS_OPERATION             (short)1019
+#define NS_EXPR                  (short)1020
+#define NS_EXPR_                 (short)1021
+#define NS_TL_EXPR_              (short)1022
+#define NS_TL_EXPR               (short)1023
+#define NS_TERM                  (short)1024
+#define NS_TERM_                 (short)1025
+#define NS_REP_EXPR              (short)1026
+
+/*
+ * Nonterminal symbols strings.
+ */
+static char *ns_str[] =
+Start garbage collection.
+End garbage collection.
+{
+    "NS_PROGRAM",
+    "NS_DECLARATION",
+    "NS_DECL_TAIL",
+    "NS_EXT_TAIL",
+    "NS_EXT_TAIL2",
+    "NS_MOD",
+    "NS_NAMES",
+    "NS_F_NAME",
+    "NS_E_NAME",
+    "NS_BODY",
+    "NS_SEMICOLONS",
+    "NS_OPT_SEMICOLONS",
+    "NS_EXTRA_SEMICOLONS",
+    "NS_BLOCK",
+    "NS_REP_SENTENCE",
+    "NS_TL_REP_SENTENCE",
+    "NS_SENTENCE",
+    "NS_REP_ACTION",
+    "NS_ACTION",
+    "NS_OPERATION",
+    "NS_EXPR",
+    "NS_EXPR_",
+    "NS_TL_EXPR_",
+    "NS_TL_EXPR",
+    "NS_TERM",
+    "NS_TERM_",
+Start garbage collection.
+End garbage collection.
+    "NS_REP_EXPR"
+};
+
+/*
+ * Semantic actions symbols.
+ */
+
+#define AS_DECL_START            (short)(-1)
+#define AS_EXT_START             (short)(-2)
+#define AS_ERR_FNAME             (short)(-3)
+#define AS_DECL_END              (short)(-4)
+#define AS_SET_SE                (short)(-5)
+#define AS_EXT_END               (short)(-6)
+#define AS_SET_ENTRY             (short)(-7)
+#define AS_SET_FNAME             (short)(-8)
+#define AS_ADD_ENAME             (short)(-9)
+#define AS_R5_LBRACE             (short)(-10)
+#define AS_BLOCK_START           (short)(-11)
+#define AS_AUX_PUSH              (short)(-12)
+#define AS_SENT_START            (short)(-13)
+#define AS_AUX_POP               (short)(-14)
+#define AS_ACT_START             (short)(-15)
+#define AS_ACT_END               (short)(-16)
+#define AS_SENT_END              (short)(-17)
+#define AS_BLOCK_END             (short)(-18)
+#define AS_R5_RBRACE             (short)(-19)
+#define AS_ERR_SEMICOLON         (short)(-20)
+#define AS_SET_ROLLBACK          (short)(-21)
+Start garbage collection.
+End garbage collection.
+#define AS_OP_COMMA              (short)(-22)
+#define AS_OP_REPLACE            (short)(-23)
+#define AS_OP_COLON              (short)(-24)
+#define AS_OP_DCOLON             (short)(-25)
+#define AS_OP_TARROW             (short)(-26)
+#define AS_OP_ARROW              (short)(-27)
+#define AS_EXPR_START            (short)(-28)
+#define AS_EXPR_END              (short)(-29)
+#define AS_TERM_START            (short)(-30)
+#define AS_TERM_END              (short)(-31)
+#define AS_SET_FUNC_TERM         (short)(-32)
+#define AS_SET_L_TERM            (short)(-33)
+#define AS_SET_R_TERM            (short)(-34)
+#define AS_SET_STR_TERM          (short)(-35)
+#define AS_SET_COMP_TERM         (short)(-36)
+#define AS_SET_INT_TERM          (short)(-37)
+#define AS_SET_FL_TERM           (short)(-38)
+#define AS_SET_VAR_TERM          (short)(-39)
+#define AS_SET_EXPR_TERM         (short)(-40)
+#define AS_SET_EVAL_TERM         (short)(-41)
+
+/*
+ * Terminal symbol with min. code.
+ */
+#define MIN_TERMINAL TS_STRING
+
+/*
+ * Start nonterminal of the grammar.
+ */
+#define START_NONTERMINAL NS_PROGRAM
+
+Start garbage collection.
+End garbage collection.
+/*
+ * LL(1) parse table.
+ */
+static short p7_table[27][29] =
+{
+    { -1, 0,-1,-1,-1, 0, 0, 0,-1,-1,-1, 0,-1,-1,-1, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1 },
+    { -1, 2,-1,-1,-1, 2, 2, 3,-1,-1,-1, 2,-1,-1,-1, 2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { -1, 5,-1,-1,-1,-1,-1,-1,-1,-1,-1, 4,-1,-1,-1, 4,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { -1, 6,-1,-1,-1,-1, 7,-1,-1,-1,-1,-1, 6,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { -1, 8,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { -1,12,-1,-1,-1,11,10,-1,-1,-1,-1,12,-1,-1,-1,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,14,-1,-1,-1,-1,-1,-1,13,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { -1,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { -1,16,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { 18,18,18,18,18,-1,-1,-1,18,18,18,17,-1,18,-1,17,-1,18,-1,18,18,18,18,18,18,-1,-1,-1,-1 },
+    { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,19,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { -1,21,-1,-1,-1,21,21,21,-1,-1,-1,21,20,-1,-1,21,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,21 },
+    { 23,23,23,23,23,23,23,23,23,23,23,23,22,23,-1,23,23,23,-1,23,23,23,23,23,23,-1,-1,-1,23 },
+    { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,25,-1,-1,-1,24,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { 26,26,26,26,26,-1,-1,-1,26,26,26,26,-1,26,-1,26,27,26,-1,26,26,26,26,26,26,-1,-1,-1,-1 },
+    { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,28,-1,-1,-1,29,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { 30,30,30,30,30,-1,-1,-1,30,30,30,30,-1,30,-1,30,-1,30,-1,30,30,30,30,30,30,-1,-1,-1,-1 },
+    { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,32,-1,-1,-1,32,-1,-1,31,31,31,31,31,31,-1,-1,-1,-1 },
+    { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,33,33,33,33,33,33,-1,-1,-1,-1 },
+    { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,34,35,36,37,38,39,-1,-1,-1,-1 },
+    { 40,40,40,40,40,-1,-1,-1,40,40,40,40,40,40,40,40,40,40,40,40,40,40,40,40,40,40,-1,-1,-1 },
+    { 41,41,41,41,41,-1,-1,-1,41,41,41,-1,-1,41,-1,-1,-1,41,-1,41,41,41,41,41,41,-1,-1,-1,-1 },
+    { 42,42,42,42,42,-1,-1,-1,42,42,42,-1,-1,42,-1,-1,-1,42,-1,43,43,43,43,43,43,-1,-1,-1,-1 },
+    { 44,44,44,44,44,-1,-1,-1,44,44,44,44,45,44,45,44,45,44,45,45,45,45,45,45,45,45,-1,-1,-1 },
+    { 46,46,46,46,46,-1,-1,-1,46,46,46,47,-1,46,-1,47,-1,46,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { 50,51,52,53,54,-1,-1,-1,48,49,57,-1,-1,55,-1,-1,-1,56,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+    { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,59,-1,-1,-1,-1,-1,-1,58,-1,-1,-1 }
+};
+
+/*
+ * Synchronization sets table.
+Start garbage collection.
+End garbage collection.
+ */
+static short p7_sync[27][29] =
+{
+    {  0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2 },
+    {  0, 3, 0, 0, 0, 3, 3, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2 },
+    {  0, 3, 0, 0, 0, 2, 2, 2, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2 },
+    {  0, 3, 0, 0, 0, 2, 3, 2, 0, 0, 0, 2, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2 },
+    {  0, 3, 0, 0, 0, 2, 2, 2, 0, 0, 0, 2, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2 },
+    {  0, 2, 0, 0, 0, 1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    {  2, 3, 2, 2, 2, 0, 0, 0, 2, 2, 2, 2, 0, 2, 0, 2, 0, 2, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0 },
+    {  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    {  1, 3, 1, 1, 1, 2, 2, 2, 1, 1, 1, 3, 0, 1, 0, 3, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 2 },
+    {  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 2 },
+    {  0, 2, 0, 0, 0, 2, 2, 2, 0, 0, 0, 2, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2 },
+    {  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 0, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 2 },
+    {  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 2 },
+    {  3, 3, 3, 3, 3, 2, 2, 2, 3, 3, 3, 3, 2, 3, 2, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 2, 0, 0, 2 },
+    {  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 2 },
+    {  1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 2, 1, 0, 1, 2, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0 },
+    {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0 },
+    {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0 },
+    {  2, 2, 2, 2, 2, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 2, 2, 2, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0 },
+    {  1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0 },
+    {  1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0 },
+    {  1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0 },
+    {  1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0 },
+    {  3, 3, 3, 3, 3, 0, 0, 0, 3, 3, 3, 3, 2, 3, 2, 3, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0 },
+    {  3, 3, 3, 3, 3, 0, 0, 0, 3, 3, 3, 2, 2, 3, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0 },
+    {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 }
+};
+
+/*
+ * Nonterminals that can produce empty sequences.
+ */
+static short p7_eps[27] =
+{
+    1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 
+    0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1
+};
+
+/*
+ * Production table.
+ */
+static short p7_prod[230] =
+{
+    /* 0. program ::= declaration program */
+    2, NS_DECLARATION, NS_PROGRAM,
+
+    /* 1. program ::= */
+Start garbage collection.
+End garbage collection.
+    0,
+
+    /* 2. declaration ::= _action_decl_start mod decl-tail */
+    3, AS_DECL_START, NS_MOD, NS_DECL_TAIL,
+
+    /* 3. declaration ::= _action_ext_start L_EXTERN ext-tail */
+    3, AS_EXT_START, TS_EXTERN, NS_EXT_TAIL,
+
+    /* 4. decl-tail ::= _action_err_fname block opt-semicolons _action_decl_end */
+    4, AS_ERR_FNAME, NS_BLOCK, NS_OPT_SEMICOLONS, AS_DECL_END,
+
+    /* 5. decl-tail ::= f-name body _action_decl_end */
+    3, NS_F_NAME, NS_BODY, AS_DECL_END,
+
+    /* 6. ext-tail ::= ext-tail2 */
+    1, NS_EXT_TAIL2,
+
+    /* 7. ext-tail ::= _action_set_se L_SE ext-tail2 */
+    3, AS_SET_SE, TS_SE, NS_EXT_TAIL2,
+
+    /* 8. ext-tail2 ::= e-name names _action_ext_end semicolons */
+    4, NS_E_NAME, NS_NAMES, AS_EXT_END, NS_SEMICOLONS,
+
+    /* 9. ext-tail2 ::= _action_err_fname _action_ext_end semicolons */
+    3, AS_ERR_FNAME, AS_EXT_END, NS_SEMICOLONS,
+
+    /* 10. mod ::= _action_set_se L_SE mod */
+    3, AS_SET_SE, TS_SE, NS_MOD,
+
+    /* 11. mod ::= _action_set_entry L_ENTRY mod */
+    3, AS_SET_ENTRY, TS_ENTRY, NS_MOD,
+
+    /* 12. mod ::= */
+    0,
+
+    /* 13. names ::= L_COMMA e-name names */
+    3, TS_COMMA, NS_E_NAME, NS_NAMES,
+
+    /* 14. names ::= */
+    0,
+
+    /* 15. f-name ::= _action_set_fname L_COMPOUND */
+    2, AS_SET_FNAME, TS_COMPOUND,
+
+    /* 16. e-name ::= _action_add_ename L_COMPOUND */
+    2, AS_ADD_ENAME, TS_COMPOUND,
+
+    /* 17. body ::= block opt-semicolons */
+    2, NS_BLOCK, NS_OPT_SEMICOLONS,
+
+    /* 18. body ::= _action_r5_lbrace _action_block_start _action_aux_push _action_sent_start _action_aux_push expr' _action_aux_pop _action_aux_push _action_act_start action _action_act_end rep-action _action_aux_pop _action_sent_end _action_aux_pop _action_block_end _action_r5_rbrace semicolons */
+    18, AS_R5_LBRACE, AS_BLOCK_START, AS_AUX_PUSH, AS_SENT_START, AS_AUX_PUSH, NS_EXPR_, AS_AUX_POP, AS_AUX_PUSH, AS_ACT_START, NS_ACTION, AS_ACT_END, NS_REP_ACTION, AS_AUX_POP, AS_SENT_END, AS_AUX_POP, AS_BLOCK_END, AS_R5_RBRACE, NS_SEMICOLONS,
+
+    /* 19. semicolons ::= L_SEMICOLON extra-semicolons */
+    2, TS_SEMICOLON, NS_EXTRA_SEMICOLONS,
+
+    /* 20. opt-semicolons ::= semicolons */
+    1, NS_SEMICOLONS,
+
+    /* 21. opt-semicolons ::= */
+    0,
+
+    /* 22. extra-semicolons ::= _action_err_semicolon semicolons */
+    2, AS_ERR_SEMICOLON, NS_SEMICOLONS,
+
+    /* 23. extra-semicolons ::= */
+    0,
+
+    /* 24. block ::= _action_block_start L_LBRACE _action_aux_push rep-sentence _action_aux_pop _action_block_end */
+    6, AS_BLOCK_START, TS_LBRACE, AS_AUX_PUSH, NS_REP_SENTENCE, AS_AUX_POP, AS_BLOCK_END,
+
+    /* 25. block ::= _action_block_start L_QMARK _action_set_rollback L_LBRACE _action_aux_push rep-sentence _action_aux_pop _action_block_end */
+Start garbage collection.
+End garbage collection.
+    8, AS_BLOCK_START, TS_QMARK, AS_SET_ROLLBACK, TS_LBRACE, AS_AUX_PUSH, NS_REP_SENTENCE, AS_AUX_POP, AS_BLOCK_END,
+
+    /* 26. rep-sentence ::= sentence tl-rep-sentence */
+    2, NS_SENTENCE, NS_TL_REP_SENTENCE,
+
+    /* 27. rep-sentence ::= L_RBRACE */
+    1, TS_RBRACE,
+
+    /* 28. tl-rep-sentence ::= semicolons rep-sentence */
+    2, NS_SEMICOLONS, NS_REP_SENTENCE,
+
+    /* 29. tl-rep-sentence ::= L_RBRACE */
+    1, TS_RBRACE,
+
+    /* 30. sentence ::= _action_sent_start _action_aux_push expr _action_aux_pop _action_aux_push _action_act_start action _action_act_end rep-action _action_aux_pop _action_sent_end */
+    11, AS_SENT_START, AS_AUX_PUSH, NS_EXPR, AS_AUX_POP, AS_AUX_PUSH, AS_ACT_START, NS_ACTION, AS_ACT_END, NS_REP_ACTION, AS_AUX_POP, AS_SENT_END,
+
+    /* 31. rep-action ::= _action_act_start action _action_act_end rep-action */
+    4, AS_ACT_START, NS_ACTION, AS_ACT_END, NS_REP_ACTION,
+
+    /* 32. rep-action ::= */
+    0,
+
+    /* 33. action ::= operation _action_aux_push expr _action_aux_pop */
+    4, NS_OPERATION, AS_AUX_PUSH, NS_EXPR, AS_AUX_POP,
+
+    /* 34. operation ::= L_COMMA _action_op_comma */
+    2, TS_COMMA, AS_OP_COMMA,
+
+    /* 35. operation ::= L_REPLACE _action_op_replace */
+    2, TS_REPLACE, AS_OP_REPLACE,
+
+    /* 36. operation ::= L_COLON _action_op_colon */
+    2, TS_COLON, AS_OP_COLON,
+
+    /* 37. operation ::= L_DCOLON _action_op_dcolon */
+    2, TS_DCOLON, AS_OP_DCOLON,
+
+    /* 38. operation ::= L_TARROW _action_op_tarrow */
+    2, TS_TARROW, AS_OP_TARROW,
+
+    /* 39. operation ::= L_ARROW _action_op_arrow */
+    2, TS_ARROW, AS_OP_ARROW,
+
+    /* 40. expr ::= _action_expr_start _action_aux_push tl-expr _action_aux_pop _action_expr_end */
+    5, AS_EXPR_START, AS_AUX_PUSH, NS_TL_EXPR, AS_AUX_POP, AS_EXPR_END,
+
+    /* 41. expr' ::= _action_expr_start _action_aux_push tl-expr' _action_aux_pop _action_expr_end */
+    5, AS_EXPR_START, AS_AUX_PUSH, NS_TL_EXPR_, AS_AUX_POP, AS_EXPR_END,
+
+    /* 42. tl-expr' ::= _action_term_start term' _action_term_end tl-expr */
+    4, AS_TERM_START, NS_TERM_, AS_TERM_END, NS_TL_EXPR,
+
+    /* 43. tl-expr' ::= */
+    0,
+
+    /* 44. tl-expr ::= _action_term_start term _action_term_end tl-expr */
+    4, AS_TERM_START, NS_TERM, AS_TERM_END, NS_TL_EXPR,
+
+    /* 45. tl-expr ::= */
+    0,
+
+    /* 46. term ::= term' */
+    1, NS_TERM_,
+
+    /* 47. term ::= _action_set_func_term block */
+    2, AS_SET_FUNC_TERM, NS_BLOCK,
+
+    /* 48. term' ::= _action_set_l_term L_L */
+    2, AS_SET_L_TERM, TS_L,
+
+    /* 49. term' ::= _action_set_r_term L_R */
+    2, AS_SET_R_TERM, TS_R,
+
+    /* 50. term' ::= _action_set_str_term L_STRING */
+    2, AS_SET_STR_TERM, TS_STRING,
+
+    /* 51. term' ::= _action_set_comp_term L_COMPOUND */
+    2, AS_SET_COMP_TERM, TS_COMPOUND,
+
+    /* 52. term' ::= _action_set_int_term L_INTEGER */
+    2, AS_SET_INT_TERM, TS_INTEGER,
+
+    /* 53. term' ::= _action_set_fl_term L_FLOAT */
+    2, AS_SET_FL_TERM, TS_FLOAT,
+
+    /* 54. term' ::= _action_set_var_term L_VAR */
+    2, AS_SET_VAR_TERM, TS_VAR,
+
+    /* 55. term' ::= _action_set_expr_term L_LPAREN _action_aux_push expr _action_aux_pop L_RPAREN */
+    6, AS_SET_EXPR_TERM, TS_LPAREN, AS_AUX_PUSH, NS_EXPR, AS_AUX_POP, TS_RPAREN,
+
+    /* 56. term' ::= _action_set_eval_term L_LEVAL _action_aux_push expr rep-expr _action_aux_pop L_REVAL */
+    7, AS_SET_EVAL_TERM, TS_LEVAL, AS_AUX_PUSH, NS_EXPR, NS_REP_EXPR, AS_AUX_POP, TS_REVAL,
+
+    /* 57. term' ::= _action_set_func_term L_FUNC f-name block */
+    4, AS_SET_FUNC_TERM, TS_FUNC, NS_F_NAME, NS_BLOCK,
+
+    /* 58. rep-expr ::= L_TILDE expr rep-expr */
+    3, TS_TILDE, NS_EXPR, NS_REP_EXPR,
+
+    /* 59. rep-expr ::= */
+    0
+};
+
+/*
+ * Entries to the production table.
+ */
+static short p7_rows[60] =
+{
+    0,   3,   4,   8,   12,  17,  21,  23,  27,  32,  36,  40,  44,  45,  49,  50,  
+    53,  56,  59,  78,  81,  83,  84,  87,  88,  95,  104, 107, 109, 112, 114, 126, 
+    131, 132, 137, 140, 143, 146, 149, 152, 155, 161, 167, 172, 173, 178, 179, 181, 
+    184, 187, 190, 193, 196, 199, 202, 205, 212, 220, 225, 229  
+};

@@ -14,7 +14,7 @@
 static void printChainOfCalls(struct lterm_t* callTerm);
 static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult, struct lterm_t** lastCallFuncFOV);
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
-static allocate_result assemblyChain(struct lterm_t* chain, uint64_t* length);
+static allocate_result gcAssemblyChain(struct lterm_t* chain, uint64_t* length);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm);
 static void onFuncFail(struct lterm_t** callTerm, int failResult);
@@ -100,6 +100,9 @@ int eqFragment(uint64_t a, uint64_t b, uint64_t length)
 
 int eqSymbol(uint64_t a, uint64_t b)
 {
+//    if (memMngr.vtActiveOffset <= a && a < memMngr.vtActiveOffset + memMngr.vtermsMaxOffset)
+  //      PRINT_AND_EXIT("BEDA!!!\n");
+
     return
         (memMngr.vterms[a].tag == memMngr.vterms[b].tag)
         &&
@@ -174,15 +177,8 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 
         switch (funcRes.status)
         {
-            case OK_RESULT:
-                //printf("Before: ");
-                //printFieldOfView(stdout, memMngr.fieldOfView);
-                //printf("Insert chain: ");
-                //if (funcRes.fieldChain)
-                //    printFieldOfView(stdout, funcRes.fieldChain);
-                _currCallTerm = updateFieldOfView(_currCallTerm, &funcRes, &lastCallFuncFOV);
-                //printf("After: ");
-                //printFieldOfView(stdout, memMngr.fieldOfView);
+            case OK_RESULT:                
+                _currCallTerm = updateFieldOfView(_currCallTerm, &funcRes, &lastCallFuncFOV);                
                 break;
 
             case CALL_RESULT:
@@ -201,7 +197,7 @@ static void onFuncFail(struct lterm_t** callTerm, int failResult)
 {
     if ((failResult && !(*callTerm)->funcCall->rollback) || !(*callTerm)->funcCall->parentCall || (*callTerm)->funcCall->failEntryPoint == -1)
     {        
-        PRINT_AND_EXIT(FUNC_CALL_FAILED);
+        PRINT_AND_EXIT( FUNC_CALL_FAILED);
     }
     else
     {
@@ -330,14 +326,14 @@ uint64_t gcGetAssembliedChain(struct lterm_t* chain)
 
         uint64_t offset = memMngr.vtermsOffset;
 
-        if(assemblyChain(chain, &length) == GC_NEED_CLEAN)
+        if(gcAssemblyChain(chain, &length) == GC_NEED_CLEAN)
         {            
             collectGarbage();
 
             SET_ACTUAL(chain);
             offset = memMngr.vtermsOffset;
 
-            if (assemblyChain(chain, &length) == GC_NEED_CLEAN)
+            if (gcAssemblyChain(chain, &length) == GC_NEED_CLEAN)
                 PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
 
             if (GC_VTERM_OV(1) || GC_LTERM_OV(sizeof(struct fragment_t)))
@@ -396,7 +392,7 @@ static allocate_result assemblyTopVTerms(struct lterm_t* chain, uint64_t* length
     return GC_OK;
 }
 
-static allocate_result assemblyChain(struct lterm_t* chain, uint64_t* length)
+static allocate_result gcAssemblyChain(struct lterm_t* chain, uint64_t* length)
 {
     struct lterm_t* currTerm = chain->next;
     uint64_t topVTermsOffset = memMngr.vtermsOffset;
@@ -419,7 +415,7 @@ static allocate_result assemblyChain(struct lterm_t* chain, uint64_t* length)
 
                 uint64_t offset = memMngr.vtermsOffset;
                 uint64_t tmpLength = 0;
-                GC_RETURN_ON_FAIL(assemblyChain(currTerm->chain, &tmpLength));
+                GC_RETURN_ON_FAIL(gcAssemblyChain(currTerm->chain, &tmpLength));
 
                 setBracketsData(topVTermsOffset, offset, tmpLength);
 

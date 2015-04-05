@@ -11,7 +11,7 @@
 void collectGarbage()
 {
     printf("Start garbage collection.\n");
-    //printFieldOfView(stdout, memMngr.fieldOfView);
+    printMemoryInfo();
 
     collectVTermGarbage(memMngr.fieldOfView);
 
@@ -30,10 +30,10 @@ void collectGarbage()
 
     // To catch bugs
     // Can't set to zero data heap, because target program get net lterms through old lterms (GET_ACTUAL)
-    memset(memMngr.vterms + memMngr.vtInactiveOffset, 0, memMngr.vtermsMaxOffset * sizeof(struct vterm_t));
+    //memset(memMngr.vterms + memMngr.vtInactiveOffset, 0, memMngr.vtermsMaxOffset * sizeof(struct vterm_t));
 
-    //printFieldOfView(stdout, memMngr.fieldOfView);
-    printf("End garbage collection.\n");
+    printf("End garbage collection:\n");
+    printMemoryInfo();
     fflush(stdout);
 }
 
