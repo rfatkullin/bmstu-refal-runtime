@@ -116,6 +116,9 @@ static struct func_result_t _gcGet(FILE* file)
 
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
+    if (CURR_FUNC_CALL->env->workFieldOfView)
+        PRINT_AND_EXIT("BEDA!!!\n");
+
     uint32_t ch;
     while(1)
     {

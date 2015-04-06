@@ -19,8 +19,7 @@ static struct lterm_t* getActual(struct lterm_t* term)
 
 void collectGarbage()
 {
-    printf("Start garbage collection.\n");
-    //printMemoryInfo();
+    printf("Start garbage collection.\n");    
 
     collectVTermGarbage(_memMngr.fieldOfView);
 
@@ -37,12 +36,10 @@ void collectGarbage()
         funcCall = funcCall->next->funcCall;
     }
 
-    //memset(_memMngr.vterms + _memMngr.vtInactiveOffset, 0, _memMngr.vtermsMaxOffset * sizeof(struct vterm_t));
-    //memset(_memMngr.data + _memMngr.dtInactiveOffset, 0, _memMngr.dataMaxOffset * sizeof(uint8_t));
+    memset(_memMngr.vterms + _memMngr.vtInactiveOffset, 0, _memMngr.vtermsMaxOffset * sizeof(struct vterm_t));
+    memset(_memMngr.data + _memMngr.dtInactiveOffset, 0, _memMngr.dataMaxOffset * sizeof(uint8_t));
 
-    printf("End garbage collection:\n");
-    //printMemoryInfo();
-    //fflush(stdout);
+    printf("End garbage collection.\n");
 }
 
 void strictCheckHeaps(uint64_t needTermCount, uint64_t needDataSize)

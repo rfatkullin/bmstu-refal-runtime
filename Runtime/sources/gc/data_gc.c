@@ -138,7 +138,7 @@ static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
     memcpy(to->stretchVarsNumber, from->stretchVarsNumber, from->fovsCount * sizeof(int));
 
     if (from->workFieldOfView)
-        to->workFieldOfView = copySimpleChain(from->workFieldOfView);
+        to->workFieldOfView = copySimpleChain(from->workFieldOfView);    
 
     return to;
 }

@@ -1,10 +1,16 @@
-Heap size: 36700160
+Heap size: 31457280
 Real Men Compiler Constructor
     source-file : ../../Tests/RealTasks/RMCC/refal7.bnf
     token-file  : ../../Tests/RealTasks/RMCC/refal7.tokens
     dest-file   : stdout
     report-file : /dev/null
 ----------------/
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
 Start garbage collection.
 End garbage collection.
 Start garbage collection.
@@ -45,13 +51,13 @@ End garbage collection.
 #define TS_INTEGER               (short)L_INTEGER
 #define TS_FLOAT                 (short)L_FLOAT
 #define TS_VAR                   (short)L_VAR
-Start garbage collection.
-End garbage collection.
 #define TS_ENTRY                 (short)L_ENTRY
 #define TS_SE                    (short)L_SE
 #define TS_EXTERN                (short)L_EXTERN
 #define TS_L                     (short)L_L
 #define TS_R                     (short)L_R
+Start garbage collection.
+End garbage collection.
 #define TS_FUNC                  (short)L_FUNC
 #define TS_QMARK                 (short)L_QMARK
 #define TS_SEMICOLON             (short)L_SEMICOLON
@@ -70,9 +76,9 @@ End garbage collection.
 #define TS_TILDE                 (short)L_TILDE
 #define TS_CR                    (short)L_CR
 #define TS_WS                    (short)L_WS
+#define TS_END_OF_INPUT          (short)L_END_OF_INPUT
 Start garbage collection.
 End garbage collection.
-#define TS_END_OF_INPUT          (short)L_END_OF_INPUT
 
 /*
  * Terminal symbols strings.
@@ -93,11 +99,11 @@ static char *ts_str[] =
     "TS_QMARK",
     "TS_SEMICOLON",
     "TS_LPAREN",
+Start garbage collection.
+End garbage collection.
     "TS_RPAREN",
     "TS_LBRACE",
     "TS_RBRACE",
-Start garbage collection.
-End garbage collection.
     "TS_LEVAL",
     "TS_REVAL",
     "TS_COMMA",
@@ -115,6 +121,8 @@ End garbage collection.
 /*
  * Nonterminal symbols.
  */
+Start garbage collection.
+End garbage collection.
 
 #define NS_PROGRAM               (short)1000
 #define NS_DECLARATION           (short)1001
@@ -122,8 +130,6 @@ End garbage collection.
 #define NS_EXT_TAIL              (short)1003
 #define NS_EXT_TAIL2             (short)1004
 #define NS_MOD                   (short)1005
-Start garbage collection.
-End garbage collection.
 #define NS_NAMES                 (short)1006
 #define NS_F_NAME                (short)1007
 #define NS_E_NAME                (short)1008
@@ -138,6 +144,8 @@ End garbage collection.
 #define NS_REP_ACTION            (short)1017
 #define NS_ACTION                (short)1018
 #define NS_OPERATION             (short)1019
+Start garbage collection.
+End garbage collection.
 #define NS_EXPR                  (short)1020
 #define NS_EXPR_                 (short)1021
 #define NS_TL_EXPR_              (short)1022
@@ -150,8 +158,6 @@ End garbage collection.
  * Nonterminal symbols strings.
  */
 static char *ns_str[] =
-Start garbage collection.
-End garbage collection.
 {
     "NS_PROGRAM",
     "NS_DECLARATION",
@@ -162,6 +168,8 @@ End garbage collection.
     "NS_NAMES",
     "NS_F_NAME",
     "NS_E_NAME",
+Start garbage collection.
+End garbage collection.
     "NS_BODY",
     "NS_SEMICOLONS",
     "NS_OPT_SEMICOLONS",
@@ -179,14 +187,14 @@ End garbage collection.
     "NS_TL_EXPR",
     "NS_TERM",
     "NS_TERM_",
-Start garbage collection.
-End garbage collection.
     "NS_REP_EXPR"
 };
 
 /*
  * Semantic actions symbols.
  */
+Start garbage collection.
+End garbage collection.
 
 #define AS_DECL_START            (short)(-1)
 #define AS_EXT_START             (short)(-2)
@@ -209,10 +217,10 @@ End garbage collection.
 #define AS_R5_RBRACE             (short)(-19)
 #define AS_ERR_SEMICOLON         (short)(-20)
 #define AS_SET_ROLLBACK          (short)(-21)
-Start garbage collection.
-End garbage collection.
 #define AS_OP_COMMA              (short)(-22)
 #define AS_OP_REPLACE            (short)(-23)
+Start garbage collection.
+End garbage collection.
 #define AS_OP_COLON              (short)(-24)
 #define AS_OP_DCOLON             (short)(-25)
 #define AS_OP_TARROW             (short)(-26)
@@ -239,11 +247,11 @@ End garbage collection.
 
 /*
  * Start nonterminal of the grammar.
+Start garbage collection.
+End garbage collection.
  */
 #define START_NONTERMINAL NS_PROGRAM
 
-Start garbage collection.
-End garbage collection.
 /*
  * LL(1) parse table.
  */
@@ -270,6 +278,8 @@ static short p7_table[27][29] =
     { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,33,33,33,33,33,33,-1,-1,-1,-1 },
     { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,34,35,36,37,38,39,-1,-1,-1,-1 },
     { 40,40,40,40,40,-1,-1,-1,40,40,40,40,40,40,40,40,40,40,40,40,40,40,40,40,40,40,-1,-1,-1 },
+Start garbage collection.
+End garbage collection.
     { 41,41,41,41,41,-1,-1,-1,41,41,41,-1,-1,41,-1,-1,-1,41,-1,41,41,41,41,41,41,-1,-1,-1,-1 },
     { 42,42,42,42,42,-1,-1,-1,42,42,42,-1,-1,42,-1,-1,-1,42,-1,43,43,43,43,43,43,-1,-1,-1,-1 },
     { 44,44,44,44,44,-1,-1,-1,44,44,44,44,45,44,45,44,45,44,45,45,45,45,45,45,45,45,-1,-1,-1 },
@@ -280,8 +290,6 @@ static short p7_table[27][29] =
 
 /*
  * Synchronization sets table.
-Start garbage collection.
-End garbage collection.
  */
 static short p7_sync[27][29] =
 {
@@ -309,6 +317,8 @@ static short p7_sync[27][29] =
     {  1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0 },
     {  1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0 },
     {  1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0 },
+Start garbage collection.
+End garbage collection.
     {  3, 3, 3, 3, 3, 0, 0, 0, 3, 3, 3, 3, 2, 3, 2, 3, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0 },
     {  3, 3, 3, 3, 3, 0, 0, 0, 3, 3, 3, 2, 2, 3, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0 },
     {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 }
@@ -332,8 +342,6 @@ static short p7_prod[230] =
     2, NS_DECLARATION, NS_PROGRAM,
 
     /* 1. program ::= */
-Start garbage collection.
-End garbage collection.
     0,
 
     /* 2. declaration ::= _action_decl_start mod decl-tail */
@@ -362,6 +370,8 @@ End garbage collection.
 
     /* 10. mod ::= _action_set_se L_SE mod */
     3, AS_SET_SE, TS_SE, NS_MOD,
+Start garbage collection.
+End garbage collection.
 
     /* 11. mod ::= _action_set_entry L_ENTRY mod */
     3, AS_SET_ENTRY, TS_ENTRY, NS_MOD,
@@ -406,8 +416,6 @@ End garbage collection.
     6, AS_BLOCK_START, TS_LBRACE, AS_AUX_PUSH, NS_REP_SENTENCE, AS_AUX_POP, AS_BLOCK_END,
 
     /* 25. block ::= _action_block_start L_QMARK _action_set_rollback L_LBRACE _action_aux_push rep-sentence _action_aux_pop _action_block_end */
-Start garbage collection.
-End garbage collection.
     8, AS_BLOCK_START, TS_QMARK, AS_SET_ROLLBACK, TS_LBRACE, AS_AUX_PUSH, NS_REP_SENTENCE, AS_AUX_POP, AS_BLOCK_END,
 
     /* 26. rep-sentence ::= sentence tl-rep-sentence */
@@ -442,6 +450,8 @@ End garbage collection.
 
     /* 36. operation ::= L_COLON _action_op_colon */
     2, TS_COLON, AS_OP_COLON,
+Start garbage collection.
+End garbage collection.
 
     /* 37. operation ::= L_DCOLON _action_op_dcolon */
     2, TS_DCOLON, AS_OP_DCOLON,

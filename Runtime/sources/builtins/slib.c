@@ -26,16 +26,12 @@ void gcInitBuiltin()
 
     CURR_FUNC_CALL->env->fovsCount = 1;
 
-    CURR_FUNC_CALL->env->workFieldOfView = (struct lterm_t*)(_memMngr.data + _memMngr.dataOffset);
-    _memMngr.dataOffset += sizeof(struct lterm_t);
-
     CURR_FUNC_CALL->env->assembled = (uint64_t*)(_memMngr.data + _memMngr.dataOffset);
     _memMngr.dataOffset += sizeof(uint64_t);
 
     CURR_FUNC_CALL->env->stretchVarsNumber = (int*)(_memMngr.data + _memMngr.dataOffset);
     _memMngr.dataOffset += sizeof(int);
 
-    memset(CURR_FUNC_CALL->env->workFieldOfView, 0, sizeof(struct lterm_t));
     memset(CURR_FUNC_CALL->env->assembled, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(struct lterm_t*));
     memset(CURR_FUNC_CALL->env->stretchVarsNumber, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(int));
 
