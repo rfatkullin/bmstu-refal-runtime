@@ -53,8 +53,8 @@ CMAKE_BINARY_DIR = /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
+	/usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -398,6 +398,33 @@ sources/gc/vterm_gc.c.s:
 	$(MAKE) -f CMakeFiles/runtime_test.dir/build.make CMakeFiles/runtime_test.dir/sources/gc/vterm_gc.c.s
 .PHONY : sources/gc/vterm_gc.c.s
 
+sources/helpers.o: sources/helpers.c.o
+.PHONY : sources/helpers.o
+
+# target to build an object file
+sources/helpers.c.o:
+	$(MAKE) -f CMakeFiles/runtime.dir/build.make CMakeFiles/runtime.dir/sources/helpers.c.o
+	$(MAKE) -f CMakeFiles/runtime_test.dir/build.make CMakeFiles/runtime_test.dir/sources/helpers.c.o
+.PHONY : sources/helpers.c.o
+
+sources/helpers.i: sources/helpers.c.i
+.PHONY : sources/helpers.i
+
+# target to preprocess a source file
+sources/helpers.c.i:
+	$(MAKE) -f CMakeFiles/runtime.dir/build.make CMakeFiles/runtime.dir/sources/helpers.c.i
+	$(MAKE) -f CMakeFiles/runtime_test.dir/build.make CMakeFiles/runtime_test.dir/sources/helpers.c.i
+.PHONY : sources/helpers.c.i
+
+sources/helpers.s: sources/helpers.c.s
+.PHONY : sources/helpers.s
+
+# target to generate assembly for a file
+sources/helpers.c.s:
+	$(MAKE) -f CMakeFiles/runtime.dir/build.make CMakeFiles/runtime.dir/sources/helpers.c.s
+	$(MAKE) -f CMakeFiles/runtime_test.dir/build.make CMakeFiles/runtime_test.dir/sources/helpers.c.s
+.PHONY : sources/helpers.c.s
+
 sources/memory_manager.o: sources/memory_manager.c.o
 .PHONY : sources/memory_manager.o
 
@@ -543,6 +570,9 @@ help:
 	@echo "... sources/gc/vterm_gc.o"
 	@echo "... sources/gc/vterm_gc.i"
 	@echo "... sources/gc/vterm_gc.s"
+	@echo "... sources/helpers.o"
+	@echo "... sources/helpers.i"
+	@echo "... sources/helpers.s"
 	@echo "... sources/memory_manager.o"
 	@echo "... sources/memory_manager.i"
 	@echo "... sources/memory_manager.s"

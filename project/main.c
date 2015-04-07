@@ -5,6 +5,7 @@
 
 #include <vmachine.h>
 #include <memory_manager.h>
+#include <defines/gc_macros.h>
 #include <builtins/builtins.h>
 #include <allocators/data_alloc.h>
 #include <allocators/vterm_alloc.h>

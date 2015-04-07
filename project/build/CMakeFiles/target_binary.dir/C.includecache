@@ -15,6 +15,8 @@ vmachine.h
 -
 memory_manager.h
 -
+defines/gc_macros.h
+-
 builtins/builtins.h
 -
 allocators/data_alloc.h
@@ -56,6 +58,10 @@ lterm.h
 
 /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/defines/errors_str.h
 
+/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/defines/gc_macros.h
+memory_manager.h
+-
+
 /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/func_call.h
 func_result.h
 -
@@ -77,12 +83,14 @@ stdio.h
 -
 stdlib.h
 -
+inttypes.h
+-
 
 /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/lterm.h
 stdint.h
 -
 func_call.h
-/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/func_call.h
+-
 
 /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/memory_manager.h
 stdint.h

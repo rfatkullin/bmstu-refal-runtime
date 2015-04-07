@@ -4,6 +4,7 @@
 CMakeFiles/runtime.dir/sources/allocators/data_alloc.c.o: ../headers/allocators/data_alloc.h
 CMakeFiles/runtime.dir/sources/allocators/data_alloc.c.o: ../headers/defines/data_struct_sizes.h
 CMakeFiles/runtime.dir/sources/allocators/data_alloc.c.o: ../headers/defines/errors_str.h
+CMakeFiles/runtime.dir/sources/allocators/data_alloc.c.o: ../headers/defines/gc_macros.h
 CMakeFiles/runtime.dir/sources/allocators/data_alloc.c.o: ../headers/func_call.h
 CMakeFiles/runtime.dir/sources/allocators/data_alloc.c.o: ../headers/func_result.h
 CMakeFiles/runtime.dir/sources/allocators/data_alloc.c.o: ../headers/gc/gc.h
@@ -18,6 +19,7 @@ CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o: ../headers/allocators
 CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o: ../headers/allocators/vterm_alloc.h
 CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o: ../headers/defines/data_struct_sizes.h
 CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o: ../headers/defines/errors_str.h
+CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o: ../headers/defines/gc_macros.h
 CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o: ../headers/func_call.h
 CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o: ../headers/func_result.h
 CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o: ../headers/gc/gc.h
@@ -70,6 +72,7 @@ CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/builtins/case_map_t
 CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/builtins/unicode_io.h
 CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/defines/data_struct_sizes.h
 CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/defines/errors_str.h
+CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/defines/gc_macros.h
 CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/func_call.h
 CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/func_result.h
 CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/gc/gc.h
@@ -92,6 +95,7 @@ CMakeFiles/runtime.dir/sources/builtins/unicode_io.c.o: ../sources/builtins/unic
 CMakeFiles/runtime.dir/sources/gc/data_gc.c.o: ../headers/allocators/data_alloc.h
 CMakeFiles/runtime.dir/sources/gc/data_gc.c.o: ../headers/defines/data_struct_sizes.h
 CMakeFiles/runtime.dir/sources/gc/data_gc.c.o: ../headers/defines/errors_str.h
+CMakeFiles/runtime.dir/sources/gc/data_gc.c.o: ../headers/defines/gc_macros.h
 CMakeFiles/runtime.dir/sources/gc/data_gc.c.o: ../headers/func_call.h
 CMakeFiles/runtime.dir/sources/gc/data_gc.c.o: ../headers/func_result.h
 CMakeFiles/runtime.dir/sources/gc/data_gc.c.o: ../headers/gc/gc.h
@@ -104,6 +108,7 @@ CMakeFiles/runtime.dir/sources/gc/data_gc.c.o: ../sources/gc/data_gc.c
 CMakeFiles/runtime.dir/sources/gc/gc.c.o: ../headers/allocators/data_alloc.h
 CMakeFiles/runtime.dir/sources/gc/gc.c.o: ../headers/builtins/builtins.h
 CMakeFiles/runtime.dir/sources/gc/gc.c.o: ../headers/defines/errors_str.h
+CMakeFiles/runtime.dir/sources/gc/gc.c.o: ../headers/defines/gc_macros.h
 CMakeFiles/runtime.dir/sources/gc/gc.c.o: ../headers/func_call.h
 CMakeFiles/runtime.dir/sources/gc/gc.c.o: ../headers/func_result.h
 CMakeFiles/runtime.dir/sources/gc/gc.c.o: ../headers/gc/gc.h
@@ -118,6 +123,7 @@ CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o: ../headers/allocators/data_alloc
 CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o: ../headers/builtins/builtins.h
 CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o: ../headers/defines/data_struct_sizes.h
 CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o: ../headers/defines/errors_str.h
+CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o: ../headers/defines/gc_macros.h
 CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o: ../headers/func_call.h
 CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o: ../headers/func_result.h
 CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o: ../headers/gc/gc.h
@@ -127,6 +133,17 @@ CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o: ../headers/memory_manager.h
 CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o: ../headers/vmachine.h
 CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o: ../headers/vterm.h
 CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o: ../sources/gc/vterm_gc.c
+
+CMakeFiles/runtime.dir/sources/helpers.c.o: ../headers/defines/errors_str.h
+CMakeFiles/runtime.dir/sources/helpers.c.o: ../headers/func_call.h
+CMakeFiles/runtime.dir/sources/helpers.c.o: ../headers/func_result.h
+CMakeFiles/runtime.dir/sources/helpers.c.o: ../headers/gc/gc.h
+CMakeFiles/runtime.dir/sources/helpers.c.o: ../headers/helpers.h
+CMakeFiles/runtime.dir/sources/helpers.c.o: ../headers/lterm.h
+CMakeFiles/runtime.dir/sources/helpers.c.o: ../headers/memory_manager.h
+CMakeFiles/runtime.dir/sources/helpers.c.o: ../headers/vmachine.h
+CMakeFiles/runtime.dir/sources/helpers.c.o: ../headers/vterm.h
+CMakeFiles/runtime.dir/sources/helpers.c.o: ../sources/helpers.c
 
 CMakeFiles/runtime.dir/sources/memory_manager.c.o: ../headers/func_call.h
 CMakeFiles/runtime.dir/sources/memory_manager.c.o: ../headers/func_result.h
@@ -149,6 +166,7 @@ CMakeFiles/runtime.dir/sources/vmachine.c.o: ../headers/allocators/vterm_alloc.h
 CMakeFiles/runtime.dir/sources/vmachine.c.o: ../headers/builtins/builtins.h
 CMakeFiles/runtime.dir/sources/vmachine.c.o: ../headers/defines/data_struct_sizes.h
 CMakeFiles/runtime.dir/sources/vmachine.c.o: ../headers/defines/errors_str.h
+CMakeFiles/runtime.dir/sources/vmachine.c.o: ../headers/defines/gc_macros.h
 CMakeFiles/runtime.dir/sources/vmachine.c.o: ../headers/func_call.h
 CMakeFiles/runtime.dir/sources/vmachine.c.o: ../headers/func_result.h
 CMakeFiles/runtime.dir/sources/vmachine.c.o: ../headers/gc/gc.h

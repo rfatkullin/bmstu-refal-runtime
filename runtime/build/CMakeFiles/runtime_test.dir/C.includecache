@@ -44,6 +44,10 @@ lterm.h
 
 ../headers/defines/errors_str.h
 
+../headers/defines/gc_macros.h
+memory_manager.h
+-
+
 ../headers/func_call.h
 func_result.h
 -
@@ -65,12 +69,14 @@ stdio.h
 -
 stdlib.h
 -
+inttypes.h
+-
 
 ../headers/lterm.h
 stdint.h
 -
 func_call.h
-../headers/func_call.h
+-
 
 ../headers/memory_manager.h
 stdint.h
@@ -113,9 +119,13 @@ stdint.h
 -
 string.h
 -
+inttypes.h
+-
 vmachine.h
 -
 memory_manager.h
+-
+defines/gc_macros.h
 -
 allocators/data_alloc.h
 -
@@ -132,6 +142,8 @@ stdint.h
 string.h
 -
 memory_manager.h
+-
+defines/gc_macros.h
 -
 allocators/data_alloc.h
 -
@@ -209,6 +221,8 @@ vmachine.h
 -
 to_string.h
 -
+defines/gc_macros.h
+-
 builtins/builtins.h
 -
 builtins/unicode_io.h
@@ -222,12 +236,6 @@ builtins/case_map_table.h
 defines/data_struct_sizes.h
 -
 
-/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/unicode_io.c
-stdio.h
--
-builtins/builtins.h
--
-
 /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/gc/data_gc.c
 stdio.h
 -
@@ -238,6 +246,8 @@ string.h
 inttypes.h
 -
 memory_manager.h
+-
+defines/gc_macros.h
 -
 defines/errors_str.h
 -
@@ -265,6 +275,8 @@ memory_manager.h
 -
 builtins/builtins.h
 -
+defines/gc_macros.h
+-
 defines/errors_str.h
 -
 allocators/data_alloc.h
@@ -287,6 +299,8 @@ memory_manager.h
 -
 builtins/builtins.h
 -
+defines/gc_macros.h
+-
 defines/errors_str.h
 -
 allocators/data_alloc.h
@@ -294,28 +308,12 @@ allocators/data_alloc.h
 defines/data_struct_sizes.h
 -
 
-/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/memory_manager.c
-stdio.h
--
-assert.h
--
-stdlib.h
--
-string.h
--
-inttypes.h
--
-memory_manager.h
-/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/memory_manager.h
-
-/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/to_string.c
-gmp.h
--
+/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/helpers.c
 helpers.h
 -
-to_string.h
+vmachine.h
 -
-builtins/unicode_io.h
+memory_manager.h
 -
 
 /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/vmachine.c
@@ -337,6 +335,8 @@ memory_manager.h
 -
 builtins/builtins.h
 -
+defines/gc_macros.h
+-
 allocators/data_alloc.h
 -
 allocators/data_alloc.h
@@ -344,13 +344,5 @@ allocators/data_alloc.h
 allocators/vterm_alloc.h
 -
 defines/data_struct_sizes.h
--
-
-/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/test/main.c
-stdio.h
--
-stdlib.h
--
-builtins/builtins.h
 -
 

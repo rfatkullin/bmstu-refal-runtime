@@ -7,6 +7,7 @@ CMakeFiles/target_binary.dir/main.c.o: /home/rustam/cpp_projects/bmstu-refal-run
 CMakeFiles/target_binary.dir/main.c.o: /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/builtins/builtins.h
 CMakeFiles/target_binary.dir/main.c.o: /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/defines/data_struct_sizes.h
 CMakeFiles/target_binary.dir/main.c.o: /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/defines/errors_str.h
+CMakeFiles/target_binary.dir/main.c.o: /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/defines/gc_macros.h
 CMakeFiles/target_binary.dir/main.c.o: /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/func_call.h
 CMakeFiles/target_binary.dir/main.c.o: /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/func_result.h
 CMakeFiles/target_binary.dir/main.c.o: /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/headers/gc/gc.h

@@ -32,9 +32,4 @@ uint64_t gcGetAssembliedChain(struct lterm_t* chain, allocate_result *res);
 
 struct lterm_t* _currCallTerm;
 
-uint64_t getHeapSize(int argc, char** argv);
-
-int eqSymbol(uint64_t a, uint64_t b);
-int eqFragment(uint64_t a, uint64_t b, uint64_t length);
-
 #endif

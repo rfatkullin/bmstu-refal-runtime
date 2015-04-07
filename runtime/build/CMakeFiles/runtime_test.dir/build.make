@@ -325,9 +325,32 @@ CMakeFiles/runtime_test.dir/sources/allocators/vterm_alloc.c.o.provides: CMakeFi
 
 CMakeFiles/runtime_test.dir/sources/allocators/vterm_alloc.c.o.provides.build: CMakeFiles/runtime_test.dir/sources/allocators/vterm_alloc.c.o
 
+CMakeFiles/runtime_test.dir/sources/helpers.c.o: CMakeFiles/runtime_test.dir/flags.make
+CMakeFiles/runtime_test.dir/sources/helpers.c.o: ../sources/helpers.c
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles $(CMAKE_PROGRESS_13)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object CMakeFiles/runtime_test.dir/sources/helpers.c.o"
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/runtime_test.dir/sources/helpers.c.o   -c /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/helpers.c
+
+CMakeFiles/runtime_test.dir/sources/helpers.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/runtime_test.dir/sources/helpers.c.i"
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -E /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/helpers.c > CMakeFiles/runtime_test.dir/sources/helpers.c.i
+
+CMakeFiles/runtime_test.dir/sources/helpers.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/runtime_test.dir/sources/helpers.c.s"
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -S /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/helpers.c -o CMakeFiles/runtime_test.dir/sources/helpers.c.s
+
+CMakeFiles/runtime_test.dir/sources/helpers.c.o.requires:
+.PHONY : CMakeFiles/runtime_test.dir/sources/helpers.c.o.requires
+
+CMakeFiles/runtime_test.dir/sources/helpers.c.o.provides: CMakeFiles/runtime_test.dir/sources/helpers.c.o.requires
+	$(MAKE) -f CMakeFiles/runtime_test.dir/build.make CMakeFiles/runtime_test.dir/sources/helpers.c.o.provides.build
+.PHONY : CMakeFiles/runtime_test.dir/sources/helpers.c.o.provides
+
+CMakeFiles/runtime_test.dir/sources/helpers.c.o.provides.build: CMakeFiles/runtime_test.dir/sources/helpers.c.o
+
 CMakeFiles/runtime_test.dir/sources/to_string.c.o: CMakeFiles/runtime_test.dir/flags.make
 CMakeFiles/runtime_test.dir/sources/to_string.c.o: ../sources/to_string.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles $(CMAKE_PROGRESS_13)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles $(CMAKE_PROGRESS_14)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object CMakeFiles/runtime_test.dir/sources/to_string.c.o"
 	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/runtime_test.dir/sources/to_string.c.o   -c /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/to_string.c
 
@@ -350,7 +373,7 @@ CMakeFiles/runtime_test.dir/sources/to_string.c.o.provides.build: CMakeFiles/run
 
 CMakeFiles/runtime_test.dir/test/main.c.o: CMakeFiles/runtime_test.dir/flags.make
 CMakeFiles/runtime_test.dir/test/main.c.o: ../test/main.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles $(CMAKE_PROGRESS_14)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles $(CMAKE_PROGRESS_15)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object CMakeFiles/runtime_test.dir/test/main.c.o"
 	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/runtime_test.dir/test/main.c.o   -c /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/test/main.c
 
@@ -385,6 +408,7 @@ runtime_test_OBJECTS = \
 "CMakeFiles/runtime_test.dir/sources/memory_manager.c.o" \
 "CMakeFiles/runtime_test.dir/sources/allocators/data_alloc.c.o" \
 "CMakeFiles/runtime_test.dir/sources/allocators/vterm_alloc.c.o" \
+"CMakeFiles/runtime_test.dir/sources/helpers.c.o" \
 "CMakeFiles/runtime_test.dir/sources/to_string.c.o" \
 "CMakeFiles/runtime_test.dir/test/main.c.o"
 
@@ -403,6 +427,7 @@ runtime_test: CMakeFiles/runtime_test.dir/sources/vmachine.c.o
 runtime_test: CMakeFiles/runtime_test.dir/sources/memory_manager.c.o
 runtime_test: CMakeFiles/runtime_test.dir/sources/allocators/data_alloc.c.o
 runtime_test: CMakeFiles/runtime_test.dir/sources/allocators/vterm_alloc.c.o
+runtime_test: CMakeFiles/runtime_test.dir/sources/helpers.c.o
 runtime_test: CMakeFiles/runtime_test.dir/sources/to_string.c.o
 runtime_test: CMakeFiles/runtime_test.dir/test/main.c.o
 runtime_test: CMakeFiles/runtime_test.dir/build.make
@@ -426,6 +451,7 @@ CMakeFiles/runtime_test.dir/requires: CMakeFiles/runtime_test.dir/sources/vmachi
 CMakeFiles/runtime_test.dir/requires: CMakeFiles/runtime_test.dir/sources/memory_manager.c.o.requires
 CMakeFiles/runtime_test.dir/requires: CMakeFiles/runtime_test.dir/sources/allocators/data_alloc.c.o.requires
 CMakeFiles/runtime_test.dir/requires: CMakeFiles/runtime_test.dir/sources/allocators/vterm_alloc.c.o.requires
+CMakeFiles/runtime_test.dir/requires: CMakeFiles/runtime_test.dir/sources/helpers.c.o.requires
 CMakeFiles/runtime_test.dir/requires: CMakeFiles/runtime_test.dir/sources/to_string.c.o.requires
 CMakeFiles/runtime_test.dir/requires: CMakeFiles/runtime_test.dir/test/main.c.o.requires
 .PHONY : CMakeFiles/runtime_test.dir/requires

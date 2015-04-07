@@ -11,6 +11,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/runtime.dir/sources/memory_manager.c.o"
   "CMakeFiles/runtime.dir/sources/allocators/data_alloc.c.o"
   "CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o"
+  "CMakeFiles/runtime.dir/sources/helpers.c.o"
   "CMakeFiles/runtime.dir/sources/to_string.c.o"
   "libruntime.pdb"
   "libruntime.a"

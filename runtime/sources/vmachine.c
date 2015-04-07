@@ -8,52 +8,24 @@
 #include <func_call.h>
 #include <memory_manager.h>
 #include <builtins/builtins.h>
+#include <defines/gc_macros.h>
 #include <allocators/data_alloc.h>
 #include <allocators/data_alloc.h>
 #include <allocators/vterm_alloc.h>
 #include <defines/data_struct_sizes.h>
 
 static void printChainOfCalls(struct lterm_t* callTerm);
-static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult, struct lterm_t** lastCallFuncFOV);
-static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
-static uint64_t gcAssemblyChain(struct lterm_t* chain, uint64_t* length, allocate_result* res);
-static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm);
-static void onFuncFail(struct lterm_t** callTerm, int failResult);
-
-uint64_t getHeapSize(int argc, char** argv)
-{
-    uint64_t heapSize = 0;
-    int i = 0;
-
-    for (i = 0; i < argc; ++i)
-    {
-        if (argv[i][0] == '-')
-        {
-            if (sscanf(argv[i], "-heapSize=%" PRIu64 , &heapSize) == 1)
-            {
-                printf("Heap size: %" PRIu64 "\n", heapSize);
-                return heapSize;
-            }
-        }
-    }
-
-    return DEFAULT_HEAP_SIZE;
-}
-
-static struct vstring_t* constructVStringFromASCIIName(const char* name)
-{
-    struct vstring_t* ptr = (struct vstring_t*)malloc(sizeof(struct vstring_t));
-    ptr->length = strlen(name);
-    ptr->head = (uint32_t*)malloc(ptr->length * sizeof(uint32_t));
-
-    memcpy(ptr->head, name, ptr->length);
-
-    return ptr;
-}
+static struct lterm_t* onFuncFail(struct lterm_t* callTerm, int failResult);
+static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
+static uint64_t gcAssemblyChain(struct lterm_t* chain, uint64_t* length, allocate_result* res);
+static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
+static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult, struct lterm_t** lastCallFuncFOV);
 
 static struct lterm_t* ConstructStartFunc(const char* funcName, RefalFunc entryFuncPointer)
 {
+    allocate_result res;
+
     struct lterm_t* gofuncCallTerm = allocateFuncCallLTerm();
     gofuncCallTerm->funcCall->fieldOfView = allocateSimpleChain();
 
@@ -61,7 +33,9 @@ static struct lterm_t* ConstructStartFunc(const char* funcName, RefalFunc entryF
     fragTerm->fragment->offset = allocateClosureVTerm();
     fragTerm->fragment->length = 1;
 
-    struct vstring_t* ident = constructVStringFromASCIIName(funcName);
+    struct vstring_t* ident;
+    CHECK_ALLOCATION_EXIT(ident, chAllocateVStringFromASCIIName(funcName, &res), res);
+
     _memMngr.vterms[fragTerm->fragment->offset].closure = gcAllocateClosureStruct(entryFuncPointer, 0, ident, 0);
 
     ADD_TO_CHAIN(gofuncCallTerm->funcCall->fieldOfView, fragTerm);
@@ -77,51 +51,6 @@ static struct lterm_t* ConstructStartFieldOfView(const char* funcName, RefalFunc
     ADD_TO_CHAIN(fieldOfView, gofuncCallTerm);
 
     return fieldOfView;
-}
-
-int eqFragment(uint64_t a, uint64_t b, uint64_t length)
-{
-    uint64_t i = 0;
-    for (i = 0; i < length; i++)
-    {
-        if (_memMngr.vterms[a + i].tag != _memMngr.vterms[b + i].tag)
-            return 0;
-
-        if (_memMngr.vterms[a + i].tag == V_BRACKETS_TAG)
-        {
-            if ((VTERM_BRACKETS(a + i)->length != VTERM_BRACKETS(b + i)->length)
-             || !eqFragment(VTERM_BRACKETS(a + i)->offset, VTERM_BRACKETS(b + i)->offset, VTERM_BRACKETS(b + i)->length))
-            return 0;
-        }
-        else if (!eqSymbol(a + i, b + i))
-            return 0;
-    }
-
-    return 1;
-}
-
-int eqSymbol(uint64_t a, uint64_t b)
-{
-    return
-        (_memMngr.vterms[a].tag == _memMngr.vterms[b].tag)
-        &&
-        (
-            (_memMngr.vterms[a].tag == V_CHAR_TAG
-                && _memMngr.vterms[a].ch == _memMngr.vterms[b].ch)
-
-            || (_memMngr.vterms[a].tag == V_IDENT_TAG
-                && ustrEq(_memMngr.vterms[a].str, _memMngr.vterms[b].str))
-
-            || (_memMngr.vterms[a].tag == V_INT_NUM_TAG
-                && !intCmp(_memMngr.vterms[a].intNum, _memMngr.vterms[b].intNum))
-
-            || (_memMngr.vterms[a].tag == V_DOUBLE_NUM_TAG
-                && !doubleCmp(_memMngr.vterms[a].doubleNum, _memMngr.vterms[b].doubleNum))
-
-            || (_memMngr.vterms[a].tag == V_CLOSURE_TAG
-                && ustrEq(_memMngr.vterms[a].closure->ident, _memMngr.vterms[b].closure->ident))
-        );
-
 }
 
 void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
@@ -145,9 +74,6 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
             {                
                 if (!_currCallTerm->funcCall->fieldOfView)
                 {
-                    if (lastCallFuncFOV == 0)
-                        PRINT_AND_EXIT("BEDA!!!\n");
-
                     _currCallTerm->funcCall->fieldOfView = lastCallFuncFOV;
                 }
                 _currCallTerm->funcCall->env->workFieldOfView = _currCallTerm->funcCall->subCall;
@@ -167,7 +93,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
             // Первый терм в скобках аткивации не является функциональным --> откат.
             if (_currCallTerm->funcCall->funcPtr == 0)
             {
-                onFuncFail(&_currCallTerm, 0);
+                _currCallTerm = onFuncFail(_currCallTerm, 0);
                 entryStatus = ROLL_BACK;
             }
         }
@@ -186,27 +112,23 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
                 _currCallTerm->funcCall->parentCall = parentCall;
                 break;
             case FAIL_RESULT:
-                onFuncFail(&_currCallTerm, 1);
+                _currCallTerm = onFuncFail(_currCallTerm, 1);
                 break;
         }
 	}
 }
 
-static void onFuncFail(struct lterm_t** callTerm, int failResult)
+static struct lterm_t* onFuncFail(struct lterm_t* callTerm, int failResult)
 {
-    if ((failResult && !(*callTerm)->funcCall->rollback) || !(*callTerm)->funcCall->parentCall || (*callTerm)->funcCall->failEntryPoint == -1)
-    {        
+    if ((failResult && !callTerm->funcCall->rollback) || !callTerm->funcCall->parentCall || callTerm->funcCall->failEntryPoint == -1)
         PRINT_AND_EXIT( FUNC_CALL_FAILED);
-    }
-    else
-    {
-        (*callTerm)->funcCall->parentCall->funcCall->entryPoint = (*callTerm)->funcCall->failEntryPoint;
 
-        if ((*callTerm)->funcCall->parentCall->funcCall->fieldOfView == 0)
-            (*callTerm)->funcCall->parentCall->funcCall->fieldOfView = (*callTerm)->funcCall->fieldOfView;
+    callTerm->funcCall->parentCall->funcCall->entryPoint = callTerm->funcCall->failEntryPoint;
 
-        (*callTerm) = (*callTerm)->funcCall->parentCall;
-    }
+    if (callTerm->funcCall->parentCall->funcCall->fieldOfView == 0)
+        callTerm->funcCall->parentCall->funcCall->fieldOfView = callTerm->funcCall->fieldOfView;
+
+    return callTerm->funcCall->parentCall;
 }
 
 static RefalFunc getFuncPointer(struct lterm_t* callTerm)

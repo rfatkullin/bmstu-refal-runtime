@@ -4,6 +4,7 @@
 #include <inttypes.h>
 
 #include <memory_manager.h>
+#include <defines/gc_macros.h>
 #include <defines/errors_str.h>
 #include <allocators/data_alloc.h>
 #include <defines/data_struct_sizes.h>
@@ -11,6 +12,13 @@
 static struct lterm_t* copyFuncCallLTerm(struct lterm_t* term);
 static struct env_t* copyEnv(struct env_t* from, struct env_t* to);
 static struct lterm_t* copyChainVTerm(struct lterm_t* term);
+
+#define SET_MOVED(oldTerm, newTerm) \
+do{                                 \
+    oldTerm->prev = newTerm;        \
+    oldTerm->tag = GC_MOVED;        \
+}while(0)
+
 
 struct lterm_t* copySimpleChain(struct lterm_t* chain)
 {
@@ -156,4 +164,3 @@ struct lterm_t* copyFragmentLTerm(struct lterm_t* oldTerm)
 
     return newTerm;
 }
-

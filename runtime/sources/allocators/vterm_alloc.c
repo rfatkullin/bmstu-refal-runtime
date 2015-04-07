@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <memory_manager.h>
+#include <defines/gc_macros.h>
 #include <allocators/data_alloc.h>
 #include <allocators/vterm_alloc.h>
 #include <defines/data_struct_sizes.h>

@@ -8,6 +8,7 @@
 #include <vmachine.h>
 #include <memory_manager.h>
 #include <builtins/builtins.h>
+#include <defines/gc_macros.h>
 #include <defines/errors_str.h>
 #include <allocators/data_alloc.h>
 

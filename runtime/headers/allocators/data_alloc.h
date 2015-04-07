@@ -19,6 +19,7 @@ struct lterm_t*     chAllocateFuncCallLTerm(allocate_result* res);
 struct lterm_t*     chAllocateBuiltinsResult(uint64_t offset, uint64_t length, allocate_result* res);
 struct lterm_t*     chCopyFieldOfView(struct lterm_t* fieldOfView, allocate_result* restrict);
 struct vclosure_t*  chAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback, allocate_result* res);
+struct vstring_t*   chAllocateVStringFromASCIIName(const char* name, allocate_result* res);
 
 /// Выделяют память в хипе данных
 /// В процессе выполнения может быть вызван сборщик мусора для данных.

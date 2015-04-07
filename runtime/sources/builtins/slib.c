@@ -7,6 +7,7 @@
 #include <helpers.h>
 #include <vmachine.h>
 #include <to_string.h>
+#include <defines/gc_macros.h>
 #include <builtins/builtins.h>
 #include <builtins/unicode_io.h>
 #include <allocators/data_alloc.h>

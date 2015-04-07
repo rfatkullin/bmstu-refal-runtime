@@ -1,8 +1,9 @@
-#ifndef __HELPERS_H__
-#define __HELPERS_H__
+#ifndef _BMSTU_REFC_HELPERS_H__
+#define _BMSTU_REFC_HELPERS_H__
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #define FMT_PRINT_AND_EXIT(fmt, ...)    \
 do{                                     \
@@ -18,5 +19,10 @@ do{                                     \
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+
+uint64_t getHeapSize(int argc, char** argv);
+
+int eqSymbol(uint64_t a, uint64_t b);
+int eqFragment(uint64_t a, uint64_t b, uint64_t length);
 
 #endif

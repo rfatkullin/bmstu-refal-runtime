@@ -325,9 +325,32 @@ CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o.provides: CMakeFiles/r
 
 CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o.provides.build: CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o
 
+CMakeFiles/runtime.dir/sources/helpers.c.o: CMakeFiles/runtime.dir/flags.make
+CMakeFiles/runtime.dir/sources/helpers.c.o: ../sources/helpers.c
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles $(CMAKE_PROGRESS_13)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object CMakeFiles/runtime.dir/sources/helpers.c.o"
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/runtime.dir/sources/helpers.c.o   -c /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/helpers.c
+
+CMakeFiles/runtime.dir/sources/helpers.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/runtime.dir/sources/helpers.c.i"
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -E /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/helpers.c > CMakeFiles/runtime.dir/sources/helpers.c.i
+
+CMakeFiles/runtime.dir/sources/helpers.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/runtime.dir/sources/helpers.c.s"
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -S /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/helpers.c -o CMakeFiles/runtime.dir/sources/helpers.c.s
+
+CMakeFiles/runtime.dir/sources/helpers.c.o.requires:
+.PHONY : CMakeFiles/runtime.dir/sources/helpers.c.o.requires
+
+CMakeFiles/runtime.dir/sources/helpers.c.o.provides: CMakeFiles/runtime.dir/sources/helpers.c.o.requires
+	$(MAKE) -f CMakeFiles/runtime.dir/build.make CMakeFiles/runtime.dir/sources/helpers.c.o.provides.build
+.PHONY : CMakeFiles/runtime.dir/sources/helpers.c.o.provides
+
+CMakeFiles/runtime.dir/sources/helpers.c.o.provides.build: CMakeFiles/runtime.dir/sources/helpers.c.o
+
 CMakeFiles/runtime.dir/sources/to_string.c.o: CMakeFiles/runtime.dir/flags.make
 CMakeFiles/runtime.dir/sources/to_string.c.o: ../sources/to_string.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles $(CMAKE_PROGRESS_13)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles $(CMAKE_PROGRESS_14)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object CMakeFiles/runtime.dir/sources/to_string.c.o"
 	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/runtime.dir/sources/to_string.c.o   -c /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/to_string.c
 
@@ -362,6 +385,7 @@ runtime_OBJECTS = \
 "CMakeFiles/runtime.dir/sources/memory_manager.c.o" \
 "CMakeFiles/runtime.dir/sources/allocators/data_alloc.c.o" \
 "CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o" \
+"CMakeFiles/runtime.dir/sources/helpers.c.o" \
 "CMakeFiles/runtime.dir/sources/to_string.c.o"
 
 # External object files for target runtime
@@ -379,6 +403,7 @@ libruntime.a: CMakeFiles/runtime.dir/sources/vmachine.c.o
 libruntime.a: CMakeFiles/runtime.dir/sources/memory_manager.c.o
 libruntime.a: CMakeFiles/runtime.dir/sources/allocators/data_alloc.c.o
 libruntime.a: CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o
+libruntime.a: CMakeFiles/runtime.dir/sources/helpers.c.o
 libruntime.a: CMakeFiles/runtime.dir/sources/to_string.c.o
 libruntime.a: CMakeFiles/runtime.dir/build.make
 libruntime.a: CMakeFiles/runtime.dir/link.txt
@@ -402,6 +427,7 @@ CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/vmachine.c.o.req
 CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/memory_manager.c.o.requires
 CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/allocators/data_alloc.c.o.requires
 CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o.requires
+CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/helpers.c.o.requires
 CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/to_string.c.o.requires
 .PHONY : CMakeFiles/runtime.dir/requires
 

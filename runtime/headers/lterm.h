@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "func_call.h"
+#include <func_call.h>
 
 #define L_TERM_FRAGMENT_TAG     1
 #define L_TERM_CHAIN_KEEPER_TAG	2

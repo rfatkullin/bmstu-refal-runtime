@@ -14,6 +14,7 @@ set(CMAKE_DEPENDS_CHECK_C
   "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/gc/data_gc.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/gc/data_gc.c.o"
   "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/gc/gc.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/gc/gc.c.o"
   "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/gc/vterm_gc.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/helpers.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/helpers.c.o"
   "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/memory_manager.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/memory_manager.c.o"
   "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/to_string.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/to_string.c.o"
   "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/vmachine.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/vmachine.c.o"
