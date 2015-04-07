@@ -1,1 +1,1 @@
-/usr/bin/cc      CMakeFiles/target_binary.dir/main.c.o  -o target_binary -rdynamic /home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/libruntime.a -lgmp 
+/usr/bin/cc      CMakeFiles/target_binary.dir/main.c.o  -o target_binary -rdynamic /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/libruntime.a -lgmp 

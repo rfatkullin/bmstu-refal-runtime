@@ -47,10 +47,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/rustam/CppProjects/bmstu-refal-runtime/project
+CMAKE_SOURCE_DIR = /home/rustam/cpp_projects/bmstu-refal-runtime/project
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/rustam/CppProjects/bmstu-refal-runtime/project/build
+CMAKE_BINARY_DIR = /home/rustam/cpp_projects/bmstu-refal-runtime/project/build
 
 #=============================================================================
 # Target rules for target CMakeFiles/target_binary.dir
@@ -59,7 +59,7 @@ CMAKE_BINARY_DIR = /home/rustam/CppProjects/bmstu-refal-runtime/project/build
 CMakeFiles/target_binary.dir/all:
 	$(MAKE) -f CMakeFiles/target_binary.dir/build.make CMakeFiles/target_binary.dir/depend
 	$(MAKE) -f CMakeFiles/target_binary.dir/build.make CMakeFiles/target_binary.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/CppProjects/bmstu-refal-runtime/project/build/CMakeFiles  1
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/cpp_projects/bmstu-refal-runtime/project/build/CMakeFiles  1
 	@echo "Built target target_binary"
 .PHONY : CMakeFiles/target_binary.dir/all
 
@@ -69,9 +69,9 @@ all: CMakeFiles/target_binary.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/target_binary.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/rustam/CppProjects/bmstu-refal-runtime/project/build/CMakeFiles 1
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/rustam/cpp_projects/bmstu-refal-runtime/project/build/CMakeFiles 1
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/target_binary.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/rustam/CppProjects/bmstu-refal-runtime/project/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/rustam/cpp_projects/bmstu-refal-runtime/project/build/CMakeFiles 0
 .PHONY : CMakeFiles/target_binary.dir/rule
 
 # Convenience name for target.

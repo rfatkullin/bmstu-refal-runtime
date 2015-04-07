@@ -4,10 +4,12 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include <memory_manager.h>
-#include <allocators/data_alloc.h>
-#include <builtins/builtins.h>
 #include <gc/gc.h>
+#include <vmachine.h>
+#include <memory_manager.h>
+#include <builtins/builtins.h>
+#include <defines/errors_str.h>
+#include <allocators/data_alloc.h>
 
 static struct lterm_t* getActual(struct lterm_t* term)
 {

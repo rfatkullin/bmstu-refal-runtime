@@ -1,1 +1,1 @@
-/home/rustam/CppProjects/bmstu-refal-runtime/project/build/CMakeFiles/target_binary.dir
+/home/rustam/cpp_projects/bmstu-refal-runtime/project/build/CMakeFiles/target_binary.dir

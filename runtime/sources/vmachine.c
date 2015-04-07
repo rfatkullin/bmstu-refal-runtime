@@ -3,13 +3,15 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include <func_call.h>
-#include <vmachine.h>
-#include <memory_manager.h>
-#include <allocators/vterm_alloc.h>
-#include <allocators/data_alloc.h>
-#include <builtins/builtins.h>
 #include <gc/gc.h>
+#include <vmachine.h>
+#include <func_call.h>
+#include <memory_manager.h>
+#include <builtins/builtins.h>
+#include <allocators/data_alloc.h>
+#include <allocators/data_alloc.h>
+#include <allocators/vterm_alloc.h>
+#include <defines/data_struct_sizes.h>
 
 static void printChainOfCalls(struct lterm_t* callTerm);
 static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult, struct lterm_t** lastCallFuncFOV);

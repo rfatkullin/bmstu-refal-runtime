@@ -3,10 +3,13 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include <memory_manager.h>
-#include <allocators/data_alloc.h>
-#include <builtins/builtins.h>
 #include <helpers.h>
+#include <vmachine.h>
+#include <memory_manager.h>
+#include <builtins/builtins.h>
+#include <defines/errors_str.h>
+#include <allocators/data_alloc.h>
+#include <defines/data_struct_sizes.h>
 
 static void copyVTerms();
 static void processVTermsInChain(struct lterm_t* expr);

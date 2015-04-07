@@ -35,10 +35,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/rustam/CppProjects/bmstu-refal-runtime/project
+CMAKE_SOURCE_DIR = /home/rustam/cpp_projects/bmstu-refal-runtime/project
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/rustam/CppProjects/bmstu-refal-runtime/project/build
+CMAKE_BINARY_DIR = /home/rustam/cpp_projects/bmstu-refal-runtime/project/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/target_binary.dir/depend.make
@@ -51,17 +51,17 @@ include CMakeFiles/target_binary.dir/flags.make
 
 CMakeFiles/target_binary.dir/main.c.o: CMakeFiles/target_binary.dir/flags.make
 CMakeFiles/target_binary.dir/main.c.o: ../main.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/CppProjects/bmstu-refal-runtime/project/build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/cpp_projects/bmstu-refal-runtime/project/build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object CMakeFiles/target_binary.dir/main.c.o"
-	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/target_binary.dir/main.c.o   -c /home/rustam/CppProjects/bmstu-refal-runtime/project/main.c
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/target_binary.dir/main.c.o   -c /home/rustam/cpp_projects/bmstu-refal-runtime/project/main.c
 
 CMakeFiles/target_binary.dir/main.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/target_binary.dir/main.c.i"
-	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -E /home/rustam/CppProjects/bmstu-refal-runtime/project/main.c > CMakeFiles/target_binary.dir/main.c.i
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -E /home/rustam/cpp_projects/bmstu-refal-runtime/project/main.c > CMakeFiles/target_binary.dir/main.c.i
 
 CMakeFiles/target_binary.dir/main.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/target_binary.dir/main.c.s"
-	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -S /home/rustam/CppProjects/bmstu-refal-runtime/project/main.c -o CMakeFiles/target_binary.dir/main.c.s
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -S /home/rustam/cpp_projects/bmstu-refal-runtime/project/main.c -o CMakeFiles/target_binary.dir/main.c.s
 
 CMakeFiles/target_binary.dir/main.c.o.requires:
 .PHONY : CMakeFiles/target_binary.dir/main.c.o.requires
@@ -81,7 +81,7 @@ target_binary_EXTERNAL_OBJECTS =
 
 target_binary: CMakeFiles/target_binary.dir/main.c.o
 target_binary: CMakeFiles/target_binary.dir/build.make
-target_binary: /home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/libruntime.a
+target_binary: /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/libruntime.a
 target_binary: CMakeFiles/target_binary.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking C executable target_binary"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/target_binary.dir/link.txt --verbose=$(VERBOSE)
@@ -98,6 +98,6 @@ CMakeFiles/target_binary.dir/clean:
 .PHONY : CMakeFiles/target_binary.dir/clean
 
 CMakeFiles/target_binary.dir/depend:
-	cd /home/rustam/CppProjects/bmstu-refal-runtime/project/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/rustam/CppProjects/bmstu-refal-runtime/project /home/rustam/CppProjects/bmstu-refal-runtime/project /home/rustam/CppProjects/bmstu-refal-runtime/project/build /home/rustam/CppProjects/bmstu-refal-runtime/project/build /home/rustam/CppProjects/bmstu-refal-runtime/project/build/CMakeFiles/target_binary.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/rustam/cpp_projects/bmstu-refal-runtime/project/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/rustam/cpp_projects/bmstu-refal-runtime/project /home/rustam/cpp_projects/bmstu-refal-runtime/project /home/rustam/cpp_projects/bmstu-refal-runtime/project/build /home/rustam/cpp_projects/bmstu-refal-runtime/project/build /home/rustam/cpp_projects/bmstu-refal-runtime/project/build/CMakeFiles/target_binary.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/target_binary.dir/depend
 

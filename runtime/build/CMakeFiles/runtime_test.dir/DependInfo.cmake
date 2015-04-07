@@ -4,20 +4,20 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/allocators/data_alloc.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/allocators/data_alloc.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/allocators/vterm_alloc.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/allocators/vterm_alloc.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/builtins/arithmetics.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/builtins/arithmetics.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/builtins/case_map_table.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/builtins/case_map_table.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/builtins/io_builtins.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/builtins/io_builtins.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/builtins/slib.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/builtins/slib.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/builtins/unicode_io.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/builtins/unicode_io.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/gc/data_gc.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/gc/data_gc.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/gc/gc.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/gc/gc.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/gc/vterm_gc.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/gc/vterm_gc.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/memory_manager.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/memory_manager.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/to_string.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/to_string.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/sources/vmachine.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/vmachine.c.o"
-  "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/test/main.c" "/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/test/main.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/allocators/data_alloc.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/allocators/data_alloc.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/allocators/vterm_alloc.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/allocators/vterm_alloc.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/arithmetics.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/builtins/arithmetics.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/case_map_table.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/builtins/case_map_table.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/io_builtins.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/builtins/io_builtins.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/slib.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/builtins/slib.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/unicode_io.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/builtins/unicode_io.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/gc/data_gc.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/gc/data_gc.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/gc/gc.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/gc/gc.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/gc/vterm_gc.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/gc/vterm_gc.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/memory_manager.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/memory_manager.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/to_string.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/to_string.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/vmachine.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/sources/vmachine.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/test/main.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir/test/main.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 

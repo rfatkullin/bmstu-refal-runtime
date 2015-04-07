@@ -7,10 +7,12 @@
 #include <vmachine.h>
 #include <to_string.h>
 #include <builtins/builtins.h>
+#include <defines/errors_str.h>
 #include <builtins/unicode_io.h>
 #include <allocators/data_alloc.h>
 #include <allocators/vterm_alloc.h>
 #include <builtins/case_map_table.h>
+#include <defines/data_struct_sizes.h>
 
 static void printSymbol(FILE* file, struct vterm_t* term);
 static void printUnicodeChar(uint32_t ch);

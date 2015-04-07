@@ -6,9 +6,11 @@
 #include "vterm.h"
 #include "lterm.h"
 
-//Сколько процентов памяти выдялется тому или иному типу данных
-#define VTERMS_HEAP_SIZE_FACTOR 		0.4f
-#define DATA_HEAP_SIZE_FACTOR 			0.6f
+#define DEFAULT_HEAP_SIZE UINT64_C(1024 * 1024 * 1024)
+
+/// Total allocated memory = VTERMS_HEAP_SIZE_FACTOR + DATA_HEAP_SIZE_FACTOR
+#define VTERMS_HEAP_SIZE_FACTOR     0.4f
+#define DATA_HEAP_SIZE_FACTOR       0.6f
 
 struct memory_manager
 {

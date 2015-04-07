@@ -29,7 +29,6 @@ do{                                 \
 }while(0)
 
 struct lterm_t;
-struct lterm_chain_t;
 
 struct fragment_t
 {

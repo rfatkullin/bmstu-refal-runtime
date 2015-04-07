@@ -1,10 +1,10 @@
-Runtime/build/*
-Runtime/CMakeLists.txt.user
+runtime/build/*
+runtime/CMakeLists.txt.user
 
-Project/build/*
-Project/main.c
-Project/CMakeLists.txt.user
+project/build/*
+project/main.c
+project/CMakeLists.txt.user
 
-RoomOfTesting/*
+room_of_testing/*
 
 *.rsl

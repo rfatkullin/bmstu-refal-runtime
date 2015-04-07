@@ -1,4 +1,4 @@
-# Install script for directory: /home/rustam/CppProjects/bmstu-refal-runtime/project
+# Install script for directory: /home/rustam/cpp_projects/bmstu-refal-runtime/project
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -38,7 +38,7 @@ else()
   set(CMAKE_INSTALL_MANIFEST "install_manifest.txt")
 endif()
 
-file(WRITE "/home/rustam/CppProjects/bmstu-refal-runtime/project/build/${CMAKE_INSTALL_MANIFEST}" "")
+file(WRITE "/home/rustam/cpp_projects/bmstu-refal-runtime/project/build/${CMAKE_INSTALL_MANIFEST}" "")
 foreach(file ${CMAKE_INSTALL_MANIFEST_FILES})
-  file(APPEND "/home/rustam/CppProjects/bmstu-refal-runtime/project/build/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
+  file(APPEND "/home/rustam/cpp_projects/bmstu-refal-runtime/project/build/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
 endforeach()

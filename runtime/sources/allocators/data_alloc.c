@@ -3,8 +3,10 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <vmachine.h>
 #include <memory_manager.h>
 #include <allocators/data_alloc.h>
+#include <defines/data_struct_sizes.h>
 
 static struct lterm_t* chCopyChainKeeperLTerm(struct lterm_t* term, allocate_result* res);
 static struct lterm_t* chCopyFragmentLTerm(struct lterm_t* term, allocate_result* res);

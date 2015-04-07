@@ -9,6 +9,7 @@
 #include <allocators/data_alloc.h>
 #include <allocators/vterm_alloc.h>
 #include <helpers.h>
+#include <defines/data_struct_sizes.h>
 
 #define WRONG_OPERANDS_NUMBER       "It's binary operation!\n"
 #define OPERANDS_TYPES_MISMATCH     "Operands must be same type!\n"

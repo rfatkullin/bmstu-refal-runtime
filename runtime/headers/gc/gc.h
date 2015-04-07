@@ -1,21 +1,14 @@
 #ifndef __GC_H__
 #define __GC_H__
 
-#include <memory_manager.h>
 #include <helpers.h>
+#include <memory_manager.h>
+#include <defines/errors_str.h>
 
 typedef int  allocate_result;
 
 #define GC_OK          0
 #define GC_NEED_CLEAN  1
-
-#define GC_MEMORY_OVERFLOW_MSG          "[GC]: Memory overflow!\n"
-#define GC_CANT_COPY_TERM               "[GC]: Can't copy term!\n"
-#define GC_VTERM_PROCESS_BAD_CHAIN_TAG  "[GC]: Bad lterm chain tag at GC vterm process. Chains can't contains simple chain without chain keeper!\n"
-#define GC_VTERM_PROCESS_BAD_TAG        "[GC]: Bad lterm tag at GC vterm process!\n"
-#define GC_BAD_CHAIN_SIMPLE_CHAIN_COPY  "[GC]: Bad chain term passed to copy simple chain func!\n"
-#define GC_NULL_CHAIN_SIMPLE_CHAIN_COPY "[GC]: Null chain passed to copy simple chain func!\n"
-#define GC_PARENT_CALL_NOT_MOVED        "[GC]: Parent call must be moved at subcall copy!\n"
 
 #define GC_VTERM_OV(needCount)      (_memMngr.vtermsOffset + needCount > _memMngr.vtActiveOffset + _memMngr.vtermsMaxOffset)
 #define GC_LTERM_OV(needDataSize)   (_memMngr.dataOffset + needDataSize > _memMngr.dtActiveOffset + _memMngr.dataMaxOffset)

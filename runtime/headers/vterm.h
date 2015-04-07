@@ -12,7 +12,7 @@
 
 #include "lterm.h"
 #include "func_call.h"
-#include "vmachine.h"
+//#include "vmachine.h"
 
 /// vterm функций.
 struct vclosure_t

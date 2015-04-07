@@ -3,9 +3,10 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <memory_manager.h>
 #include <allocators/data_alloc.h>
 #include <allocators/vterm_alloc.h>
-#include <memory_manager.h>
+#include <defines/data_struct_sizes.h>
 
 uint64_t allocateVTerms(struct fragment_t* frag, allocate_result* res)
 {

@@ -3,11 +3,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <memory_manager.h>
-#include <allocators/vterm_alloc.h>
-#include <allocators/data_alloc.h>
 #include <vmachine.h>
+#include <memory_manager.h>
 #include <builtins/builtins.h>
+#include <allocators/data_alloc.h>
+#include <allocators/vterm_alloc.h>
+#include <defines/data_struct_sizes.h>
 
 struct func_result_t func_0(int entryStatus);
 

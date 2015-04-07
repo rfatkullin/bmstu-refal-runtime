@@ -12,6 +12,7 @@
 #include <allocators/data_alloc.h>
 #include <allocators/vterm_alloc.h>
 #include <builtins/case_map_table.h>
+#include <defines/data_struct_sizes.h>
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch));
 
