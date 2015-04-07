@@ -1,0 +1,2 @@
+/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir
+/home/rustam/CppProjects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime_test.dir

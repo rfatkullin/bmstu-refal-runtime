@@ -1,0 +1,133 @@
+          
+program ::=
+    declaration program
+    _epsilon_
+
+/***********************************************/
+
+declaration ::=
+    _action_decl_start mod decl-tail
+    _action_ext_start L_EXTERN ext-tail
+
+decl-tail ::=
+    _action_err_fname block opt-semicolons _action_decl_end
+    f-name body _action_decl_end
+
+ext-tail ::=
+    ext-tail2
+    _action_set_se L_SE ext-tail2
+
+ext-tail2 ::=
+    e-name names _action_ext_end semicolons
+    _action_err_fname _action_ext_end semicolons
+
+mod ::=
+    _action_set_se L_SE mod
+    _action_set_entry L_ENTRY mod
+    _epsilon_
+
+names ::=
+    L_COMMA e-name names
+    _epsilon_
+
+f-name ::=
+    _action_set_fname L_COMPOUND
+
+e-name ::=
+    _action_add_ename L_COMPOUND
+
+/***********************************************/
+
+body ::=
+    block opt-semicolons
+    _action_r5_lbrace _action_block_start _action_aux_push _action_sent_start \
+        _action_aux_push expr' _action_aux_pop \
+        _action_aux_push \
+        _action_act_start action _action_act_end rep-action \
+        _action_aux_pop \
+        _action_sent_end _action_aux_pop _action_block_end _action_r5_rbrace semicolons
+
+semicolons ::=
+    L_SEMICOLON extra-semicolons
+
+opt-semicolons ::=
+    semicolons
+    _epsilon_
+
+extra-semicolons ::=
+    _action_err_semicolon semicolons
+    _epsilon_
+
+block ::=
+    _action_block_start \
+        L_LBRACE _action_aux_push rep-sentence _action_aux_pop _action_block_end
+    _action_block_start L_QMARK _action_set_rollback \
+        L_LBRACE _action_aux_push rep-sentence _action_aux_pop _action_block_end
+
+/***********************************************/
+
+rep-sentence ::=
+    sentence tl-rep-sentence
+    L_RBRACE
+
+tl-rep-sentence ::=
+    semicolons rep-sentence
+    L_RBRACE
+
+sentence ::=
+    _action_sent_start _action_aux_push expr _action_aux_pop \
+        _action_aux_push _action_act_start action _action_act_end \
+        rep-action _action_aux_pop _action_sent_end
+
+rep-action ::=
+    _action_act_start action _action_act_end rep-action
+    _epsilon_
+
+action ::=
+    operation _action_aux_push expr _action_aux_pop
+
+operation ::=
+    L_COMMA   _action_op_comma
+    L_REPLACE _action_op_replace
+    L_COLON   _action_op_colon
+    L_DCOLON  _action_op_dcolon
+    L_TARROW  _action_op_tarrow
+    L_ARROW   _action_op_arrow
+
+/***********************************************/
+
+expr ::=
+    _action_expr_start _action_aux_push tl-expr \
+        _action_aux_pop _action_expr_end
+
+expr' ::=
+    _action_expr_start _action_aux_push tl-expr' \
+        _action_aux_pop _action_expr_end
+
+tl-expr' ::=
+    _action_term_start term' _action_term_end tl-expr
+    _epsilon_
+
+tl-expr ::=
+    _action_term_start term _action_term_end tl-expr
+    _epsilon_
+
+term ::=
+    term'
+    _action_set_func_term block
+
+term' ::=
+    _action_set_l_term    L_L
+    _action_set_r_term    L_R
+    _action_set_str_term  L_STRING
+    _action_set_comp_term L_COMPOUND
+    _action_set_int_term  L_INTEGER
+    _action_set_fl_term   L_FLOAT
+    _action_set_var_term  L_VAR
+    _action_set_expr_term L_LPAREN _action_aux_push expr _action_aux_pop L_RPAREN
+    _action_set_eval_term L_LEVAL _action_aux_push expr rep-expr _action_aux_pop L_REVAL
+    _action_set_func_term L_FUNC f-name block
+
+rep-expr ::=
+    L_TILDE expr rep-expr
+    _epsilon_

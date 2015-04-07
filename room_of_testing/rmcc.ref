@@ -1,0 +1,826 @@
+
+/****************************************************************************
+ Real Men Compiler Constructor.
+
+ Copyright (c) 2006 Sergei Yu. Skorobogatov. All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ THE POSSIBILITY OF SUCH DAMAGE.
+
+ ****************************************************************************
+ File:
+     rmcc.ref
+
+ Description:
+     The compiler constructor written specially for Refal compiler.
+
+ Author:
+     Sergei Skorobogatov (Sergei.Skorobogatov@supercompilers.com)
+ ***************************************************************************/
+
+/*
+ * Main part.
+ */
+
+$ENTRY GO {
+    = <Prout 'Real Men Compiler Constructor'>
+      <Prout '    source-file : ' <Arg 1>>
+      <Prout '    token-file  : ' <Arg 2>>
+      <Prout '    dest-file   : ' <Arg 3>>
+      <Prout '    report-file : ' <Arg 4>>
+      <Prout '----------------/'>
+      <Open 'r' 1 <Arg 1>>
+      <Open 'r' 2 <Arg 2>>
+      <Evaluate
+          (<SortTok <ParseTok <LoadFile 2>>>)
+          <Parse <LoadFile 1>>
+          <Open 'w' 3 <Arg 3>>
+          <Open 'w' 4 <Arg 4>>
+      >;
+    }
+
+Evaluate {
+    t.Tokens e.Rules t.As t.Ts t.Ns
+        , t.Tokens: ((s.100 t.MinTs) e.101)
+        , t.Ns: (t.StartNs e.103)
+        , <EvalFirst (e.Rules) t.Ns>: (e.First)
+        , <Lenw e.First>: s.NsCount e.104
+        , <EvalFollow (e.Rules) (e.First) t.Ns>: (e.Follow)
+        , <EvalParse (e.Rules) (e.First) (e.Follow)>: (e.Cells)
+        , <BuildMatrix (e.Cells) t.Tokens>: t.ParseMatrix
+        , <BuildProductions e.Rules>: s.ProdSize (e.Prod) s.RowsSize (e.Rows)
+        = <SaveFile 4
+              '**** TOKENS' CAR_RET t.Tokens CAR_RET CAR_RET
+              '**** FIRST' CAR_RET <DbgFormatSet e.First> CAR_RET
+              '**** FOLLOW' CAR_RET <DbgFormatSet e.Follow> CAR_RET
+              '**** PARSE TABLE' CAR_RET <DbgFormatParse e.Cells> CAR_RET
+          >
+          <SaveFile 3
+              CAR_RET
+
+              '/*' CAR_RET
+              ' * Terminal symbols.' CAR_RET
+              ' */' CAR_RET CAR_RET
+              <FormatTs t.Tokens> CAR_RET
+
+              '/*' CAR_RET
+              ' * Terminal symbols strings.' CAR_RET
+              ' */' CAR_RET
+              'static char *ts_str[] =' CAR_RET
+              '{' CAR_RET
+              <FormatTsStrings t.Tokens> CAR_RET
+              '};' CAR_RET CAR_RET
+
+              '/*' CAR_RET
+              ' * Nonterminal symbols.' CAR_RET
+              ' */' CAR_RET CAR_RET
+              <FormatNs 1000 t.Ns> CAR_RET
+
+              '/*' CAR_RET
+              ' * Nonterminal symbols strings.' CAR_RET
+              ' */' CAR_RET
+              'static char *ns_str[] =' CAR_RET
+              '{' CAR_RET
+              <FormatNsStrings t.Ns> CAR_RET
+              '};' CAR_RET CAR_RET
+
+              '/*' CAR_RET
+              ' * Semantic actions symbols.' CAR_RET
+              ' */' CAR_RET CAR_RET
+              <FormatAs 1 t.As> CAR_RET
+
+              '/*' CAR_RET
+              ' * Terminal symbol with min. code.' CAR_RET
+              ' */' CAR_RET
+              '#define MIN_TERMINAL ' <FormatTsName t.MinTs> CAR_RET CAR_RET
+
+              '/*' CAR_RET
+              ' * Start nonterminal of the grammar.' CAR_RET
+              ' */' CAR_RET
+              '#define START_NONTERMINAL ' <FormatNsName t.StartNs> CAR_RET CAR_RET
+
+              '/*' CAR_RET
+              ' * LL(1) parse table.' CAR_RET
+              ' */' CAR_RET
+              <FormatMatrix ('p7_table') t.ParseMatrix ('-' 1)> CAR_RET
+
+*              '/*' CAR_RET
+*              ' * FIRST sets table.' CAR_RET
+*              ' */' CAR_RET
+*              <FormatMatrix ('p7_first') <Set2Matrix (e.First) t.Tokens> (0)> CAR_RET
+*
+*              '/*' CAR_RET
+*              ' * FOLLOW sets table.' CAR_RET
+*              ' */' CAR_RET
+*              <FormatMatrix ('p7_follow') <Set2Matrix (e.Follow) t.Tokens> (0)> CAR_RET
+
+              '/*' CAR_RET
+              ' * Synchronization sets table.' CAR_RET
+              ' */' CAR_RET
+              <FormatMatrix
+                  ('p7_sync') 
+                  <BuildMatrix_FirstFollow (e.First) (e.Follow) t.Tokens> 
+                  (0)
+              > CAR_RET
+
+              '/*' CAR_RET
+              ' * Nonterminals that can produce empty sequences.' CAR_RET
+              ' */' CAR_RET
+              'static short p7_eps[' <Symb s.NsCount> '] =' CAR_RET
+              '{' CAR_RET
+              <FormatEps <BuildEps e.First>>
+              '};' CAR_RET CAR_RET
+
+              '/*' CAR_RET
+              ' * Production table.' CAR_RET
+              ' */' CAR_RET
+              'static short p7_prod[' <Symb s.ProdSize> '] =' CAR_RET
+              '{' CAR_RET
+              <FormatProductionTable e.Prod>
+              '};' CAR_RET CAR_RET
+
+              '/*' CAR_RET
+              ' * Entries to the production table.' CAR_RET
+              ' */' CAR_RET
+              'static short p7_rows[' <Symb s.RowsSize> '] =' CAR_RET
+              '{' CAR_RET
+              <FormatRows 1 e.Rows>
+              '};' CAR_RET
+          >;
+    }
+
+SortTok {
+    e.L (s.1 t.X) e.M (s.2 t.Y) e.R
+        , <Sub s.2 s.1>: '-' s.3
+        = <SortTok e.L (s.2 t.Y) e.M (s.1 t.X) e.R>;
+
+    e.1 = e.1;
+    }
+
+FormatAs {
+    s.C (t.X e.Xs)
+        = <LeftJustify 33 '#define ' <FormatAsName t.X>> 
+          '(short)(-' <Symb s.C> ')' CAR_RET
+          <FormatAs <Add (s.C) 1> (e.Xs)>;
+
+    s.C () = ;
+    }
+
+FormatTs {
+    ((s.N (TS e.Name)) e.Xs)
+        = <LeftJustify 33 '#define ' <FormatTsName (TS e.Name)>>
+          '(short)L_' e.Name CAR_RET
+          <FormatTs (e.Xs)>;
+
+    () = ;
+    }
+
+FormatTsStrings {
+    ((s.N (TS e.Name)) e.Xs)
+        = '    \"' <FormatTsName (TS e.Name)> '\"'
+          <FormatTsStrings2 (e.Xs)>;
+
+    () = ;
+    }
+
+FormatTsStrings2 {
+    () = ;
+    (e.Xs) = ',' CAR_RET <FormatTsStrings (e.Xs)>;
+    }
+
+FormatNs {
+    s.C (t.X e.Xs)
+        = <LeftJustify 33 '#define ' <FormatNsName t.X>> 
+          '(short)' <Symb s.C> CAR_RET
+          <FormatNs <Add (s.C) 1> (e.Xs)>;
+
+    s.C () = ;
+    }
+
+FormatNsStrings {
+    (t.X e.Xs)
+        = '    \"' <FormatNsName t.X> '\"'
+          <FormatNsStrings2 (e.Xs)>;
+
+    () = ;
+    }
+
+FormatNsStrings2 {
+    () = ;
+    (e.Xs) = ',' CAR_RET <FormatNsStrings (e.Xs)>;
+    }
+
+FormatAsName {
+    (AS e.Name) = 'AS_' <Upper e.Name>;
+    }
+
+FormatTsName {
+    (TS e.Name) = 'TS_' <Upper e.Name>;
+    }
+
+FormatNsName {
+    (NS e.Name) = 'NS_' <FormatNsName2 <Upper e.Name>>;
+    }
+
+FormatNsName2 {
+    '-' e.1 = '_' <FormatNsName2 e.1>;
+    '\'' e.1 = '_' <FormatNsName2 e.1>;
+    s.X e.1 = s.X <FormatNsName2 e.1>;
+    = ;
+    }
+
+FormatRows {
+    1 e.Rows = '    ' <FormatRows2 1 e.Rows>;
+    17 e.Rows = CAR_RET <FormatRows 1 e.Rows>;
+    s.C e.Rows = <FormatRows2 s.C e.Rows>;
+    }
+
+FormatRows2 {
+    s.C s.X e.Xs
+        = <LeftJustify 5 <Symb s.X> <FormatRows3 e.Xs>>
+          <FormatRows <Add (s.C) 1> e.Xs>;
+
+    1 = ;
+
+    s.C = CAR_RET;
+    }
+
+FormatRows3 {
+    = ;
+    e.1 = ',';
+    }
+
+BuildEps {
+    (t.X EPS e.1) e.2 = 1 <BuildEps e.2>;
+    t.1 e.2 = 0 <BuildEps e.2>;
+    = ;
+    }
+
+FormatEps {
+    = ;
+    e.1 = <FormatEps2 1 e.1>;
+    }
+
+FormatEps2 {
+    1 e.1 = '    ' <FormatEps3 1 e.1>;
+    17 e.1 = CAR_RET <FormatEps2 1 e.1>;
+    s.N e.1 = <FormatEps3 s.N e.1>;
+    }
+
+FormatEps3 {
+    s.N s.X = <Symb s.X> CAR_RET;
+    s.N s.X e.1 = <Symb s.X> ', ' <FormatEps2 <Add (s.N) 1> e.1>;
+    }
+
+FormatProductionTable {
+    ((e.Comment) (e.Code)) e.Prod
+        = '    /* ' <FormatComment e.Comment> '*/' CAR_RET
+          '    ' <FormatCode e.Code>
+          <FormatProductionTable2 e.Prod>;
+
+    = ;
+    }
+
+FormatProductionTable2 {
+    = CAR_RET;
+    e.Prod = ',' CAR_RET CAR_RET <FormatProductionTable e.Prod>;
+    }
+
+FormatComment {
+    s.Num (e.Name) e.Ys
+        = <Symb s.Num> '. ' e.Name ' ::= ' <FormatComment2 e.Ys>;
+    }
+
+FormatComment2 {
+    (e.Name) e.Ys = e.Name ' ' <FormatComment2 e.Ys>;
+    = ;
+    }
+
+FormatCode {
+    s.Size e.Ys = <Symb s.Size> <FormatCode2 e.Ys>;
+    }
+
+FormatCode2 {
+    (e.Name) e.Ys = ', ' e.Name <FormatCode2 e.Ys>;
+    = ;
+    }
+
+LoadFile {
+    s.1 = <LoadFile2 s.1 <Get s.1>>;
+    }
+
+LoadFile2 {
+    s.1 0 = ;
+    s.1 e.2 0 = e.2;
+    s.1 e.2 = e.2 CAR_RET <LoadFile s.1>;
+    }
+
+SaveFile {
+    s.1 = ;
+    s.1 e.2 CAR_RET e.3 = <Put s.1 e.2> <SaveFile s.1 e.3>;
+    s.1 e.2 = <Put s.1 e.2>;
+    }
+
+/*
+ * Grammar parser.
+ */
+Parse {
+    e.1 = <Parse2 () () ()
+              <NormalizeBeginning
+                  <NormalizeEnding 
+                      <RemoveExtraSpace
+                          <ProcessLineWraps
+                              <RemoveComments e.1>
+                          >
+                      >
+                  >
+              >
+          >;
+    }
+
+RemoveComments {
+    e.1 '/*' e.2 '*/' e.3    = e.1 <RemoveComments e.3>;
+    e.1                      = e.1;
+    }
+
+ProcessLineWraps {
+    e.1 '\\' e.2 CAR_RET e.3 = e.1 <ProcessLineWraps e.3>;
+    e.1                      = e.1;
+    }
+
+RemoveExtraSpace {
+    '  ' e.1                 = <RemoveExtraSpace ' ' e.1>;
+    ' ' CAR_RET e.1          = <RemoveExtraSpace CAR_RET e.1>;
+    CAR_RET CAR_RET e.1      = <RemoveExtraSpace CAR_RET e.1>;
+    s.X e.1                  = s.X <RemoveExtraSpace e.1>;
+                             = ;
+    }
+
+NormalizeBeginning {
+    ' ' e.1                  = <NormalizeBeginning e.1>;
+    CAR_RET e.1              = <NormalizeBeginning e.1>;
+    e.1                      = e.1;
+    }
+
+NormalizeEnding {
+    e.1 ' '                  = <NormalizeEnding e.1>;
+    e.1 CAR_RET              = <NormalizeEnding e.1>;
+    e.1                      = e.1 CAR_RET;
+    }
+
+Parse2 {
+    (e.As) (e.Ts) (e.Ns) e.Name ' ::=' e.2 CAR_RET e.3
+        , <Parse3 (e.As) (e.Ts) (e.Name) (e.3)>: t.As_ t.Ts_ e.Rules (e.4)
+        = e.Rules <Parse2 t.As_ t.Ts_ (e.Ns (NS e.Name)) e.4>;
+    (e.As) (e.Ts) (e.Ns) = (e.As) (e.Ts) (e.Ns);
+    }
+
+Parse3 {
+    t.As t.Ts (e.Name) e.Rules (' ' e.1 CAR_RET e.2)
+        , <Parse4 (0) e.1>: s.N e.R
+        , <Update t.As t.Ts e.R>: t.As_ t.Ts_
+        = <Parse3 t.As_ t.Ts_ (e.Name) e.Rules ((NS e.Name) s.N e.R) (e.2)>;
+
+    t.As t.Ts (e.Name) e.Rules (e.2) = t.As t.Ts e.Rules (e.2);
+    }
+
+Parse4 {
+    (0) '_epsilon_' = 0;
+    (s.N e.R) e.X ' ' e.Y = <Parse4 (<Add s.N 1> e.R <RecognizeSym e.X>) e.Y>;
+    (s.N e.R) e.X = <Add s.N 1> e.R <RecognizeSym e.X>;
+    }
+
+RecognizeSym {
+    '_action_' e.1 = (AS e.1);
+    'L_' e.1 = (TS e.1);
+    e.1 = (NS e.1);
+    }
+
+Update {
+    (e.As) (e.Ts) t.S e.1
+        , t.S: {
+              (AS e.2), e.As: e.L t.S e.R = <Update (e.As) (e.Ts) e.1>;
+              (AS e.2) = <Update (e.As t.S) (e.Ts) e.1>;
+              (TS e.2), e.Ts: e.L t.S e.R = <Update (e.As) (e.Ts) e.1>;
+              (TS e.2) = <Update (e.As) (e.Ts t.S) e.1>;
+              (NS e.2) = <Update (e.As) (e.Ts) e.1>;
+              };
+
+    (e.As) (e.Ts) = (e.As) (e.Ts);
+    }
+
+ParseTok {
+    e.1 = <ParseTok2
+              <NormalizeBeginning
+                  <NormalizeEnding 
+                      <RemoveExtraSpace e.1>
+                  >
+              >
+          >;
+    }
+
+ParseTok2 {
+    e.Name ' ' e.Num CAR_RET e.1 
+        = (<Numb e.Num> (TS <FixName e.Name>)) <ParseTok2 e.1>;
+
+    = ;
+    }
+
+FixName {
+    'END_OF_SLK_INPUT_' = 'END_OF_INPUT';
+    'L_' e.1 = e.1;
+    e.1 = e.1;
+    }
+
+/*
+ * Functions that are common for FIRST and FOLLOW sets
+ */
+
+Merge {
+    (EPS e.1) EPS e.2 = <Merge (EPS e.1) e.2>;
+    (e.1) EPS e.2 = <Merge (EPS e.1) e.2>;
+
+    (e.1) = e.1;
+
+    (e.1) t.X e.2
+        , e.1: {
+              e.L t.X e.R = <Merge (e.1) e.2>;
+              e.3 = <Merge (e.1 t.X) e.2>;
+              };
+    }
+
+DbgFormatSet {
+    ((NS e.X) e.Xs) e.Fs
+        = e.X ': ' <DbgFormatSet2 e.Xs> CAR_RET <DbgFormatSet e.Fs>;
+    = ;
+    }
+
+DbgFormatSet2 {
+    EPS e.1 = '_epsilon_ ' <DbgFormatSet2 e.1>;
+    (TS e.Y) e.1 = 'L_' e.Y ' ' <DbgFormatSet2 e.1>;
+    = ;
+    }
+
+Set2Matrix {
+    (e.Set) t.Tokens = <BuildMatrix (<Set2Matrix2 1 e.Set>) t.Tokens>;
+    };
+
+BuildMatrix_FirstFollow {
+    (e.First) (e.Follow) t.Tokens
+        , <Set2Matrix2 1 e.First>: e.FirstM
+        , <Set2Matrix2 2 e.Follow>: e.FollowM
+        , <SortTable e.FirstM e.FollowM>: e.Table
+        = <BuildMatrix (e.Table) t.Tokens>;
+    }
+
+SortTable {
+    e.1 (t.X t.Y s.A) e.2 (t.X t.Y s.B) e.3
+        = <SortTable e.1 (t.X t.Y 3) e.2 e.3>;
+
+    e.1 (t.X t.Y1 s.A) e.2 (t.X t.Y2 s.B) e.3
+        = e.1 (t.X t.Y1 s.A) <SortTable (t.X t.Y2 s.B) e.2 e.3>;
+
+    e.1 = e.1;
+    }
+
+Set2Matrix2 {
+    s.Id (t.X e.Xs) e.Fs
+        = <Set2Matrix3 s.Id t.X e.Xs> <Set2Matrix2 s.Id e.Fs>;
+    s.Id = ;
+    }
+
+Set2Matrix3 {
+    s.Id t.X EPS e.1 = <Set2Matrix3 s.Id t.X e.1>;
+    s.Id t.X t.Y e.1 = (t.X t.Y s.Id) <Set2Matrix3 s.Id t.X e.1>;
+    s.Id t.X = ;
+    }
+
+/*
+ * FIRST set evaluator.
+ */
+
+EvalFirst {
+    t.Rules t.Ns = <EvalFirst2 t.Rules () t.Ns>;
+    }
+
+EvalFirst2 {
+    (e.Rules) (e.1) (t.X e.Ns)
+        , e.Rules: {
+              e.L (t.X 0) e.R = <EvalFirst2 (e.L e.R) (e.1 (t.X EPS)) (e.Ns)>;
+              e.2 = <EvalFirst2 (e.Rules) (e.1 (t.X)) (e.Ns)>;
+              };
+        
+    (e.Rules) (e.1) () = <EvalFirst_Loop (e.Rules) (e.1)>;
+    }
+
+EvalFirst_Loop {
+    t.Rules t.First
+        , <EvalFirst_Process t.Rules t.First>: {
+              t.First = t.First;
+              e.1 = <EvalFirst_Loop t.Rules e.1>;
+              };
+    }
+
+EvalFirst_Process {
+    ((t.X s.N e.Ys) e.Rules) (e.First)
+        , e.First: e.L (t.X e.Fx) e.R
+        , <Merge (e.Fx) <FIRST (e.Ys) (e.First)>>: e.Fx_
+        = <EvalFirst_Process (e.Rules) (e.L (t.X e.Fx_) e.R)>;
+
+    () t.First = t.First;
+    }
+
+FIRST {
+    () (e.First) = EPS;
+
+    (t.X e.Xs) (e.First)
+        , t.X: {
+              (AS e.1) = <FIRST (e.Xs) (e.First)>;
+              (TS e.1) = t.X;
+              (NS e.1)
+                  , e.First: e.L (t.X e.Fx) e.R
+                  , e.Fx: {
+                        EPS e.2 = <Merge (e.2) <FIRST (e.Xs) (e.First)>>;
+                        e.2 = e.2;
+                        }
+              };
+    }
+
+/*
+ * FOLLOW set evaluator.
+ */
+
+EvalFollow {
+    t.Rules t.First (t.X e.Ns)
+        = <EvalFollow2 t.Rules t.First ((t.X (TS 'END_OF_INPUT'))) (e.Ns)>;
+
+    t.Rules t.First () = ();
+    }
+
+EvalFollow2 {
+    t.Rules t.First (e.1) (t.X e.Ns)
+        = <EvalFollow2 t.Rules t.First (e.1 (t.X)) (e.Ns)>;
+
+    t.Rules t.First (e.1) () = <EvalFollow_Loop t.Rules t.First (e.1)>;
+    }
+
+EvalFollow_Loop {
+    t.Rules t.First t.Follow
+        , <EvalFollow_Process t.Rules t.First t.Follow>: {
+              t.Follow = t.Follow;
+              e.1 = <EvalFollow_Loop t.Rules t.First e.1>;
+              };
+    }
+
+EvalFollow_Process {
+    ((t.X s.N e.Ys) e.Rules) t.First t.Follow
+        , <EvalFollow_ProcessRule t.X (e.Ys) t.First t.Follow>: t.Follow_
+        = <EvalFollow_Process (e.Rules) t.First t.Follow_>;
+
+    () t.First t.Follow = t.Follow;
+    }
+
+EvalFollow_ProcessRule {
+    t.X () t.First t.Follow = t.Follow;
+
+    t.X (t.Y e.Ys) t.First t.Follow
+        , t.Y: {
+              (NS e.1)
+                  , <FIRST (e.Ys) t.First>: {
+                        EPS e.3
+                            , <FOLLOW t.X t.Follow>: e.Fx
+                            , t.Follow: (e.L (t.Y e.Fy) e.R)
+                            , (e.L (t.Y <Merge (e.Fy) e.Fx>) e.R): t.Follow_
+                            = <EvalFollow_ProcessRule2 t.X t.Y (e.Ys) (e.3) t.First t.Follow_>;
+
+                        e.3 = <EvalFollow_ProcessRule2 t.X t.Y (e.Ys) (e.3) t.First t.Follow>;
+                        };
+
+              t.1 = <EvalFollow_ProcessRule t.X (e.Ys) t.First t.Follow>;
+              };
+    }
+
+EvalFollow_ProcessRule2 {
+    t.X t.Y (e.Ys) (e.FYs) t.First (e.L (t.Y e.Fy) e.R)
+        , (e.L (t.Y <Merge (e.Fy) e.FYs>) e.R): t.Follow_
+        = <EvalFollow_ProcessRule t.X (e.Ys) t.First t.Follow_>;
+    }
+
+FOLLOW {
+    t.X (e.L (t.X e.Fx) e.R) = e.Fx;
+    }
+
+/*
+ * Parse table evaluator.
+ */
+
+EvalParse {
+    t.Rules t.First t.Follow = <EvalParse2 1 () t.Rules t.First t.Follow>;
+    }
+
+EvalParse2 {
+    s.N (e.Cells) () t.First t.Follow = (e.Cells);
+
+    s.N (e.Cells) ((t.A s.Size e.Alpha) e.Rules) t.First t.Follow
+        , <FIRST (e.Alpha) t.First>: {
+              EPS e.1
+                  = <EvalParse2 
+                        <Add s.N 1> 
+                        (
+                            e.Cells 
+                            <GenCells s.N t.A (e.1)>
+                            <GenCells s.N t.A (<FOLLOW t.A t.Follow>)>
+                        ) 
+                        (e.Rules) t.First t.Follow
+                    >;
+
+              e.1 = <EvalParse2 
+                        <Add s.N 1> 
+                        (e.Cells <GenCells s.N t.A (e.1)>) 
+                        (e.Rules) t.First t.Follow
+                    >;
+              };
+    }
+
+GenCells {
+    s.N t.A (t.X e.1) = (t.A t.X s.N) <GenCells s.N t.A (e.1)>;
+    s.N t.A () = ;
+    }
+
+DbgFormatParse {
+    t.Cell e.1
+        , t.Cell: (t.X e.2)
+        , t.X: (NS e.Name)
+        = e.Name ':' <DbgFormatParse2 t.X (t.Cell e.1)>;
+
+    = ;
+    }
+
+DbgFormatParse2 {
+    t.X ((t.X (TS e.A) s.P) e.1)
+        = '   L_' e.A ' ' s.P <DbgFormatParse2 t.X (e.1)>;
+
+    t.X (e.1) = CAR_RET <DbgFormatParse e.1>;
+    }
+
+/*
+ * Work with matrixes.
+ */
+BuildMatrix {
+    (e.Table) t.Tokens
+        , t.Tokens: ((s.1 t.X) e.M (s.2 t.Y))
+        , <Group e.Table>: e.Groups
+        , <Lenw e.Groups>: s.Height e.3
+        , <Add (<Sub (s.2) s.1>) 1>: s.Width
+        = (s.Height s.Width <BuildMatrix2 s.1 s.2 t.Tokens (e.Groups)>);
+    }
+
+Group {
+    t.Cell e.1
+        , t.Cell: (t.X e.2)
+        , <Group2 t.X (t.Cell e.1)>: e.Grp (e.3)
+        = (e.Grp) <Group e.3>;
+
+    = ;
+    }
+
+Group2 {
+    t.X ((t.X t.A s.P) e.1)
+        = (t.A s.P) <Group2 t.X (e.1)>;
+
+    t.X (e.1) = (e.1);
+    }
+
+BuildMatrix2 {
+    s.1 s.2 t.Tokens (t.G e.Groups)
+        = <BuildRow () s.1 s.2 t.Tokens t.G> 
+          <BuildMatrix2 s.1 s.2 t.Tokens (e.Groups)>;
+
+    s.1 s.2 t.Tokens () = ;
+    }
+
+BuildRow {
+    (e.Row) s.i s.max t.Tokens t.G
+        , <Sub (s.max) s.i>: s.1
+        , <SearchGroup s.i t.Tokens t.G>: s.R
+        = <BuildRow (e.Row s.R) <Add (s.i) 1> s.max t.Tokens t.G>;
+
+    (e.Row) e.2 = (e.Row);
+    }
+
+SearchGroup {
+    s.i (e.1 (s.i t.X) e.2) (e.3 (t.X s.P) e.4) = s.P;
+    e.1 = 0;
+    }
+
+FormatMatrix {
+    (e.Name) (s.Height s.Width e.Matrix) t.Fix
+        = 'static short ' e.Name '[' <Symb s.Height> '][' <Symb s.Width> '] =' CAR_RET
+          '{' CAR_RET
+          <FormatMatrix2 t.Fix e.Matrix>
+          '};' CAR_RET
+    }
+
+FormatMatrix2 {
+    t.Fix (e.Row) e.Matrix
+        = '    { ' <FormatRow t.Fix e.Row> <FormatMatrix3 t.Fix e.Matrix>;
+    }
+
+FormatMatrix3 {
+    t.Fix (e.Row) e.Matrix = ' },' CAR_RET <FormatMatrix2 t.Fix (e.Row) e.Matrix>;
+    t.Fix = ' }' CAR_RET;
+    }
+
+FormatRow {
+    t.Fix s.1 e.2 = <RightJustify 2 <Symb <Add t.Fix s.1>>> <FormatRow2 t.Fix e.2>;
+    }
+
+FormatRow2 {
+    t.Fix = ;
+    t.Fix e.1 = ',' <FormatRow t.Fix e.1>;
+    }
+
+/*
+ * Productions.
+ */
+
+BuildProductions {
+    e.Rules = <BuildProductions2 0 () 0 () e.Rules>;
+    }
+
+BuildProductions2 {
+    s.Pos (e.Prod) s.RowsSize (e.Rows) (t.X s.Size e.Ys) e.Rules
+        , <BuildProdRow s.RowsSize t.X s.Size e.Ys>: t.Row
+        = <BuildProductions2 
+              <Add (<Add (s.Pos) s.Size>) 1>
+              (e.Prod t.Row)
+              <Add (s.RowsSize) 1>
+              (e.Rows s.Pos) 
+              e.Rules
+          >;
+
+    s.Pos t.Prod s.RowsSize t.Rows = s.Pos t.Prod s.RowsSize t.Rows;
+    }
+
+BuildProdRow {
+    s.Num (NS e.Name) s.Size e.Ys
+        = <BuildProdRow2 (s.Num (e.Name)) (s.Size) e.Ys>;
+    }
+
+BuildProdRow2 {
+    (e.Comment) (e.Code) t.Y e.Ys
+        = <BuildProdRow2
+              (e.Comment <ToComment t.Y>)
+              (e.Code <ToCode t.Y>)
+              e.Ys
+          >;
+
+    t.Comment t.Code = (t.Comment t.Code);
+    }
+
+ToComment {
+    (TS e.Name) = ('L_' e.Name);
+    (NS e.Name) = (e.Name);
+    (AS e.Name) = ('_action_' e.Name);
+    }
+
+ToCode {
+    (TS e.Name) = (<FormatTsName (TS e.Name)>);
+    (NS e.Name) = (<FormatNsName (NS e.Name)>);
+    (AS e.Name) = (<FormatAsName (AS e.Name)>);
+    }
+
+/*
+ * Justifications.
+ */
+
+LeftJustify {
+    0 e.S = e.S;
+    s.Width s.X e.S = s.X <LeftJustify <Sub (s.Width) 1> e.S>;
+    s.Width = ' ' <LeftJustify <Sub (s.Width) 1>>;
+    }
+
+
+RightJustify {
+    0 e.S = e.S;
+    s.Width e.S s.X = <RightJustify <Sub (s.Width) 1> e.S> s.X;
+    s.Width = <RightJustify <Sub (s.Width) 1>> ' ';
+    }

@@ -1,5 +1,0 @@
-$ENTRY Go
-{
-	= <Open 'r' 1 '../../Tests/Builtins/Files/file-916382.read.tmp'>
-}
-

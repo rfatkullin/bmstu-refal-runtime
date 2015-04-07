@@ -1,0 +1,5 @@
+$ENTRY Go
+{
+	= <Open 'w' 1 '../../tests/builtins/files/test1.write.tmp'>
+	  <Open 'w' 19 '../../tests/builtins/files/test2.write.tmp'> 
+}
