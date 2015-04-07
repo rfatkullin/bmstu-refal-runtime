@@ -45,10 +45,7 @@ static struct vstring_t* constructVStringFromASCIIName(const char* name)
     ptr->length = strlen(name);
     ptr->head = (uint32_t*)malloc(ptr->length * sizeof(uint32_t));
 
-    // USE MEMSET
-    uint64_t i = 0;
-    for (i = 0; i < ptr->length; ++i)
-        ptr->head[i] = name[i];
+    memcpy(ptr->head, name, ptr->length);
 
     return ptr;
 }
@@ -214,32 +211,23 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
 {
     struct lterm_t* fieldOfView = callTerm->funcCall->fieldOfView;
 
-    //Fatal error!
     if (fieldOfView == 0)
-    {
-        printf("%s\n", BAD_EVAL_EXPR);
-        exit(0);
-    }
+        PRINT_AND_EXIT(BAD_EVAL_EXPR);
 
+    // There is no lterms.
     if (fieldOfView->next == fieldOfView)
         return 0;
 
-    //Fatal error!
     if (fieldOfView->next->tag != L_TERM_FRAGMENT_TAG)
-    {
-        printf("%s\n", BAD_EVAL_EXPR);
-        exit(0);
-    }
+        PRINT_AND_EXIT(BAD_EVAL_EXPR);
 
+    // There is no func calls.
     if (fieldOfView->next->fragment->length == 0)
         return 0;
 
-    //Fatal error!
+    // First vterm must be closure!
     if (_memMngr.vterms[fieldOfView->next->fragment->offset].tag != V_CLOSURE_TAG)
-    {
-        printf("%s\n", BAD_EVAL_EXPR);
-        exit(0);
-    }
+        PRINT_AND_EXIT(BAD_EVAL_EXPR);
 
     struct vclosure_t* closure = _memMngr.vterms[fieldOfView->next->fragment->offset].closure;
 
@@ -394,13 +382,9 @@ static uint64_t gcAssemblyChain(struct lterm_t* chain, uint64_t* length, allocat
 
                 setBracketsData(topVTermsOffset, offset, tmpLength);
 
-//                if (!(_memMngr.vtActiveOffset <= offset && offset < _memMngr.vtActiveOffset + _memMngr.vtermsMaxOffset))
-//                    PRINT_AND_EXIT("BEDA!!!\n");
-
                 ++topVTermsOffset;
                 break;
             }
-
         }
 
         currTerm = currTerm->next;

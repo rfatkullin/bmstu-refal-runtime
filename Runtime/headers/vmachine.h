@@ -11,7 +11,7 @@
 
 #define DEFAULT_HEAP_SIZE UINT64_C(1024 * 1024 * 1024)
 
-#define BAD_EVAL_EXPR               "Can't execute expr in evaluate brackets!"
+#define BAD_EVAL_EXPR               "Can't execute expr in evaluate brackets!\n"
 #define FUNC_CALL_FAILED            "Func call failed!\n"
 #define ASSEMBLY_NOT_CHAIN          "Trying assembly not chain!\n"
 #define SIMPLE_CHAIN_AT_ASSEMBLY    "Chain tag when assembly. Chains contains only chains keepers, not chains!\n"
