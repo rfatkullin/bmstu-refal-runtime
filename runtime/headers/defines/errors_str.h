@@ -22,4 +22,18 @@
 #define FOV_CONTAINS_FUNC_CALL      "[Data allocator]: FieldOfView passed in funcation contains func call term!\n"
 #define FOV_CONTAINS_SIMPLE_CHAIN   "[Data allocator]: FieldOfView can't contains simple chain without chain keeper!\n"
 
+
+#define TOO_FEW_ARGUMENTS           "[Builtins]: Too few arguments passed in function!\n"
+#define BAD_DESCR                   "[Builtins]: Bad file descriptor! Descriptor must be in range [1,%d)! Descr: %d\n"
+#define BAD_FILE_OPEN_MODE          "[Builtins]: Bad file open mode! Expected 'W','w', 'R' or 'r'\n"
+#define FILE_OPEN_ERROR             "[Builtins]: Can't open file %s in '%s' mode! The reason: %s\n"
+#define DESCR_ALREADY_IN_USE        "[Builtins]: Descriptor %u already in use!\n"
+#define BAD_VTERM                   "[Builtins]: Bad vterm type!\n"
+#define TRY_TO_TAKE_TERMINAL_DESCR  "[Builtins]: Trying to bind file to terminal descriptor! Descriptor must be in range [1,%d)!\n"
+#define GET_WRONG_ARG_NUM           "[Builtins]: Get take 1 argument - file descriptor!\n"
+#define ARG_FUNC_BAD_ARG_NUM        "[Builtins]: Arg take 1 argument - number of argument!\'n"
+#define BAD_PROGRAM_ARG_NUM         "[Builtins]: Bad program argument number! Program args count: %d. Passed arg num: %d. But must in range [1, %d).\n"
+#define SYMB_BAD_ARG                "[Builtins]: Symb takes 1 argument - int number!\n"
+#define NUMB_BAD_ARG                "[Builtins]: Numb can't parse int from string!\n"
+
 #endif

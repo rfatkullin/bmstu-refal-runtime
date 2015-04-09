@@ -12,6 +12,7 @@
 static struct lterm_t* copyFuncCallLTerm(struct lterm_t* term);
 static struct env_t* copyEnv(struct env_t* from, struct env_t* to);
 static struct lterm_t* copyChainVTerm(struct lterm_t* term);
+static struct lterm_t* copyFragmentLTerm(struct lterm_t* oldTerm);
 
 #define SET_MOVED(oldTerm, newTerm) \
 do{                                 \
@@ -153,7 +154,7 @@ static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
     return to;
 }
 
-struct lterm_t* copyFragmentLTerm(struct lterm_t* oldTerm)
+static struct lterm_t* copyFragmentLTerm(struct lterm_t* oldTerm)
 {
     GC_DATA_HEAP_CHECK_EXIT(FRAGMENT_LTERM_SIZE(1));
 

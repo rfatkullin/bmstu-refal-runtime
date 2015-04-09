@@ -26,10 +26,12 @@ struct lterm_t*     allocateBuiltinsResult(uint64_t offset, uint64_t length);
 struct vclosure_t*  allocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback);
 struct lterm_t*     allocateFragmentLTerm(uint32_t count);
 struct lterm_t*     allocateFuncCallLTerm();
-struct env_t*       initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount, uint32_t bracketsCount);
 struct lterm_t*     allocateChainKeeperLTerm(uint32_t count);
 struct lterm_t*     allocateSimpleChain();
 struct fragment_t*  allocateFragment(uint32_t count);
+
+/// Инициализирует окружение функции. Также выделяет память.
+struct env_t*       initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount, uint32_t bracketsCount);
 
 /// Выделяют память с помощью malloc'а
 struct vstring_t* allocateVStringLiteral(uint32_t* runes, uint64_t length);

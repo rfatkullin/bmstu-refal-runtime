@@ -12,13 +12,7 @@
 #include <defines/errors_str.h>
 #include <allocators/data_alloc.h>
 
-static struct lterm_t* getActual(struct lterm_t* term)
-{
-    if (term->tag == GC_MOVED)
-        return term->prev;
-
-    return term;
-}
+static struct lterm_t* getActual(struct lterm_t* term);
 
 void collectGarbage()
 {
@@ -45,20 +39,6 @@ void collectGarbage()
     printf("End garbage collection.\n");
 }
 
-void strictCheckHeaps(uint64_t needTermCount, uint64_t needDataSize)
-{
-    if (GC_VTERM_OV(needTermCount) || GC_LTERM_OV(needDataSize))
-        PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
-}
-
-int isHeapsOverflowed(uint64_t needTermCount, uint64_t needDataSize)
-{
-    if (GC_VTERM_OV(needTermCount) || GC_LTERM_OV(needDataSize))
-        return 1;
-
-    return 0;
-}
-
 int checkAndCleanHeaps(uint64_t needTermCount, uint64_t needDataSize)
 {
     int isCollect = 0;
@@ -75,8 +55,13 @@ int checkAndCleanHeaps(uint64_t needTermCount, uint64_t needDataSize)
     return isCollect;
 }
 
+static struct lterm_t* getActual(struct lterm_t* term)
+{
+    if (term->tag == GC_MOVED)
+        return term->prev;
 
-
+    return term;
+}
 
 
 

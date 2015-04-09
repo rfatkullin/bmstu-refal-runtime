@@ -133,7 +133,7 @@ static struct func_result_t _gcGet(FILE* file)
         if (checkAndCleanHeaps(1, 0))
         {
             uint64_t length = currOffset - firstOffset + 1;
-            strictCheckHeaps(length + 1, 0);
+            GC_VTERM_HEAP_CHECK_EXIT(length + 1);
 
             // Copy earlier read chars.
             firstOffset = copySymbols(firstOffset, currOffset - firstOffset);

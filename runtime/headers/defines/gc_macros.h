@@ -3,6 +3,8 @@
 
 #include <memory_manager.h>
 
+/* Макросы, используемые сборщиком мусора для проверки переполнения куч. */
+
 #define GC_VTERM_OV(needCount)      (_memMngr.vtermsOffset + needCount > _memMngr.vtActiveOffset + _memMngr.vtermsMaxOffset)
 #define GC_LTERM_OV(needDataSize)   (_memMngr.dataOffset + needDataSize > _memMngr.dtActiveOffset + _memMngr.dataMaxOffset)
 
@@ -63,7 +65,7 @@ do{                                                     \
     }                                                   \
 }while(0)
 
-#define GC_RETURN_ON_NEED_CLEAN(res)                              \
+#define GC_RETURN_ON_NEED_CLEAN(res)                        \
 do{                                                         \
     if (res == GC_NEED_CLEAN)                               \
         return res;                                         \
@@ -73,11 +75,11 @@ do{                                                         \
 do                                                  \
 {                                                   \
     var = expr;                                     \
-    if (statusVar == GC_NEED_CLEAN)               \
+    if (statusVar == GC_NEED_CLEAN)                 \
     {                                               \
         collectGarbage();                           \
         var = expr;                                 \
-        if (statusVar == GC_NEED_CLEAN)           \
+        if (statusVar == GC_NEED_CLEAN)             \
             PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG); \
     }                                               \
 }while(0)
