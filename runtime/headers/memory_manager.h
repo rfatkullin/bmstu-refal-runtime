@@ -8,42 +8,42 @@
 
 #define DEFAULT_HEAP_SIZE UINT64_C(1024 * 1024 * 1024)
 
-/// Total allocated memory = VTERMS_HEAP_SIZE_FACTOR + DATA_HEAP_SIZE_FACTOR
+/// Коэффциенты распределения памяти по кучам.
 #define VTERMS_HEAP_SIZE_FACTOR     0.4f
 #define DATA_HEAP_SIZE_FACTOR       0.6f
 
 struct memory_manager
 {
-	// Указатель на начало vterm'ов
+    /// Указатель на начало vterm'ов
 	struct vterm_t* vterms;
     uint64_t vtActiveOffset;
     uint64_t vtInactiveOffset;
 
-	// Указатели на данные
+    /// Указатели на данные
     uint8_t* data;
     uint64_t dtActiveOffset;
     uint64_t dtInactiveOffset;
 
-    // Текущие сдвиги
+    /// Текущие сдвиги
     uint64_t vtermsOffset;
     uint64_t dataOffset;    
 
-    // Вспомогательный массив для GC. Отмечаются использованные vterm'ы.
+    /// Вспомогательный массив для GC. Отмечаются использованные vterm'ы.
     uint8_t* gcInUseVTerms;
 
-    // Начиная с какого vterm'а начинаются не литеральные vterm'ы в массиве vterms
+    /// Начиная с какого vterm'а начинаются не литеральные vterm'ы в массиве vterms
     uint64_t vtermsBeginOffset;
 
-    // Максимальный размер массива vterm'ов.
+    /// Максимальный размер массива vterm'ов.
     uint64_t vtermsMaxOffset;	
 
-    // Максимальный размер данных.
+    /// Максимальный размер данных.
     uint64_t dataMaxOffset;
 
-    // Размер выделенного участка
+    /// Размер выделенного участка
     uint64_t totalSize;
 
-    // Поле зрения
+    /// Поле зрения
     struct lterm_t* fieldOfView;
 };
 
@@ -58,6 +58,7 @@ void initAllocator(uint64_t size);
 /// т.е. инциализирует поля activeTermsHeap, inactiveTermsHeap и т.д.
 void initHeaps(uint64_t literalsNumber);
 
+/// Выводит общую информацию об использовании памяти.
 void printMemoryInfo();
 
 #endif
