@@ -21,41 +21,11 @@ static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static uint64_t gcAssemblyChain(struct lterm_t* chain, uint64_t* length, allocate_result* res);
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
 static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult, struct lterm_t** lastCallFuncFOV);
-
-static struct lterm_t* ConstructStartFunc(const char* funcName, RefalFunc entryFuncPointer)
-{
-    allocate_result res;
-
-    struct lterm_t* gofuncCallTerm = allocateFuncCallLTerm();
-    gofuncCallTerm->funcCall->fieldOfView = allocateSimpleChain();
-
-    struct lterm_t* fragTerm = allocateFragmentLTerm(1);
-    fragTerm->fragment->offset = allocateClosureVTerm();
-    fragTerm->fragment->length = 1;
-
-    struct vstring_t* ident;
-    CHECK_ALLOCATION_EXIT(ident, chAllocateVStringFromASCIIName(funcName, &res), res);
-
-    _memMngr.vterms[fragTerm->fragment->offset].closure = gcAllocateClosureStruct(entryFuncPointer, 0, ident, 0);
-
-    ADD_TO_CHAIN(gofuncCallTerm->funcCall->fieldOfView, fragTerm);
-
-    return gofuncCallTerm;
-}
-
-static struct lterm_t* ConstructStartFieldOfView(const char* funcName, RefalFunc entryFuncPointer)
-{
-    struct lterm_t* fieldOfView = allocateSimpleChain();
-    struct lterm_t* gofuncCallTerm = ConstructStartFunc(funcName, entryFuncPointer);
-
-    ADD_TO_CHAIN(fieldOfView, gofuncCallTerm);
-
-    return fieldOfView;
-}
+static struct lterm_t* constructStartFieldOfView(const char* funcName, RefalFunc entryFuncPointer);
 
 void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 {
-    _memMngr.fieldOfView = ConstructStartFieldOfView(entryFuncName, entryFuncPointer);
+    _memMngr.fieldOfView = constructStartFieldOfView(entryFuncName, entryFuncPointer);
 
 	struct func_result_t funcRes;    
     struct lterm_t* parentCall = 0;
@@ -209,6 +179,30 @@ static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_r
 	return newCurrNode;
 }
 
+void clearCurrFuncEnvData()
+{
+    CURR_FUNC_CALL->env->stretchVarsNumber[0] = 0;
+
+    uint32_t i = 0;
+    for (i = 1; i < CURR_FUNC_CALL->env->fovsCount; ++i)  // first field of view and assembled field of view must be saved.
+    {
+        // No need to set to 0 ?
+        CURR_FUNC_CALL->env->stretchVarsNumber[i] = 0;
+        CURR_FUNC_CALL->env->assembled[i] = 0;
+    }
+
+    // No need to set to 0 ?
+    for (i = 1; i < CURR_FUNC_CALL->env->bracketsCount; ++i)
+    {
+        CURR_FUNC_CALL->env->bracketsOffset[i] = 0;
+    }
+
+    for (i = 0; i < CURR_FUNC_CALL->env->localsCount; ++i)
+    {
+        memset(CURR_FUNC_CALL->env->locals + i, 0, FRAGMENT_STRUCT_SIZE(1));
+    }
+}
+
 uint64_t gcGetAssembliedChain(struct lterm_t* chain, allocate_result *res)
 {    
     uint64_t assembledVtermOffset = 0;
@@ -315,4 +309,44 @@ static uint64_t gcAssemblyChain(struct lterm_t* chain, uint64_t* length, allocat
     }
 
     return resOffset;
+}
+
+static struct lterm_t* constructStartFunc(const char* funcName, RefalFunc entryFuncPointer)
+{
+    allocate_result     res;
+    struct vstring_t*   ident;
+    struct lterm_t*     fragTerm;
+    struct lterm_t*     gofuncCallTerm;
+
+    CHECK_ALLOCATION_EXIT(gofuncCallTerm, chAllocateFuncCallLTerm(&res), res);
+    CHECK_ALLOCATION_EXIT(gofuncCallTerm->funcCall->fieldOfView, chAllocateSimpleChainLTerm(&res), res);
+
+    CHECK_ALLOCATION_EXIT(fragTerm, chAllocateFragmentLTerm(1, &res), res);
+    CHECK_ALLOCATION_EXIT(fragTerm->fragment->offset, chAllocateClosureVTerm(&res), res);
+
+    fragTerm->fragment->length = 1;
+
+    CHECK_ALLOCATION_EXIT(ident, chAllocateVStringFromASCIIName(funcName, &res), res);
+
+    CHECK_ALLOCATION_EXIT(_memMngr.vterms[fragTerm->fragment->offset].closure,
+            chAllocateClosureStruct(entryFuncPointer, 0, ident, 0, &res),
+            res);
+
+    ADD_TO_CHAIN(gofuncCallTerm->funcCall->fieldOfView, fragTerm);
+
+    return gofuncCallTerm;
+}
+
+static struct lterm_t* constructStartFieldOfView(const char* funcName, RefalFunc entryFuncPointer)
+{
+    allocate_result     res;
+    struct lterm_t*     fieldOfView;
+
+    CHECK_ALLOCATION_EXIT(fieldOfView, chAllocateSimpleChainLTerm(&res), res);
+
+    struct lterm_t* goFuncCallTerm = constructStartFunc(funcName, entryFuncPointer);
+
+    ADD_TO_CHAIN(fieldOfView, goFuncCallTerm);
+
+    return fieldOfView;
 }

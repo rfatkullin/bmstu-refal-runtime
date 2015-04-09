@@ -110,6 +110,7 @@ struct lterm_t* chCopyFieldOfView(struct lterm_t* chain, allocate_result* result
     return newChain;
 }
 
+/*
 struct vclosure_t* gcAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback)
 {
     checkAndCleanHeaps(0, VCLOSURE_SIZE(paramsCount));
@@ -123,14 +124,7 @@ struct vint_t* gcAllocateIntStruct(uint64_t length)
 
     return allocateIntStruct(length);
 }
-
-struct lterm_t* gcAllocateFragmentLTerm(uint32_t count)
-{
-    checkAndCleanHeaps(0, count * (sizeof(struct fragment_t) + sizeof(struct lterm_t)));
-
-    return allocateFragmentLTerm(count);
-}
-
+*/
 // Params sets in mainLoop.
 struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount, uint32_t bracketsCount)
 {
@@ -154,30 +148,6 @@ struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patt
     memset(env->stretchVarsNumber, 0, patternsCount * sizeof(int));
 
     return env;
-}
-
-void clearCurrFuncEnvData()
-{
-    CURR_FUNC_CALL->env->stretchVarsNumber[0] = 0;
-
-    uint32_t i = 0;
-    for (i = 1; i < CURR_FUNC_CALL->env->fovsCount; ++i)  // first field of view and assembled field of view must be saved.
-    {
-        // No need to set to 0 ?
-        CURR_FUNC_CALL->env->stretchVarsNumber[i] = 0;
-        CURR_FUNC_CALL->env->assembled[i] = 0;
-    }
-
-    // No need to set to 0 ?
-    for (i = 1; i < CURR_FUNC_CALL->env->bracketsCount; ++i)
-    {
-        CURR_FUNC_CALL->env->bracketsOffset[i] = 0;
-    }
-
-    for (i = 0; i < CURR_FUNC_CALL->env->localsCount; ++i)
-    {
-        memset(CURR_FUNC_CALL->env->locals + i, 0, FRAGMENT_STRUCT_SIZE(1));
-    }
 }
 
 struct vclosure_t* allocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback)

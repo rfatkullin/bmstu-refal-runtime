@@ -30,6 +30,9 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer);
 /// В процессе выполнения могут быть вызваны сборщики мусора vterm'ов и lterm'ов.
 uint64_t gcGetAssembliedChain(struct lterm_t* chain, allocate_result *res);
 
+///
+void clearCurrFuncEnvData();
+
 struct lterm_t* _currCallTerm;
 
 #endif
