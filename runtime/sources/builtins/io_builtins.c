@@ -5,7 +5,6 @@
 
 #include <helpers.h>
 #include <vmachine.h>
-#include <to_string.h>
 #include <builtins/builtins.h>
 #include <defines/errors_str.h>
 #include <builtins/unicode_io.h>
@@ -50,10 +49,10 @@ struct func_result_t Get(int entryStatus)
     if (!descr)
         return _gcGet(stdin);
 
-    if (!files[descr].file)
+    if (!_files[descr].file)
         gcOpenDefaultFile(descr, READ_MODE);
 
-    return _gcGet(files[descr].file);
+    return _gcGet(_files[descr].file);
 }
 
 struct func_result_t Prout(int entryStatus)
@@ -175,10 +174,10 @@ static void _gcPut()
         return;
     }
 
-    if (!files[descr].file)
+    if (!_files[descr].file)
         gcOpenDefaultFile(descr, WRITE_MODE);
 
-    printFragmentLn(files[descr].file, BUILTIN_FRAG);
+    printFragmentLn(_files[descr].file, BUILTIN_FRAG);
 }
 
 static uint8_t getOpenMode(struct fragment_t* frag)
@@ -258,18 +257,18 @@ static void gcOpenDefaultFile(uint8_t descr, uint8_t mode)
 
 static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr)
 {
-    if (files[descr].file)
+    if (_files[descr].file)
         FMT_PRINT_AND_EXIT(DESCR_ALREADY_IN_USE, descr);
 
     if (descr == 0)
         FMT_PRINT_AND_EXIT(TRY_TO_TAKE_TERMINAL_DESCR, MAX_FILE_DESCR);
 
-    files[descr].file = fopen(fileName, modeStr[mode]);
+    _files[descr].file = fopen(fileName, modeStr[mode]);
 
-    if (!files[descr].file)
+    if (!_files[descr].file)
         FMT_PRINT_AND_EXIT(FILE_OPEN_ERROR, fileName, modeStr[mode], strerror(errno));
 
-    files[descr].mode = mode;
+    _files[descr].mode = mode;
 }
 
 static void gcAssemblyFileName(struct fragment_t* frag)

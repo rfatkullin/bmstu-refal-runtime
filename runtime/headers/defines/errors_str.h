@@ -36,4 +36,6 @@
 #define SYMB_BAD_ARG                "[Builtins]: Symb takes 1 argument - int number!\n"
 #define NUMB_BAD_ARG                "[Builtins]: Numb can't parse int from string!\n"
 
+#define BAD_BUFF  "[Helpers]: Bad buffer passed to char array converter!\n"
+
 #endif

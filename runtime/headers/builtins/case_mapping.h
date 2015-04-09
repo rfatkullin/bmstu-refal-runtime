@@ -1,5 +1,5 @@
-#ifndef __CASE_MAP_TABLE_H__
-#define __CASE_MAP_TABLE_H__
+#ifndef _BMSTU_REFC_CASE_MAP_TABLE_H_
+#define _BMSTU_REFC_CASE_MAP_TABLE_H_
 
 #include <stdint.h>
 

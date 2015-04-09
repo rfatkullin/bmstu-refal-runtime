@@ -1,5 +1,5 @@
-#ifndef __GC_H__
-#define __GC_H__
+#ifndef _BMSTU_REFC_GC_H_
+#define _BMSTU_REFC_GC_H_
 
 #include <helpers.h>
 #include <memory_manager.h>

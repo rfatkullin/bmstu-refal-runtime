@@ -1,5 +1,5 @@
-#ifndef __V_TERM_ALLOCATORS_H__
-#define __V_TERM_ALLOCATORS_H__
+#ifndef _BMSTU_REFC_V_TERM_ALLOCATORS_H_
+#define _BMSTU_REFC_V_TERM_ALLOCATORS_H_
 
 #include <vterm.h>
 #include <gc/gc.h>

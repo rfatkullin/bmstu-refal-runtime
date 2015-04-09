@@ -1,5 +1,5 @@
-#ifndef __DATA_ALLOCATORS_H___
-#define __DATA_ALLOCATORS_H___
+#ifndef _BMSTU_REFC_DATA_ALLOCATORS_H_
+#define _BMSTU_REFC_DATA_ALLOCATORS_H_
 
 #include <lterm.h>
 #include <vterm.h>

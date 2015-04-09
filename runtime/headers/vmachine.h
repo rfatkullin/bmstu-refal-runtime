@@ -1,5 +1,5 @@
-#ifndef __V_MACHINE_H__
-#define __V_MACHINE_H__
+#ifndef _BMSTU_REFC_V_MACHINE_H_
+#define _BMSTU_REFC_V_MACHINE_H_
 
 #include <gc/gc.h>
 #include <lterm.h>

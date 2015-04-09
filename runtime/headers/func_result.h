@@ -1,7 +1,7 @@
-#ifndef __F_RESULT_H__
-#define __F_RESULT_H__
+#ifndef _BMSTU_REFC_FUNC_RESULT_H_
+#define _BMSTU_REFC_FUNC_RESULT_H_
 
-#include "lterm.h"
+#include <lterm.h>
 
 #define OK_RESULT			0
 #define CALL_RESULT			1

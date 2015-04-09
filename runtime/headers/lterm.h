@@ -1,5 +1,5 @@
-#ifndef __L_TERM_H__
-#define __L_TERM_H__
+#ifndef _BMSTU_REFC_L_TERM_H_
+#define _BMSTU_REFC_L_TERM_H_
 
 #include <stdint.h>
 

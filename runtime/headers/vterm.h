@@ -1,17 +1,17 @@
-#ifndef __V_TERM_H__
-#define __V_TERM_H__
+#ifndef _BMSTU_REFC_V_TERM_H_
+#define _BMSTU_REFC_V_TERM_H_
 
-#define V_CHAR_TAG          0
-#define V_IDENT_TAG         1
-#define V_INT_NUM_TAG       2
-#define V_DOUBLE_NUM_TAG    3
-#define V_CLOSURE_TAG       4
-#define V_BRACKETS_TAG      5
+#define V_CHAR_TAG          1
+#define V_IDENT_TAG         2
+#define V_INT_NUM_TAG       3
+#define V_DOUBLE_NUM_TAG    4
+#define V_CLOSURE_TAG       5
+#define V_BRACKETS_TAG      6
 
 #include <stdint.h>
 
-#include "lterm.h"
-#include "func_call.h"
+#include <lterm.h>
+#include <func_call.h>
 
 /// vterm функций.
 struct vclosure_t

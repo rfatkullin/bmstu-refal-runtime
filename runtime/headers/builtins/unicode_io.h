@@ -1,5 +1,5 @@
-#ifndef _BMSRU_REFAL_COMPILER_UNICODE_IO_H_
-#define _BMSRU_REFAL_COMPILER_UNICODE_IO_H_
+#ifndef _BMSRU_REFC_COMPILER_UNICODE_IO_H_
+#define _BMSRU_REFC_COMPILER_UNICODE_IO_H_
 
 /// Считывает из файла UTF-8 символ и конвертирует его в  UTF-32.
 uint32_t readUTF8Char(FILE* file);

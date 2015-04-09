@@ -6,7 +6,6 @@
 
 #include <helpers.h>
 #include <vmachine.h>
-#include <to_string.h>
 #include <defines/gc_macros.h>
 #include <builtins/builtins.h>
 #include <builtins/unicode_io.h>
@@ -52,20 +51,20 @@ struct func_result_t Arg(int entryStatus)
 
     int argNum = ConvertToInt(_memMngr.vterms[BUILTIN_FRAG->offset].intNum);
 
-    if (argNum < 1 || argNum >= refalProgramArgsCount)
-        FMT_PRINT_AND_EXIT(BAD_PROGRAM_ARG_NUM, refalProgramArgsCount, argNum, refalProgramArgsCount);
+    if (argNum < 1 || argNum >= _refalProgramArgsCount)
+        FMT_PRINT_AND_EXIT(BAD_PROGRAM_ARG_NUM, _refalProgramArgsCount, argNum, _refalProgramArgsCount);
 
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
-    struct lterm_t* chain = allocateBuiltinsResult(refalProgramArgs[argNum].offset, refalProgramArgs[argNum].length);
+    struct lterm_t* chain = allocateBuiltinsResult(_refalProgramArgs[argNum].offset, _refalProgramArgs[argNum].length);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = chain, .callChain = 0};
 }
 
 uint64_t initArgsData(uint64_t offset, int argc, char** argv)
 {
-    refalProgramArgsCount = argc;
-    refalProgramArgs = (struct fragment_t*)malloc(argc * sizeof(struct fragment_t));
+    _refalProgramArgsCount = argc;
+    _refalProgramArgs = (struct fragment_t*)malloc(argc * sizeof(struct fragment_t));
 
     int argIndex = 1;
 
@@ -74,11 +73,11 @@ uint64_t initArgsData(uint64_t offset, int argc, char** argv)
     {
         if (argv[i][0] == '-')
         {
-            refalProgramArgsCount--;
+            _refalProgramArgsCount--;
             continue;
         }
 
-        refalProgramArgs[argIndex].offset = offset;
+        _refalProgramArgs[argIndex].offset = offset;
         char* curr = argv[i];
 
         while (*curr)
@@ -86,7 +85,7 @@ uint64_t initArgsData(uint64_t offset, int argc, char** argv)
             uint32_t ch;
             curr = readUTF8CharFromStr(curr, &ch);
             _memMngr.vterms[offset++] = (struct vterm_t){.tag = V_CHAR_TAG, .ch = ch};
-            refalProgramArgs[argIndex].length++;
+            _refalProgramArgs[argIndex].length++;
         }
 
         ++argIndex;

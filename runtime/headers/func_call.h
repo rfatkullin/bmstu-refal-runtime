@@ -1,5 +1,5 @@
-#ifndef __F_CALL_H__
-#define __F_CALL_H__
+#ifndef _BMSTU_REFC_FUNC_CALL_H_
+#define _BMSTU_REFC_FUNC_CALL_H_
 
 #include <func_result.h>
 

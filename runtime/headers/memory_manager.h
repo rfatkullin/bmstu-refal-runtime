@@ -1,10 +1,10 @@
-#ifndef __ALLOCATOR_H__
-#define __ALLOCATOR_H__
+#ifndef _BMSTU_REFC_ALLOCATOR_H_
+#define _BMSTU_REFC_ALLOCATOR_H_
 
 #include <stdint.h>
 
-#include "vterm.h"
-#include "lterm.h"
+#include <vterm.h>
+#include <lterm.h>
 
 #define DEFAULT_HEAP_SIZE UINT64_C(1024 * 1024 * 1024)
 

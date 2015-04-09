@@ -4,7 +4,7 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "memory_manager.h"
+#include <memory_manager.h>
 
 static void allocateMemoryForSegmentTree(uint64_t termsNumber, uint8_t** pointer);
 static void allocateMemoryForVTerms(uint64_t size, uint8_t** pointer);
@@ -32,9 +32,7 @@ void initHeaps(uint64_t literalsNumber)
 	allocateMemoryForData(dataHeapSize, &pointer);
 
     _memMngr.vtermsOffset = _memMngr.vtActiveOffset;
-    _memMngr.dataOffset = _memMngr.dtActiveOffset;
-
-    //printMemoryAllocationInfo();
+    _memMngr.dataOffset = _memMngr.dtActiveOffset;    
 }
 
 void printMemoryInfo()
