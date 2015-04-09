@@ -110,22 +110,7 @@ struct lterm_t* chCopyFieldOfView(struct lterm_t* chain, allocate_result* result
     return newChain;
 }
 
-/*
-struct vclosure_t* gcAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback)
-{
-    checkAndCleanHeaps(0, VCLOSURE_SIZE(paramsCount));
-
-    return allocateClosureStruct(funcPtr, paramsCount, ident, rollback);
-}
-
-struct vint_t* gcAllocateIntStruct(uint64_t length)
-{
-    checkAndCleanHeaps(0, VINT_STRUCT_SIZE(length));
-
-    return allocateIntStruct(length);
-}
-*/
-// Params sets in mainLoop.
+// Параметры инициализируются перед первым вызовом на основе данных из зымакания в vterm'е.
 struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount, uint32_t bracketsCount)
 {
     env->locals = allocateFragment(localsCount);

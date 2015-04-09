@@ -183,15 +183,16 @@ void clearCurrFuncEnvData()
 {
     CURR_FUNC_CALL->env->stretchVarsNumber[0] = 0;
 
+    // Значение в CURR_FUNC_CALL->env->stretchVarsNumber[1] не трогем
+    // Так как это единственный указатель на собранное поле зрения, которое было
+    // передано функции при первом вызове.
     uint32_t i = 0;
-    for (i = 1; i < CURR_FUNC_CALL->env->fovsCount; ++i)  // first field of view and assembled field of view must be saved.
+    for (i = 1; i < CURR_FUNC_CALL->env->fovsCount; ++i)
     {
-        // No need to set to 0 ?
         CURR_FUNC_CALL->env->stretchVarsNumber[i] = 0;
         CURR_FUNC_CALL->env->assembled[i] = 0;
     }
 
-    // No need to set to 0 ?
     for (i = 1; i < CURR_FUNC_CALL->env->bracketsCount; ++i)
     {
         CURR_FUNC_CALL->env->bracketsOffset[i] = 0;
@@ -203,7 +204,7 @@ void clearCurrFuncEnvData()
     }
 }
 
-uint64_t gcGetAssembliedChain(struct lterm_t* chain, allocate_result *res)
+uint64_t chGetAssembliedChain(struct lterm_t* chain, allocate_result *res)
 {    
     uint64_t assembledVtermOffset = 0;
     uint64_t length = 0;
