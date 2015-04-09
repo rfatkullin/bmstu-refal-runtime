@@ -15,3 +15,7 @@ add_library(${PROJECT_NAME} ${LIB_SRC_LIST})
 
 target_link_libraries(${PROJECT_NAME} -lgmp)
 target_link_libraries(${PROJECT_NAME}_test -lgmp)
+
+if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
+    add_definitions(-DDEBUG)
+endif(CMAKE_BUILD_TYPE MATCHES "DEBUG")

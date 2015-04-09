@@ -5,7 +5,12 @@
 
 int main(int argc, char** argv)
 {
-    Add(0);
 
-	return 0;
+#ifdef DEBUG
+    printf("Debug.\n");
+#else
+    printf("Release!\n");
+#endif
+
+    return 0;
 }

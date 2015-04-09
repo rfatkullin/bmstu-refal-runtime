@@ -19,7 +19,9 @@ uint64_t getHeapSizeFromCmdArgs(int argc, char** argv)
         {
             if (sscanf(argv[i], "-heapSize=%" PRIu64 , &heapSize) == 1)
             {
+#ifdef DEBUG
                 printf("Heap size: %" PRIu64 "\n", heapSize);
+#endif
                 return heapSize;
             }
         }
