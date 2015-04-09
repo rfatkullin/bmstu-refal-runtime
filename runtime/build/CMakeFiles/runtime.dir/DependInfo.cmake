@@ -7,7 +7,7 @@ set(CMAKE_DEPENDS_CHECK_C
   "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/allocators/data_alloc.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/allocators/data_alloc.c.o"
   "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/allocators/vterm_alloc.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/allocators/vterm_alloc.c.o"
   "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/arithmetics.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/builtins/arithmetics.c.o"
-  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/case_map_table.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o"
+  "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/case_mapping.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o"
   "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/io_builtins.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o"
   "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/slib.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/builtins/slib.c.o"
   "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/unicode_io.c" "/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles/runtime.dir/sources/builtins/unicode_io.c.o"

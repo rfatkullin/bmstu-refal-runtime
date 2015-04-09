@@ -11,11 +11,15 @@
 #define GC_PARENT_CALL_NOT_MOVED        "[GC]: Parent call must be moved at subcall copy!\n"
 
 
-#define BAD_EVAL_EXPR               "Can't execute expr in evaluate brackets!\n"
-#define FUNC_CALL_FAILED            "Func call failed!\n"
-#define ASSEMBLY_NOT_CHAIN          "Trying assembly not chain!\n"
-#define SIMPLE_CHAIN_AT_ASSEMBLY    "Chain tag when assembly. Chains contains only chains keepers, not chains!\n"
-#define BAD_TAG_AT_ASSEMBLY         "Bad tag when assembly!\n"
-#define FUNC_CALL_AT_ASSEMBLY       "Func call term when assembly!\n"
+#define BAD_EVAL_EXPR               "[VM]: Can't execute expr in evaluate brackets!\n"
+#define FUNC_CALL_FAILED            "[VM]: Func call failed!\n"
+#define ASSEMBLY_NOT_CHAIN          "[VM]: Trying assembly not chain!\n"
+#define SIMPLE_CHAIN_AT_ASSEMBLY    "[VM]: Chain tag when assembly. Chains contains only chains keepers, not chains!\n"
+#define BAD_TAG_AT_ASSEMBLY         "[VM]: Bad tag when assembly!\n"
+#define FUNC_CALL_AT_ASSEMBLY       "[VM]: Func call term when assembly!\n"
+
+
+#define FOV_CONTAINS_FUNC_CALL      "[Data allocator]: FieldOfView passed in funcation contains func call term!\n"
+#define FOV_CONTAINS_SIMPLE_CHAIN   "[Data allocator]: FieldOfView can't contains simple chain without chain keeper!\n"
 
 #endif

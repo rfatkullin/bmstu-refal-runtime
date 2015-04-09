@@ -4,7 +4,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/runtime.dir/sources/gc/data_gc.c.o"
   "CMakeFiles/runtime.dir/sources/builtins/unicode_io.c.o"
   "CMakeFiles/runtime.dir/sources/builtins/arithmetics.c.o"
-  "CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o"
+  "CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o"
   "CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o"
   "CMakeFiles/runtime.dir/sources/builtins/slib.c.o"
   "CMakeFiles/runtime.dir/sources/vmachine.c.o"

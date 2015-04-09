@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#include <builtins/case_map_table.h>
+#include <builtins/case_mapping.h>
 
 #define OFFSET_TO_UPPER_CASE 1
 #define OFFSET_TO_LOWER_CASE 2

@@ -30,7 +30,7 @@ memory_manager.h
 func_call.h
 ../headers/builtins/func_call.h
 
-../headers/builtins/case_map_table.h
+../headers/builtins/case_mapping.h
 stdint.h
 -
 
@@ -174,6 +174,12 @@ helpers.h
 defines/data_struct_sizes.h
 -
 
+/home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/case_mapping.c
+stdint.h
+-
+builtins/case_mapping.h
+-
+
 /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/io_builtins.c
 stdio.h
 -
@@ -199,7 +205,7 @@ allocators/data_alloc.h
 -
 allocators/vterm_alloc.h
 -
-builtins/case_map_table.h
+builtins/case_mapping.h
 -
 defines/data_struct_sizes.h
 -
@@ -231,7 +237,7 @@ allocators/data_alloc.h
 -
 allocators/vterm_alloc.h
 -
-builtins/case_map_table.h
+builtins/case_mapping.h
 -
 defines/data_struct_sizes.h
 -

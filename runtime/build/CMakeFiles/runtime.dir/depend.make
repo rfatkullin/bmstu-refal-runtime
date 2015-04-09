@@ -44,13 +44,13 @@ CMakeFiles/runtime.dir/sources/builtins/arithmetics.c.o: ../headers/vmachine.h
 CMakeFiles/runtime.dir/sources/builtins/arithmetics.c.o: ../headers/vterm.h
 CMakeFiles/runtime.dir/sources/builtins/arithmetics.c.o: ../sources/builtins/arithmetics.c
 
-CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o: ../headers/builtins/case_map_table.h
-CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o: ../sources/builtins/case_map_table.c
+CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o: ../headers/builtins/case_mapping.h
+CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o: ../sources/builtins/case_mapping.c
 
 CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o: ../headers/allocators/data_alloc.h
 CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o: ../headers/allocators/vterm_alloc.h
 CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o: ../headers/builtins/builtins.h
-CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o: ../headers/builtins/case_map_table.h
+CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o: ../headers/builtins/case_mapping.h
 CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o: ../headers/builtins/unicode_io.h
 CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o: ../headers/defines/data_struct_sizes.h
 CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o: ../headers/defines/errors_str.h
@@ -68,7 +68,7 @@ CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o: ../sources/builtins/io_
 CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/allocators/data_alloc.h
 CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/allocators/vterm_alloc.h
 CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/builtins/builtins.h
-CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/builtins/case_map_table.h
+CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/builtins/case_mapping.h
 CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/builtins/unicode_io.h
 CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/defines/data_struct_sizes.h
 CMakeFiles/runtime.dir/sources/builtins/slib.c.o: ../headers/defines/errors_str.h

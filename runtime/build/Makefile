@@ -209,32 +209,32 @@ sources/builtins/arithmetics.c.s:
 	$(MAKE) -f CMakeFiles/runtime_test.dir/build.make CMakeFiles/runtime_test.dir/sources/builtins/arithmetics.c.s
 .PHONY : sources/builtins/arithmetics.c.s
 
-sources/builtins/case_map_table.o: sources/builtins/case_map_table.c.o
-.PHONY : sources/builtins/case_map_table.o
+sources/builtins/case_mapping.o: sources/builtins/case_mapping.c.o
+.PHONY : sources/builtins/case_mapping.o
 
 # target to build an object file
-sources/builtins/case_map_table.c.o:
-	$(MAKE) -f CMakeFiles/runtime.dir/build.make CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o
-	$(MAKE) -f CMakeFiles/runtime_test.dir/build.make CMakeFiles/runtime_test.dir/sources/builtins/case_map_table.c.o
-.PHONY : sources/builtins/case_map_table.c.o
+sources/builtins/case_mapping.c.o:
+	$(MAKE) -f CMakeFiles/runtime.dir/build.make CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o
+	$(MAKE) -f CMakeFiles/runtime_test.dir/build.make CMakeFiles/runtime_test.dir/sources/builtins/case_mapping.c.o
+.PHONY : sources/builtins/case_mapping.c.o
 
-sources/builtins/case_map_table.i: sources/builtins/case_map_table.c.i
-.PHONY : sources/builtins/case_map_table.i
+sources/builtins/case_mapping.i: sources/builtins/case_mapping.c.i
+.PHONY : sources/builtins/case_mapping.i
 
 # target to preprocess a source file
-sources/builtins/case_map_table.c.i:
-	$(MAKE) -f CMakeFiles/runtime.dir/build.make CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.i
-	$(MAKE) -f CMakeFiles/runtime_test.dir/build.make CMakeFiles/runtime_test.dir/sources/builtins/case_map_table.c.i
-.PHONY : sources/builtins/case_map_table.c.i
+sources/builtins/case_mapping.c.i:
+	$(MAKE) -f CMakeFiles/runtime.dir/build.make CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.i
+	$(MAKE) -f CMakeFiles/runtime_test.dir/build.make CMakeFiles/runtime_test.dir/sources/builtins/case_mapping.c.i
+.PHONY : sources/builtins/case_mapping.c.i
 
-sources/builtins/case_map_table.s: sources/builtins/case_map_table.c.s
-.PHONY : sources/builtins/case_map_table.s
+sources/builtins/case_mapping.s: sources/builtins/case_mapping.c.s
+.PHONY : sources/builtins/case_mapping.s
 
 # target to generate assembly for a file
-sources/builtins/case_map_table.c.s:
-	$(MAKE) -f CMakeFiles/runtime.dir/build.make CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.s
-	$(MAKE) -f CMakeFiles/runtime_test.dir/build.make CMakeFiles/runtime_test.dir/sources/builtins/case_map_table.c.s
-.PHONY : sources/builtins/case_map_table.c.s
+sources/builtins/case_mapping.c.s:
+	$(MAKE) -f CMakeFiles/runtime.dir/build.make CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.s
+	$(MAKE) -f CMakeFiles/runtime_test.dir/build.make CMakeFiles/runtime_test.dir/sources/builtins/case_mapping.c.s
+.PHONY : sources/builtins/case_mapping.c.s
 
 sources/builtins/io_builtins.o: sources/builtins/io_builtins.c.o
 .PHONY : sources/builtins/io_builtins.o
@@ -549,9 +549,9 @@ help:
 	@echo "... sources/builtins/arithmetics.o"
 	@echo "... sources/builtins/arithmetics.i"
 	@echo "... sources/builtins/arithmetics.s"
-	@echo "... sources/builtins/case_map_table.o"
-	@echo "... sources/builtins/case_map_table.i"
-	@echo "... sources/builtins/case_map_table.s"
+	@echo "... sources/builtins/case_mapping.o"
+	@echo "... sources/builtins/case_mapping.i"
+	@echo "... sources/builtins/case_mapping.s"
 	@echo "... sources/builtins/io_builtins.o"
 	@echo "... sources/builtins/io_builtins.i"
 	@echo "... sources/builtins/io_builtins.s"

@@ -44,14 +44,14 @@ CMakeFiles/runtime_test.dir/sources/builtins/arithmetics.c.o
  ../headers/vmachine.h
  ../headers/vterm.h
  /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/arithmetics.c
-CMakeFiles/runtime_test.dir/sources/builtins/case_map_table.c.o
- ../headers/builtins/case_map_table.h
- /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/case_map_table.c
+CMakeFiles/runtime_test.dir/sources/builtins/case_mapping.c.o
+ ../headers/builtins/case_mapping.h
+ /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/case_mapping.c
 CMakeFiles/runtime_test.dir/sources/builtins/io_builtins.c.o
  ../headers/allocators/data_alloc.h
  ../headers/allocators/vterm_alloc.h
  ../headers/builtins/builtins.h
- ../headers/builtins/case_map_table.h
+ ../headers/builtins/case_mapping.h
  ../headers/builtins/unicode_io.h
  ../headers/defines/data_struct_sizes.h
  ../headers/defines/errors_str.h
@@ -69,7 +69,7 @@ CMakeFiles/runtime_test.dir/sources/builtins/slib.c.o
  ../headers/allocators/data_alloc.h
  ../headers/allocators/vterm_alloc.h
  ../headers/builtins/builtins.h
- ../headers/builtins/case_map_table.h
+ ../headers/builtins/case_mapping.h
  ../headers/builtins/unicode_io.h
  ../headers/defines/data_struct_sizes.h
  ../headers/defines/errors_str.h

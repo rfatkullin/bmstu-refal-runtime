@@ -2,7 +2,7 @@
 #include <vmachine.h>
 #include <memory_manager.h>
 
-uint64_t getHeapSize(int argc, char** argv)
+uint64_t getHeapSizeFromCmdArgs(int argc, char** argv)
 {
     uint64_t heapSize = 0;
     int i = 0;

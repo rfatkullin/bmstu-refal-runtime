@@ -5,9 +5,6 @@
 #include <vterm.h>
 #include <gc/gc.h>
 
-#define FOV_CONTAINS_FUNC_CALL      "FieldOfView passed in funcation contains func call term!\n"
-#define FOV_CONTAINS_SIMPLE_CHAIN   "FieldOfView can't contains simple chain without chain keeper!\n"
-
 /// Выделяют память в хипе данных
 /// Статус выполнения возвращается в аргументе res.
 /// Если памяти хватило и она выделена,то в *res будет Ok,

@@ -164,28 +164,28 @@ CMakeFiles/runtime.dir/sources/builtins/arithmetics.c.o.provides: CMakeFiles/run
 
 CMakeFiles/runtime.dir/sources/builtins/arithmetics.c.o.provides.build: CMakeFiles/runtime.dir/sources/builtins/arithmetics.c.o
 
-CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o: CMakeFiles/runtime.dir/flags.make
-CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o: ../sources/builtins/case_map_table.c
+CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o: CMakeFiles/runtime.dir/flags.make
+CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o: ../sources/builtins/case_mapping.c
 	$(CMAKE_COMMAND) -E cmake_progress_report /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/build/CMakeFiles $(CMAKE_PROGRESS_6)
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o"
-	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o   -c /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/case_map_table.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o"
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o   -c /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/case_mapping.c
 
-CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.i"
-	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -E /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/case_map_table.c > CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.i
+CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.i"
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -E /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/case_mapping.c > CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.i
 
-CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.s"
-	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -S /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/case_map_table.c -o CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.s
+CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.s"
+	/usr/bin/cc  $(C_DEFINES) $(C_FLAGS) -S /home/rustam/cpp_projects/bmstu-refal-runtime/runtime/sources/builtins/case_mapping.c -o CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.s
 
-CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o.requires:
-.PHONY : CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o.requires
+CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o.requires:
+.PHONY : CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o.requires
 
-CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o.provides: CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o.requires
-	$(MAKE) -f CMakeFiles/runtime.dir/build.make CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o.provides.build
-.PHONY : CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o.provides
+CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o.provides: CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o.requires
+	$(MAKE) -f CMakeFiles/runtime.dir/build.make CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o.provides.build
+.PHONY : CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o.provides
 
-CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o.provides.build: CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o
+CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o.provides.build: CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o
 
 CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o: CMakeFiles/runtime.dir/flags.make
 CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o: ../sources/builtins/io_builtins.c
@@ -378,7 +378,7 @@ runtime_OBJECTS = \
 "CMakeFiles/runtime.dir/sources/gc/data_gc.c.o" \
 "CMakeFiles/runtime.dir/sources/builtins/unicode_io.c.o" \
 "CMakeFiles/runtime.dir/sources/builtins/arithmetics.c.o" \
-"CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o" \
+"CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o" \
 "CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o" \
 "CMakeFiles/runtime.dir/sources/builtins/slib.c.o" \
 "CMakeFiles/runtime.dir/sources/vmachine.c.o" \
@@ -396,7 +396,7 @@ libruntime.a: CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o
 libruntime.a: CMakeFiles/runtime.dir/sources/gc/data_gc.c.o
 libruntime.a: CMakeFiles/runtime.dir/sources/builtins/unicode_io.c.o
 libruntime.a: CMakeFiles/runtime.dir/sources/builtins/arithmetics.c.o
-libruntime.a: CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o
+libruntime.a: CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o
 libruntime.a: CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o
 libruntime.a: CMakeFiles/runtime.dir/sources/builtins/slib.c.o
 libruntime.a: CMakeFiles/runtime.dir/sources/vmachine.c.o
@@ -420,7 +420,7 @@ CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/gc/vterm_gc.c.o.
 CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/gc/data_gc.c.o.requires
 CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/builtins/unicode_io.c.o.requires
 CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/builtins/arithmetics.c.o.requires
-CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/builtins/case_map_table.c.o.requires
+CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/builtins/case_mapping.c.o.requires
 CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/builtins/io_builtins.c.o.requires
 CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/builtins/slib.c.o.requires
 CMakeFiles/runtime.dir/requires: CMakeFiles/runtime.dir/sources/vmachine.c.o.requires

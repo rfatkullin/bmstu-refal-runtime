@@ -200,7 +200,7 @@ struct func_result_t func_0(int entryStatus)
 
 int main(int argc, char** argv)
 {
-	initAllocator(getHeapSize(argc, argv));
+	initAllocator(getHeapSizeFromCmdArgs(argc, argv));
 	initLiteralData();
 	uint64_t vtermOffset = initArgsData(UINT64_C(4), argc, argv);
 	initHeaps(vtermOffset);
