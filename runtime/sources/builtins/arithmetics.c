@@ -4,11 +4,12 @@
 
 #include <gmp.h>
 
+#include <vint.h>
+#include <helpers.h>
 #include <vmachine.h>
 #include <builtins/builtins.h>
 #include <allocators/data_alloc.h>
 #include <allocators/vterm_alloc.h>
-#include <helpers.h>
 #include <defines/data_struct_sizes.h>
 
 #define WRONG_OPERANDS_NUMBER       "It's binary operation!\n"
@@ -96,29 +97,29 @@ struct func_result_t Compare(int entryStatus)
 /// Проверка на равенство двух чисел. 1 - успех, 0 - неудача.
 int intCmp(struct vint_t* a, struct vint_t* b)
 {
-    if (a->length == 1 && b->length == 1 &&
+    if (GET_INT_LENGTH(a) == 1 && GET_INT_LENGTH(b) == 1 &&
         a->bytes[0] == 0 && b->bytes[0] == 0)
         return 0;
 
     int invert = 1;
 
-    if (a->sign > b->sign)
+    if (GET_INT_SIGN(a) > GET_INT_SIGN(b))
         return -1;
 
-    if (a->sign < b->sign)
+    if (GET_INT_SIGN(a) < GET_INT_SIGN(b))
         return 1;
 
-    if (a->sign)
+    if (GET_INT_SIGN(a))
         invert = -1;
 
-    if (a->length > b->length)
+    if (GET_INT_LENGTH(a) > GET_INT_LENGTH(b))
         return 1 * invert;
 
-    if (a->length < b->length)
+    if (GET_INT_LENGTH(a) < GET_INT_LENGTH(b))
         return -1 * invert;
 
     uint64_t i = 0;
-    for (i = 0; i < a->length; ++i)
+    for (i = 0; i < GET_INT_LENGTH(a); ++i)
     {
         if (a->bytes[i] > b->bytes[i])
             return 1 * invert;
@@ -147,9 +148,9 @@ int ConvertToInt(struct vint_t* numData)
 
     mpz_init(num);
 
-    mpz_import(num, numData->length, 1, sizeof(uint8_t), 1, 0, numData->bytes);
+    mpz_import(num, GET_INT_LENGTH(numData), 1, sizeof(uint8_t), 1, 0, numData->bytes);
 
-    if (numData->sign)
+    if (GET_INT_SIGN(numData))
         mpz_neg(num, num);
 
     int res = mpz_get_si(num);
@@ -234,7 +235,9 @@ struct lterm_t* gcConstructIntNumBuiltinResult(mpz_t num)
     struct vint_t* intNum = allocateIntStruct(length);
 
     mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
-    intNum->sign = mpz_sgn(num) < 0;
+
+    if (mpz_sgn(num) < 0)
+        SET_INT_SIGN(intNum);
 
     uint64_t offset = allocateIntNumVTerm(intNum);
 
@@ -250,9 +253,9 @@ static struct lterm_t* gcConstructDoubleNumLTerm(double val)
 
 static void readOperand(mpz_t num, struct vterm_t* term)
 {
-    mpz_import(num, term->intNum->length, 1, sizeof(uint8_t), 1, 0, term->intNum->bytes);
+    mpz_import(num, GET_INT_LENGTH(term->intNum), 1, sizeof(uint8_t), 1, 0, term->intNum->bytes);
 
-    if (term->intNum->sign)
+    if (GET_INT_SIGN(term->intNum))
 		mpz_mul_si(num, num, -1);	
 }
 

@@ -224,7 +224,7 @@ static uint8_t getDescr(struct fragment_t* frag)
 
 static getFileDescr(struct vint_t* bigInt, uint8_t* descr)
 {
-    if (bigInt->sign || bigInt->length > 1)
+    if (GET_INT_SIGN(bigInt) || GET_INT_LENGTH(bigInt) > 1)
         return 0;
 
     *descr = *bigInt->bytes;
@@ -527,9 +527,9 @@ void printIntNumber(FILE* file, struct vint_t* intNum)
     mpz_t num;
     mpz_init(num);
 
-    mpz_import(num, intNum->length, 1, sizeof(uint8_t), 1, 0, intNum->bytes);
+    mpz_import(num, GET_INT_LENGTH(intNum), 1, sizeof(uint8_t), 1, 0, intNum->bytes);
 
-    if (intNum->sign)
+    if (GET_INT_SIGN(intNum))
         mpz_neg(num, num);
 
     gmp_fprintf(file, "%Zd ", num);

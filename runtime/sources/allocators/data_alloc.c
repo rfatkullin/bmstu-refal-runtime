@@ -156,7 +156,7 @@ struct vint_t* allocateIntStruct(uint64_t length)
     _memMngr.dataOffset += sizeof(struct vint_t);
 
     pointer->bytes = (uint8_t*)(_memMngr.data + _memMngr.dataOffset);
-    pointer->length = length;
+    SET_INT_LENGTH(pointer, length);
 
     memset(pointer->bytes, 0, length);
 

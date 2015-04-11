@@ -33,19 +33,6 @@ struct vstring_t
     uint64_t length;
 };
 
-/// vterm целочисленных чисел.
-struct vint_t
-{
-    /// Байты для хранения большого числа.
-    uint8_t* bytes;
-
-    /// Знак числа. 0 - число положительное, в противном случае отрицательное.
-    uint8_t sign;
-
-    /// Сколько байтов занимает число.
-    uint64_t length;
-};
-
 struct vterm_t
 {
 	int tag;

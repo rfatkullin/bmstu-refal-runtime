@@ -2,6 +2,7 @@
 
 #include <gmp.h>
 
+#include <vint.h>
 #include <helpers.h>
 #include <vmachine.h>
 #include <memory_manager.h>
@@ -78,9 +79,9 @@ uint64_t calcBytesForIntCharArr(struct vint_t* intNum, mpz_t* outputNum)
 {
     mpz_t num;
     mpz_init(num);
-    mpz_import(num, intNum->length, 1, sizeof(uint8_t), 1, 0, intNum->bytes);
+    mpz_import(num, GET_INT_LENGTH(intNum), 1, sizeof(uint8_t), 1, 0, intNum->bytes);
 
-    if (intNum->sign)
+    if (GET_INT_SIGN(intNum))
         mpz_neg(num, num);
 
     char ch;

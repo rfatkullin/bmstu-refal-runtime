@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include <gc/gc.h>
+#include <vint.h>
 #include <memory_manager.h>
 #include <defines/gc_macros.h>
 #include <allocators/data_alloc.h>
@@ -91,21 +92,24 @@ static void copyIntVTerm(uint64_t to, struct vint_t* intNum)
     {
         _memMngr.vterms[to].intNum = intNum;
     }
-    else if (CHECK_MST_SIGN_BIT(intNum->length)) // Данные были скопированы - береме только адрес.
+    else if (CHECK_MST_SIGN_BIT(intNum->info)) // Данные были скопированы - береме только адрес.
     {
         _memMngr.vterms[to].intNum = (struct vint_t*)intNum->bytes;
     }
     else // Копируем данные и сохраняем новый адрес.
     {
-        GC_DATA_HEAP_CHECK_EXIT(VINT_STRUCT_SIZE(intNum->length));
+        GC_DATA_HEAP_CHECK_EXIT(VINT_STRUCT_SIZE(GET_INT_LENGTH(intNum)));
 
-        struct vint_t* newIntNum = allocateIntStruct(intNum->length);
-        newIntNum->sign = intNum->sign;
-        memcpy(newIntNum->bytes, intNum->bytes, intNum->length);
+        struct vint_t* newIntNum = allocateIntStruct(GET_INT_LENGTH(intNum));
+
+        if (GET_INT_SIGN(intNum))
+            SET_INT_SIGN(newIntNum);
+
+        memcpy(newIntNum->bytes, intNum->bytes, GET_INT_LENGTH(intNum));
         _memMngr.vterms[to].intNum = newIntNum;
 
         // Отмечаем что число скопировано и сохраняем адрес.
-        SET_MST_SIGN_BIT(intNum->length);
+        SET_MST_SIGN_BIT(intNum->info);
         intNum->bytes = (uint8_t*)newIntNum;
     }
 }

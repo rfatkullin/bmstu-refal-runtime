@@ -14,7 +14,7 @@ typedef int  allocate_result;
 #define GC_VTERMS_MARK_STAGE            1
 #define GC_VTERMS_SET_ACTUAL_STAGE      2
 
-#define GC_MOVED_MASK   0x8000000000000000
+#define GC_MOVED_MASK   UINT64_C(0x8000000000000000)
 
 struct gc
 {

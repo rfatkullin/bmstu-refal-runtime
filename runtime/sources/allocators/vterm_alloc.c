@@ -74,8 +74,7 @@ uint64_t allocateDoubleNumVTerm(double value)
 
 uint64_t allocateUInt8VTerm(uint8_t val)
 {    
-    struct vint_t* num = allocateIntStruct(1);
-    num->sign = 0;
+    struct vint_t* num = allocateIntStruct(1);    
     *num->bytes = val;
 
     return allocateIntNumVTerm(num);
@@ -137,8 +136,10 @@ struct vint_t* allocateIntNumberLiteral(uint8_t* bytes, uint8_t sign, uint64_t l
     struct vint_t* pointer = (struct vint_t*)malloc(sizeof(struct vint_t));
 
     pointer->bytes = (uint8_t*) malloc(length * sizeof(uint8_t));
-    pointer->length = length;
-    pointer->sign = sign;
+    SET_INT_LENGTH(pointer, length);
+
+    if (sign)
+        SET_INT_SIGN(pointer);
 
     memcpy(pointer->bytes, bytes, length * sizeof(uint8_t));
 
