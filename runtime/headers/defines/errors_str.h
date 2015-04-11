@@ -35,6 +35,12 @@
 #define BAD_PROGRAM_ARG_NUM         "[Builtins]: Bad program argument number! Program args count: %d. Passed arg num: %d. But must in range [1, %d).\n"
 #define SYMB_BAD_ARG                "[Builtins]: Symb takes 1 argument - int number!\n"
 #define NUMB_BAD_ARG                "[Builtins]: Numb can't parse int from string!\n"
+#define WRONG_OPERANDS_NUMBER       "[Builtins]: It's binary operation!\n"
+#define OPERANDS_TYPES_MISMATCH     "[Builtins]: Operands must be same type!\n"
+#define OPERAND_BAD_TYPE            "[Builtins]: Operand must be int or double!\n"
+#define BAD_BINARY_OPERATION        "[Builtins]: Unknown binary operation\n"
+#define MOD_TO_DOUBLE_ERROR         "[Builtins]: Can't applay mod operation to double!\n"
+
 
 #define BAD_BUFF  "[Helpers]: Bad buffer passed to char array converter!\n"
 

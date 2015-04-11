@@ -12,12 +12,6 @@
 #include <allocators/vterm_alloc.h>
 #include <defines/data_struct_sizes.h>
 
-#define WRONG_OPERANDS_NUMBER       "It's binary operation!\n"
-#define OPERANDS_TYPES_MISMATCH     "Operands must be same type!\n"
-#define OPERAND_BAD_TYPE            "Operand must be int or double!\n"
-#define BAD_BINARY_OPERATION        "Unknown binary operation\n"
-#define MOD_TO_DOUBLE_ERROR         "Can't applay mod operation to double!\n"
-
 #define EPS 1e-6
 
 typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
