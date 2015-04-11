@@ -47,13 +47,13 @@ int checkAndCleanHeaps(uint64_t needTermCount, uint64_t needDataSize)
 {
     int isCollect = 0;
 
-    if (GC_VTERM_OV(needTermCount) || GC_LTERM_OV(needDataSize))
+    if (GC_VTERM_OV(needTermCount) || GC_DATA_OV(needDataSize))
     {
         collectGarbage();
         isCollect = 1;
     }
 
-    if (GC_VTERM_OV(needTermCount) || GC_LTERM_OV(needDataSize))
+    if (GC_VTERM_OV(needTermCount) || GC_DATA_OV(needDataSize))
         PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
 
     return isCollect;

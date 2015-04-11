@@ -31,7 +31,7 @@ void copyVTerms()
 
             switch (_memMngr.vterms[from].tag)
             {
-                case V_INT_NUM_TAG:
+                case V_INT_NUM_TAG:                    
                     copyIntVTerm(to, _memMngr.vterms[from].intNum);
                     break;
                 case V_CLOSURE_TAG:
@@ -48,7 +48,8 @@ void copyVTerms()
                     break;
 
                 case V_IDENT_TAG:
-                    // Ident structs only in literals data area --> no need to copy to new place. Just copy.
+                    // пока vterm'ы идентификаторов могут хранятся только в области литеральных vterm'ов
+                    // поэтому данные можно не копировать.
                     _memMngr.vterms[to] = _memMngr.vterms[from];
                     break;
             }
@@ -60,37 +61,73 @@ void copyVTerms()
     }
 }
 
-
-
-// TO FIX: Должно копироваться только один раз.
-// Параметры копируются криво.
 static void copyClosureVTerm(uint64_t to, struct vclosure_t* closure)
 {
-    GC_DATA_HEAP_CHECK_EXIT(VCLOSURE_SIZE(closure->paramsCount));
+    // Если указатель на функцию не нулевой, значит замыкание еще не скопировано в новую кучу.
+    if (closure->funcPtr)
+    {
+        GC_DATA_HEAP_CHECK_EXIT(VCLOSURE_SIZE(closure->paramsCount));
 
-    _memMngr.vterms[to].closure =
-            allocateClosureStruct(closure->funcPtr, closure->paramsCount, closure->ident, closure->rollback);
+        _memMngr.vterms[to].closure =
+                allocateClosureStruct(closure->funcPtr, closure->paramsCount, closure->ident, closure->rollback);
 
-    memcpy(_memMngr.vterms[to].closure->params, closure->params, closure->paramsCount * sizeof(struct fragment_t));
+        memcpy(_memMngr.vterms[to].closure->params, closure->params, closure->paramsCount * sizeof(struct fragment_t));
+
+        // Отмечаем что замыкание скопировано и сохраняем адрес.
+        closure->funcPtr = 0;
+        closure->params = (struct fragment_t*)_memMngr.vterms[to].closure;
+    }
+    else  // Замыкание уже скопировано.
+    {
+        _memMngr.vterms[to].closure = (struct vclosure_t*)closure->params;
+    }
 }
 
-// TO FIX: Должно копироваться только один раз.
 static void copyIntVTerm(uint64_t to, struct vint_t* intNum)
 {
-    GC_DATA_HEAP_CHECK_EXIT(VINT_STRUCT_SIZE(intNum->length));
+    // Данные были выделены с помощью malloc'a. Они не перемещаются
+    // из кучи в кучу.
+    if (!ADDR_IN_INACTIVE_HEAP((uint8_t*)intNum))
+    {
+        _memMngr.vterms[to].intNum = intNum;
+    }
+    else if (CHECK_MST_SIGN_BIT(intNum->length)) // Данные были скопированы - береме только адрес.
+    {
+        _memMngr.vterms[to].intNum = (struct vint_t*)intNum->bytes;
+    }
+    else // Копируем данные и сохраняем новый адрес.
+    {
+        GC_DATA_HEAP_CHECK_EXIT(VINT_STRUCT_SIZE(intNum->length));
 
-    struct vint_t* newIntNum = allocateIntStruct(intNum->length);
-    newIntNum->sign = intNum->sign;
-    memcpy(newIntNum->bytes, intNum->bytes, intNum->length);
-    _memMngr.vterms[to].intNum = newIntNum;
+        struct vint_t* newIntNum = allocateIntStruct(intNum->length);
+        newIntNum->sign = intNum->sign;
+        memcpy(newIntNum->bytes, intNum->bytes, intNum->length);
+        _memMngr.vterms[to].intNum = newIntNum;
+
+        // Отмечаем что число скопировано и сохраняем адрес.
+        SET_MST_SIGN_BIT(intNum->length);
+        intNum->bytes = (uint8_t*)newIntNum;
+    }
 }
 
 static void copyBracketsVTerm(uint64_t to, struct fragment_t* frag)
 {
-    GC_DATA_HEAP_CHECK_EXIT(FRAGMENT_STRUCT_SIZE(1));
+    // Фрагмент уже скопирован в новую кучу.
+    if (CHECK_MST_SIGN_BIT(frag->length))
+    {
+        _memMngr.vterms[to].brackets = _memMngr.vterms[frag->offset].brackets;
+    }
+    else  // Копируем и отмечаем, что скопировали.
+    {
+        GC_DATA_HEAP_CHECK_EXIT(FRAGMENT_STRUCT_SIZE(1));
 
-    _memMngr.vterms[to].brackets = allocateFragment(1);
-    memcpy(_memMngr.vterms[to].brackets, frag, FRAGMENT_STRUCT_SIZE(1));
+        _memMngr.vterms[to].brackets = allocateFragment(1);
+        memcpy(_memMngr.vterms[to].brackets, frag, FRAGMENT_STRUCT_SIZE(1));
+
+        // Отмечаем что скобки скопированы и сохраняем смещение.
+        SET_MST_SIGN_BIT(frag->length);
+        frag->offset = to;
+    }
 }
 
 static void swap(uint64_t* a, uint64_t* b)

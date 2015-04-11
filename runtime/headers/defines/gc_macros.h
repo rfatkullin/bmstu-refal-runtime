@@ -6,7 +6,7 @@
 /* Макросы, используемые сборщиком мусора для проверки переполнения куч. */
 
 #define GC_VTERM_OV(needCount)      (_memMngr.vtermsOffset + needCount > _memMngr.vtActiveOffset + _memMngr.vtermsMaxOffset)
-#define GC_LTERM_OV(needDataSize)   (_memMngr.dataOffset + needDataSize > _memMngr.dtActiveOffset + _memMngr.dataMaxOffset)
+#define GC_DATA_OV(needDataSize)   (_memMngr.dataOffset + needDataSize > _memMngr.dtActiveOffset + _memMngr.dataMaxOffset)
 
 #define GC_VTERM_HEAP_CHECK_RETURN(needCount, statusVar)    \
 do{                                                         \
@@ -27,7 +27,7 @@ do{                                                         \
 
 #define GC_DATA_HEAP_CHECK_RETURN(needDataSize, statusVar)  \
 do{                                                         \
-    if (GC_LTERM_OV(needDataSize))                          \
+    if (GC_DATA_OV(needDataSize))                           \
     {                                                       \
         statusVar = GC_NEED_CLEAN;                          \
         return 0;                                           \
@@ -37,7 +37,7 @@ do{                                                         \
 
 #define GC_DATA_HEAP_CHECK_EXIT(needDataSize)               \
 do{                                                         \
-    if (GC_LTERM_OV(needDataSize))                          \
+    if (GC_DATA_OV(needDataSize))                           \
         PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);             \
 }while(0)
 
@@ -87,5 +87,15 @@ do{                                                     \
         PRINT_AND_EXIT(GC_ACCESS_TO_ZERO_ADDRESS);      \
 }while(0)
 
+#define SET_MST_SIGN_BIT(val)   (val |= GC_MOVED_MASK)
+#define CHECK_MST_SIGN_BIT(val) (val & GC_MOVED_MASK)
+
+#define ADDR_IN_INACTIVE_HEAP(addr)                                             \
+    (_memMngr.data + _memMngr.dtInactiveOffset <= addr &&                       \
+     addr < _memMngr.data + _memMngr.dtInactiveOffset + _memMngr.dataMaxOffset)
+
+#define ADDR_IN_ACTIVE_HEAP(addr)                                             \
+    (_memMngr.data + _memMngr.dtActiveOffset <= addr &&                       \
+     addr < _memMngr.data + _memMngr.dtActiveOffset + _memMngr.dataMaxOffset)
 
 #endif
