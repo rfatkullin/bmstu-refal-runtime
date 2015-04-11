@@ -72,8 +72,7 @@ do{                                                         \
 }while(0)                                                   \
 
 #define DOUBLE_TRY(var, expr, statusVar)            \
-do                                                  \
-{                                                   \
+do{                                                 \
     var = expr;                                     \
     if (statusVar == GC_NEED_CLEAN)                 \
     {                                               \
@@ -83,5 +82,12 @@ do                                                  \
             PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG); \
     }                                               \
 }while(0)
+
+#define CHECK_ON_ZERO_VTERM_OFFSET_EXIT(vtermOffset)    \
+do{                                                     \
+    if (vtermOffset == 0)                               \
+        PRINT_AND_EXIT(GC_ACCESS_TO_ZERO_ADDRESS);      \
+}while(0)
+
 
 #endif

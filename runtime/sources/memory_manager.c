@@ -5,6 +5,7 @@
 #include <inttypes.h>
 
 #include <memory_manager.h>
+#include <gc/gc.h>
 
 static void allocateMemoryForSegmentTree(uint64_t termsNumber, uint8_t** pointer);
 static void allocateMemoryForVTerms(uint64_t size, uint8_t** pointer);
@@ -84,7 +85,7 @@ static void allocateMemoryForVTerms(uint64_t size, uint8_t** pointer)
 
     _memMngr.vtActiveOffset = _memMngr.vtermsBeginOffset;
     _memMngr.vtInactiveOffset = _memMngr.vtActiveOffset + maxTermsNumber;
-    _memMngr.gcInUseVTerms = (uint8_t*)(_memMngr.vterms + _memMngr.vtInactiveOffset + maxTermsNumber);
+    _gc.inUseVTerms = (uint8_t*)(_memMngr.vterms + _memMngr.vtInactiveOffset + maxTermsNumber);
 
     _memMngr.vtermsMaxOffset = maxTermsNumber;
 

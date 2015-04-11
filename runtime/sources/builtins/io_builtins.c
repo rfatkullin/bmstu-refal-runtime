@@ -5,6 +5,7 @@
 
 #include <helpers.h>
 #include <vmachine.h>
+#include <defines/gc_macros.h>
 #include <builtins/builtins.h>
 #include <defines/errors_str.h>
 #include <builtins/unicode_io.h>

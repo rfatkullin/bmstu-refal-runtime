@@ -4,11 +4,11 @@
 
 #define GC_MEMORY_OVERFLOW_MSG          "[GC]: Memory overflow!\n"
 #define GC_CANT_COPY_TERM               "[GC]: Can't copy term!\n"
-#define GC_VTERM_PROCESS_BAD_CHAIN_TAG  "[GC]: Bad lterm chain tag at GC vterm process. Chains can't contains simple chain without chain keeper!\n"
 #define GC_VTERM_PROCESS_BAD_TAG        "[GC]: Bad lterm tag at GC vterm process!\n"
 #define GC_BAD_CHAIN_SIMPLE_CHAIN_COPY  "[GC]: Bad chain term passed to copy simple chain func!\n"
 #define GC_NULL_CHAIN_SIMPLE_CHAIN_COPY "[GC]: Null chain passed to copy simple chain func!\n"
 #define GC_PARENT_CALL_NOT_MOVED        "[GC]: Parent call must be moved at subcall copy!\n"
+#define GC_ACCESS_TO_ZERO_ADDRESS       "[GC]: Accessing to vterms on zero offset - something go wrong!\n"
 
 
 #define BAD_EVAL_EXPR               "[VM]: Can't execute expr in evaluate brackets!\n"

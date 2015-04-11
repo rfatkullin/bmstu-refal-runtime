@@ -28,9 +28,6 @@ struct memory_manager
     uint64_t vtermsOffset;
     uint64_t dataOffset;    
 
-    /// Вспомогательный массив для GC. Отмечаются использованные vterm'ы.
-    uint8_t* gcInUseVTerms;
-
     /// Начиная с какого vterm'а начинаются не литеральные vterm'ы в массиве vterms
     uint64_t vtermsBeginOffset;
 

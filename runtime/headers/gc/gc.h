@@ -10,6 +10,19 @@ typedef int  allocate_result;
 #define GC_OK          1
 #define GC_NEED_CLEAN  2
 
+/// Этапы сборки vterm'ов.
+#define GC_VTERMS_MARK_STAGE            1
+#define GC_VTERMS_SET_ACTUAL_STAGE      2
+
+struct gc
+{
+    /// В массиве отмечаются использованные vterm'ы.
+    uint8_t* inUseVTerms;
+
+    /// Этап сборки vterm'ов.
+    int stage;
+};
+
 /// Собирает мусор.
 void collectGarbage();
 
@@ -28,5 +41,10 @@ void collectVTermGarbage(struct lterm_t* fieldOfView);
 /// и needDataSize байтов для данных. Если нет, запускает сборку мусора
 /// Если сборка мусора ничего не дает, программа завершается.
 int checkAndCleanHeaps(uint64_t needTermCount, uint64_t needDataSize);
+
+/// Копирует отмеченные vterm'ы в новую кучу.
+void copyVTerms();
+
+struct gc _gc;
 
 #endif
