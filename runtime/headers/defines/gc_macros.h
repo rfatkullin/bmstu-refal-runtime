@@ -55,15 +55,13 @@ do{                                                     \
         return 0;                                       \
 }while(0)
 
+/// Используем continue --> нельзя использовать do-while.
 #define CHECK_ALLOCATION_CONTINUE(var, expr, statusVar) \
-do{                                                     \
+{                                                       \
     var = expr;                                         \
     if (statusVar == GC_NEED_CLEAN)                     \
-    {                                                   \
-        statusVar = 0;                                  \
         continue;                                       \
-    }                                                   \
-}while(0)
+}
 
 #define GC_RETURN_ON_NEED_CLEAN(res)                        \
 do{                                                         \
