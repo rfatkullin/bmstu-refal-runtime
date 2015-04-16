@@ -1,0 +1,53 @@
+$ENTRY Go {
+	= <Prout 'Введите строки'>
+	<Prout '(после каждой строки нажимайте Enter, для окончания ввода введите пустую строку'>
+	<Prout 'Максимальная общая подстрока: ' <Max <Common <Input <Card>>>>>
+}
+
+Input {
+	= ;
+	e.1 = (e.1) <Input <Card>>
+}
+
+Max {
+	= ;
+	(e.X) = e.X;
+	(e.X) (e.Y) e.1 = <Max <Choose (<Lenw e.X>) <Lenw e.Y>> e.1>;
+}
+
+Choose {
+	(s.LenX e.X) s.LenY e.Y = <Choose2 <Compare s.LenX s.LenY> (e.X) e.Y>
+}
+
+Choose2 {
+	'-' (e.X) e.Y = (e.Y);
+	s.1 (e.X) e.Y = (e.X)
+}
+
+Common {
+	= ;
+	t.1 = t.1;
+	t.1 t.2 e.R = <Filter (<All t.1 t.2>) e.R>
+}
+
+Filter {
+	t.Subs t.1 e.R = <Filter (<Filter2 t.Subs t.1>) e.R>;
+	(e.Subs) = e.Subs
+}
+
+Filter2 {
+	((e.S) e.1) (e.2 e.S e.3) = (e.S) <Filter2 (e.1) (e.2 e.S e.3)>;
+	((e.S) e.1) e.2 = <Filter2 (e.1) e.2>;
+	() e.1 = 
+}
+
+All {
+	(s.X e.1) (e.2 s.X e.3) = <All2 (s.X) (e.1) (e.3)> <All (e.1) (e.2 s.X e.3)>;
+	(s.X e.1) (e.2) = <All (e.1) (e.2)>;
+	e.1 =
+}
+
+All2 {
+	(e.X) (s.Y e.1) (s.Y e.2) = (e.X) <All2 (e.X s.Y) (e.1) (e.2)>;
+	(e.X) (e.1) (e.2) = (e.X)
+}

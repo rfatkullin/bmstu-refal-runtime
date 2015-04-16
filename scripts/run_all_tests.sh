@@ -50,9 +50,8 @@ function RunTestsInDir
 		AssertSuccess "[Can't build project!]: ${sourceFile}"
 	
 		#Запускаем испольняемый файл.
-		args=`cat ../${sourceFile%.*}.args 2>/dev/null`
-		input=`cat ../${sourceFile%.*}.input 2>/dev/null`
-		echo ${input} | ./target_binary ${args} > ${RealOutputFile}
+		args=`cat ../${sourceFile%.*}.args 2>/dev/null`		
+		cat ../${sourceFile%.*}.input 2>/dev/null | ./target_binary ${args} > ${RealOutputFile}
 		AssertSuccess "[Bad exe file!]: ${sourceFile}"
 	
 		#Проверям ожидаемое с полученным

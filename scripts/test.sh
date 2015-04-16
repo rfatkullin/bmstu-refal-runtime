@@ -42,6 +42,6 @@ AssertSuccess "Can't build project!"
 
 #Запускаем испольняемый файл.
 args=`cat ../${1%.*}.args 2>/dev/null`
-./target_binary ${args}
+cat ../${1%.*}.input 2>/dev/null | ./target_binary ${args}
 
 

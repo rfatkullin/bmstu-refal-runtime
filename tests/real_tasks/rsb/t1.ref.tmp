@@ -1,0 +1,171 @@
+
+/*
+ * Refal-5 Source Beautifier
+ * (C) 2000 Сергей Скоробогатов
+ *
+ * Форматирует текст Рефал-программы, делает его более удобочитаемым.
+ * Позволяет перенумеровывать переменные в предложениях Рефала.
+ *
+ * Формат вызова:
+ *     REFGO RSB <source-file> <dest-file> flag
+ * где
+ *     source-file - имя исходного файла
+ *     dest-file   - имя файла, в котором будет сохранен текст 
+ *                   преобразованной программы
+ *     flag        - T или F в зависимости от того, нужна ли перенумерация
+ *                   переменных (T, если нужна)
+ *
+ * Замечание: flag обязательно должен присутствовать в командной строке !
+ *
+ * Известные ограничения и ошибки:
+ *     1) Отсутствует диагностика ошибок в тексте исходной программы;
+ *     2) Не поддерживается cond-cond-replacement в предложениях Рефала
+ *        (см. синтаксис в Refal-5 Reference Guide);
+ *     3) Не поддерживается встроенная функция '-' (SUB поддерживается).
+ *
+ */
+
+******************************************************************************
+* Основная часть
+******************************************************************************
+
+$ENTRY GO {
+    = <PROUT 'Refal-5 Source Beautifier'>
+      <PROUT '    source-file ' <ARG 1>>
+      <PROUT '    dest-file   ' <ARG 2>>
+      <PROUT '    flag        ' <ARG 3>>
+      <PROUT '----------------/'>
+      <OPEN 'r' 1 <ARG 1>>
+      <SAVEFILE 2
+          '/*' 
+          CAR_RET
+          ' * This program was produced by decompiler from assembler source.'
+          CAR_RET
+          ' * (C) 2000 Serge Skorobogatoff'
+          CAR_RET
+          ' */'
+          CAR_RET CAR_RET
+          <RSB_LAYOUT 
+              <RSB_GEN 
+                  <RSB_PARSE <ARG 3>
+                      <RSB_STRUC <RSB_LEX <LOADFILE 1>>>
+                  >
+              >
+          >
+          <OPEN 'w' 2 <ARG 2>>
+      >;
+    };
+
+LOADFILE {
+    s1 = <LOADFILE2 s1 <GET s1>>;
+    };
+
+LOADFILE2 {
+    s1 0 = ;
+    s1 e2 0 = e2;
+    s1 e2 = e2 CAR_RET <LOADFILE s1>;
+    };
+
+SAVEFILE {
+    s1 = ;
+    s1 e2 CAR_RET e3 = <PUT s1 e2> <SAVEFILE s1 e3>;
+    s1 e2 = <PUT s1 e2>;
+    };
+
+******************************************************************************
+* Лексический анализ
+******************************************************************************
+
+/* Лексический анализатор текста */
+RSB_LEX {
+    e1 = <PROUT 'Lexical analysis in progress ...'>
+         <UNITE_STRINGS <BREAK <REMOVE_COMMENTS e1>>>
+         <PROUT '    done (current step is ' <STEP> ').'>;
+    };
+
+/* Убирает комментарии и символы CAR_RET из текста, а также заменяет
+   символы табуляции на пробелы */
+REMOVE_COMMENTS {
+    e1 = <REMOVE_COMMENTS2 CAR_RET e1 CAR_RET>;
+    };
+
+REMOVE_COMMENTS2 {
+    CAR_RET '*' e1 CAR_RET e2 = <REMOVE_COMMENTS2 CAR_RET e2>;
+    '/*' e1 '*/' e2 = <REMOVE_COMMENTS2 e2>;
+    "'" e1 "'" e2 = "'" e1 "'" <REMOVE_COMMENTS2 e2>;
+    '"' e1 '"' e2 = '"' e1 '"' <REMOVE_COMMENTS2 e2>;
+    CAR_RET e1 = <REMOVE_COMMENTS2 e1>;
+    '   ' e1 = <REMOVE_COMMENTS2 ' ' e1>;
+    s1 e2 = s1 <REMOVE_COMMENTS2 e2>;
+    = ;
+    };
+
+/* Разбивает текст на лексемы, распознает тип лексем */
+BREAK {
+    = ;
+    '"' e1 = <BREAK3 <PICK_OUT_STRING '"' e1>>;
+    "'" e1 = <BREAK3 <PICK_OUT_STRING "'" e1>>;
+    ' ' e1 = <BREAK e1>;
+    
+    e1 "'" e2 = <BREAK4 (e1) (e2)>;
+    e1 '"' e2 = <BREAK5 (e1) (e2)>;
+
+    e1 ' ' e2 = <BREAK2 e1> <BREAK e2>;
+    e1 = <BREAK2 e1>;
+    };
+
+BREAK4 {
+    (e1 '"' e3) (e2) = <BREAK e1> <BREAK '"' e3 "'" e2>;
+    (e1) (e2) = <BREAK e1> <BREAK "'" e2>;
+    };
+
+BREAK5 {
+    (e1 "'" e3) (e2) = <BREAK e1> <BREAK "'" e3 '"' e2>;
+    (e1) (e2) = <BREAK e1> <BREAK '"' e2>;
+    };
+
+BREAK3 {
+    (e2) e3 = (e2) <BREAK e3>;
+    };
+
+BREAK2 {
+    = ;
+
+    e1 '(' e2 = <BREAK2 e1> '(' <BREAK2 e2>;
+    e1 ')' e2 = <BREAK2 e1> ')' <BREAK2 e2>;
+    e1 '<' e2 = <BREAK2 e1> '<' <BREAK2 e2>;
+    e1 '>' e2 = <BREAK2 e1> '>' <BREAK2 e2>;
+    e1 '=' e2 = <BREAK2 e1> '=' <BREAK2 e2>;
+    e1 ';' e2 = <BREAK2 e1> ';' <BREAK2 e2>;
+    e1 ':' e2 = <BREAK2 e1> ':' <BREAK2 e2>;
+    e1 ',' e2 = <BREAK2 e1> ',' <BREAK2 e2>;
+    e1 '{' e2 = <BREAK2 e1> '{' <BREAK2 e2>;
+    e1 '}' e2 = <BREAK2 e1> '}' <BREAK2 e2>;
+
+    e1 '+' e2 = <BREAK2 e1> (ID_IDENT 'ADD') <BREAK2 e2>;
+    /*e1 '-' e2 = <BREAK2 e1> (ID_IDENT 'SUB') <BREAK2 e2>;*/
+    e1 '*' e2 = <BREAK2 e1> (ID_IDENT 'MUL') <BREAK2 e2>;
+    e1 '/' e2 = <BREAK2 e1> (ID_IDENT 'DIV') <BREAK2 e2>;
+
+    '$ENTRY' = ID_ENTRY;
+    '$EXTERNAL' = ID_EXTERNAL;
+    '$EXTERN' = ID_EXTERNAL;
+    '$EXTRN' = ID_EXTERNAL;
+
+    's' e2 = (ID_VAR 's' <ADD_POINT e2>);
+    't' e2 = (ID_VAR 't' <ADD_POINT e2>);
+    'e' e2 = (ID_VAR 'e' <ADD_POINT e2>);
+
+    '0' e2 = (ID_NUMBER '0' e2);
+    '1' e2 = (ID_NUMBER '1' e2);
+    '2' e2 = (ID_NUMBER '2' e2);
+    '3' e2 = (ID_NUMBER '3' e2);
+    '4' e2 = (ID_NUMBER '4' e2);
+    '5' e2 = (ID_NUMBER '5' e2);
+    '6' e2 = (ID_NUMBER '6' e2);
+    '7' e2 = (ID_NUMBER '7' e2);
+    '8' e2 = (ID_NUMBER '8' e2);
+    '9' e2 = (ID_NUMBER '9' e2);
+
+    e1 = (ID_IDENT e1);
+    };
