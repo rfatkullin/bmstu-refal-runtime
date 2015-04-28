@@ -16,7 +16,8 @@
 
 static void printSymbol(FILE* file, struct vterm_t* term);
 static void printUnicodeChar(uint32_t ch);
-static uint64_t copySymbols(uint64_t first, uint64_t length);
+static void getCharsFromVTerms(uint8_t* chars, uint64_t offset, uint64_t length);
+static uint64_t createCharVTerms(uint8_t* chars, uint64_t length);
 static char* getFileName();
 static void gcAssemblyFileName(struct fragment_t* frag);
 static void gcOpenFile(struct fragment_t* frag, uint8_t mode, uint8_t descr);
@@ -116,6 +117,8 @@ static struct func_result_t _gcGet(FILE* file)
     uint64_t currOffset =  _memMngr.vtermsOffset;
     struct lterm_t* mainChain = 0;
 
+    //printMemoryInfo();
+
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
     if (CURR_FUNC_CALL->env->workFieldOfView)
@@ -124,20 +127,27 @@ static struct func_result_t _gcGet(FILE* file)
     uint32_t ch;
     while(1)
     {
-        // Simple fix of windows \r\n
+        // Simple fix \r\n line endings
         while ((ch = readUTF8Char(file)) == '\r');
 
         if (ch == '\n' || ch == 0)
             break;
 
-        if (checkAndCleanHeaps(1, 0))
+        if (GC_VTERM_OV(1))
         {
-            uint64_t length = currOffset - firstOffset + 1;
+            uint64_t length = currOffset - firstOffset;
+            uint8_t* buff = malloc(length);
+
+            getCharsFromVTerms(buff, firstOffset, length);
+
+            collectGarbage();
             GC_VTERM_HEAP_CHECK_EXIT(length + 1);
 
             // Copy earlier read chars.
-            firstOffset = copySymbols(firstOffset, currOffset - firstOffset);
+            firstOffset = createCharVTerms(buff, length);
             currOffset = _memMngr.vtermsOffset;
+
+            free(buff);
         }
 
         // Checked --> may call func without gc prefix.
@@ -155,7 +165,7 @@ static struct func_result_t _gcGet(FILE* file)
         checkAndCleanHeaps(1, VINT_STRUCT_SIZE(1) + BUILTINS_RESULT_SIZE);
         allocateUInt8VTerm(0);
         mainChain = allocateBuiltinsResult(firstOffset, _memMngr.vtermsOffset - firstOffset);
-    }
+    }    
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
 }
@@ -366,13 +376,24 @@ static uint64_t getBytesCountToAssembly(struct fragment_t* frag)
     return needBytesCount;
 }
 
-static uint64_t copySymbols(uint64_t first, uint64_t length)
+static void getCharsFromVTerms(uint8_t* chars, uint64_t offset, uint64_t length)
+{
+    uint64_t i = 0;
+    for (i = 0; i < length; ++i)
+    {
+        chars[i] = _memMngr.vterms[offset + i].ch;
+    }
+}
+
+static uint64_t createCharVTerms(uint8_t* chars, uint64_t length)
 {
     uint64_t firstOffset = _memMngr.vtermsOffset;
 
     uint64_t i = 0;
     for (i = 0; i < length; ++i)
-        allocateSymbolVTerm(_memMngr.vterms[first + i].ch);
+    {        
+        allocateSymbolVTerm(chars[i]);
+    }
 
     return firstOffset;
 }

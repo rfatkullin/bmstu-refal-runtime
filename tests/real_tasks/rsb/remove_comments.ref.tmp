@@ -1,17 +1,10 @@
+
 $ENTRY GO {
     = <Prout 'Refal-5 Source Beautifier'>
       <Prout '    source-file : ' <Arg 1>>      
-      <Prout '----------------/'>      
-      '/*' 
-      CAR_RET
-      ' * This program was produced by decompiler from assembler source.'
-      CAR_RET
-      ' * (C) 2000 Serge Skorobogatoff'
-      CAR_RET
-      ' */'
-      CAR_RET CAR_RET
+      <Prout '----------------/'>
       <Open 'r' 1 <Arg 1>>      
-      <PRINT <REMOVE_COMMENTS <LOADFILE 1>>>
+      <SAVEFILE 0 <REMOVE_COMMENTS <LOADFILE 1>>>;
     };
 
 LOADFILE {
@@ -23,11 +16,11 @@ LOADFILE2 {
     s.1 e.2 0 = e.2;
     s.1 e.2 = e.2 CAR_RET <LOADFILE s.1>;
     };
-    
-PRINT {
-     = ;
-    e.2 CAR_RET e.3 = <Prout e.2> <PRINT e.3>;
-    e.2 = <Prout e.2>;
+
+SAVEFILE {
+    s.1 = ;
+    s.1 e.2 CAR_RET e.3 = <Put s.1 e.2> <SAVEFILE s.1 e.3>;
+    s.1 e.2 = <Put s.1 e.2>;
     };
 
 REMOVE_COMMENTS {
@@ -39,7 +32,7 @@ REMOVE_COMMENTS2 {
     '/*' e.1 '*/' e.2 = <REMOVE_COMMENTS2 e.2>;
     "'" e.1 "'" e.2 = "'" e.1 "'" <REMOVE_COMMENTS2 e.2>;
     '"' e.1 '"' e.2 = '"' e.1 '"' <REMOVE_COMMENTS2 e.2>;
-    CAR_RET e.1 = CAR_RET <REMOVE_COMMENTS2 e.1>;
+    CAR_RET e.1 = <REMOVE_COMMENTS2 e.1>;
     '	' e.1 = <REMOVE_COMMENTS2 ' ' e.1>;
     s.1 e.2 = s.1 <REMOVE_COMMENTS2 e.2>;
     = ;
