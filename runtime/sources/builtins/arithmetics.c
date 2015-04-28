@@ -180,22 +180,19 @@ static struct func_result_t gcApplyOp(ArithOp op)
 static struct lterm_t* gcApplyOpToInt(ArithOp op)
 {
     mpz_t x;
-    mpz_t y;
-    mpz_t res;
+    mpz_t y;    
 
     mpz_init(x);
-    mpz_init(y);
-    mpz_init(res);
+    mpz_init(y);    
 
     readIntOperands(x, y);
 
-    op(res, x, y);
+    op(x, x, y);
 
-    struct lterm_t* resChain = gcConstructIntNumBuiltinResult(res);
+    struct lterm_t* resChain = gcConstructIntNumBuiltinResult(x);
 
     mpz_clear(x);
     mpz_clear(y);
-    mpz_clear(res);
 
     return resChain;
 }
