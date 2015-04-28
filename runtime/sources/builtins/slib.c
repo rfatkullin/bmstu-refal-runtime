@@ -16,25 +16,11 @@
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch));
 
-// TO FIX: Нет проверки на переполнение памяти. Можно все инициализировать с помощью initEnvData.
 void gcInitBuiltin()
 {
-    CURR_FUNC_CALL->env->locals = 0;
-    CURR_FUNC_CALL->env->localsCount = 0;
+    checkAndCleanHeaps(0, ENV_SIZE(0, 1, 0));
 
-    CURR_FUNC_CALL->env->params = 0;
-    CURR_FUNC_CALL->env->paramsCount = 0;
-
-    CURR_FUNC_CALL->env->fovsCount = 1;
-
-    CURR_FUNC_CALL->env->assembled = (uint64_t*)(_memMngr.data + _memMngr.dataOffset);
-    _memMngr.dataOffset += sizeof(uint64_t);
-
-    CURR_FUNC_CALL->env->stretchVarsNumber = (int*)(_memMngr.data + _memMngr.dataOffset);
-    _memMngr.dataOffset += sizeof(int);
-
-    memset(CURR_FUNC_CALL->env->assembled, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(struct lterm_t*));
-    memset(CURR_FUNC_CALL->env->stretchVarsNumber, 0, CURR_FUNC_CALL->env->fovsCount * sizeof(int));
+    initEnvData(CURR_FUNC_CALL->env, 0, 1, 0);
 
     ASSEMBLY_FIELD(0, CURR_FUNC_CALL->fieldOfView);
 }
