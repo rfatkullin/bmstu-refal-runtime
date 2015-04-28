@@ -18,7 +18,7 @@ static void printChainOfCalls(struct lterm_t* callTerm);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm);
 static struct lterm_t* onFuncFail(struct lterm_t* callTerm, int failResult);
 static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
-static uint64_t gcAssemblyChain(struct lterm_t* chain, uint64_t* length, allocate_result* res);
+static uint64_t chAssemblyChain(struct lterm_t* chain, uint64_t* length, allocate_result* res);
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
 static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult, struct lterm_t** lastCallFuncFOV);
 static struct lterm_t* constructStartFieldOfView(const char* funcName, RefalFunc entryFuncPointer);
@@ -217,7 +217,7 @@ uint64_t chGetAssembliedChain(struct lterm_t* chain, allocate_result *res)
 
         CHECK_ALLOCATION_RETURN(assembledVtermOffset, chAllocateBracketVterm(res), *res);
 
-        CHECK_ALLOCATION_RETURN(offset, gcAssemblyChain(chain, &length, res), *res);
+        CHECK_ALLOCATION_RETURN(offset, chAssemblyChain(chain, &length, res), *res);
 
         VTERM_BRACKETS(assembledVtermOffset)->offset = offset;
         VTERM_BRACKETS(assembledVtermOffset)->length = length;
@@ -271,7 +271,7 @@ static uint64_t assemblyTopVTerms(struct lterm_t* chain, uint64_t* length, alloc
     return resOffset;
 }
 
-static uint64_t gcAssemblyChain(struct lterm_t* chain, uint64_t* length, allocate_result* res)
+static uint64_t chAssemblyChain(struct lterm_t* chain, uint64_t* length, allocate_result* res)
 {
     *res = GC_OK;
     uint64_t resOffset = _memMngr.vtermsOffset;
@@ -297,7 +297,7 @@ static uint64_t gcAssemblyChain(struct lterm_t* chain, uint64_t* length, allocat
                 uint64_t offset = 0;
                 uint64_t tmpLength = 0;
 
-                CHECK_ALLOCATION_RETURN(offset, gcAssemblyChain(currTerm->chain, &tmpLength, res), *res);
+                CHECK_ALLOCATION_RETURN(offset, chAssemblyChain(currTerm->chain, &tmpLength, res), *res);
 
                 setBracketsData(topVTermsOffset, offset, tmpLength);
 
