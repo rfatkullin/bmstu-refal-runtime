@@ -192,14 +192,19 @@ static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch))
 {
     gcInitBuiltin();
 
+    // 0 для vterm'ов, так как во время сборки уже
+    // выделили для них память.
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
     struct lterm_t* chainTerm = allocateBuiltinsResult(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);
     struct fragment_t* frag = chainTerm->next->fragment;
 
-    uint64_t i =0;
+    uint64_t i = 0;
     for (i = 0; i < frag->length; ++i)
-        _memMngr.vterms[frag->offset + i].ch = op(_memMngr.vterms[frag->offset + i].ch);
+    {
+        if (_memMngr.vterms[frag->offset + i].tag == V_CHAR_TAG)
+            _memMngr.vterms[frag->offset + i].ch = op(_memMngr.vterms[frag->offset + i].ch);
+    }
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm, .callChain = 0};
 }
