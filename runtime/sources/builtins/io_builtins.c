@@ -117,12 +117,7 @@ static struct func_result_t _gcGet(FILE* file)
     uint64_t currOffset =  _memMngr.vtermsOffset;
     struct lterm_t* mainChain = 0;
 
-    //printMemoryInfo();
-
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
-
-    if (CURR_FUNC_CALL->env->workFieldOfView)
-        PRINT_AND_EXIT("BEDA!!!\n");
 
     uint32_t ch;
     while(1)
