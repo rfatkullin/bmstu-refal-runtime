@@ -17,11 +17,10 @@
 static void printChainOfCalls(struct lterm_t* callTerm);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm);
 static struct lterm_t* onFuncFail(struct lterm_t* callTerm, int failResult);
-static struct lterm_t* createFieldOfViewForReCall(struct lterm_t* funcCall);
 static uint64_t chAssemblyChain(struct lterm_t* chain, uint64_t* length, allocate_result* res);
+static struct lterm_t* constructStartFieldOfView(const char* funcName, RefalFunc entryFuncPointer);
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
 static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult, struct lterm_t** lastCallFuncFOV);
-static struct lterm_t* constructStartFieldOfView(const char* funcName, RefalFunc entryFuncPointer);
 
 void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 {
