@@ -19,8 +19,8 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm);
 static struct lterm_t* onFuncFail(struct lterm_t* callTerm, int failResult);
 static uint64_t chAssemblyChain(struct lterm_t* chain, uint64_t* length, allocate_result* res);
 static struct lterm_t* constructStartFieldOfView(const char* funcName, RefalFunc entryFuncPointer);
+static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult);
-static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult, struct lterm_t** lastCallFuncFOV);
 
 void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 {
@@ -29,7 +29,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 	struct func_result_t funcRes;    
     struct lterm_t* parentCall = 0;
     int entryStatus = 0;
-    struct lterm_t* lastCallFuncFOV = 0;
+    struct lterm_t* prevFuncFieldOfView = 0;
 
     _currCallTerm = _memMngr.fieldOfView->next;
 
@@ -41,10 +41,14 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
             // Предыдущий результат успешен --> все скобки активации обработаны, можно передавать функции-потребителю.
             if (funcRes.status != FAIL_RESULT)
             {                
+                // Если поле зрения нулевой, значит было обработано действие-вызов.
+                // Поэтому восстанавливаем поле зрения на основе поле зрения пред. функции
                 if (!_currCallTerm->funcCall->fieldOfView)
                 {
-                    _currCallTerm->funcCall->fieldOfView = lastCallFuncFOV;
+                    _currCallTerm->funcCall->fieldOfView = prevFuncFieldOfView;
+                    prevFuncFieldOfView = 0;
                 }
+
                 _currCallTerm->funcCall->env->workFieldOfView = _currCallTerm->funcCall->subCall;
                 _currCallTerm->funcCall->subCall = 0;
                 entryStatus = NEXT_ENTRYPOINT;
@@ -71,8 +75,9 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 
         switch (funcRes.status)
         {
-            case OK_RESULT:                
-                _currCallTerm = updateFieldOfView(_currCallTerm, &funcRes, &lastCallFuncFOV);                
+            case OK_RESULT:
+                prevFuncFieldOfView = _currCallTerm->funcCall->fieldOfView;
+                _currCallTerm = updateFieldOfView(_currCallTerm, &funcRes);
                 break;
 
             case CALL_RESULT:
@@ -145,11 +150,9 @@ static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct f
 	return newCallNode;
 }
 
-static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult, struct lterm_t** lastCallFuncFOV)
+static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_result_t* funcResult)
 {
-	struct lterm_t* newCurrNode = currNode->funcCall->next;
-
-    *lastCallFuncFOV = currNode->funcCall->fieldOfView;
+	struct lterm_t* newCurrNode = currNode->funcCall->next;    
 
     if (funcResult->fieldChain)  // Insertn chain in the middle
 	{		
