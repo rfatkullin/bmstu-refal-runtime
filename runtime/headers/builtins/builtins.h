@@ -40,6 +40,8 @@ struct func_result_t Card(int entryStatus);
 struct func_result_t Print(int entryStatus);
 
 struct func_result_t Open(int entryStatus);
+uint8_t getDescr(struct fragment_t* frag);
+void gcOpenDefaultFile(uint8_t descr, uint8_t mode);
 
 struct func_result_t Get(int entryStatus);
 struct func_result_t Put(int entryStatus);
