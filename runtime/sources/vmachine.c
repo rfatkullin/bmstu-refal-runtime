@@ -277,6 +277,14 @@ static uint64_t chAssemblyChain(struct lterm_t* chain, uint64_t* length, allocat
     struct lterm_t* currTerm = chain->next;
     uint64_t topVTermsOffset = 0;
 
+    // Цепочка состоит из единственного фрагментного l-терма. Возвращаем
+    // смещение этого фрагментного l-терма.
+    if (chain->next == chain->prev && chain->next->tag == L_TERM_FRAGMENT_TAG)
+    {
+        *length = chain->next->fragment->length;
+        return chain->next->fragment->offset;
+    }
+
     CHECK_ALLOCATION_RETURN(topVTermsOffset, assemblyTopVTerms(chain, length, res), *res);
 
     while (currTerm != chain)

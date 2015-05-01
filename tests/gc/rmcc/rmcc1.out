@@ -7,14 +7,6 @@ Real Men Compiler Constructor
 ----------------/
 Start garbage collection.
 End garbage collection.
-Start garbage collection.
-End garbage collection.
-Start garbage collection.
-End garbage collection.
-Start garbage collection.
-End garbage collection.
-Start garbage collection.
-End garbage collection.
 
 /*
  * Terminal symbols.
@@ -53,13 +45,13 @@ End garbage collection.
 /*
  * Terminal symbols strings.
  */
+Start garbage collection.
+End garbage collection.
 static char *ts_str[] =
 {
     "TS_STRING",
     "TS_COMPOUND",
     "TS_INTEGER",
-Start garbage collection.
-End garbage collection.
     "TS_FLOAT",
     "TS_VAR",
     "TS_ENTRY",
@@ -130,13 +122,13 @@ static char *ns_str[] =
     "NS_DECL_TAIL",
     "NS_EXT_TAIL",
     "NS_EXT_TAIL2",
+Start garbage collection.
+End garbage collection.
     "NS_MOD",
     "NS_NAMES",
     "NS_F_NAME",
     "NS_E_NAME",
     "NS_BODY",
-Start garbage collection.
-End garbage collection.
     "NS_SEMICOLONS",
     "NS_OPT_SEMICOLONS",
     "NS_EXTRA_SEMICOLONS",
@@ -220,14 +212,14 @@ static short p7_table[27][29] =
     { -1, 0,-1,-1,-1, 0, 0, 0,-1,-1,-1, 0,-1,-1,-1, 0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1 },
     { -1, 2,-1,-1,-1, 2, 2, 3,-1,-1,-1, 2,-1,-1,-1, 2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
     { -1, 5,-1,-1,-1,-1,-1,-1,-1,-1,-1, 4,-1,-1,-1, 4,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
+Start garbage collection.
+End garbage collection.
     { -1, 6,-1,-1,-1,-1, 7,-1,-1,-1,-1,-1, 6,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
     { -1, 8,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 9,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
     { -1,12,-1,-1,-1,11,10,-1,-1,-1,-1,12,-1,-1,-1,12,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
     { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,14,-1,-1,-1,-1,-1,-1,13,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
     { -1,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
     { -1,16,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
-Start garbage collection.
-End garbage collection.
     { 18,18,18,18,18,-1,-1,-1,18,18,18,17,-1,18,-1,17,-1,18,-1,18,18,18,18,18,18,-1,-1,-1,-1 },
     { -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,19,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1 },
     { -1,21,-1,-1,-1,21,21,21,-1,-1,-1,21,20,-1,-1,21,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,21 },
@@ -400,6 +392,8 @@ static short p7_prod[230] =
 
     /* 34. operation ::= L_COMMA _action_op_comma */
     2, TS_COMMA, AS_OP_COMMA,
+Start garbage collection.
+End garbage collection.
 
     /* 35. operation ::= L_REPLACE _action_op_replace */
     2, TS_REPLACE, AS_OP_REPLACE,
@@ -429,8 +423,6 @@ static short p7_prod[230] =
     0,
 
     /* 44. tl-expr ::= _action_term_start term _action_term_end tl-expr */
-Start garbage collection.
-End garbage collection.
     4, AS_TERM_START, NS_TERM, AS_TERM_END, NS_TL_EXPR,
 
     /* 45. tl-expr ::= */
