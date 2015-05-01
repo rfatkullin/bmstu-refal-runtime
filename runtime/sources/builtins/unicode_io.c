@@ -11,6 +11,8 @@ static void UTF32ToUTF8(uint32_t ch);
 #define UNI_SUR_LOW_END     (uint32_t)0xDFFF
 #define UNI_REPLACEMENT_CHAR (uint32_t)0x0000FFFD
 
+#define MaxBytesForUTF8 4
+
 static const char trailingBytesForUTF8[256] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -28,7 +30,7 @@ static const uint32_t offsetsFromUTF8[6] = { 0x00000000UL, 0x00003080UL, 0x000E2
 
 
 /// Array for store bytes of UTF-8 char.
-static uint8_t utf8CharBytes[4];
+static uint8_t utf8CharBytes[MaxBytesForUTF8];
 
 /// Bytes in UTF-8 char.
 int bytesToWrite = 0;
@@ -38,44 +40,30 @@ static uint32_t readUTF8AsUTF32(uint8_t ch, char* str, uint32_t bytesToRead);
 /// Read UTF-8 char as UTF32 char.
 uint32_t readUTF8Char(FILE* file)
 {
-    uint32_t res = 0;
-    uint8_t uch;
+    char ch;
 
-    int8_t ch = fgetc(file);
-
-    if (ch == EOF)
+    if ((ch = fgetc(file)) == EOF)
         return 0;
 
-    uch = ch;
+    utf8CharBytes[0] = ch;
 
-    int extraBytesToRead = trailingBytesForUTF8[uch];
-    int i = 0;
+    int extraBytesToRead = trailingBytesForUTF8[(uint8_t)ch];
 
+    if (extraBytesToRead > MaxBytesForUTF8 - 1)
+        return utf8CharBytes[0];
+
+    uint32_t i;
     for (i = 0; i < extraBytesToRead; ++i)
     {
-        res += uch;
-        res <<= 6;
-        ch = fgetc(file);
-
-        if (ch == EOF)
+        if ((ch = fgetc(file)) == EOF)
             return 0;
-        uch = ch;
-    }
-    res += uch;
-    res -= offsetsFromUTF8[extraBytesToRead];
 
-    if (res <= UNI_MAX_LEGAL_UTF32)
-    {
-        if (res >= UNI_SUR_HIGH_START && res <= UNI_SUR_LOW_END)        
-            res = UNI_REPLACEMENT_CHAR;        
+        utf8CharBytes[i + 1] = ch;
     }
-    else
-        res = UNI_REPLACEMENT_CHAR;
 
-    return res;
+    return readUTF8AsUTF32(utf8CharBytes[0], utf8CharBytes + 1, extraBytesToRead);
 }
 
-// TO FIX: Код дублируется - исправить.
 char* readUTF8CharFromStr(char* str, uint32_t* resPointer)
 {
     uint8_t ch = str[0];
