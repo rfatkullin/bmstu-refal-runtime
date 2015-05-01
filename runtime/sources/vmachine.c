@@ -133,6 +133,7 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     callTerm->funcCall->env->params = closure->params;
     callTerm->funcCall->env->paramsCount = closure->paramsCount;
     callTerm->funcCall->rollback = closure->rollback;
+    callTerm->funcCall->ident = closure->ident;
 
     // Remove fragment with closure => lost closure => GC will clean it.
     fieldOfView->next = fieldOfView->next->next;

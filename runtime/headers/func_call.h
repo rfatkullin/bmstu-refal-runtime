@@ -23,6 +23,7 @@ struct env_t
     /// Число необходимых FieldOfView.
     uint32_t fovsCount;
 
+    /// Текущий FieldOfView
     struct lterm_t* workFieldOfView;
 
     /// Собранные FieldOfView. Offset'ы для vterm-фрагментов (т.е. V_BRACKETS_TAG).
@@ -42,6 +43,9 @@ struct func_call_t
 {
     /// Указатель на функцию
 	RefalFunc funcPtr;
+
+    /// Имя функции.
+    struct vstring_t* ident;
 
     /// Окружение.
 	struct env_t* env;

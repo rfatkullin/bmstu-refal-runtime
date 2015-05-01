@@ -77,29 +77,14 @@ uint64_t initArgsData(uint64_t offset, int argc, char** argv);
 /// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
 int ustrEq(struct vstring_t* a, struct vstring_t* b);
 
-/// Вывод Unicode строки.
-void printUStr(FILE* file, struct vstring_t* str);
-
-/// Вывод целого числа.
-void printIntNumber(FILE* file, struct vint_t* intNum);
-
 /// Проверка на равенство двух чисел. 1: a > b, -1 a < b, 0 a == b
 int intCmp(struct vint_t* a, struct vint_t* b);
 
 /// Проверка на равенство двух чисел. 1: a > b, -1 a < b, 0 a == b
 int doubleCmp(double a, double b);
 
-/// Вывод фргамента vterm'ов в файл.
-void printFragment(FILE* file, struct fragment_t* frag);
-
-/// Вывод фргамента vterm'ов с переводом строки в файл.
-void printFragmentLn(FILE* file, struct fragment_t* frag);
-
 /// Собирает из целочисленнго числа результат функции.
 struct lterm_t* gcConstructIntNumBuiltinResult(mpz_t num);
-
-/// Выводит поле зрения в файл.
-void printFieldOfView(FILE* file, struct lterm_t* fov);
 
 /// Конвертирует mpz_t в int.
 int ConvertToInt(struct vint_t* numData);

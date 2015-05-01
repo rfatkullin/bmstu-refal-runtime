@@ -99,6 +99,7 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
     to->entryPoint      = from->entryPoint;
     to->failEntryPoint  = from->failEntryPoint;
     to->funcPtr         = from->funcPtr;
+    to->ident           = from->ident;
     to->rollback        = from->rollback;
 
     if (from->fieldOfView)

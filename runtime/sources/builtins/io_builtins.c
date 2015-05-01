@@ -14,8 +14,6 @@
 #include <builtins/case_mapping.h>
 #include <defines/data_struct_sizes.h>
 
-static void printSymbol(FILE* file, struct vterm_t* term);
-static void printUnicodeChar(uint32_t ch);
 static void getCharsFromVTerms(uint8_t* chars, uint64_t offset, uint64_t length);
 static uint64_t createCharVTerms(uint8_t* chars, uint64_t length);
 static char* getFileName();
@@ -28,8 +26,6 @@ static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr);
 static void _gcPut();
 static struct func_result_t _gcGet(FILE* file);
 static getFileDescr(struct vint_t* bigInt, uint8_t* descr);
-static void printChain(FILE* file, struct lterm_t* chain);
-static void printFragmentTogether(FILE* file, struct fragment_t* frag);
 
 static uint64_t getBytesCountToAssembly(struct fragment_t* frag);
 static char* assemblyFragment(struct fragment_t* frag, char* buff);
@@ -393,121 +389,6 @@ static uint64_t createCharVTerms(uint8_t* chars, uint64_t length)
     return firstOffset;
 }
 
-void printFieldOfView(FILE* file, struct lterm_t* fov)
-{
-    fprintf(file, "FOV START-----------------\n");
-    printChain(file, fov);
-    fprintf(file, "\n");
-}
-
-static void printChain(FILE* file, struct lterm_t* chain)
-{
-    if (chain->tag != L_TERM_CHAIN_TAG)
-        PRINT_AND_EXIT("[Print chain]: Must be chain");
-
-    struct lterm_t* currTerm = chain->next;
-
-    while (currTerm != chain)
-    {
-        switch (currTerm->tag)
-        {
-            case L_TERM_FRAGMENT_TAG :
-            {
-                printFragmentTogether(file, currTerm->fragment);
-                break;
-            }
-            case L_TERM_CHAIN_KEEPER_TAG:
-            {
-                fprintf(file, "(");
-                printChain(file, currTerm->chain);
-                fprintf(file, ")");
-                break;
-            }
-
-            case L_TERM_FUNC_CALL:
-            {
-                fprintf(file, "<");
-
-                if (currTerm->funcCall->funcPtr)
-                    fprintf(file, "[FuncCalled]");
-
-                if (currTerm->funcCall->fieldOfView)
-                    printChain(file, currTerm->funcCall->fieldOfView);                
-
-                if (currTerm->funcCall->subCall)
-                {
-                    fprintf(file, "<");
-                    fprintf(file, "[Func subCall]:");
-                    printChain(file, currTerm->funcCall->subCall);
-                    fprintf(file, ">");
-                }
-
-                fprintf(file, ">");
-                break;
-            }
-
-            default:
-                PRINT_AND_EXIT(BAD_TAG_AT_ASSEMBLY);
-
-        }
-
-        currTerm = currTerm->next;
-    }
-}
-
-static void printFragmentTogether(FILE* file, struct fragment_t* frag)
-{
-    int i = 0;
-    struct vterm_t* currTerm = _memMngr.vterms + frag->offset;
-
-    for (i = 0; i < frag->length; ++i)
-        printSymbol(file, currTerm + i);
-}
-
-void printFragmentLn(FILE* file, struct fragment_t* frag)
-{
-    printFragment(file, frag);
-
-    fprintf(file, "\n");
-}
-
-void printFragment(FILE* file, struct fragment_t* frag)
-{
-    int i = 0;
-    struct vterm_t* currTerm = _memMngr.vterms + frag->offset;
-
-    for (i = 0; i < frag->length; ++i)
-        printSymbol(file, currTerm + i);
-}
-
-static void printSymbol(FILE* file, struct vterm_t* term)
-{
-	switch (term->tag)
-	{
-	case V_CHAR_TAG:
-        printUTF32(file, term->ch);
-		break;
-	case V_IDENT_TAG:
-        printUStr(file, term->str);
-        fprintf(file, " ");
-		break;
-	case V_INT_NUM_TAG:
-        printIntNumber(file, term->intNum);
-		break;
-    case V_DOUBLE_NUM_TAG:
-        fprintf(file, "%lf ", term->doubleNum);
-		break;
-    case V_CLOSURE_TAG:
-        printUStr(file, term->closure->ident);
-		break;
-    case V_BRACKETS_TAG:
-        fprintf(file, "(");
-        printFragment(file, term->brackets);
-        fprintf(file, ")");
-		break;    
-	}
-}
-
 /// Проверка на равенство двух строк. 1 - успех, 0 - неудача.
 int ustrEq(struct vstring_t* a, struct vstring_t* b)
 {
@@ -525,30 +406,4 @@ int ustrEq(struct vstring_t* a, struct vstring_t* b)
     }
 
     return 1;
-}
-
-void printUStr(FILE* file, struct vstring_t* str)
-{
-    if (!str)
-        return;
-
-    uint64_t i = 0;
-
-    for (i = 0; i < str->length; ++i)
-        printUTF32(file, str->head[i]);
-}
-
-void printIntNumber(FILE* file, struct vint_t* intNum)
-{
-    mpz_t num;
-    mpz_init(num);
-
-    mpz_import(num, GET_INT_LENGTH(intNum), 1, sizeof(uint8_t), 1, 0, intNum->bytes);
-
-    if (GET_INT_SIGN(intNum))
-        mpz_neg(num, num);
-
-    gmp_fprintf(file, "%Zd ", num);
-
-    mpz_clear(num);
 }
