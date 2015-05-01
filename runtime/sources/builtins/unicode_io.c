@@ -33,6 +33,8 @@ static uint8_t utf8CharBytes[4];
 /// Bytes in UTF-8 char.
 int bytesToWrite = 0;
 
+static uint32_t readUTF8AsUTF32(uint8_t ch, char* str, uint32_t bytesToRead);
+
 /// Read UTF-8 char as UTF32 char.
 uint32_t readUTF8Char(FILE* file)
 {
@@ -76,23 +78,29 @@ uint32_t readUTF8Char(FILE* file)
 // TO FIX: Код дублируется - исправить.
 char* readUTF8CharFromStr(char* str, uint32_t* resPointer)
 {
+    uint8_t ch = str[0];
+
+    uint32_t extraBytesToRead = trailingBytesForUTF8[ch];
+
+    *resPointer = readUTF8AsUTF32(ch, str + 1, extraBytesToRead);
+
+    return str + 1 + extraBytesToRead;
+}
+
+static uint32_t readUTF8AsUTF32(uint8_t ch, char* str, uint32_t bytesToRead)
+{
+    uint32_t i = 0;
     uint32_t res = 0;
-    uint8_t ch;
-    uint64_t offset = 0;
+    uint32_t offset = 0;
 
-    ch = str[offset++];
-
-    int extraBytesToRead = trailingBytesForUTF8[ch];
-    int i = 0;
-
-    for (i = 0; i < extraBytesToRead; ++i)
+    for (i = 0; i < bytesToRead; ++i)
     {
         res += ch;
         res <<= 6;
         ch = str[offset++];
     }
     res += ch;
-    res -= offsetsFromUTF8[extraBytesToRead];
+    res -= offsetsFromUTF8[bytesToRead];
 
     if (res <= UNI_MAX_LEGAL_UTF32)
     {
@@ -102,9 +110,7 @@ char* readUTF8CharFromStr(char* str, uint32_t* resPointer)
     else
         res = UNI_REPLACEMENT_CHAR;
 
-    *resPointer = res;
-
-    return str + offset;
+    return res;
 }
 
 /// Print UTF32 char as UTF8 char
