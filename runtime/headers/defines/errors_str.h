@@ -15,8 +15,8 @@
 #define FUNC_CALL_FAILED            "[VM]: Func call failed!\n"
 #define ASSEMBLY_NOT_CHAIN          "[VM]: Trying assembly not chain!\n"
 #define SIMPLE_CHAIN_AT_ASSEMBLY    "[VM]: Chain tag when assembly. Chains contains only chains keepers, not chains!\n"
-#define BAD_TAG_AT_ASSEMBLY         "[VM]: Bad tag when assembly!\n"
-#define FUNC_CALL_AT_ASSEMBLY       "[VM]: Func call term when assembly!\n"
+#define BAD_TAG_AT_ASSEMBLY         "[VM]: Bad tag at assembly!\n"
+#define FUNC_CALL_AT_ASSEMBLY       "[VM]: Func call term at assembly!\n"
 
 
 #define FOV_CONTAINS_FUNC_CALL      "[Data allocator]: FieldOfView passed in funcation contains func call term!\n"

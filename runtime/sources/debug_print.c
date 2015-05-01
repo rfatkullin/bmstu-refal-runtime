@@ -15,6 +15,7 @@ static void printChain(FILE* file, struct lterm_t* chain);
 static void printSymbol(FILE* file, struct vterm_t* term);
 static void printIntNumber(FILE* file, struct vint_t* intNum);
 static void printFragment(FILE* file, struct fragment_t* frag);
+static void printFuncCall(FILE* file, struct func_call_t* funcCall);
 static void printFragmentTogether(FILE* file, struct fragment_t* frag);
 
 void printFieldOfView(FILE* file, struct lterm_t* fov)
@@ -27,6 +28,32 @@ void printFragmentLn(FILE* file, struct fragment_t* frag)
 {
     printFragment(file, frag);
     fprintf(file, "\n");
+}
+
+void printFuncCallLn(FILE* file, struct func_call_t* funcCall)
+{
+    printFuncCall(file, funcCall);
+    printf("\n");
+}
+
+static void printFuncCall(FILE* file, struct func_call_t* funcCall)
+{
+    fprintf(file, "<");
+
+    if (funcCall->funcPtr)
+        printUStr(file, funcCall->ident);
+
+    if (funcCall->fieldOfView)
+        printChain(file, funcCall->fieldOfView);
+
+    if (funcCall->subCall)
+    {
+        fprintf(file, "[");
+        printChain(file, funcCall->subCall);
+        fprintf(file, "]");
+    }
+
+    fprintf(file, ">");
 }
 
 static void printFragment(FILE* file, struct fragment_t* frag)
@@ -61,25 +88,9 @@ static void printChain(FILE* file, struct lterm_t* chain)
                 fprintf(file, ")");
                 break;
             }
-
             case L_TERM_FUNC_CALL:
             {
-                fprintf(file, "<");
-
-                if (currTerm->funcCall->funcPtr)
-                    printUStr(file, currTerm->funcCall->ident);
-
-                if (currTerm->funcCall->fieldOfView)
-                    printChain(file, currTerm->funcCall->fieldOfView);
-
-                if (currTerm->funcCall->subCall)
-                {
-                    fprintf(file, "[[Func subCall:");
-                    printChain(file, currTerm->funcCall->subCall);
-                    fprintf(file, "]");
-                }
-
-                fprintf(file, ">");
+                printFuncCall(file, currTerm->funcCall);
                 break;
             }
 
@@ -107,19 +118,23 @@ static void printSymbol(FILE* file, struct vterm_t* term)
     case V_CHAR_TAG:
         printUTF32(file, term->ch);
         break;
+
     case V_IDENT_TAG:
         printUStr(file, term->str);
-        fprintf(file, " ");
         break;
+
     case V_INT_NUM_TAG:
         printIntNumber(file, term->intNum);
         break;
+
     case V_DOUBLE_NUM_TAG:
         fprintf(file, "%lf ", term->doubleNum);
         break;
+
     case V_CLOSURE_TAG:
         printUStr(file, term->closure->ident);
         break;
+
     case V_BRACKETS_TAG:
         fprintf(file, "(");
         printFragment(file, term->brackets);
@@ -137,6 +152,8 @@ static void printUStr(FILE* file, struct vstring_t* str)
 
     for (i = 0; i < str->length; ++i)
         printUTF32(file, str->head[i]);
+
+    fprintf(file, " ");
 }
 
 static void printIntNumber(FILE* file, struct vint_t* intNum)

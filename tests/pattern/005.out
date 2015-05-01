@@ -1,2 +1,6 @@
 Success 
 [VM]: Func call failed!
+Func call term:
+<NoRollBackFunc a b c d >
+Field of view:
+<Prout <NoRollBackFunc a b c d >>

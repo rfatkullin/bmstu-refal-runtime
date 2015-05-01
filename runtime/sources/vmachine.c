@@ -6,6 +6,7 @@
 #include <gc/gc.h>
 #include <vmachine.h>
 #include <func_call.h>
+#include <debug_print.h>
 #include <memory_manager.h>
 #include <builtins/builtins.h>
 #include <defines/gc_macros.h>
@@ -14,7 +15,6 @@
 #include <allocators/vterm_alloc.h>
 #include <defines/data_struct_sizes.h>
 
-static void printChainOfCalls(struct lterm_t* callTerm);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm);
 static struct lterm_t* onFuncFail(struct lterm_t* callTerm, int failResult);
 static uint64_t chAssemblyChain(struct lterm_t* chain, uint64_t* length, allocate_result* res);
@@ -95,7 +95,14 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 static struct lterm_t* onFuncFail(struct lterm_t* callTerm, int failResult)
 {
     if ((failResult && !callTerm->funcCall->rollback) || !callTerm->funcCall->parentCall || callTerm->funcCall->failEntryPoint == -1)
-        PRINT_AND_EXIT( FUNC_CALL_FAILED);
+    {
+        printf(FUNC_CALL_FAILED);
+        printf("Func call term:\n");
+        printFuncCallLn(stdout, callTerm->funcCall);
+        printf("Field of view:\n");
+        printFieldOfView(stdout, _memMngr.fieldOfView);
+        exit(0);
+    }
 
     callTerm->funcCall->parentCall->funcCall->entryPoint = callTerm->funcCall->failEntryPoint;
 

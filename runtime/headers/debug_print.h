@@ -7,4 +7,7 @@ void printFragmentLn(FILE* file, struct fragment_t* frag);
 /// Выводит поле зрения в файл.
 void printFieldOfView(FILE* file, struct lterm_t* fov);
 
+/// Выводит вызов функции.
+void printFuncCallLn(FILE* file, struct func_call_t* funcCall);
+
 #endif
