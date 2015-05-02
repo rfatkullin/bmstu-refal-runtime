@@ -1,0 +1,947 @@
+/*
+ * This program was produced by decompiler from assembler source.
+ * (C) 2000 Serge Skorobogatoff
+ */
+
+$ENTRY GO {
+    = 
+        <PROUT 'Refal-5 Source Beautifier'  > <PROUT '    source-file '  <ARG 1 > > 
+            <PROUT '    dest-file   '  <ARG 2 > > <PROUT '    flag        '  <ARG 3 
+            > > <PROUT '----------------/'  > <OPEN 'r'  1 <ARG 1 > > <SAVEFILE 2 
+            '/*'  CAR_RET 
+            ' * This program was produced by decompiler from assembler source.'  
+            CAR_RET ' * (C) 2000 Serge Skorobogatoff'  CAR_RET ' */'  CAR_RET 
+            CAR_RET <RSB_LAYOUT <RSB_GEN <RSB_PARSE <ARG 3 > <RSB_STRUC 
+            <RSB_LEX <LOADFILE 1 > > > > > > <OPEN 'w'  2 <ARG 2 > > > ;
+
+    };
+
+LOADFILE {
+    s.1 = <LOADFILE2 s.1 <GET s.1 > > ;
+
+    };
+
+LOADFILE2 {
+    s.1 0 = ;
+
+    s.1 e.2 0 = e.2 ;
+
+    s.1 e.2 = e.2 CAR_RET <LOADFILE s.1 > ;
+
+    };
+
+SAVEFILE {
+    s.1 = ;
+
+    s.1 e.2 CAR_RET e.3 = <PUT s.1 e.2 > <SAVEFILE s.1 e.3 > ;
+
+    s.1 e.2 = <PUT s.1 e.2 > ;
+
+    };
+
+RSB_LEX {
+    e.1 = 
+        <PROUT 'Lexical analysis in progress ...'  > <UNITE_STRINGS <BREAK 
+            <REMOVE_COMMENTS e.1 > > > <PROUT '    done (current step is '  
+            <STEP> ').'  > ;
+
+    };
+
+REMOVE_COMMENTS {
+    e.1 = <REMOVE_COMMENTS2 CAR_RET e.1 CAR_RET > ;
+
+    };
+
+REMOVE_COMMENTS2 {
+    CAR_RET '*'  e.1 CAR_RET e.2 = <REMOVE_COMMENTS2 CAR_RET e.2 > ;
+
+    '/*'  e.1 '*/'  e.2 = <REMOVE_COMMENTS2 e.2 > ;
+
+     e.1  e.2 =  e.1  <REMOVE_COMMENTS2 e.2 > ;
+
+    '"'  e.1 '"'  e.2 = '"'  e.1 '"'  <REMOVE_COMMENTS2 e.2 > ;
+
+    CAR_RET e.1 = <REMOVE_COMMENTS2 e.1 > ;
+
+    '	'  e.1 = <REMOVE_COMMENTS2 ' '  e.1 > ;
+
+    s.1 e.2 = s.1 <REMOVE_COMMENTS2 e.2 > ;
+
+    = ;
+
+    };
+
+BREAK {
+    = ;
+
+    '"'  e.1 = <BREAK3 <PICK_OUT_STRING '"'  e.1 > > ;
+
+     e.1 = <BREAK3 <PICK_OUT_STRING  e.1 > > ;
+
+    ' '  e.1 = <BREAK e.1 > ;
+
+    e.1  e.2 = <BREAK4 (e.1 ) (e.2 ) > ;
+
+    e.1 '"'  e.2 = <BREAK5 (e.1 ) (e.2 ) > ;
+
+    e.1 ' '  e.2 = <BREAK2 e.1 > <BREAK e.2 > ;
+
+    e.1 = <BREAK2 e.1 > ;
+
+    };
+
+BREAK4 {
+    (e.1 '"'  e.2 ) (e.3 ) = <BREAK e.1 > <BREAK '"'  e.2  e.3 > ;
+
+    (e.1 ) (e.2 ) = <BREAK e.1 > <BREAK  e.2 > ;
+
+    };
+
+BREAK5 {
+    (e.1  e.2 ) (e.3 ) = <BREAK e.1 > <BREAK  e.2 '"'  e.3 > ;
+
+    (e.1 ) (e.2 ) = <BREAK e.1 > <BREAK '"'  e.2 > ;
+
+    };
+
+BREAK3 {
+    (e.1 ) e.2 = (e.1 ) <BREAK e.2 > ;
+
+    };
+
+BREAK2 {
+    = ;
+
+    e.1 '('  e.2 = <BREAK2 e.1 > '('  <BREAK2 e.2 > ;
+
+    e.1 ')'  e.2 = <BREAK2 e.1 > ')'  <BREAK2 e.2 > ;
+
+    e.1 '<'  e.2 = <BREAK2 e.1 > '<'  <BREAK2 e.2 > ;
+
+    e.1 '>'  e.2 = <BREAK2 e.1 > '>'  <BREAK2 e.2 > ;
+
+    e.1 '='  e.2 = <BREAK2 e.1 > '='  <BREAK2 e.2 > ;
+
+    e.1 ';'  e.2 = <BREAK2 e.1 > ';'  <BREAK2 e.2 > ;
+
+    e.1 ':'  e.2 = <BREAK2 e.1 > ':'  <BREAK2 e.2 > ;
+
+    e.1 ','  e.2 = <BREAK2 e.1 > ','  <BREAK2 e.2 > ;
+
+    e.1 '{'  e.2 = <BREAK2 e.1 > '{'  <BREAK2 e.2 > ;
+
+    e.1 '}'  e.2 = <BREAK2 e.1 > '}'  <BREAK2 e.2 > ;
+
+    e.1 '+'  e.2 = <BREAK2 e.1 > (ID_IDENT 'ADD'  ) <BREAK2 e.2 > ;
+
+    e.1 '*'  e.2 = <BREAK2 e.1 > (ID_IDENT 'MUL'  ) <BREAK2 e.2 > ;
+
+    e.1 '/'  e.2 = <BREAK2 e.1 > (ID_IDENT 'DIV'  ) <BREAK2 e.2 > ;
+
+    '$ENTRY'  = ID_ENTRY ;
+
+    '$EXTERNAL'  = ID_EXTERNAL ;
+
+    '$EXTERN'  = ID_EXTERNAL ;
+
+    '$EXTRN'  = ID_EXTERNAL ;
+
+    's'  e.1 = (ID_VAR 's'  <ADD_POINT e.1 > ) ;
+
+    't'  e.1 = (ID_VAR 't'  <ADD_POINT e.1 > ) ;
+
+    'e'  e.1 = (ID_VAR 'e'  <ADD_POINT e.1 > ) ;
+
+    '0'  e.1 = (ID_NUMBER '0'  e.1 ) ;
+
+    '1'  e.1 = (ID_NUMBER '1'  e.1 ) ;
+
+    '2'  e.1 = (ID_NUMBER '2'  e.1 ) ;
+
+    '3'  e.1 = (ID_NUMBER '3'  e.1 ) ;
+
+    '4'  e.1 = (ID_NUMBER '4'  e.1 ) ;
+
+    '5'  e.1 = (ID_NUMBER '5'  e.1 ) ;
+
+    '6'  e.1 = (ID_NUMBER '6'  e.1 ) ;
+
+    '7'  e.1 = (ID_NUMBER '7'  e.1 ) ;
+
+    '8'  e.1 = (ID_NUMBER '8'  e.1 ) ;
+
+    '9'  e.1 = (ID_NUMBER '9'  e.1 ) ;
+
+    e.1 = (ID_IDENT e.1 ) ;
+
+    };
+
+PICK_OUT_STRING {
+    s.1 s.1 e.2 = (ID_STRING s.1 ) e.2 ;
+
+    s.1 e.2 = <PICK_OUT_STRING (ID_STRING ) s.1 e.2 > ;
+
+    (e.1 ) s.2 s.2 s.2 e.3 = <PICK_OUT_STRING (e.1 s.2 ) s.2 e.3 > ;
+
+    (e.1 ) s.2 s.2 e.3 = (e.1 ) e.3 ;
+
+    (e.1 ) s.2 s.3 e.4 = <PICK_OUT_STRING (e.1 s.3 ) s.2 e.4 > ;
+
+    };
+
+ADD_POINT {
+    '.'  e.1 = '.'  e.1 ;
+
+    e.1 = '.'  e.1 ;
+
+    };
+
+UNITE_STRINGS {
+    e.1 = e.1 ;
+
+    };
+
+RSB_STRUC {
+    e.1 = 
+        <PROUT 'Bracket detection in progress ...'  > <RSB_STRUC2 e.1 > <PROUT 
+            '    done (current step is '  <STEP> ').'  > ;
+
+    };
+
+RSB_STRUC2 {
+    e.1 '{'  e.2 = e.1 <RSB_STRUC3 <SEARCH '}'  ('{'  ) (e.2 ) > > ;
+
+    e.1 = e.1 ;
+
+    };
+
+RSB_STRUC3 {
+    (e.1 ) () = (e.1 ) ;
+
+    (e.1 ) (e.2 ) = (e.1 ) <RSB_STRUC2 e.2 > ;
+
+    };
+
+SEARCH {
+    s.1 (e.2 ) (s.1 e.3 ) = (e.2 s.1 ) (e.3 ) ;
+
+    s.1 (e.2 ) ('{'  e.3 ) = <SEARCH2 s.1 (e.2 ) <SEARCH '}'  ('{'  ) (e.3 ) > > ;
+
+    s.1 (e.2 ) ('('  e.3 ) = <SEARCH2 s.1 (e.2 ) <SEARCH ')'  ('('  ) (e.3 ) > > ;
+
+    s.1 (e.2 ) ('<'  e.3 ) = <SEARCH2 s.1 (e.2 ) <SEARCH '>'  ('<'  ) (e.3 ) > > ;
+
+    s.1 (e.2 ) (t.3 e.4 ) = <SEARCH s.1 (e.2 t.3 ) (e.4 ) > ;
+
+    };
+
+SEARCH2 {
+    s.1 (e.2 ) (e.3 ) (e.4 ) = <SEARCH s.1 (e.2 (e.3 ) ) (e.4 ) > ;
+
+    };
+
+RSB_PARSE {
+    e.1 = 
+        <PROUT 'Syntactic analysis in progress ...'  > <PARSE_PROGRAM e.1 > 
+            <PROUT '    done (current step is '  <STEP> ').'  > ;
+
+    };
+
+PARSE_PROGRAM {
+    e.1 = <PARSE_PROGRAM2 <PARSE_FUNCTION_DEF e.1 > > ;
+
+    };
+
+PARSE_PROGRAM2 {
+    = ;
+
+    (e.1 ) ('T'  ) = (e.1 ) ;
+
+    (e.1 ) ('F'  ) = (e.1 ) ;
+
+    (e.1 ) (e.2 ) = (e.1 ) <PARSE_PROGRAM e.2 > ;
+
+    };
+
+PARSE_FUNCTION_DEF {
+    s.1 = ;
+
+    s.1 ID_EXTERNAL e.2 ';'  e.3 = 
+        (SY_FUNCTION_DEF 3 <PARSE_IDENT_CLIST e.2 > ) (s.1 e.3 ) ;
+
+    s.1 (ID_IDENT 'LASM1'  ) ('{'  e.2 '}'  ) ';'  e.3 = 
+        (SY_FUNCTION_DEF 2 (<UPPER <ARG 4 > > ) <PARSE_FUNCTION_DEF2 s.1 e.2 > 
+            ) (s.1 e.3 ) ;
+
+    s.1 (ID_IDENT 'LASM1'  ) ('{'  e.2 '}'  ) e.3 = 
+        (SY_FUNCTION_DEF 2 (<UPPER <ARG 4 > > ) <PARSE_FUNCTION_DEF2 s.1 e.2 > 
+            ) (s.1 e.3 ) ;
+
+    s.1 (ID_IDENT e.2 ) ('{'  e.3 '}'  ) ';'  e.4 = 
+        (SY_FUNCTION_DEF 1 (e.2 ) <PARSE_FUNCTION_DEF2 s.1 e.3 > ) (s.1 e.4 ) ;
+
+    s.1 (ID_IDENT e.2 ) ('{'  e.3 '}'  ) e.4 = 
+        (SY_FUNCTION_DEF 1 (e.2 ) <PARSE_FUNCTION_DEF2 s.1 e.3 > ) (s.1 e.4 ) ;
+
+    s.1 ID_ENTRY (ID_IDENT e.2 ) ('{'  e.3 '}'  ) ';'  e.4 = 
+        (SY_FUNCTION_DEF 2 (e.2 ) <PARSE_FUNCTION_DEF2 s.1 e.3 > ) (s.1 e.4 ) ;
+
+    s.1 ID_ENTRY (ID_IDENT e.2 ) ('{'  e.3 '}'  ) e.4 = 
+        (SY_FUNCTION_DEF 2 (e.2 ) <PARSE_FUNCTION_DEF2 s.1 e.3 > ) (s.1 e.4 ) ;
+
+    };
+
+PARSE_FUNCTION_DEF2 {
+    'T'  e.1 = <RENUM_SENTENCE_LIST (1 ) <PARSE_SENTENCE_LIST e.1 > > ;
+
+    'F'  e.1 = <PARSE_SENTENCE_LIST e.1 > ;
+
+    };
+
+PARSE_IDENT_CLIST {
+    (ID_IDENT e.1 ) ','  e.2 = (e.1 ) <PARSE_IDENT_CLIST e.2 > ;
+
+    (ID_IDENT e.1 ) = (e.1 ) ;
+
+    };
+
+PARSE_SENTENCE_LIST {
+    e.1 ';;'  t.2 e.3 = <PARSE_SENTENCE e.1 > <PARSE_SENTENCE_LIST t.2 e.3 > ;
+
+    e.1 ';'  t.2 e.3 = <PARSE_SENTENCE e.1 > <PARSE_SENTENCE_LIST t.2 e.3 > ;
+
+    e.1 ';'  = <PARSE_SENTENCE e.1 > ;
+
+    e.1 = <PARSE_SENTENCE e.1 > ;
+
+    };
+
+PARSE_SENTENCE {
+    e.1 ','  e.2 = (SY_SENTENCE 1 <PARSE_PATTERN e.1 > <PARSE_COND e.2 > ) ;
+
+    e.1 '='  e.2 = (SY_SENTENCE 2 <PARSE_PATTERN e.1 > <PARSE_EXPRESSION e.2 > ) ;
+
+    };
+
+PARSE_COND {
+    e.1 ','  e.2 = (SY_COND 1 <PARSE_CONDITION e.1 > <PARSE_COND e.2 > ) ;
+
+    e.1 '='  e.2 = (SY_COND 2 <PARSE_CONDITION e.1 > <PARSE_EXPRESSION e.2 > ) ;
+
+    e.1 ':'  ('{'  e.2 '}'  ) = 
+        (SY_COND 3 <PARSE_EXPRESSION e.1 > <PARSE_SENTENCE_LIST e.2 > ) ;
+
+    ('{'  e.1 '}'  ) = (SY_COND 4 <PARSE_COND_COND_REPLACEMENT_LIST e.1 > ) ;
+
+    };
+
+PARSE_CONDITION {
+    e.1 ':'  e.2 = (SY_CONDITION <PARSE_EXPRESSION e.1 > <PARSE_PATTERN e.2 > ) ;
+
+    };
+
+PARSE_COND_COND_REPLACEMENT_LIST {
+    e.1 ';;'  t.2 e.3 = 
+        <PARSE_COND_COND_REPLACEMENT e.1 > <PARSE_COND_COND_REPLACEMENT_LIST 
+            t.2 e.3 > ;
+
+    e.1 ';'  t.2 e.3 = 
+        <PARSE_COND_COND_REPLACEMENT e.1 > <PARSE_COND_COND_REPLACEMENT_LIST 
+            t.2 e.3 > ;
+
+    e.1 ';'  = <PARSE_COND_COND_REPLACEMENT e.1 > ;
+
+    e.1 = <PARSE_COND_COND_REPLACEMENT e.1 > ;
+
+    };
+
+PARSE_COND_COND_REPLACEMENT {
+    e.1 ','  e.2 = 
+        (SY_COND_COND_REPLACEMENT 1 <PARSE_CONDITION e.1 > <PARSE_COND e.2 > ) ;
+
+    e.1 '='  e.2 = 
+        (SY_COND_COND_REPLACEMENT 2 <PARSE_CONDITION e.1 > <PARSE_EXPRESSION 
+            e.2 > ) ;
+
+    };
+
+PARSE_EXPRESSION {
+    e.1 = <PARSE_EXPRESSION2 (e.1 ) () > ;
+
+    };
+
+PARSE_EXPRESSION2 {
+    () (e.1 ) = (e.1 ) ;
+
+    (e.1 t.2 ) (e.3 ) = <PARSE_EXPRESSION2 (e.1 ) (<PARSE_TERM t.2 > e.3 ) > ;
+
+    };
+
+PARSE_TERM {
+    (ID_IDENT e.1 ) = (SY_TERM 1 e.1 ) ;
+
+    (ID_NUMBER e.1 ) = (SY_TERM 1 e.1 ) ;
+
+    (ID_STRING e.1 ) = (SY_TERM 2 e.1 ) ;
+
+    (ID_VAR e.1 ) = (SY_TERM 3 e.1 ) ;
+
+    ('('  e.1 ')'  ) = (SY_TERM 4 <PARSE_EXPRESSION e.1 > ) ;
+
+    ('<'  (ID_IDENT e.1 ) e.2 '>'  ) = (SY_TERM 5 (e.1 ) <PARSE_EXPRESSION e.2 > ) ;
+
+    };
+
+PARSE_PATTERN {
+    e.1 = <PARSE_PATTERN2 (e.1 ) () > ;
+
+    };
+
+PARSE_PATTERN2 {
+    () (e.1 ) = (e.1 ) ;
+
+    (e.1 t.2 ) (e.3 ) = 
+        <PARSE_PATTERN2 (e.1 ) (<PARSE_PATTERN_TERM t.2 > e.3 ) > ;
+
+    };
+
+PARSE_PATTERN_TERM {
+    (ID_IDENT e.1 ) = (SY_PATTERN_TERM 1 e.1 ) ;
+
+    (ID_NUMBER e.1 ) = (SY_PATTERN_TERM 1 e.1 ) ;
+
+    (ID_STRING e.1 ) = (SY_PATTERN_TERM 2 e.1 ) ;
+
+    (ID_VAR e.1 ) = (SY_PATTERN_TERM 3 e.1 ) ;
+
+    ('('  e.1 ')'  ) = (SY_PATTERN_TERM 4 <PARSE_PATTERN e.1 > ) ;
+
+    };
+
+RENUM_SENTENCE_LIST {
+    t.1 = ;
+
+    t.1 t.2 e.3 = <RENUM_SENTENCE t.1 t.2 > <RENUM_SENTENCE_LIST t.1 e.3 > ;
+
+    };
+
+RENUM_SENTENCE {
+    t.1 (SY_SENTENCE 1 t.2 t.3 ) = 
+        <RENUM_SENTENCE2 <RENUM_PATTERN t.1 t.2 > t.3 > ;
+
+    t.1 (SY_SENTENCE 2 t.2 t.3 ) = 
+        <RENUM_SENTENCE3 <RENUM_PATTERN t.1 t.2 > t.3 > ;
+
+    };
+
+RENUM_SENTENCE2 {
+    t.1 t.2 t.3 = (SY_SENTENCE 1 t.2 <RENUM_COND t.1 t.3 > ) ;
+
+    };
+
+RENUM_SENTENCE3 {
+    t.1 t.2 t.3 = 
+        (SY_SENTENCE 2 t.2 <TRIM_VAR_LIST <RENUM_EXPRESSION t.1 t.3 > > ) ;
+
+    };
+
+RENUM_PATTERN {
+    t.1 (e.2 ) = <RENUM_PATTERN2 (t.1 ) (e.2 ) > ;
+
+    };
+
+RENUM_PATTERN2 {
+    (e.1 t.2 ) () = t.2 (e.1 ) ;
+
+    (e.1 t.2 ) ((SY_PATTERN_TERM 3 e.3 ) e.4 ) = 
+        <RENUM_PATTERN2 (e.1 <PROCESS_VAR (SY_PATTERN_TERM 3 e.3 ) t.2 > ) (e.4 
+            ) > ;
+
+    (e.1 t.2 ) ((SY_PATTERN_TERM 4 e.3 ) e.4 ) = 
+        <RENUM_PATTERN3 (e.1 ) (<RENUM_PATTERN2 (t.2 ) e.3 > ) (e.4 ) > ;
+
+    (e.1 t.2 ) (t.3 e.4 ) = <RENUM_PATTERN2 (e.1 t.3 t.2 ) (e.4 ) > ;
+
+    };
+
+RENUM_PATTERN3 {
+    (e.1 ) (t.2 (e.3 ) ) (e.4 ) = 
+        <RENUM_PATTERN2 (e.1 (SY_PATTERN_TERM 4 (e.3 ) ) t.2 ) (e.4 ) > ;
+
+    };
+
+RENUM_COND {
+    t.1 (SY_COND 1 t.2 t.3 ) = <RENUM_COND2 <RENUM_CONDITION t.1 t.2 > t.3 > ;
+
+    t.1 (SY_COND 2 t.2 t.3 ) = <RENUM_COND3 <RENUM_CONDITION t.1 t.2 > t.3 > ;
+
+    t.1 (SY_COND 3 t.2 e.3 ) = <RENUM_COND4 <RENUM_EXPRESSION t.1 t.2 > e.3 > ;
+
+    };
+
+RENUM_COND2 {
+    t.1 t.2 t.3 = (SY_COND 1 t.2 <RENUM_COND t.1 t.3 > ) ;
+
+    };
+
+RENUM_COND3 {
+    t.1 t.2 t.3 = 
+        (SY_COND 2 t.2 <TRIM_VAR_LIST <RENUM_EXPRESSION t.1 t.3 > > ) ;
+
+    };
+
+RENUM_COND4 {
+    t.1 t.2 e.3 = (SY_COND 3 t.2 <RENUM_SENTENCE_LIST t.1 e.3 > ) ;
+
+    };
+
+RENUM_CONDITION {
+    t.1 (SY_CONDITION t.2 t.3 ) = 
+        <RENUM_CONDITION2 <RENUM_EXPRESSION t.1 t.2 > t.3 > ;
+
+    };
+
+RENUM_CONDITION2 {
+    t.1 t.2 t.3 = <RENUM_CONDITION3 t.2 <RENUM_PATTERN t.1 t.3 > > ;
+
+    };
+
+RENUM_CONDITION3 {
+    t.1 t.2 t.3 = t.2 (SY_CONDITION t.1 t.3 ) ;
+
+    };
+
+RENUM_EXPRESSION {
+    t.1 (e.2 ) = <RENUM_EXPRESSION2 (t.1 ) (e.2 ) > ;
+
+    };
+
+RENUM_EXPRESSION2 {
+    (e.1 t.2 ) () = t.2 (e.1 ) ;
+
+    (e.1 t.2 ) ((SY_TERM 3 e.3 ) e.4 ) = 
+        <RENUM_EXPRESSION2 (e.1 <PROCESS_VAR (SY_TERM 3 e.3 ) t.2 > ) (e.4 ) > ;
+
+    (e.1 t.2 ) ((SY_TERM 4 e.3 ) e.4 ) = 
+        <RENUM_EXPRESSION3 (e.1 ) (<RENUM_EXPRESSION2 (t.2 ) e.3 > ) (e.4 ) > ;
+
+    (e.1 t.2 ) ((SY_TERM 5 (e.3 ) e.4 ) e.5 ) = 
+        <RENUM_EXPRESSION4 (e.3 ) (e.1 ) (<RENUM_EXPRESSION2 (t.2 ) e.4 > ) (
+            e.5 ) > ;
+
+    (e.1 t.2 ) (t.3 e.4 ) = <RENUM_EXPRESSION2 (e.1 t.3 t.2 ) (e.4 ) > ;
+
+    };
+
+RENUM_EXPRESSION3 {
+    (e.1 ) (t.2 (e.3 ) ) (e.4 ) = 
+        <RENUM_EXPRESSION2 (e.1 (SY_TERM 4 (e.3 ) ) t.2 ) (e.4 ) > ;
+
+    };
+
+RENUM_EXPRESSION4 {
+    (e.1 ) (e.2 ) (t.3 (e.4 ) ) (e.5 ) = 
+        <RENUM_EXPRESSION2 (e.2 (SY_TERM 5 (e.1 ) (e.4 ) ) t.3 ) (e.5 ) > ;
+
+    };
+
+PROCESS_VAR {
+    (s.1 s.2 e.3 ) (e.4 ((e.3 ) (e.5 ) ) e.6 ) = 
+        (s.1 s.2 e.5 ) (e.4 ((e.3 ) (e.5 ) ) e.6 ) ;
+
+    (s.1 s.2 s.3 '.'  e.4 ) (s.5 e.6 ) = 
+        <PROCESS_VAR2 (s.1 s.2 s.3 '.'  e.4 ) (s.5 e.6 ) s.3 '.'  <SYMB s.5 > > ;
+
+    };
+
+PROCESS_VAR2 {
+    (s.1 s.2 e.3 ) (s.4 e.5 ) e.6 = 
+        (s.1 s.2 e.6 ) (<ADD (s.4 ) 1 > e.5 ((e.3 ) (e.6 ) ) ) ;
+
+    };
+
+TRIM_VAR_LIST {
+    t.1 t.2 = t.2 ;
+
+    };
+
+RSB_GEN {
+    e.1 = 
+        <PROUT 'Program generation in progress ...'  > <CALC_LEN <GEN_PROGRAM e.1 
+            > > <PROUT '    done (current step is '  <STEP> ').'  > ;
+
+    };
+
+CALC_LEN {
+    = ;
+
+    (s.1 e.2 ) e.3 = (s.1 <CALC_LEN2 e.2 0 > ) <CALC_LEN e.3 > ;
+
+    (e.1 ) e.2 = (<CALC_LEN e.1 > ) <CALC_LEN e.2 > ;
+
+    };
+
+CALC_LEN2 {
+    s.1 = s.1 ;
+
+    (e.1 ) e.2 s.3 = <CALC_LEN3 (<LENW e.1 > ) e.2 s.3 > ;
+
+    };
+
+CALC_LEN3 {
+    (s.1 e.2 ) e.3 s.4 = (e.2 s.1 ) <CALC_LEN2 e.3 <ADD (s.4 ) s.1 > > ;
+
+    };
+
+GEN_PROGRAM {
+    = ;
+
+    (e.1 ) e.2 = <GEN_FUNCTION_DEF e.1 > <GEN_PROGRAM e.2 > ;
+
+    };
+
+GEN_FUNCTION_DEF {
+    SY_FUNCTION_DEF 1 (e.1 ) e.2 = <GEN_FUNCTION_DEF2 (e.1 ) e.2 > ;
+
+    SY_FUNCTION_DEF 2 (e.1 ) e.2 = <GEN_FUNCTION_DEF2 ('$ENTRY '  e.1 ) e.2 > ;
+
+    SY_FUNCTION_DEF 3 e.1 = 
+        (LY_EXTERNAL ('$EXTERNAL '  ) <GEN_FUNCTION_DEF3 e.1 > ) ;
+
+    };
+
+GEN_FUNCTION_DEF2 {
+    (e.1 ) e.2 = 
+        (LY_FUNC_BEGIN (e.1 ' {'  ) ) (<GEN_SENTENCE_LIST e.2 > ) (LY_FUNC_END (
+            '    };'  ) ) ;
+
+    };
+
+GEN_FUNCTION_DEF3 {
+    (e.1 ) = (e.1 ';'  ) ;
+
+    (e.1 ) e.2 = (e.1 ', '  ) <GEN_FUNCTION_DEF3 e.2 > ;
+
+    };
+
+GEN_SENTENCE_LIST {
+    = ;
+
+    (e.1 ) e.2 = <GEN_SENTENCE e.1 > <GEN_SENTENCE_LIST e.2 > ;
+
+    };
+
+GEN_SENTENCE {
+    SY_SENTENCE 1 (e.1 ) (e.2 ) = 
+        <GEN_PATTERN e.1 (', '  ) LY_SENTENCE_PATTERN > <GEN_COND e.2 > ;
+
+    SY_SENTENCE 2 (e.1 ) (e.2 ) = 
+        <GEN_PATTERN e.1 ('= '  ) LY_SENTENCE_PATTERN > <GEN_EXPRESSION e.2 (';'  ) 
+            LY_SENTENCE_EXPRESSION > ;
+
+    };
+
+GEN_COND {
+    SY_COND 1 (e.1 ) (e.2 ) = <GEN_CONDITION e.1 (', '  ) > <GEN_COND e.2 > ;
+
+    SY_COND 2 (e.1 ) (e.2 ) = 
+        <GEN_CONDITION e.1 ('= '  ) > <GEN_EXPRESSION e.2 (';'  ) 
+            LY_COND_EXPRESSION1 > ;
+
+    SY_COND 3 (e.1 ) e.2 = 
+        <GEN_EXPRESSION e.1 (': '  ) LY_COND_EXPRESSION2 > (LY_LIST_BEGIN ('{'  ) ) 
+            (<GEN_SENTENCE_LIST e.2 > ) (LY_LIST_END ('};'  ) ) ;
+
+    SY_COND 4 e.1 = 
+        (LY_LIST_BEGIN ('{'  ) ) (<GEN_COND_COND_REPLACEMENT_LIST e.1 > ) (
+            LY_LIST_END ('};'  ) ) ;
+
+    };
+
+GEN_CONDITION {
+    SY_CONDITION (e.1 ) (e.2 ) (e.3 ) = 
+        <GEN_EXPRESSION e.1 (': '  ) LY_CONDITION_EXPRESSION > <GEN_PATTERN e.2 (
+            e.3 ) LY_CONDITION_PATTERN > ;
+
+    };
+
+GEN_COND_COND_REPLACEMENT_LIST {
+    = ;
+
+    (e.1 ) e.2 = 
+        <GEN_COND_COND_REPLACEMENT e.1 > <GEN_COND_COND_REPLACEMENT_LIST e.2 > ;
+
+    };
+
+GEN_COND_COND_REPLACEMENT {
+    SY_COND_COND_REPLACEMENT 1 (e.1 ) (e.2 ) = 
+        <GEN_CONDITION e.1 (', '  ) > <GEN_COND e.2 > ;
+
+    SY_COND_COND_REPLACEMENT 2 (e.1 ) (e.2 ) = 
+        <GEN_CONDITION e.1 ('= '  ) > <GEN_EXPRESSION e.2 (';'  ) 
+            LY_COND_EXPRESSION1 > ;
+
+    };
+
+GEN_EXPRESSION {
+    e.1 s.2 = (s.2 <GEN_EXPRESSION2 e.1 > ) ;
+
+    };
+
+GEN_EXPRESSION2 {
+    (e.1 ) = (e.1 ) ;
+
+    (e.1 ) (e.2 ) = <APPEND <GEN_TERM e.1 > (e.2 ) > ;
+
+    (e.1 ) e.2 (e.3 ) = <GEN_TERM e.1 > <GEN_EXPRESSION2 e.2 (e.3 ) > ;
+
+    };
+
+GEN_TERM {
+    SY_TERM 5 (e.1 ) () = ('<'  e.1 '> '  ) ;
+
+    SY_TERM 5 (e.1 ) (e.2 ) = ('<'  e.1 ' '  ) <GEN_EXPRESSION2 e.2 () > ('> '  ) ;
+
+    SY_TERM 4 (e.1 ) = ('('  ) <GEN_EXPRESSION2 e.1 () > (') '  ) ;
+
+    SY_TERM 2 e.1 = <GEN_STRING e.1 > ;
+
+    SY_TERM s.1 e.2 = (e.2 ' '  ) ;
+
+    };
+
+GEN_PATTERN {
+    e.1 s.2 = (s.2 <GEN_PATTERN2 e.1 > ) ;
+
+    };
+
+GEN_PATTERN2 {
+    (e.1 ) = (e.1 ) ;
+
+    (e.1 ) (e.2 ) = <APPEND <GEN_PATTERN_TERM e.1 > (e.2 ) > ;
+
+    (e.1 ) e.2 (e.3 ) = <GEN_PATTERN_TERM e.1 > <GEN_PATTERN2 e.2 (e.3 ) > ;
+
+    };
+
+GEN_PATTERN_TERM {
+    SY_PATTERN_TERM 4 (e.1 ) = ('('  ) <GEN_PATTERN2 e.1 () > (') '  ) ;
+
+    SY_PATTERN_TERM 2 e.1 = <GEN_STRING e.1 > ;
+
+    SY_PATTERN_TERM s.1 e.2 = (e.2 ' '  ) ;
+
+    };
+
+GEN_STRING {
+     = (  ' '  ) ;
+
+     e.1 = (  ' '  ) <GEN_STRING e.1 > ;
+
+    e.1 = ( <GEN_STRING2 e.1 >  ' '  ) ;
+
+    };
+
+GEN_STRING2 {
+    e.1  e.2 = e.1   <GEN_STRING2 e.2 > ;
+
+    e.1 = e.1 ;
+
+    };
+
+APPEND {
+    e.1 (e.2 ) (e.3 ) = e.1 (e.2 e.3 ) ;
+
+    };
+
+RSB_LAYOUT {
+    e.1 = 
+        <PROUT 'Layout generation in progress ...'  > <RSB_LAYOUT2 e.1 > <PROUT 
+            '    done (current step is '  <STEP> ').'  > ;
+
+    };
+
+RSB_LAYOUT2 {
+    = ;
+
+    (LY_EXTERNAL e.1 ) e.2 = <LAYOUT_EXTERNAL e.1 > <RSB_LAYOUT2 e.2 > ;
+
+    (LY_FUNC_BEGIN (e.1 s.2 ) s.3 ) (e.4 ) (LY_FUNC_END (e.5 s.6 ) s.7 ) e.8 = 
+        e.1 CAR_RET <LAYOUT_SENTENCE_LIST e.4 4 > e.5 CAR_RET CAR_RET 
+            <RSB_LAYOUT2 e.8 > ;
+
+    };
+
+LAYOUT_EXTERNAL {
+    e.1 s.2 = <TRIM_LAYOUT_INFO <OUT_PIECE e.1 s.2 0 > > CAR_RET CAR_RET ;
+
+    };
+
+LAYOUT_SENTENCE_LIST {
+    s.1 = ;
+
+    (LY_SENTENCE_PATTERN e.1 ) (LY_SENTENCE_EXPRESSION e.2 ) e.3 s.4 = 
+        <BLANK s.4 > <LAYOUT_SENTENCE_LIST2 (<OUT_PIECE e.1 s.4 > ) e.2 s.4 > 
+            CAR_RET <LAYOUT_SENTENCE_LIST e.3 s.4 > ;
+
+    (LY_SENTENCE_PATTERN e.1 ) e.2 s.3 = 
+        <BLANK s.3 > <TRIM_LAYOUT_INFO <OUT_PIECE e.1 s.3 > > CAR_RET 
+            <LAYOUT_SENTENCE_LIST4 <LAYOUT_COND e.2 <ADD (s.3 ) 4 > > s.3 > ;
+
+    };
+
+LAYOUT_SENTENCE_LIST2 {
+    (e.1 (s.2 1 ) ) e.3 s.4 = 
+        e.1 CAR_RET <BLANK <ADD (s.4 ) 4 > > <TRIM_LAYOUT_INFO <OUT_PIECE e.3 
+            <ADD (s.4 ) 4 > > > CAR_RET ;
+
+    (e.1 (s.2 0 ) ) e.3 s.4 = 
+        e.1 <LAYOUT_SENTENCE_LIST3 <OUT_PIECE e.3 s.2 > (e.3 ) s.4 > CAR_RET ;
+
+    };
+
+LAYOUT_SENTENCE_LIST3 {
+    e.1 (s.2 0 ) (e.3 ) s.4 = e.1 ;
+
+    e.1 (s.2 1 ) (e.3 ) s.4 = 
+        CAR_RET <BLANK <ADD (s.4 ) 4 > > <TRIM_LAYOUT_INFO <OUT_PIECE e.3 <ADD (
+            s.4 ) 4 > > > ;
+
+    };
+
+LAYOUT_SENTENCE_LIST4 {
+    (e.1 ) e.2 s.3 = e.1 CAR_RET <LAYOUT_SENTENCE_LIST e.2 s.3 > ;
+
+    };
+
+LAYOUT_COND {
+    e.1 s.2 = <LAYOUT_COND2 () (e.1 ) s.2 > ;
+
+    };
+
+LAYOUT_COND2 {
+    (e.1 ) ((LY_CONDITION_EXPRESSION e.2 ) (LY_CONDITION_PATTERN e.3 ) (
+        LY_COND_EXPRESSION1 e.4 ) e.5 ) s.6 = 
+        (e.1 <BLANK s.6 > <LAYOUT_COND3 (e.2 ) e.3 s.6 > CAR_RET <BLANK s.6 > 
+            <TRIM_LAYOUT_INFO <OUT_PIECE e.4 s.6 > > CAR_RET ) e.5 ;
+
+    (e.1 ) ((LY_CONDITION_EXPRESSION e.2 ) (LY_CONDITION_PATTERN e.3 ) e.4 ) 
+        s.5 = 
+        <LAYOUT_COND2 (e.1 <BLANK s.5 > <LAYOUT_COND3 (e.2 ) e.3 s.5 > CAR_RET 
+            ) (e.4 ) s.5 > ;
+
+    (e.1 ) ((LY_COND_EXPRESSION2 e.2 ) (LY_LIST_BEGIN (e.3 s.4 ) s.5 ) (e.6 ) (
+        LY_LIST_END (e.7 s.8 ) s.9 ) e.10 ) s.11 = 
+        (e.1 <BLANK s.11 > <TRIM_LAYOUT_INFO <OUT_PIECE e.2 s.11 > > CAR_RET 
+            <BLANK s.11 > e.3 CAR_RET <LAYOUT_SENTENCE_LIST e.6 <ADD (s.11 ) 4 
+            > > <BLANK s.11 > e.7 CAR_RET ) e.10 ;
+
+    };
+
+LAYOUT_COND3 {
+    (e.1 ) e.2 s.3 = <LAYOUT_COND4 (<OUT_PIECE e.1 s.3 > ) e.2 s.3 > ;
+
+    };
+
+LAYOUT_COND4 {
+    (e.1 (s.2 1 ) ) e.3 s.4 = 
+        e.1 CAR_RET <BLANK <ADD (s.4 ) 4 > > <TRIM_LAYOUT_INFO <OUT_PIECE e.3 
+            <ADD (s.4 ) 4 > > > ;
+
+    (e.1 (s.2 0 ) ) e.3 s.4 = 
+        e.1 <LAYOUT_COND5 <OUT_PIECE e.3 s.2 > (e.3 ) s.4 > ;
+
+    };
+
+LAYOUT_COND5 {
+    e.1 (s.2 0 ) (e.3 ) s.4 = e.1 ;
+
+    e.1 (s.2 1 ) (e.3 ) s.4 = 
+        CAR_RET <BLANK <ADD (s.4 ) 4 > > <TRIM_LAYOUT_INFO <OUT_PIECE e.3 <ADD (
+            s.4 ) 4 > > > ;
+
+    };
+
+OUT_PIECE {
+    e.1 s.2 s.3 = 
+        <OUT_PIECE2 (e.1 ) (<SUB (80 ) <ADD (s.2 ) s.3 > > ) s.2 s.3 > ;
+
+    };
+
+OUT_PIECE2 {
+    (e.1 ) (s.2 ) s.3 s.4 = <OUT_SOLID e.1 > (<ADD (s.3 ) s.4 > 0 ) ;
+
+    (e.1 ) ('-'  s.2 ) s.3 s.4 = <OUT_BROKEN e.1 s.4 > ;
+
+    };
+
+OUT_SOLID {
+    = ;
+
+    (e.1 s.2 ) e.3 = e.1 <OUT_SOLID e.3 > ;
+
+    };
+
+OUT_BROKEN {
+    e.1 s.2 = <OUT_BROKEN2 <COLLECT e.1 s.2 > > ;
+
+    };
+
+OUT_BROKEN2 {
+    (e.1 ) () s.2 s.3 = <OUT_SOLID e.1 > (s.2 1 ) ;
+
+    (e.1 ) (e.2 ) s.3 s.4 = 
+        <OUT_SOLID e.1 > CAR_RET <BLANK s.4 > <OUT_BROKEN (<BLANK 4 > 4 ) e.2 
+            s.4 > ;
+
+    };
+
+COLLECT {
+    ('    '  4 ) (e.1 s.2 ) e.3 s.4 = 
+        <COLLECT4 ('    '  4 ) (e.1 s.2 ) e.3 s.4 (<SUB (76 ) <ADD (s.4 ) s.2 > > 
+            ) > ;
+
+    (e.1 s.2 ) e.3 s.4 = 
+        <COLLECT4 (e.1 s.2 ) e.3 s.4 (<SUB (80 ) <ADD (s.4 ) s.2 > > ) > ;
+
+    };
+
+COLLECT4 {
+    e.1 s.2 (s.3 ) = <COLLECT2 () (e.1 ) s.2 > s.2 ;
+
+    ('    '  4 ) (e.1 s.2 ) e.3 s.4 ('-'  s.5 ) = 
+        (('    '  4 ) (e.1 s.2 ) ) (e.3 ) <ADD (s.4 ) s.2 > s.4 ;
+
+    (e.1 s.2 ) e.3 s.4 ('-'  s.5 ) = ((e.1 s.2 ) ) (e.3 ) <ADD (s.4 ) s.2 > s.4 ;
+
+    };
+
+COLLECT2 {
+    (e.1 ) () s.2 = (e.1 ) () s.2 ;
+
+    (e.1 ) ((e.2 s.3 ) e.4 ) s.5 = 
+        <COLLECT3 (e.1 ) ((e.2 s.3 ) e.4 ) <ADD (s.5 ) s.3 > (<SUB (80 ) <ADD (
+            s.5 ) s.3 > > ) > ;
+
+    };
+
+COLLECT3 {
+    (e.1 ) ((e.2 s.3 ) e.4 ) s.5 (s.6 ) = 
+        <COLLECT2 (e.1 (e.2 s.3 ) ) (e.4 ) s.5 > ;
+
+    (e.1 ) ((e.2 s.3 ) e.4 ) s.5 ('-'  s.6 ) = (e.1 ) ((e.2 s.3 ) e.4 ) s.5 ;
+
+    };
+
+TRIM_LAYOUT_INFO {
+    e.1 (e.2 ) = e.1 ;
+
+    };
+
+BLANK {
+    0 = ;
+
+    s.1 = ' '  <BLANK <SUB (s.1 ) 1 > > ;
+
+    };
+

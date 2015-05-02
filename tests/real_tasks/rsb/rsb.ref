@@ -49,7 +49,7 @@ SAVEFILE {
 RSB_LEX {
     e.1 = <Prout 'Lexical analysis in progress ...'>
          <UNITE_STRINGS <BREAK <REMOVE_COMMENTS e.1>>>
-         <Prout '    done (current Step is ' <Step> ').'>;
+         <Prout '    done (current Step is 1).'>;
     };
 
 /* Убирает комментарии и символы CAR_RET из текста, а также заменяет
@@ -170,7 +170,7 @@ UNITE_STRINGS {
 RSB_STRUC {
     e.1 = <Prout 'Bracket detection in progress ...'>
          <RSB_STRUC2 e.1>
-         <Prout '    done (current Step is ' <Step> ').'>;
+         <Prout '    done (current Step is 1).'>;
     };
 
 RSB_STRUC2 {
@@ -275,7 +275,7 @@ RSB_PARSE {
     e.1 = 
          <Prout 'Syntactic analysis in progress ...'>
          <PARSE_PROGRAM e.1>
-         <Prout '    done (current Step is ' <Step> ').'>;
+         <Prout '    done (current Step is 1).'>;
     };
 
 /* 
@@ -696,7 +696,7 @@ TRIM_VAR_LIST {
 RSB_GEN {
     e.1 = <Prout 'Program generation in progress ...'>
          <CALC_LEN <GEN_PROGRAM e.1>>
-         <Prout '    done (current Step is ' <Step> ').'>;
+         <Prout '    done (current Step is 1).'>;
     };
 
 /* Вычисляет длину каждой лексемы */
@@ -1023,7 +1023,7 @@ APPEND {
 RSB_LAYOUT {
     e.1 = <Prout 'Layout generation in progress ...'>
          <RSB_LAYOUT2 e.1>
-         <Prout '    done (current Step is ' <Step> ').'>;
+         <Prout '    done (current Step is 1).'>;
     };
 
 RSB_LAYOUT2 {
