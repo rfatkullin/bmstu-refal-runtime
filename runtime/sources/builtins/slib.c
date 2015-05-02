@@ -154,7 +154,7 @@ struct func_result_t Numb(int entryStatus)
     if (sign)
         mpz_neg(num, num);
 
-    struct lterm_t* res = gcConstructIntNumBuiltinResult(num);
+    struct lterm_t* res = gcConstructSingleIntNumBuiltinResult(num);
 
     mpz_clear(num);
 
@@ -178,7 +178,7 @@ struct func_result_t Lenw(int entryStatus)
     mpz_addmul_ui(num, helper, BUILTIN_FRAG->length / div);
     mpz_add_ui(num, num, BUILTIN_FRAG->length % div);
 
-    struct lterm_t* res = gcConstructIntNumBuiltinResult(num);
+    struct lterm_t* res = gcConstructSingleIntNumBuiltinResult(num);
 
     mpz_clear(num);
     mpz_clear(helper);

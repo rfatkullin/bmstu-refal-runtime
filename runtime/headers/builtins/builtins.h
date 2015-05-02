@@ -86,7 +86,7 @@ int intCmp(struct vint_t* a, struct vint_t* b);
 int doubleCmp(double a, double b);
 
 /// Собирает из целочисленнго числа результат функции.
-struct lterm_t* gcConstructIntNumBuiltinResult(mpz_t num);
+struct lterm_t* gcConstructSingleIntNumBuiltinResult(mpz_t num);
 
 /// Конвертирует mpz_t в int.
 int ConvertToInt(struct vint_t* numData);

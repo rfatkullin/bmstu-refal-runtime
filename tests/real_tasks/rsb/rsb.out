@@ -1,3 +1,21 @@
+Refal-5 Source Beautifier
+    source-file : ../../tests/real_tasks/rsb/rsb.in
+    flag        : T
+----------------/
+Lexical analysis in progress ...
+Start garbage collection.
+End garbage collection.
+Start garbage collection.
+End garbage collection.
+    done (current Step is 1).
+Bracket detection in progress ...
+    done (current Step is 1).
+Syntactic analysis in progress ...
+    done (current Step is 1).
+Program generation in progress ...
+    done (current Step is 1).
+Layout generation in progress ...
+    done (current Step is 1).
 /*
  * This program was produced by decompiler from assembler source.
  * (C) 2000 Serge Skorobogatoff

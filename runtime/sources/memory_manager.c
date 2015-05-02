@@ -33,7 +33,7 @@ void initHeaps(uint64_t literalsNumber)
 	allocateMemoryForData(dataHeapSize, &pointer);
 
     _memMngr.vtermsOffset = _memMngr.vtActiveOffset;
-    _memMngr.dataOffset = _memMngr.dtActiveOffset;    
+    _memMngr.dataOffset = _memMngr.dtActiveOffset;
 }
 
 void printMemoryInfo()

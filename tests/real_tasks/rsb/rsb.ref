@@ -1,11 +1,10 @@
 $ENTRY GO {
     = <Prout 'Refal-5 Source Beautifier'>
-      <Prout '    source-file : ' <Arg 1>>
-      <Prout '    dest-file   : ' <Arg 2>>
-      <Prout '    flag        : ' <Arg 3>>
+      <Prout '    source-file : ' <Arg 1>>      
+      <Prout '    flag        : ' <Arg 2>>
       <Prout '----------------/'>
       <Open 'r' 1 <Arg 1>>
-      <SAVEFILE 2
+      <SAVEFILE 0
           '/*' 
           CAR_RET
           ' * This program was produced by decompiler from assembler source.'
@@ -16,12 +15,11 @@ $ENTRY GO {
           CAR_RET CAR_RET
           <RSB_LAYOUT 
               <RSB_GEN 
-                  <RSB_PARSE <Arg 3>
+                  <RSB_PARSE <Arg 2>
                       <RSB_STRUC <RSB_LEX <LOADFILE 1>>>
                   >
               >
-          >
-          <Open 'w' 2 <Arg 2>>
+          >          
       >;
     };
 

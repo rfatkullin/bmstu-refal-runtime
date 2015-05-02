@@ -19,3 +19,7 @@ target_link_libraries(${PROJECT_NAME}_test -lgmp)
 if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
     add_definitions(-DDEBUG)
 endif(CMAKE_BUILD_TYPE MATCHES "DEBUG")
+
+if(R5_ARITHM)
+    ADD_DEFINITIONS(-DR5_ARITHM)
+endif(R5_ARITHM)

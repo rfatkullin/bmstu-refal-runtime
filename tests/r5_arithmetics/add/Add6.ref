@@ -1,0 +1,4 @@
+$ENTRY Go
+{
+	= <Prout <Add '-'1 '-'2>>
+}
