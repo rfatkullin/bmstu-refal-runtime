@@ -30,7 +30,7 @@ REMOVE_COMMENTS {
 REMOVE_COMMENTS2 {
     CAR_RET '*' e.1 CAR_RET e.2 = <REMOVE_COMMENTS2 CAR_RET e.2>;
     '/*' e.1 '*/' e.2 = <REMOVE_COMMENTS2 e.2>;
-    "'" e.1 "'" e.2 = "'" e.1 "'" <REMOVE_COMMENTS2 e.2>;
+    '\'' e.1 '\'' e.2 = '\'' e.1 '\'' <REMOVE_COMMENTS2 e.2>;
     '"' e.1 '"' e.2 = '"' e.1 '"' <REMOVE_COMMENTS2 e.2>;
     CAR_RET e.1 = <REMOVE_COMMENTS2 e.1>;
     '	' e.1 = <REMOVE_COMMENTS2 ' ' e.1>;

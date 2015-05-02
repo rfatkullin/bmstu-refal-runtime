@@ -1,1 +1,1 @@
--heapSize=2147483648 ../../tests/real_tasks/rsb/t1.ref
+-heapSize=2147483648 ../../tests/real_tasks/rsb/rsb.in

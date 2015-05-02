@@ -1,8 +1,0 @@
-$ENTRY GO {
-    = <Prout 'Refal-5 Source Beautifier'>
-      <Prout '    source-file : ' <Arg 1>>
-      <Prout '    dest-file   : ' <Arg 2>>
-      <Prout '    flag        : ' <Arg 3>>
-      <Prout '----------------/'>
-      <Prout '3 arg:' <Arg 3>>
-    };
