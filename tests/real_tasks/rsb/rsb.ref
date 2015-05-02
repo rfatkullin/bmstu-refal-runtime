@@ -61,7 +61,7 @@ REMOVE_COMMENTS {
 REMOVE_COMMENTS2 {
     CAR_RET '*' e.1 CAR_RET e.2 = <REMOVE_COMMENTS2 CAR_RET e.2>;
     '/*' e.1 '*/' e.2 = <REMOVE_COMMENTS2 e.2>;
-    "'" e.1 "'" e.2 = "'" e.1 "'" <REMOVE_COMMENTS2 e.2>;
+    '\'' e.1 '\'' e.2 = '\'' e.1 '\'' <REMOVE_COMMENTS2 e.2>;
     '"' e.1 '"' e.2 = '"' e.1 '"' <REMOVE_COMMENTS2 e.2>;
     CAR_RET e.1 = <REMOVE_COMMENTS2 e.1>;
     '	' e.1 = <REMOVE_COMMENTS2 ' ' e.1>;
@@ -73,10 +73,10 @@ REMOVE_COMMENTS2 {
 BREAK {
     = ;
     '"' e.1 = <BREAK3 <PICK_OUT_STRING '"' e.1>>;
-    "'" e.1 = <BREAK3 <PICK_OUT_STRING "'" e.1>>;
+    '\'' e.1 = <BREAK3 <PICK_OUT_STRING '\'' e.1>>;
     ' ' e.1 = <BREAK e.1>;
     
-    e.1 "'" e.2 = <BREAK4 (e.1) (e.2)>;
+    e.1 '\'' e.2 = <BREAK4 (e.1) (e.2)>;
     e.1 '"' e.2 = <BREAK5 (e.1) (e.2)>;
 
     e.1 ' ' e.2 = <BREAK2 e.1> <BREAK e.2>;
@@ -84,12 +84,12 @@ BREAK {
     };
 
 BREAK4 {
-    (e.1 '"' e.3) (e.2) = <BREAK e.1> <BREAK '"' e.3 "'" e.2>;
-    (e.1) (e.2) = <BREAK e.1> <BREAK "'" e.2>;
+    (e.1 '"' e.3) (e.2) = <BREAK e.1> <BREAK '"' e.3 '\'' e.2>;
+    (e.1) (e.2) = <BREAK e.1> <BREAK '\'' e.2>;
     };
 
 BREAK5 {
-    (e.1 "'" e.3) (e.2) = <BREAK e.1> <BREAK "'" e.3 '"' e.2>;
+    (e.1 '\'' e.3) (e.2) = <BREAK e.1> <BREAK '\'' e.3 '"' e.2>;
     (e.1) (e.2) = <BREAK e.1> <BREAK '"' e.2>;
     };
 
@@ -955,13 +955,13 @@ GEN_PATTERN_TERM {
 
 /* Формирует строковую константу */
 GEN_STRING {
-    '' = ('''' ' ');
-    '' e.1 = ('''' ' ') <GEN_STRING e.1>;
-    e.1 = ("'" <GEN_STRING2 e.1> "' ");
+    '\'' = ('''' ' ');
+    '\'' e.1 = ('''' ' ') <GEN_STRING e.1>;
+    e.1 = ('\'' <GEN_STRING2 e.1> "' ");
     };
 
 GEN_STRING2 {
-    e.1 "'" e.2 = e.1 "''" <GEN_STRING2 e.2>;
+    e.1 '\'' e.2 = e.1 "''" <GEN_STRING2 e.2>;
     e.1 = e.1;
     };
 
