@@ -1,6 +1,8 @@
 project(runtime)
 cmake_minimum_required(VERSION 2.8)
 
+option(R5_ARITHM "" OFF)
+
 include_directories(${PROJECT_SOURCE_DIR}/headers)
 
 file(GLOB_RECURSE RuntimeHeaders ${PROJECT_SOURCE_DIR}/headers/*.h)
@@ -21,5 +23,5 @@ if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
 endif(CMAKE_BUILD_TYPE MATCHES "DEBUG")
 
 if(R5_ARITHM)
-    ADD_DEFINITIONS(-DR5_ARITHM)
+    add_definitions(-DR5_ARITHM)
 endif(R5_ARITHM)

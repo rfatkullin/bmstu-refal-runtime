@@ -4,6 +4,7 @@
 TestsDir="../tests"
 TmpRefSourceFile="source.ref"
 TmpCSourceFile="source.c"
+RuntimeArgs="-DCMAKE_BUILD_TYPE=DEBUG"
 
 red='\e[0;31m'
 green='\e[0;32m'
@@ -17,8 +18,14 @@ function AssertSuccess
 	fi
 }
 
+if [ -e "${1%.*}.runtime.args" ]; then 
+	RuntimeArgs=`cat ${1%.*}.runtime.args`		
+fi 
+
 #Собираем библиотеку рантайма.
 cd ../runtime/build 
+rm CMakeCache.txt
+cmake ${RuntimeArgs} .. 1>/dev/null 
 make 1>/dev/null 
 AssertSuccess "Runtime build error" 
 cd - 1>/dev/null

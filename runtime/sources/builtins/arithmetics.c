@@ -17,13 +17,10 @@
 
 typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
 
-static void readIntOperands(mpz_t x, mpz_t y);
+static struct func_result_t gcApplyOp(ArithOp op);
 static void readOperand(mpz_t num, struct vint_t* vnum);
-static void r5ReadOperand(mpz_t num, uint32_t offset, uint32_t maxOffset);
-static struct lterm_t* gcApplyOpToInt(ArithOp op);
 static struct lterm_t* gcApplyOpToDouble(ArithOp op, double a, double b);
 static struct lterm_t* gcConstructDoubleNumLTerm(double val);
-static struct func_result_t gcApplyOp(ArithOp op);
 
 struct func_result_t Add(int entryStatus)
 {
@@ -52,6 +49,7 @@ struct func_result_t Mod(int entryStatus)
 
 #ifdef R5_ARITHM
 static struct lterm_t* writeOperand(mpz_t num);
+static void r5ReadOperand(mpz_t num, uint32_t offset, uint32_t maxOffset);
 static uint32_t getInfoForAllocation(mpz_t num, uint64_t* dataSizeForNums);
 static struct lterm_t* gcApplyToInt(ArithOp op, uint64_t aOffset, uint64_t aLength, uint64_t bOffset, uint64_t bLength);
 static struct func_result_t r5GCApplyOp(ArithOp op, uint64_t aOffset, uint64_t aLength, uint64_t bOffset, uint64_t bLength);
@@ -297,6 +295,9 @@ static uint32_t getInfoForAllocation(mpz_t num, uint64_t* dataSizeForNums)
 }
 
 #else
+static void readIntOperands(mpz_t x, mpz_t y);
+static struct lterm_t* gcApplyOpToInt(ArithOp op);
+
 static struct func_result_t gcApplyOp(ArithOp op)
 {
     gcInitBuiltin();

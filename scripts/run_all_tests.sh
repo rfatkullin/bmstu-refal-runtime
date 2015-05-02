@@ -5,6 +5,7 @@ TestsDir="../tests"
 TmpRefSourceFile="source.ref"
 TmpCSourceFile="source.c"
 RealOutputFile="output.txt"
+RuntimeArgs="-DCMAKE_BUILD_TYPE=DEBUG"
 
 red='\e[0;31m'
 green='\e[0;32m'
@@ -16,12 +17,6 @@ function AssertSuccess
 		echo -e "${red}[FAIL]$1${NC}"		
 	fi
 }
-
-#Собираем библиотеку рантайма.
-cd ../runtime/build 
-make 1>/dev/null 
-AssertSuccess "runtime-build error" 
-cd - 1>/dev/null
 
 #Компилируем компилятор! В итоге получаем исполняемый файл refalc, который кладется в папку, прописанную в переменной PATH.
 go install -compiler gccgo ${GOPATH}/src/bmstu-refal-compiler/refalc/refalc.go 
@@ -37,6 +32,18 @@ function RunTestsInDir
 
 	for sourceFile in `ls ${currDir}/*.ref 2>/dev/null`
 	do	
+		if [ -e "${sourceFile%.*}.runtime.args" ]; then 
+			RuntimeArgs=`cat ${sourceFile%.*}.runtime.args`		
+		fi 
+
+		#Собираем библиотеку рантайма.
+		cd ../runtime/build 		
+		rm CMakeCache.txt
+		cmake ${RuntimeArgs} .. 1>/dev/null 
+		make 1>/dev/null 
+		AssertSuccess "runtime-build error" 
+		cd - 1>/dev/null
+
 		cp ${sourceFile} ${TmpRefSourceFile}
 		#Компилируем рефал программу
 		compilerArgs=`cat ${sourceFile%.*}.compiler.args 2>/dev/null`
