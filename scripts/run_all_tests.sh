@@ -5,7 +5,7 @@ TestsDir="../tests"
 TmpRefSourceFile="source.ref"
 TmpCSourceFile="source.c"
 RealOutputFile="output.txt"
-RuntimeArgs="-DCMAKE_BUILD_TYPE=DEBUG"
+DefaultRuntimeArgs="-DCMAKE_BUILD_TYPE=DEBUG"
 
 red='\e[0;31m'
 green='\e[0;32m'
@@ -22,6 +22,8 @@ function AssertSuccess
 go install -compiler gccgo ${GOPATH}/src/bmstu-refal-compiler/refalc/refalc.go 
 AssertSuccess "Can't build compiler"
 
+prevRuntimeArgs=""
+
 function RunTestsInDir
 {
 	if [ -z "$1" ]; then 
@@ -32,17 +34,22 @@ function RunTestsInDir
 
 	for sourceFile in `ls ${currDir}/*.ref 2>/dev/null`
 	do	
+		RuntimeArgs="${DefaultRuntimeArgs}"
+
 		if [ -e "${sourceFile%.*}.runtime.args" ]; then 
 			RuntimeArgs=`cat ${sourceFile%.*}.runtime.args`		
 		fi 
 
-		#Собираем библиотеку рантайма.
-		cd ../runtime/build 		
-		rm CMakeCache.txt
-		cmake ${RuntimeArgs} .. 1>/dev/null 
-		make 1>/dev/null 
-		AssertSuccess "runtime-build error" 
-		cd - 1>/dev/null
+		if [ "${prevRuntimeArgs}" != "${RuntimeArgs}" ]; then
+			#Собираем библиотеку рантайма.
+			cd ../runtime/build		
+			rm CMakeCache.txt
+			cmake ${RuntimeArgs} .. 1>/dev/null 
+			make 1>/dev/null 
+			AssertSuccess "runtime-build error" 
+			cd - 1>/dev/null			
+		fi		
+		prevRuntimeArgs=${RuntimeArgs}
 
 		cp ${sourceFile} ${TmpRefSourceFile}
 		#Компилируем рефал программу
