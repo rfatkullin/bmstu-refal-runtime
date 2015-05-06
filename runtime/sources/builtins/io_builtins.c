@@ -17,8 +17,8 @@
 static void _gcPut();
 static char* getFileName();
 static struct func_result_t _gcGet(FILE* file);
-static uint64_t createCharVTerms(uint8_t* chars, uint64_t length);
-static void getCharsFromVTerms(uint8_t* chars, uint64_t offset, uint64_t length);
+static uint64_t createCharVTerms(uint32_t* chars, uint64_t length);
+static void getCharsFromVTerms(uint32_t* chars, uint64_t offset, uint64_t length);
 
 struct func_result_t Card(int entryStatus)
 {
@@ -99,7 +99,7 @@ static struct func_result_t _gcGet(FILE* file)
         if (GC_VTERM_OV(1))
         {
             uint64_t length = currOffset - firstOffset;
-            uint8_t* buff = malloc(length);
+            uint32_t* buff = malloc(length * sizeof(uint32_t));
 
             getCharsFromVTerms(buff, firstOffset, length);
 
@@ -154,7 +154,7 @@ static void _gcPut()
     printFragmentLn(_files[descr].file, BUILTIN_FRAG);
 }
 
-static void getCharsFromVTerms(uint8_t* chars, uint64_t offset, uint64_t length)
+static void getCharsFromVTerms(uint32_t* chars, uint64_t offset, uint64_t length)
 {
     uint64_t i = 0;
     for (i = 0; i < length; ++i)
@@ -163,7 +163,7 @@ static void getCharsFromVTerms(uint8_t* chars, uint64_t offset, uint64_t length)
     }
 }
 
-static uint64_t createCharVTerms(uint8_t* chars, uint64_t length)
+static uint64_t createCharVTerms(uint32_t* chars, uint64_t length)
 {
     uint64_t firstOffset = _memMngr.vtermsOffset;
 
