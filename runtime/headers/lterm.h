@@ -41,7 +41,7 @@ struct lterm_t
 	struct lterm_t* prev;
 	struct lterm_t* next;
 
-	int tag;
+    uint8_t tag;
 
 	union
 	{

@@ -20,7 +20,7 @@ struct vclosure_t
     struct fragment_t*  params;
     struct vstring_t*   ident;
     uint32_t            paramsCount;
-    int                 rollback;
+    uint8_t             rollback;
 };
 
 /// vterm строк Юникода.
@@ -35,7 +35,7 @@ struct vstring_t
 
 struct vterm_t
 {
-	int tag;
+    uint8_t tag;
 
 	union
 	{
