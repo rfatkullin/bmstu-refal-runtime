@@ -1,0 +1,11 @@
+$ENTRY GO
+{
+	= <Prout <Gen 1000>>
+}
+
+Gen
+{
+	0 (e.1) = e.1;
+	s.X (e.1) = <Gen <Sub s.X 1> (e.1 'a')>;
+	s.X = <Gen s.X ()>;
+}
