@@ -1,0 +1,10 @@
+$ENTRY Go {
+  = <PrintPermutations () <Arg 1>>;
+}
+
+PrintPermutations {
+  (e.Prefix) s.Last = <Prout e.Prefix s.Last>;
+  (e.Prefix) e.Begin s.Next e.End,
+      <PrintPermutations (e.Prefix s.Next) e.Begin e.End>: X = ;
+  (e.Prefix) e.X = ;
+}

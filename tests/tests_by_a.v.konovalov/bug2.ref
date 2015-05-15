@@ -1,0 +1,7 @@
+WithE {
+  (e.Prefix e.Suffix) e.PrefixesB (e.Prefix) e.Suffix = ;
+}
+
+$ENTRY Go {
+  = <WithE () ()>;
+}
