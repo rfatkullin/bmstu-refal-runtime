@@ -20,7 +20,6 @@ do{                                 \
     oldTerm->tag = GC_MOVED;        \
 }while(0)
 
-
 struct lterm_t* copySimpleChain(struct lterm_t* chain)
 {
     if (!chain)

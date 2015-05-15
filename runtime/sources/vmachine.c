@@ -28,8 +28,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 
 	struct func_result_t funcRes;    
     struct lterm_t* parentCall = 0;
-    int entryStatus = 0;
-    struct lterm_t* prevFuncFieldOfView = 0;
+    int entryStatus = 0;    
 
     _currCallTerm = _memMngr.fieldOfView->next;
 
@@ -40,15 +39,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
         {            
             // Предыдущий результат успешен --> все скобки активации обработаны, можно передавать функции-потребителю.
             if (funcRes.status != FAIL_RESULT)
-            {                
-                // Если поле зрения нулевой, значит было обработано действие-вызов.
-                // Поэтому восстанавливаем поле зрения на основе поле зрения пред. функции
-                if (!_currCallTerm->funcCall->fieldOfView)
-                {
-                    _currCallTerm->funcCall->fieldOfView = prevFuncFieldOfView;
-                    prevFuncFieldOfView = 0;
-                }
-
+            {                                
                 _currCallTerm->funcCall->env->workFieldOfView = _currCallTerm->funcCall->subCall;
                 _currCallTerm->funcCall->subCall = 0;
                 entryStatus = NEXT_ENTRYPOINT;
@@ -75,8 +66,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 
         switch (funcRes.status)
         {
-            case OK_RESULT:
-                prevFuncFieldOfView = _currCallTerm->funcCall->fieldOfView;
+            case OK_RESULT:                
                 _currCallTerm = updateFieldOfView(_currCallTerm, &funcRes);
                 break;
 
@@ -112,6 +102,7 @@ static struct lterm_t* onFuncFail(struct lterm_t* callTerm, int failResult)
     return callTerm->funcCall->parentCall;
 }
 
+static void printUStr(FILE* file, struct vstring_t* str);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm)
 {
     struct lterm_t* fieldOfView = callTerm->funcCall->fieldOfView;
@@ -132,7 +123,10 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
 
     // First vterm must be closure!
     if (_memMngr.vterms[fieldOfView->next->fragment->offset].tag != V_CLOSURE_TAG)
+    {
+        printUStr(stdout, _memMngr.vterms[fieldOfView->next->fragment->offset].str);
         PRINT_AND_EXIT(BAD_EVAL_EXPR);
+    }
 
     struct vclosure_t* closure = _memMngr.vterms[fieldOfView->next->fragment->offset].closure;
 
@@ -147,6 +141,19 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     fieldOfView->next->prev = fieldOfView;
 
 	return newFuncPointer;
+}
+
+static void printUStr(FILE* file, struct vstring_t* str)
+{
+    if (!str)
+        return;
+
+    uint64_t i = 0;
+
+    for (i = 0; i < str->length; ++i)
+        printUTF32(file, str->head[i]);
+
+    fprintf(file, " ");
 }
 
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult)
@@ -368,4 +375,36 @@ static struct lterm_t* constructStartFieldOfView(const char* funcName, RefalFunc
     ADD_TO_CHAIN(fieldOfView, goFuncCallTerm);
 
     return fieldOfView;
+}
+
+struct lterm_t* chCopySimpleExpr(struct lterm_t* chain, allocate_result* res)
+{
+    if (!chain)
+        PRINT_AND_EXIT(GC_NULL_CHAIN_SIMPLE_CHAIN_COPY);
+
+    if (chain->tag != L_TERM_CHAIN_TAG)
+        PRINT_AND_EXIT(GC_BAD_CHAIN_SIMPLE_CHAIN_COPY);
+
+
+    GC_DATA_HEAP_CHECK_RETURN(CHAIN_LTERM_SIZE, *res);
+
+    struct lterm_t* newChain = allocateSimpleChain();
+    struct lterm_t* currTerm = chain->next;
+
+    while (currTerm != chain)
+    {
+        if (currTerm->tag != L_TERM_FRAGMENT_TAG)
+            PRINT_AND_EXIT(OBJ_EXPR_CONTAINS_ONLY_FRAGS);
+
+        GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_LTERM_SIZE(1), *res);
+
+        struct lterm_t* newTerm = allocateFragmentLTerm(1);
+        memcpy(newTerm->fragment, currTerm->fragment, sizeof(struct fragment_t));
+
+        ADD_TO_CHAIN(newChain, newTerm);
+
+        currTerm = currTerm->next;
+    }
+
+    return newChain;
 }

@@ -1,0 +1,9 @@
+$ENTRY GO
+{
+	= <Func Prout 'Hello'>;
+}
+
+Func
+{
+	e.1 => ;
+}

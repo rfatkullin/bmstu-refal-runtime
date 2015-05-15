@@ -39,4 +39,7 @@ void clearCurrFuncEnvData();
 /// Указатель на текущий функциональный lterm.
 struct lterm_t* _currCallTerm;
 
+/// Копирует объектное выражение представленное в виде головного l-терма.
+struct lterm_t* chCopySimpleExpr(struct lterm_t* chain, allocate_result* res);
+
 #endif
