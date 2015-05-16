@@ -1,0 +1,26 @@
+$ENTRY Go
+{
+	= <Prout <<"@" MyDiv MyAdd MyAdd> 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15>>
+}
+
+"@" 
+{
+	s.F = s.F;
+	s.F e.List = 
+		{
+			e.Arg = <s.F <<"@" e.List> e.Arg>>;
+		}
+}
+
+MyAdd
+{
+	s.1 e.1 = <Add s.1 1><MyAdd e.1>;
+	= ;
+}
+
+MyDiv
+{
+	s.1 e.1 = <Div s.1 2><MyDiv e.1>;
+	= ;	
+}
+
