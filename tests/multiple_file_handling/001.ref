@@ -1,0 +1,6 @@
+$EXTERN MyFunc;
+
+$ENTRY Go
+{
+	= <Prout <MyFunc>>
+}
