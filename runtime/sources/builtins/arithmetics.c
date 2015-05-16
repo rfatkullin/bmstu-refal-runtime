@@ -21,6 +21,7 @@ static struct func_result_t gcApplyOp(ArithOp op);
 static void readOperand(mpz_t num, struct vint_t* vnum);
 static struct lterm_t* gcApplyOpToDouble(ArithOp op, double a, double b);
 static struct lterm_t* gcConstructDoubleNumLTerm(double val);
+static const char* getOpStr(ArithOp op);
 
 struct func_result_t Add(int entryStatus)
 {
@@ -304,10 +305,10 @@ static struct func_result_t gcApplyOp(ArithOp op)
     struct lterm_t* resChain = 0;
 
     if (BUILTIN_FRAG->length != 2)    
-        PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER);    
+        FMT_PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER, getOpStr(op));
 
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag != _memMngr.vterms[BUILTIN_FRAG->offset + 1].tag )
-        PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH);
+        FMT_PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH, getOpStr(op));
 
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag == V_INT_NUM_TAG)
     {
@@ -321,7 +322,7 @@ static struct func_result_t gcApplyOp(ArithOp op)
             _memMngr.vterms[BUILTIN_FRAG->offset+1].doubleNum);
     }
     else
-        PRINT_AND_EXIT(OPERAND_BAD_TYPE);
+        FMT_PRINT_AND_EXIT(OPERAND_BAD_TYPE, getOpStr(op));
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = resChain, .callChain = 0};
 }
@@ -376,9 +377,9 @@ static struct lterm_t* gcApplyOpToDouble(ArithOp op, double a, double b)
     else if (op == mpz_tdiv_q)
         return gcConstructDoubleNumLTerm(a / b);
     else if (op == mpz_mod)
-        PRINT_AND_EXIT(MOD_TO_DOUBLE_ERROR);
+        FMT_PRINT_AND_EXIT(MOD_TO_DOUBLE_ERROR, getOpStr(op));
 
-    PRINT_AND_EXIT(BAD_BINARY_OPERATION);
+    FMT_PRINT_AND_EXIT(BAD_BINARY_OPERATION, "Double arithmetic");
 }
 
 struct lterm_t* gcConstructSingleIntNumBuiltinResult(mpz_t num)
@@ -424,10 +425,10 @@ struct func_result_t Compare(int entryStatus)
     gcInitBuiltin();
 
     if (BUILTIN_FRAG->length != 2)
-        PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER);
+        FMT_PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER, "Compare");
 
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag != _memMngr.vterms[BUILTIN_FRAG->offset + 1].tag )
-        PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH);
+        FMT_PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH, "Compare");
 
     int cmpRes = 0;
     char resChar = '0';
@@ -437,7 +438,7 @@ struct func_result_t Compare(int entryStatus)
     else if (_memMngr.vterms[BUILTIN_FRAG->offset].tag == V_DOUBLE_NUM_TAG)
         cmpRes = doubleCmp(_memMngr.vterms[BUILTIN_FRAG->offset].doubleNum, _memMngr.vterms[BUILTIN_FRAG->offset + 1].doubleNum);
     else
-        PRINT_AND_EXIT(OPERAND_BAD_TYPE);
+        FMT_PRINT_AND_EXIT(OPERAND_BAD_TYPE, "Compare");
 
     switch (cmpRes)
     {
@@ -524,3 +525,24 @@ int ConvertToInt(struct vint_t* numData)
 
     return res;
 }
+
+static const char* getOpStr(ArithOp op)
+{
+    if (op == mpz_add)
+        return "Add";
+
+    if (op == mpz_sub)
+        return "Sub";
+
+    if (op == mpz_mul)
+        return "Mul";
+
+    if (op == mpz_tdiv_q)
+        return "Div";
+
+    if (op == mpz_mod)
+        return "Mod";
+
+    return 0;
+}
+

@@ -30,7 +30,7 @@ struct func_result_t Get(int entryStatus)
     gcInitBuiltin();
 
     if (BUILTIN_FRAG->length != 1)
-        PRINT_AND_EXIT(GET_WRONG_ARG_NUM);    
+        FMT_PRINT_AND_EXIT(GET_WRONG_ARG_NUM, "Get");
 
     uint8_t descr = getDescr(BUILTIN_FRAG);
 
@@ -138,7 +138,7 @@ static void _gcPut()
     gcInitBuiltin();
 
     if (BUILTIN_FRAG->length < 1)
-        PRINT_AND_EXIT(TOO_FEW_ARGUMENTS);
+        FMT_PRINT_AND_EXIT(TOO_FEW_ARGUMENTS, "Put/Putout");
 
     uint8_t descr = getDescr(BUILTIN_FRAG);
 

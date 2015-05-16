@@ -30,15 +30,15 @@ struct func_result_t Arg(int entryStatus)
     gcInitBuiltin();
 
     if (BUILTIN_FRAG->length != 1)
-        PRINT_AND_EXIT(ARG_FUNC_BAD_ARG_NUM);
+        FMT_PRINT_AND_EXIT(ARG_FUNC_BAD_ARG_NUM, "Arg");
 
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag != V_INT_NUM_TAG)
-        PRINT_AND_EXIT(ARG_FUNC_BAD_ARG_NUM);
+        FMT_PRINT_AND_EXIT(ARG_FUNC_BAD_ARG_NUM, "Arg");
 
     int argNum = ConvertToInt(_memMngr.vterms[BUILTIN_FRAG->offset].intNum);
 
     if (argNum < 1 || argNum >= _refalProgramArgsCount)
-        FMT_PRINT_AND_EXIT(BAD_PROGRAM_ARG_NUM, _refalProgramArgsCount, argNum, _refalProgramArgsCount);
+        FMT_PRINT_AND_EXIT(BAD_PROGRAM_ARG_NUM, "Arg", _refalProgramArgsCount, argNum, _refalProgramArgsCount);
 
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
@@ -95,10 +95,10 @@ struct func_result_t Symb(int entryStatus)
     gcInitBuiltin();
 
     if (BUILTIN_FRAG->length != 1)
-        PRINT_AND_EXIT(SYMB_BAD_ARG);
+        FMT_PRINT_AND_EXIT(SYMB_BAD_ARG, "Symb");
 
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag != V_INT_NUM_TAG)
-        PRINT_AND_EXIT(SYMB_BAD_ARG);
+        FMT_PRINT_AND_EXIT(SYMB_BAD_ARG, "Symb");
 
     mpz_t num;
     uint64_t size = calcBytesForIntCharArr(_memMngr.vterms[BUILTIN_FRAG->offset].intNum, &num);
@@ -125,7 +125,7 @@ struct func_result_t Numb(int entryStatus)
     gcInitBuiltin();
 
     if (BUILTIN_FRAG->length == 0)
-        PRINT_AND_EXIT(NUMB_BAD_ARG);
+        FMT_PRINT_AND_EXIT(NUMB_BAD_ARG, "Numb");
 
     int sign = 0;
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag == V_CHAR_TAG && _memMngr.vterms[BUILTIN_FRAG->offset].ch == '-')
@@ -142,10 +142,10 @@ struct func_result_t Numb(int entryStatus)
     for (i = 0; i < BUILTIN_FRAG->length; ++i)
     {
         if (_memMngr.vterms[BUILTIN_FRAG->offset + i].tag != V_CHAR_TAG)
-            PRINT_AND_EXIT(NUMB_BAD_ARG);
+            FMT_PRINT_AND_EXIT(NUMB_BAD_ARG, "Numb");
 
         if (_memMngr.vterms[BUILTIN_FRAG->offset + i].ch < '0' || _memMngr.vterms[BUILTIN_FRAG->offset + i].ch > '9')
-            PRINT_AND_EXIT(NUMB_BAD_ARG);        
+            FMT_PRINT_AND_EXIT(NUMB_BAD_ARG, "Numb");
 
         mpz_mul_ui(num, num, 10);
         mpz_add_ui(num, num, _memMngr.vterms[BUILTIN_FRAG->offset + i].ch -  '0');

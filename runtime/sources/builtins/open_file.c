@@ -27,7 +27,7 @@ struct func_result_t Open(int entryStatus)
         PRINT_AND_EXIT(TOO_FEW_ARGUMENTS);
 
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag != V_CHAR_TAG)
-        PRINT_AND_EXIT(BAD_FILE_OPEN_MODE);
+        FMT_PRINT_AND_EXIT(BAD_FILE_OPEN_MODE, "Open");
 
     uint8_t mode = getOpenMode(BUILTIN_FRAG);
     uint8_t descr = getDescr(BUILTIN_FRAG);
@@ -50,11 +50,11 @@ void gcOpenDefaultFile(uint8_t descr, uint8_t mode)
 uint8_t getDescr(struct fragment_t* frag)
 {
     if (_memMngr.vterms[frag->offset].tag != V_INT_NUM_TAG)
-        FMT_PRINT_AND_EXIT(BAD_DESCR, MAX_FILE_DESCR);
+        FMT_PRINT_AND_EXIT(BAD_DESCR, "Open/Get/Put/Putout", MAX_FILE_DESCR);
 
     uint8_t descr = 0;
     if (!getFileDescr(_memMngr.vterms[frag->offset].intNum, &descr))
-        FMT_PRINT_AND_EXIT(BAD_DESCR, MAX_FILE_DESCR, descr);
+        FMT_PRINT_AND_EXIT(BAD_DESCR, "Open/Get/Put/Putout", MAX_FILE_DESCR, descr);
 
     frag->offset++;
     frag->length--;
@@ -79,15 +79,15 @@ static void gcOpenFile(struct fragment_t* frag, uint8_t mode, uint8_t descr)
 static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr)
 {
     if (_files[descr].file)
-        FMT_PRINT_AND_EXIT(DESCR_ALREADY_IN_USE, descr);
+        FMT_PRINT_AND_EXIT(DESCR_ALREADY_IN_USE, "Open", descr);
 
     if (descr == 0)
-        FMT_PRINT_AND_EXIT(TRY_TO_TAKE_TERMINAL_DESCR, MAX_FILE_DESCR);
+        FMT_PRINT_AND_EXIT(TRY_TO_TAKE_TERMINAL_DESCR, "Open", MAX_FILE_DESCR);
 
     _files[descr].file = fopen(fileName, modeStr[mode]);
 
     if (!_files[descr].file)
-        FMT_PRINT_AND_EXIT(FILE_OPEN_ERROR, fileName, modeStr[mode], strerror(errno));
+        FMT_PRINT_AND_EXIT(FILE_OPEN_ERROR, "Open", fileName, modeStr[mode], strerror(errno));
 
     _files[descr].mode = mode;
 }
@@ -138,7 +138,7 @@ static char* assemblyFragment(struct fragment_t* frag, char* buff)
                 break;
 
             default:
-                PRINT_AND_EXIT(BAD_VTERM);
+                FMT_PRINT_AND_EXIT(BAD_VTERM, "Open");
         }
     }
 
@@ -203,7 +203,7 @@ static uint8_t getOpenMode(struct fragment_t* frag)
            break;
 
         default:
-            PRINT_AND_EXIT(BAD_FILE_OPEN_MODE);
+            FMT_PRINT_AND_EXIT(BAD_FILE_OPEN_MODE, "Open");
     }
 
     frag->offset++;
