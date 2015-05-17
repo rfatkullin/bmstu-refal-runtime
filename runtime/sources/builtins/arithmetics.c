@@ -12,50 +12,71 @@
 #include <allocators/vterm_alloc.h>
 #include <defines/data_struct_sizes.h>
 
+typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
+
 #define EPS 1e-6
 #define ARITHM_BASE "4294967296"
 
-typedef void (*ArithOp) (mpz_ptr, mpz_srcptr, mpz_srcptr);
+#define ADD     1
+#define SUB     2
+#define MUL     3
+#define DIV     4
+#define MOD     5
+#define COMPARE 6
 
-static struct func_result_t gcApplyOp(ArithOp op);
+static ArithOp opToFunc(int op);
+struct func_result_t r7Compare();
+static const char* opToStr(int op);
+static void readIntOperands(mpz_t x, mpz_t y);
+static struct func_result_t gcApplyOp(int op);
+static struct lterm_t* gcApplyOpToInt(int op);
 static void readOperand(mpz_t num, struct vint_t* vnum);
-static struct lterm_t* gcApplyOpToDouble(ArithOp op, double a, double b);
 static struct lterm_t* gcConstructDoubleNumLTerm(double val);
-static const char* getOpStr(ArithOp op);
+static struct lterm_t* gcApplyOpToDouble(int op, double a, double b);
+struct lterm_t* chCmpResToLTerm(int res);
 
 struct func_result_t Add(int entryStatus)
 {
-    return  gcApplyOp(mpz_add);
+    return  gcApplyOp(ADD);
 }
 
 struct func_result_t Sub(int entryStatus)
 {
-    return  gcApplyOp(mpz_sub);
+    return  gcApplyOp(SUB);
 }
 
 struct func_result_t Mul(int entryStatus)
 {
-    return  gcApplyOp(mpz_mul);
+    return  gcApplyOp(MUL);
 }
 
 struct func_result_t Div(int entryStatus)
-{
-    return  gcApplyOp(mpz_tdiv_q);
+{    
+    return  gcApplyOp(DIV);
 }
 
 struct func_result_t Mod(int entryStatus)
 {
-    return  gcApplyOp(mpz_mod);
+    return  gcApplyOp(MOD);
+}
+
+struct func_result_t Compare(int entryStatus)
+{
+    #ifdef R5_ARITHM
+        return gcApplyOp(COMPARE);
+    #else
+        return r7Compare();
+    #endif
 }
 
 #ifdef R5_ARITHM
 static struct lterm_t* writeOperand(mpz_t num);
 static void r5ReadOperand(mpz_t num, uint32_t offset, uint32_t maxOffset);
 static uint32_t getInfoForAllocation(mpz_t num, uint64_t* dataSizeForNums);
-static struct lterm_t* gcApplyToInt(ArithOp op, uint64_t aOffset, uint64_t aLength, uint64_t bOffset, uint64_t bLength);
-static struct func_result_t r5GCApplyOp(ArithOp op, uint64_t aOffset, uint64_t aLength, uint64_t bOffset, uint64_t bLength);
+static struct lterm_t* gcApplyToInt(int op, uint64_t aOffset, uint64_t aLength, uint64_t bOffset, uint64_t bLength);
+static struct func_result_t r5GCApplyOp(int op, uint64_t aOffset, uint64_t aLength, uint64_t bOffset, uint64_t bLength);
 
-static struct func_result_t gcApplyOp(ArithOp op)
+static struct func_result_t gcApplyOp(int op)
 {
     gcInitBuiltin();
 
@@ -76,7 +97,7 @@ static struct func_result_t gcApplyOp(ArithOp op)
         if (_memMngr.vterms[offset].tag == V_CHAR_TAG)
         {
             if (_memMngr.vterms[offset].ch != '-')
-                PRINT_AND_EXIT(OPERAND_BAD_TYPE);
+                FMT_PRINT_AND_EXIT(OPERAND_BAD_TYPE, opToStr(op));
             else
                 ++argLength;
         }
@@ -107,7 +128,7 @@ static double getDouble(uint64_t offset, uint64_t length)
         sign = 1;
 
     if (length - sign != 1)
-        PRINT_AND_EXIT(OPERAND_BAD_TYPE);
+        FMT_PRINT_AND_EXIT(OPERAND_BAD_TYPE, "Double op");
 
     if (!sign)
         return _memMngr.vterms[offset].doubleNum;
@@ -116,18 +137,18 @@ static double getDouble(uint64_t offset, uint64_t length)
 }
 
 
-static struct func_result_t r5GCApplyOp(ArithOp op, uint64_t aOffset, uint64_t aLength, uint64_t bOffset, uint64_t bLength)
+static struct func_result_t r5GCApplyOp(int op, uint64_t aOffset, uint64_t aLength, uint64_t bOffset, uint64_t bLength)
 {
     struct lterm_t* resChain;
 
     if (aLength == 0 || bLength == 0)
-         PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER);
+         FMT_PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER, opToStr(op));
 
     int aOpType = getOperandType(aOffset, aLength);
     int bOpType = getOperandType(bOffset, bLength);
 
     if (aOpType != bOpType)
-        PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH);
+        FMT_PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH, opToStr(op));
 
     if (aOpType == V_INT_NUM_TAG)
     {
@@ -140,22 +161,33 @@ static struct func_result_t r5GCApplyOp(ArithOp op, uint64_t aOffset, uint64_t a
                 getDouble(bOffset, bLength));
     }
     else
-        PRINT_AND_EXIT(OPERAND_BAD_TYPE);
+    {
+        FMT_PRINT_AND_EXIT(OPERAND_BAD_TYPE, opToStr(op));
+    }
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = resChain, .callChain = 0};
 }
 
-static struct lterm_t* gcApplyToInt(ArithOp op, uint64_t aOffset, uint64_t aLength, uint64_t bOffset, uint64_t bLength)
+static struct lterm_t* gcApplyToInt(int op, uint64_t aOffset, uint64_t aLength, uint64_t bOffset, uint64_t bLength)
 {
+    struct lterm_t* resChain = 0;
+
     mpz_t x;
     mpz_t y;
 
     r5ReadOperand(x, aOffset, aOffset + aLength);
     r5ReadOperand(y, bOffset, bOffset + bLength);
 
-    op(x, x, y);
+    switch (op)
+    {
+    case COMPARE:
+        resChain = chCmpResToLTerm(mpz_cmp(x, y));
+        break;
 
-    struct lterm_t* resChain = writeOperand(x);
+    default:
+        opToFunc(op)(x, x, y);
+        resChain = writeOperand(x);
+    }
 
     mpz_clear(x);
     mpz_clear(y);
@@ -181,12 +213,12 @@ static void r5ReadOperand(mpz_t num, uint32_t offset, uint32_t maxOffset)
     }
 
     if (offset >= maxOffset)
-        PRINT_AND_EXIT(OPERAND_BAD_TYPE);
+        FMT_PRINT_AND_EXIT(OPERAND_BAD_TYPE, "Refal-5 read int operand");
 
     do
     {
         if (_memMngr.vterms[offset].tag != V_INT_NUM_TAG)
-            PRINT_AND_EXIT(OPERAND_BAD_TYPE);
+            FMT_PRINT_AND_EXIT(OPERAND_BAD_TYPE, "Refal-5 read int operand");
 
         mpz_mul(num, num, base);
         readOperand(tmpNum, _memMngr.vterms[offset].intNum);
@@ -296,19 +328,17 @@ static uint32_t getInfoForAllocation(mpz_t num, uint64_t* dataSizeForNums)
 }
 
 #else
-static void readIntOperands(mpz_t x, mpz_t y);
-static struct lterm_t* gcApplyOpToInt(ArithOp op);
 
-static struct func_result_t gcApplyOp(ArithOp op)
+static struct func_result_t gcApplyOp(int op)
 {
     gcInitBuiltin();
     struct lterm_t* resChain = 0;
 
     if (BUILTIN_FRAG->length != 2)    
-        FMT_PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER, getOpStr(op));
+        FMT_PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER, opToStr(op));
 
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag != _memMngr.vterms[BUILTIN_FRAG->offset + 1].tag )
-        FMT_PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH, getOpStr(op));
+        FMT_PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH, opToStr(op));
 
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag == V_INT_NUM_TAG)
     {
@@ -322,12 +352,12 @@ static struct func_result_t gcApplyOp(ArithOp op)
             _memMngr.vterms[BUILTIN_FRAG->offset+1].doubleNum);
     }
     else
-        FMT_PRINT_AND_EXIT(OPERAND_BAD_TYPE, getOpStr(op));
+        FMT_PRINT_AND_EXIT(OPERAND_BAD_TYPE, opToStr(op));
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = resChain, .callChain = 0};
 }
 
-static struct lterm_t* gcApplyOpToInt(ArithOp op)
+static struct lterm_t* gcApplyOpToInt(int op)
 {
     mpz_t x;
     mpz_t y;
@@ -337,8 +367,7 @@ static struct lterm_t* gcApplyOpToInt(ArithOp op)
 
     readIntOperands(x, y);
 
-    op(x, x, y);
-
+    opToFunc(op)(x, x, y);
     struct lterm_t* resChain = gcConstructSingleIntNumBuiltinResult(x);
 
     mpz_clear(x);
@@ -366,18 +395,26 @@ static void readOperand(mpz_t num, struct vint_t* vnum)
         mpz_mul_si(num, num, -1);
 }
 
-static struct lterm_t* gcApplyOpToDouble(ArithOp op, double a, double b)
+static struct lterm_t* gcApplyOpToDouble(int op, double a, double b)
 {
-    if (op == mpz_add)
+    switch (op)
+    {
+    case ADD:
         return gcConstructDoubleNumLTerm(a + b);
-    else if (op == mpz_sub)
+
+    case SUB:
         return gcConstructDoubleNumLTerm(a - b);
-    else if (op == mpz_mul)
+
+    case MUL :
         return gcConstructDoubleNumLTerm(a * b);
-    else if (op == mpz_tdiv_q)
+
+    case DIV:
         return gcConstructDoubleNumLTerm(a / b);
-    else if (op == mpz_mod)
-        FMT_PRINT_AND_EXIT(MOD_TO_DOUBLE_ERROR, getOpStr(op));
+
+    case MOD:
+        FMT_PRINT_AND_EXIT(MOD_TO_DOUBLE_ERROR, opToStr(op));
+    }
+
 
     FMT_PRINT_AND_EXIT(BAD_BINARY_OPERATION, "Double arithmetic");
 }
@@ -420,7 +457,7 @@ static struct lterm_t* gcConstructDoubleNumLTerm(double val)
 #endif
 }
 
-struct func_result_t Compare(int entryStatus)
+struct func_result_t r7Compare()
 {
     gcInitBuiltin();
 
@@ -430,8 +467,7 @@ struct func_result_t Compare(int entryStatus)
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag != _memMngr.vterms[BUILTIN_FRAG->offset + 1].tag )
         FMT_PRINT_AND_EXIT(OPERANDS_TYPES_MISMATCH, "Compare");
 
-    int cmpRes = 0;
-    char resChar = '0';
+    int cmpRes = 0;    
 
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag == V_INT_NUM_TAG)
         cmpRes = intCmp(_memMngr.vterms[BUILTIN_FRAG->offset].intNum, _memMngr.vterms[BUILTIN_FRAG->offset + 1].intNum);
@@ -440,24 +476,23 @@ struct func_result_t Compare(int entryStatus)
     else
         FMT_PRINT_AND_EXIT(OPERAND_BAD_TYPE, "Compare");
 
-    switch (cmpRes)
-    {
-        case 0 :
-            resChar = '0';
-            break;
-        case 1 :
-            resChar = '+';
-            break;
-        case -1 :
-            resChar = '-';
-            break;
-    }
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = chCmpResToLTerm(cmpRes), .callChain = 0};
+}
+
+struct lterm_t* chCmpResToLTerm(int res)
+{
+    char resChar = '0';
+
+    if (res > 0)
+        resChar = '+';
+    else if (res < 0)
+        resChar = '-';
+    else
+        resChar = '0';
 
     checkAndCleanHeaps(1, BUILTINS_RESULT_SIZE);
 
-    struct lterm_t* resChain = allocateBuiltinsResult(allocateSymbolVTerm(resChar), 1);
-
-    return (struct func_result_t){.status = OK_RESULT, .fieldChain = resChain, .callChain = 0};
+    return allocateBuiltinsResult(allocateSymbolVTerm(resChar), 1);
 }
 
 /// Проверка на равенство двух чисел. 1 - успех, 0 - неудача.
@@ -526,23 +561,51 @@ int ConvertToInt(struct vint_t* numData)
     return res;
 }
 
-static const char* getOpStr(ArithOp op)
+static const char* opToStr(int op)
 {
-    if (op == mpz_add)
+    switch (op)
+    {
+    case ADD:
         return "Add";
 
-    if (op == mpz_sub)
+    case SUB:
         return "Sub";
 
-    if (op == mpz_mul)
+    case MUL :
         return "Mul";
 
-    if (op == mpz_tdiv_q)
+    case DIV:
         return "Div";
 
-    if (op == mpz_mod)
+    case MOD:
         return "Mod";
 
+    case COMPARE:
+        return "Compare";
+    }
+
     return 0;
+}
+
+
+static ArithOp opToFunc(int op)
+{
+    switch (op)
+    {
+    case ADD:
+        return mpz_add;
+
+    case SUB:
+        return mpz_sub;
+
+    case MUL :
+        return mpz_mul;
+
+    case DIV:
+        return mpz_tdiv_q;
+
+    case MOD:
+        return mpz_mod;
+    }
 }
 

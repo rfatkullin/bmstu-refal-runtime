@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Prout <Compare 0 0 >>
+	  <Prout <Compare 1 0 >>
+  	  <Prout <Compare 0 1 >>
+  	  <Prout <Compare '-'100 100>>
+  	  <Prout <Compare 2 3>>
+  	  <Prout <Compare 0 '-'1>>
+}
+

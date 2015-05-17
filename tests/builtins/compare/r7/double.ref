@@ -1,0 +1,9 @@
+$ENTRY Go
+{
+	=	<Prout <Compare -123.23 23.5>>
+		<Prout <Compare 123.23 23.5>>
+		<Prout <Compare 23.23 23.5>>
+		<Prout <Compare 23.23 2323.5>>
+		<Prout <Compare -23.23 -2323.5>>
+		<Prout <Compare 2.5 2.5>>
+}
