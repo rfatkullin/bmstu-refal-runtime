@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Prout <SimpleSort 4 45 3 123 4565 212 3 94875 23 6 23 98 6 72 2 0>>
+}
+
+SimpleSort 
+{ 
+	e.1 t.X t.Y e.2, <Compare t.X t.Y> : '+' = <SimpleSort e.1 t.Y t.X e.2>;
+ 	e.1 = e.1; 
+}
