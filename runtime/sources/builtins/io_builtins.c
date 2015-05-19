@@ -82,18 +82,16 @@ struct func_result_t Putout(int entryStatus)
 static struct func_result_t _gcGet(FILE* file)
 {
     uint64_t firstOffset = _memMngr.vtermsOffset;
-    uint64_t currOffset =  _memMngr.vtermsOffset;
-    struct lterm_t* mainChain = 0;
+    uint64_t currOffset =  _memMngr.vtermsOffset;    
 
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
-    uint32_t ch;
-    while(1)
+    uint32_t ch = 1;
+    while(ch)
     {
-        // Simple fix \r\n line endings
         while ((ch = readUTF8Char(file)) == '\r');
 
-        if (ch == '\n' || ch == 0)
+        if (ch == '\n')
             break;
 
         if (GC_VTERM_OV(1))
@@ -101,34 +99,28 @@ static struct func_result_t _gcGet(FILE* file)
             uint64_t length = currOffset - firstOffset;
             uint32_t* buff = malloc(length * sizeof(uint32_t));
 
+            // Бекапим считанные символы во временном буфере.
             getCharsFromVTerms(buff, firstOffset, length);
 
             collectGarbage();
             GC_VTERM_HEAP_CHECK_EXIT(length + 1);
 
-            // Copy earlier read chars.
+            // Восстанавливаем из бекапа ранее считанные символы.
             firstOffset = createCharVTerms(buff, length);
             currOffset = _memMngr.vtermsOffset;
 
             free(buff);
         }
 
-        // Checked --> may call func without gc prefix.
-        allocateSymbolVTerm(ch);
+        if (ch)
+            allocateSymbolVTerm(ch);
+        else
+            allocateUInt8VTerm(0);
+
         currOffset++;
     }
 
-    if (ch == '\n')
-    {
-        // Checked --> may call func without gc prefix.
-        mainChain = allocateBuiltinsResult(firstOffset, _memMngr.vtermsOffset - firstOffset);
-    }
-    else // ch == 0
-    {        
-        checkAndCleanHeaps(1, VINT_STRUCT_SIZE(1) + BUILTINS_RESULT_SIZE);
-        allocateUInt8VTerm(0);
-        mainChain = allocateBuiltinsResult(firstOffset, _memMngr.vtermsOffset - firstOffset);
-    }    
+    struct lterm_t* mainChain = allocateBuiltinsResult(firstOffset, _memMngr.vtermsOffset - firstOffset);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = mainChain, .callChain = 0};
 }
