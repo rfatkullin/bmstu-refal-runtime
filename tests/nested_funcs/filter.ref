@@ -5,7 +5,7 @@ $ENTRY Go
 
 Filter
 {
-	s.P t.X e.1, <s.P t.X> : e.2 = t.X <Filter s.P e.1>;
+	s.P t.X e.1, <s.P t.X> = t.X <Filter s.P e.1>;
 	s.P t.X e.1 = <Filter s.P e.1>;
 	s.P = ;
 }
