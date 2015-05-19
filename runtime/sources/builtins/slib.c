@@ -15,6 +15,7 @@
 #include <defines/data_struct_sizes.h>
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch));
+static void recApplyCaseMappingOp(uint64_t offset, uint64_t length, uint32_t op(uint32_t ch));
 
 void gcInitBuiltin()
 {
@@ -188,6 +189,7 @@ struct func_result_t Lenw(int entryStatus)
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
+
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch))
 {
     gcInitBuiltin();
@@ -196,15 +198,28 @@ static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch))
     // выделили для них память.
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
-    struct lterm_t* chainTerm = allocateBuiltinsResult(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);
-    struct fragment_t* frag = chainTerm->next->fragment;
+    struct lterm_t* chainTerm = allocateBuiltinsResult(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);    
 
-    uint64_t i = 0;
-    for (i = 0; i < frag->length; ++i)
-    {
-        if (_memMngr.vterms[frag->offset + i].tag == V_CHAR_TAG)
-            _memMngr.vterms[frag->offset + i].ch = op(_memMngr.vterms[frag->offset + i].ch);
-    }
+    recApplyCaseMappingOp(BUILTIN_FRAG->offset, BUILTIN_FRAG->length, op);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm, .callChain = 0};
 }
+
+static void recApplyCaseMappingOp(uint64_t offset, uint64_t length, uint32_t op(uint32_t ch))
+{
+    uint64_t i = 0;
+    for (i = 0; i < length; ++i)
+    {
+        if (_memMngr.vterms[offset + i].tag == V_CHAR_TAG)
+        {
+            _memMngr.vterms[offset + i].ch = op(_memMngr.vterms[offset + i].ch);
+        }
+        else if (_memMngr.vterms[offset + i].tag == V_BRACKETS_TAG)
+        {
+            recApplyCaseMappingOp(_memMngr.vterms[offset + i].brackets->offset,
+                    _memMngr.vterms[offset + i].brackets->length,
+                    op);
+        }
+    }
+}
+
