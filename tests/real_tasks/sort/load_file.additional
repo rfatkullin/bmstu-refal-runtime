@@ -1,0 +1,11 @@
+$ENTRY LOADFILE 
+{
+	s.1 = <LOADFILE2 s.1 <Get s.1>>;
+};
+
+LOADFILE2 
+{
+    s.1 0 = ;
+    s.1 e.2 0 = e.2;
+    s.1 e.2 = e.2 <LOADFILE s.1>;
+};

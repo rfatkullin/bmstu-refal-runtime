@@ -87,7 +87,33 @@ static void processEnvVTerms(struct env_t* env)
     for (i = 0; i < env->fovsCount; ++i)
     {
         if (env->assembled[i])
-            processVTermsInFragment(VTERM_BRACKETS(env->assembled[i]));
+        {
+            uint64_t offset = env->assembled[i];
+
+            if (_gc.stage == GC_VTERMS_MARK_STAGE)
+            {
+                // Пропускаем литеральные vterm'ы.
+                if (!(offset < _memMngr.vtermsBeginOffset))
+                    _gc.inUseVTerms[offset - _memMngr.vtActiveOffset] = 1;
+
+                processVTermsInFragment(VTERM_BRACKETS(env->assembled[i]));
+            }
+            else
+            {
+                // Пропускаем фрагменты, которые указывают на литеральные vterm'ы.
+                if (offset < _memMngr.vtermsBeginOffset)
+                    continue;
+
+                // Если смещение указывает на новую кучу, значит фрагмент уже обработан - пропускаем.
+                if (_memMngr.vtActiveOffset <= offset && offset < _memMngr.vtActiveOffset + _memMngr.vtermsMaxOffset)
+                    return;
+
+                // Подправляем смещение.
+                env->assembled[i] = (uint64_t)_memMngr.vterms[offset].brackets; // Приходтся кастить, чтобы избежать предупреждений.
+
+                processVTermsInFragment(VTERM_BRACKETS(env->assembled[i]));
+            }
+        }
     }
 }
 

@@ -1,6 +1,10 @@
+$EXTERN ParseNums;
+$EXTERN LOADFILE;
+
 $ENTRY Go
 {
-	= <Prout <Sort 4 45 3 123 4565 212 3 94875 23 6 23 98 6 72 2 0>>
+    = <Open 'r' 1 <Arg 1>>      
+      <Prout <Sort <ParseNums <LOADFILE 1>>>>;
 }
 
 Sort 
