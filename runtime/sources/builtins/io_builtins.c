@@ -27,7 +27,7 @@ struct func_result_t Card(int entryStatus)
 
 struct func_result_t Get(int entryStatus)
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
 
     if (BUILTIN_FRAG->length != 1)
         FMT_PRINT_AND_EXIT(GET_WRONG_ARG_NUM, "Get");
@@ -45,7 +45,7 @@ struct func_result_t Get(int entryStatus)
 
 struct func_result_t Prout(int entryStatus)
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
 
     printFragmentLn(stdout, BUILTIN_FRAG);
 
@@ -54,7 +54,7 @@ struct func_result_t Prout(int entryStatus)
 
 struct func_result_t Print(int entryStatus)
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
 
     printFragmentLn(stdout, BUILTIN_FRAG);
 
@@ -127,7 +127,7 @@ static struct func_result_t _gcGet(FILE* file)
 
 static void _gcPut()
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
 
     if (BUILTIN_FRAG->length < 1)
         FMT_PRINT_AND_EXIT(TOO_FEW_ARGUMENTS, "Put/Putout");

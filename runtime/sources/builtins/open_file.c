@@ -21,7 +21,7 @@ static void gcOpenFile(struct fragment_t* frag, uint8_t mode, uint8_t descr);
 
 struct func_result_t Open(int entryStatus)
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
 
     if (BUILTIN_FRAG->length < 2)
         PRINT_AND_EXIT(TOO_FEW_ARGUMENTS);

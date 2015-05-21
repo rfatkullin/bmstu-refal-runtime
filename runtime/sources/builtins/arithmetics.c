@@ -78,7 +78,7 @@ static struct func_result_t r5GCApplyOp(int op, uint64_t aOffset, uint64_t aLeng
 
 static struct func_result_t gcApplyOp(int op)
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
 
     uint64_t offset = BUILTIN_FRAG->offset;
     uint64_t length = BUILTIN_FRAG->length;
@@ -331,7 +331,7 @@ static uint32_t getInfoForAllocation(mpz_t num, uint64_t* dataSizeForNums)
 
 static struct func_result_t gcApplyOp(int op)
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
     struct lterm_t* resChain = 0;
 
     if (BUILTIN_FRAG->length != 2)    
@@ -459,7 +459,7 @@ static struct lterm_t* gcConstructDoubleNumLTerm(double val)
 
 struct func_result_t r7Compare()
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
 
     if (BUILTIN_FRAG->length != 2)
         FMT_PRINT_AND_EXIT(WRONG_OPERANDS_NUMBER, "Compare");

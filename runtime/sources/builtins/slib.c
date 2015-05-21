@@ -17,7 +17,12 @@
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch));
 static void recApplyCaseMappingOp(uint64_t offset, uint64_t length, uint32_t op(uint32_t ch));
 
-void gcInitBuiltin()
+void initBuiltins()
+{
+    mpz_init_set_ui(_step, 0);
+}
+
+void gcInitBuiltinEnv()
 {
     checkAndCleanHeaps(0, ENV_SIZE(0, 1, 0));
 
@@ -28,7 +33,7 @@ void gcInitBuiltin()
 
 struct func_result_t Arg(int entryStatus)
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
 
     if (BUILTIN_FRAG->length != 1)
         FMT_PRINT_AND_EXIT(ARG_FUNC_BAD_ARG_NUM, "Arg");
@@ -93,7 +98,7 @@ struct func_result_t Lower(int entryStatus)
 
 struct func_result_t Symb(int entryStatus)
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
 
     if (BUILTIN_FRAG->length != 1)
         FMT_PRINT_AND_EXIT(SYMB_BAD_ARG, "Symb");
@@ -123,7 +128,7 @@ struct func_result_t Symb(int entryStatus)
 
 struct func_result_t Numb(int entryStatus)
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
 
     if (BUILTIN_FRAG->length == 0)
         FMT_PRINT_AND_EXIT(NUMB_BAD_ARG, "Numb");
@@ -164,7 +169,7 @@ struct func_result_t Numb(int entryStatus)
 
 struct func_result_t Lenw(int entryStatus)
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
 
     mpz_t num;
     mpz_t helper;
@@ -189,10 +194,18 @@ struct func_result_t Lenw(int entryStatus)
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
+struct func_result_t Step(int entryStatus)
+{
+    gcInitBuiltinEnv();
+
+    struct lterm_t* res = gcConstructSingleIntNumBuiltinResult(_step);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
+}
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch))
 {
-    gcInitBuiltin();
+    gcInitBuiltinEnv();
 
     // 0 для vterm'ов, так как во время сборки уже
     // выделили для них память.

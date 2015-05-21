@@ -26,6 +26,9 @@ struct file_info
 /// Количесто аргументов командной строки.
 int _refalProgramArgsCount;
 
+/// Счетчик для встроенной функции Step.
+mpz_t _step;
+
 /// Аргументы командной строки. Представлены в виде фрагментов vterm'ов.
 struct fragment_t* _refalProgramArgs;
 
@@ -71,6 +74,9 @@ struct func_result_t Numb(int entryStatus);
 /// Возвращает длину в термах переданного аргумента.
 struct func_result_t Lenw(int entryStatus);
 
+/// Возвращает общее количество вызванных функций.
+struct func_result_t Step(int entryStatus);
+
 /* Вспомогательные функции.*/
 
 /// Обрабатывает аргументы командной строки и заполняет _refalProgramArgs.
@@ -92,7 +98,9 @@ struct lterm_t* gcConstructSingleIntNumBuiltinResult(mpz_t num);
 int ConvertToInt(struct vint_t* numData);
 
 /// Выполняет подготовительные операции, общие для всех встроенных функций.
-void gcInitBuiltin();
+void gcInitBuiltinEnv();
 
+/// Инициализация встроенных функций.
+void initBuiltins();
 
 #endif

@@ -7,15 +7,15 @@ Start garbage collection.
 End garbage collection.
 Start garbage collection.
 End garbage collection.
-    done (current Step is 1).
+    done (current Step is 41240 ).
 Bracket detection in progress ...
-    done (current Step is 1).
+    done (current Step is 46812 ).
 Syntactic analysis in progress ...
-    done (current Step is 1).
+    done (current Step is 65143 ).
 Program generation in progress ...
-    done (current Step is 1).
+    done (current Step is 90155 ).
 Layout generation in progress ...
-    done (current Step is 1).
+    done (current Step is 126943 ).
 /*
  * This program was produced by decompiler from assembler source.
  * (C) 2000 Serge Skorobogatoff

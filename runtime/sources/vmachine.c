@@ -34,10 +34,7 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
     _currCallTerm = _memMngr.fieldOfView->next;
 
     while (_currCallTerm)
-	{
-        step = step + 1;
-        //printf("Step: %" PRIu64 "\n", step);
-
+    {
         // Указатель на функцию проставлен --> функция вызывается повторно.
         if (_currCallTerm->funcCall->funcPtr)
         {            
@@ -83,6 +80,9 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
                 _currCallTerm = onFuncFail(_currCallTerm, 1);
                 break;
         }
+
+        // Обновляем счетчик вызовов функций, который используется встр.ф. Step.
+        mpz_add_ui(_step, _step, 1);
 	}
 }
 

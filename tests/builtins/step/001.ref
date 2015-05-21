@@ -1,0 +1,19 @@
+$ENTRY Go
+{
+	= <Prout <Step><Step><Func1>>;
+}
+
+Func1
+{
+	= <Step><Func2>;
+}
+
+Func2
+{
+	= <Func3>
+}
+
+Func3
+{
+	= <Step>
+}
