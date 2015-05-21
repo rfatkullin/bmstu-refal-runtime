@@ -94,7 +94,7 @@ static void processEnvVTerms(struct env_t* env)
             {
                 // Пропускаем литеральные vterm'ы.
                 if (!(offset < _memMngr.vtermsBeginOffset))
-                    _gc.inUseVTerms[offset - _memMngr.vtActiveOffset] = 1;
+                    _gc.inUseVTerms[offset - _memMngr.vtInactiveOffset] = 1;
 
                 processVTermsInFragment(VTERM_BRACKETS(env->assembled[i]));
             }
@@ -138,7 +138,7 @@ static void processVTermsInFragment(struct fragment_t* frag)
             if (i < _memMngr.vtermsBeginOffset)
                 continue;
 
-            _gc.inUseVTerms[i - _memMngr.vtActiveOffset] = 1;
+            _gc.inUseVTerms[i - _memMngr.vtInactiveOffset] = 1;
 
             switch (_memMngr.vterms[i].tag)
             {

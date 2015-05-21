@@ -10,16 +10,9 @@
 static void copyClosureVTerm(uint64_t to, struct vclosure_t* closure);
 static void copyIntVTerm(uint64_t to, struct vint_t* intNum);
 static void copyBracketsVTerm(uint64_t to, struct fragment_t* frag);
-static void swap(uint64_t* a, uint64_t* b);
 
 void copyVTerms()
-{
-    swap(&_memMngr.vtInactiveOffset, &_memMngr.vtActiveOffset);
-    swap(&_memMngr.dtInactiveOffset, &_memMngr.dtActiveOffset);
-
-    _memMngr.vtermsOffset = _memMngr.vtActiveOffset;
-    _memMngr.dataOffset = _memMngr.dtActiveOffset;
-
+{    
     uint64_t i = 0;
     for (i = 0; i < _memMngr.vtermsMaxOffset; ++i)
     {
@@ -132,11 +125,4 @@ static void copyBracketsVTerm(uint64_t to, struct fragment_t* frag)
         SET_MST_SIGN_BIT(frag->length);
         frag->offset = to;
     }
-}
-
-static void swap(uint64_t* a, uint64_t* b)
-{
-    uint64_t tmp = *a;
-    *a = *b;
-    *b = tmp;
 }
