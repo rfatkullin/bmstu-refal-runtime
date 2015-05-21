@@ -37,7 +37,9 @@ struct lterm_t* copySimpleChain(struct lterm_t* chain);
 /// Перемещает достижимые vterm'ы активной кучи в пассивную кучу.
 /// В процессе работы менят местами активную и пассивную кучи (как
 /// для vterm'ов, так и для данных).
-void collectVTermGarbage(struct lterm_t* fieldOfView);
+void collectVTermGarbage();
+
+void collectDataGarbage();
 
 /// Проверяет есть ли в кучах место для needTermCount vterm'ов
 /// и needDataSize байтов для данных. Если нет, запускает сборку мусора

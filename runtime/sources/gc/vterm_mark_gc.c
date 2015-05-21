@@ -16,18 +16,18 @@ static void processVTermsInFragment(struct fragment_t* frag);
 static void processClosureVTerms(struct vclosure_t* closure);
 static void processVTermsInFuncCall(struct func_call_t* funcCall);
 
-void collectVTermGarbage(struct lterm_t* fieldOfView)
+void collectVTermGarbage()
 {    
     memset(_gc.inUseVTerms, 0, _memMngr.vtermsMaxOffset * sizeof(uint8_t));
 
     _gc.stage = GC_VTERMS_MARK_STAGE;
-    processVTermsInChain(fieldOfView);
+    processVTermsInChain(_memMngr.fieldOfView);
 
     copyVTerms();
 
     _gc.stage = GC_VTERMS_SET_ACTUAL_STAGE;
     setActualDataInVTerms();
-    processVTermsInChain(fieldOfView);
+    processVTermsInChain(_memMngr.fieldOfView);
 }
 
 static void processVTermsInChain(struct lterm_t* chain)

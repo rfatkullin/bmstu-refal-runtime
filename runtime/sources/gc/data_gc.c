@@ -3,22 +3,50 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include <vmachine.h>
 #include <memory_manager.h>
 #include <defines/gc_macros.h>
 #include <defines/errors_str.h>
 #include <allocators/data_alloc.h>
 #include <defines/data_struct_sizes.h>
 
-static struct lterm_t* copyFuncCallLTerm(struct lterm_t* term);
-static struct env_t* copyEnv(struct env_t* from, struct env_t* to);
+
+static struct lterm_t* getActual(struct lterm_t* term);
 static struct lterm_t* copyChainVTerm(struct lterm_t* term);
+static struct lterm_t* copyFuncCallLTerm(struct lterm_t* term);
 static struct lterm_t* copyFragmentLTerm(struct lterm_t* oldTerm);
+static struct env_t* copyEnv(struct env_t* from, struct env_t* to);
 
 #define SET_MOVED(oldTerm, newTerm) \
 do{                                 \
     oldTerm->prev = newTerm;        \
     oldTerm->tag = GC_MOVED;        \
 }while(0)
+
+
+void collectDataGarbage()
+{
+    _memMngr.fieldOfView = copySimpleChain(_memMngr.fieldOfView);
+
+    // Get node from new heap
+    _currCallTerm = getActual(_currCallTerm);
+
+    // Fix pointers in func call chain
+    struct func_call_t* funcCall = _currCallTerm->funcCall;
+    while (funcCall->next)
+    {
+        funcCall->next = getActual(funcCall->next);
+        funcCall = funcCall->next->funcCall;
+    }
+}
+
+static struct lterm_t* getActual(struct lterm_t* term)
+{
+    if (term->tag == GC_MOVED)
+        return term->prev;
+
+    return term;
+}
 
 struct lterm_t* copySimpleChain(struct lterm_t* chain)
 {
