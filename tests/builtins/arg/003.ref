@@ -1,4 +1,4 @@
 $ENTRY Go
 {
-	= <Prout <Arg 1>>
+	= <Prout 'Must be '<Arg 1><Arg 2><Arg 3>'Empty'>
 }

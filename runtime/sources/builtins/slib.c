@@ -43,12 +43,17 @@ struct func_result_t Arg(int entryStatus)
 
     int argNum = ConvertToInt(_memMngr.vterms[BUILTIN_FRAG->offset].intNum);
 
-    if (argNum < 1 || argNum >= _refalProgramArgsCount)
+    if (argNum < 1)
         FMT_PRINT_AND_EXIT(BAD_PROGRAM_ARG_NUM, "Arg", _refalProgramArgsCount, argNum, _refalProgramArgsCount);
 
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
-    struct lterm_t* chain = allocateBuiltinsResult(_refalProgramArgs[argNum].offset, _refalProgramArgs[argNum].length);
+    struct lterm_t* chain = 0;
+
+    if (argNum >= _refalProgramArgsCount)
+        chain = allocateBuiltinsResult(0, 0);
+    else
+        chain = allocateBuiltinsResult(_refalProgramArgs[argNum].offset, _refalProgramArgs[argNum].length);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = chain, .callChain = 0};
 }
