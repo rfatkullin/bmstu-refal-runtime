@@ -1,0 +1,14 @@
+$ENTRY Go
+{
+	= <Prout <Func $FUNC NewFunc {=;}>>	
+}
+
+Func
+{
+	s.1 = <Func2 s.1 $FUNC NewFunc {=;}>;
+}
+
+Func2
+{
+	s.1 s.2 : s.2 s.1 = Success;
+}

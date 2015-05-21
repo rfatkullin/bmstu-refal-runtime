@@ -1,0 +1,9 @@
+$ENTRY Go
+{
+	= <Prout <Func {=;} {=;}>>	
+}
+
+Func
+{
+	s.1 s.2 : s.2 s.1 = Success;
+}
