@@ -2,10 +2,8 @@
 #Run from build directory
 
 TestsDir="../tests"
-TmpRefSourceFile="source.ref"
-TmpCSourceFile="source.c"
-RealOutputFile="output.txt"
 DefaultRuntimeArgs="-DCMAKE_BUILD_TYPE=DEBUG"
+RealOutputFile="output.txt"
 
 red='\e[0;31m'
 green='\e[0;32m'
@@ -33,39 +31,44 @@ function RunTestsInDir
 	currDir="$1"
 
 	for sourceFile in `ls ${currDir}/*.ref 2>/dev/null`
-	do	
-		RuntimeArgs="${DefaultRuntimeArgs}"
-
+	do			
+		runtimeArgs="${DefaultRuntimeArgs}"
 		if [ -e "${sourceFile%.*}.runtime.args" ]; then 
-			RuntimeArgs=`cat ${sourceFile%.*}.runtime.args`		
+			runtimeArgs=`cat ${sourceFile%.*}.runtime.args`		
 		fi 
 
-		if [ "${prevRuntimeArgs}" != "${RuntimeArgs}" ]; then
+		refSourceFile="${sourceFile##*/}"
+		cSourceFile="${refSourceFile%.*}.c"
+		compilerArgs=`cat ${sourceFile%.*}.compiler.args 2>/dev/null`
+		additionalSourcesList=`cat ${sourceFile%.*}.adds_list 2>/dev/null`
+		targetProgramArgs=`cat ${sourceFile%.*}.args 2>/dev/null`
+		targetProgramInput=`cat ${sourceFile%.*}.input 2>/dev/null`
+
+		if [ "${prevRuntimeArgs}" != "${runtimeArgs}" ]; then
 			#Собираем библиотеку рантайма.
 			cd ../runtime/build		
 			rm CMakeCache.txt
-			cmake ${RuntimeArgs} .. 1>/dev/null 
+			cmake ${runtimeArgs} .. 1>/dev/null 
 			make 1>/dev/null 
 			AssertSuccess "runtime-build error" 
 			cd - 1>/dev/null			
 		fi		
-		prevRuntimeArgs=${RuntimeArgs}
+		prevRuntimeArgs=${runtimeArgs}
 
-		cp ${sourceFile} ${TmpRefSourceFile}
-		#Компилируем рефал программу
-		compilerArgs=`cat ${sourceFile%.*}.compiler.args 2>/dev/null`
-		refalc ${compilerArgs} ${TmpRefSourceFile} 1>/dev/null 
+		cp ${sourceFile} ${refSourceFile}
+		
+		#Компилируем рефал программу		
+		refalc ${compilerArgs} ${refSourceFile} ${additionalSourcesList} 1>/dev/null 
 		AssertSuccess "Can't compile refal source ${sourceFile}"		
 	
 		#Собираем весь проект - линкуем сгенерированный файл с библиотекой исполнения.
-		cp ${TmpCSourceFile} ../project/main.c
+		cp ${cSourceFile} ../project/main.c
 		cd ../project/build/ 
 		make 1>/dev/null
 		AssertSuccess "[Can't build project!]: ${sourceFile}"
 	
-		#Запускаем испольняемый файл.
-		args=`cat ../${sourceFile%.*}.args 2>/dev/null`		
-		cat ../${sourceFile%.*}.input 2>/dev/null | ./target_binary ${args} > ${RealOutputFile}
+		#Запускаем испольняемый файл.		
+		echo "${targetProgramInput}" | ./target_binary ${targetProgramArgs} > ${RealOutputFile}
 		AssertSuccess "[Bad exe file!]: ${sourceFile}"
 	
 		#Проверям ожидаемое с полученным

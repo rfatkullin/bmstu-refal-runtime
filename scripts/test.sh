@@ -1,11 +1,6 @@
 #!/bin/bash
 #Run from build directory
 
-TestsDir="../tests"
-TmpRefSourceFile="source.ref"
-TmpCSourceFile="source.c"
-RuntimeArgs="-DCMAKE_BUILD_TYPE=DEBUG"
-
 red='\e[0;31m'
 green='\e[0;32m'
 NC='\e[0m' # No Color
@@ -18,14 +13,21 @@ function AssertSuccess
 	fi
 }
 
+runtimeArgs="-DCMAKE_BUILD_TYPE=DEBUG"
 if [ -e "${1%.*}.runtime.args" ]; then 
-	RuntimeArgs=`cat ${1%.*}.runtime.args`		
+	runtimeArgs=`cat ${1%.*}.runtime.args`		
 fi 
+refSourceFile="${1##*/}"
+cSourceFile="${refSourceFile%.*}.c"
+compilerArgs=`cat ${1%.*}.compiler.args 2>/dev/null`
+additionalSourcesList=`cat ${1%.*}.adds_list 2>/dev/null`
+targetProgramArgs=`cat ${1%.*}.args 2>/dev/null`
+targetProgramInput=`cat ${1%.*}.input 2>/dev/null`
 
 #Собираем библиотеку рантайма.
 cd ../runtime/build 
 rm CMakeCache.txt
-cmake ${RuntimeArgs} .. 1>/dev/null 
+cmake ${runtimeArgs} .. 1>/dev/null 
 make 1>/dev/null 
 AssertSuccess "Runtime build error" 
 cd - 1>/dev/null
@@ -34,21 +36,17 @@ cd - 1>/dev/null
 go install -compiler gccgo ${GOPATH}/src/bmstu-refal-compiler/refalc/refalc.go 
 AssertSuccess "Can't build compiler"
 
-cp ${1} ${TmpRefSourceFile}
+cp ${1} ${refSourceFile}
 
 #Компилируем рефал программу
-compilerArgs=`cat ${1%.*}.compiler.args 2>/dev/null`
-refalc ${compilerArgs} ${TmpRefSourceFile} 1>/dev/null 
+refalc ${compilerArgs} ${refSourceFile} ${additionalSourcesList} 1>/dev/null 
 AssertSuccess "Can't compile refal source ${1}"
 
 #Собираем весь проект - линкуем сгенерированный файл с библиотекой исполнения.
-cp ${TmpCSourceFile} ../project/main.c
+cp ${cSourceFile} ../project/main.c
 cd ../project/build/
 make 1>/dev/null
 AssertSuccess "Can't build project!"
 
 #Запускаем испольняемый файл.
-args=`cat ../${1%.*}.args 2>/dev/null`
-cat ../${1%.*}.input 2>/dev/null | ./target_binary ${args}
-
-
+echo "${targetProgramInput}" | ./target_binary ${targetProgramArgs}
