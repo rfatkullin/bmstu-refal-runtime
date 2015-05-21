@@ -1,0 +1,1463 @@
+* SCP4.REF: trace.ref+scp4.ref+drive.ref+basic.ref+compare.ref+access.ref+
+*           analyse.ref+reflib.ref
+* DOCUMENTATION: syntax.doc+debug.doc+test.doc+input.doc
+* Basic-version 2.10.99, new
+
+* Notes about the programming style:
+* In this version of Refal sources we use t-variables just in situations
+* where we can certainly change them with the following
+* substitution  ( (e.term) <-  t.term ). So that can be done automatically.
+
+* $ENTRY Scp, Develop, Decomp, DecAss, PushSt, PopSt, Result;
+
+* $INTERIOR RedHist, ExHist, DecmpExp, Lift, PutCall;
+
+* $BASIC-AUXILIARY Dev-Bas1 ;
+
+$ENTRY Go
+{
+	=	<Prout 'It\'s work'>
+}
+
+* key.ref:
+$EXTRN Strategy;
+
+* drive.ref:
+$EXTRN Drive, Scp4, Mu-Comp1;
+
+* compare.ref:
+$EXTRN Gener, Reduce, Refer, FormGen, ExpectOut1, MakeOut;
+
+* access.ref:
+$EXTRN FunName, NewHVar, EqNode, SetType, IsSec, IsRecur, NameNd,NameBs,Found;
+$EXTRN PutBas, NewNode, GetGraph, ListVar, ClearR,New, InputVar,IdAss, NewInd;
+$EXTRN Basics, FunPath, NewNd, NewTopBasics, GetKey;
+
+* basic.ref:
+$EXTRN Subs, SubsAs, SubsSt, CombAss, DistrAs;
+
+* analise.ref:
+$EXTRN AnlzGr, UnBr, SubsGrs;
+*$EXTRN AnlzGr;
+ 
+* trace.ref:
+$EXTRN Trace, Trace0, TraceRes, CommTrace, CommTraceRes, CommTrace2;
+$EXTRN OutGraph, OutCont, NameBas, Dpth;
+
+/*
+  The main function of the SCP4.
+  Mark the top of the whole history, put a trace of the history with
+  the History function and start develop the start configuration.
+*/
+$ENTRY Scp4 {    
+  (Node e.node) = <HistTop (Top) <History <Scp (Node e.node)>>>;
+} /* End of Scp4 */
+
+$ENTRY Scp4s {  
+  (Node e.node) e.nodes = <Scp4a <Scp4 (Node e.node)> e.nodes>;
+} /* End of Scp4s */
+
+Scp4a {
+ (GRAPH e.gr (Ready e.basics)) t.node e.nodes
+       = (GRAPH e.gr (Ready e.basics)) <NewTopBasics e.basics>
+         <Scp4s t.node e.nodes>; 
+ (GRAPH e.gr (Ready e.basics)) 
+       = (GRAPH e.gr (Ready e.basics)) <NewTopBasics e.basics>;
+}
+
+/*
+  The Scp function calls development to a first situation in a list.
+*/
+* <Scp e.c-branch e.cp-end>
+Scp {    
+*1. A node to develop. Decompose the configuration.
+  e.c-br (Node e.node), <Decomp (Node e.node)>: 
+      { (Node e.node1) = e.c-br <Develop (Node e.node1)>;
+        e.subgrs  = <Scp e.c-br e.subgrs>;
+      };
+
+*2. Subgraphs are encountered. Transform the first of them.
+* Mark the top of the subgraph's history, put a trace of the history with
+* the History function and start develop the start configuration.
+   e.c-br '^'(Subgraph (As e.ass)(Begin t.node':'t.out End) e.subgrs) = 
+      e.c-br '^' (Subgraph (As e.ass)(Begin 
+         <HistTop (Middle) <History <Scp t.node>>>':'t.out End) e.subgrs);
+
+*3. A definition is encountered. 
+  e.c-br '^'(Subgraph (Def e.def) e.subgrs), <Mu-Comp1 (Def e.def)>: 
+     { (Def e.def) = <Scp e.c-br (Def e.def) '^'(Subgraph e.subgrs)>; 
+       t.assign = <Scp e.c-br '^'(Subgraph <SubsGrs t.assign e.subgrs>)>;
+     };
+*4. A basic node.  
+  e.c-br t.basic = e.c-br t.basic;
+} /* End of Scp */
+
+/*
+ Development executes one step of driving over a decomposed node.
+*/
+* <Develop t.node> == t.node(Dev e.development)
+*                  == e.c-branch
+*                  == Zero 
+$ENTRY Develop {    
+*1. Non-empty stack. Drive the node.
+  (Node e.node (Stack (Call e.call) e.stack) t.basics)
+**  ,<FunPath Of Call (Call e.call)>: t.path =
+**        <Drive t.path (Node e.node (Stack (Call e.call) e.stack) t.basics) 
+**                          <GetGraph t.path>>;
+  ,<GetKey Strategy>:
+  { 
+  /*0. Image function. Just to force decomposition. */
+    s.strat, <Appl__Call (Call e.call)>: (Call e.call0)
+    , <ApplDecmpCall (Call e.call)>: 
+         { (Call e.call1) = <Develop (Node e.node (Stack (Call e.call0) e.stack) t.basics)>;
+           (Call e.call1) e.calls =
+             <Dev-Bas1 <FunPath Of Call (Call e.call1)>
+                     (Node e.node (Stack (Call e.call1) e.calls e.stack) t.basics)>; 
+         };
+
+  /*1. Lazy supercompilation. */
+    Lazy = <Dev-Bas1 <FunPath Of Call (Call e.call)>
+                     (Node e.node (Stack (Call e.call) e.stack) t.basics)>; 
+
+   /*2. Applicative supercompilation. Go on decomposition. */
+    Applicative, <ApplDecmpCall (Call e.call)>: (Call e.call1) e.calls 
+         = <Dev-Bas1 <FunPath Of Call (Call e.call1)>
+                     (Node e.node (Stack (Call e.call1) e.calls e.stack) t.basics)>; 
+  };
+
+*2. Empty stack. Passive bottom or just a basic node.  
+    (Middle) e.br t.node = e.br t.node (Ready);
+             e.br t.node = e.br t.node (Ready);
+} /* End of Develop */
+
+* An auxiliary function for Develop.
+Dev-Bas1 {    
+*1. Non-empty stack. Drive the node.
+  t.path t.node = <Drive t.path t.node <GetGraph t.path>>;
+}  
+
+* ===================== Examination of History ===========================
+/*
+ Examination of the history is doing by two passages along the current
+ branch of the driving. The first one looks for a first basic configuration
+ ( id est a format of a ready residual graph ) such that the current
+ situation is reduced to it as well as in this passage we try to reduce
+ the current situation to previous ones step by step until a success is
+ reached. The first passage along the driving tree must be done from up
+ to down. The goal is to construct a compact residual program. That
+ does not contradict to its efficiency because of the upper basic situations
+ are tighter than the lower ones. The same fact is truely for the pevious
+ situations. We delimetes the reducing and generalization in two different
+ passages through the tree. The second is doing from bottom to up.
+ By the word, in this way there are not rejected generalizations.
+ ( There is not a "transitive" function constructed by  compilation without
+ decomposition. It seems that is not true.)
+ We mark nodes of the current branch with stack's labels. They are
+ just calls to the function History. Whenever we need to analyze the branch's
+ history, we just call nothing so the History's call will start to run. 
+*/
+
+* <RedHist t.prev-node(Dev (e.c-develop)'+'(e.br t.node(e.dev)) e.p-brs) 
+*          t.curr-node>
+RedHist {    
+*1. Subgraphs are encountered. Go inside the first of them.
+*   Try to reduce the current node to the list of basic situation.
+  e.br '^'(Subgraph e.subgrs (Basics e.basics)) 
+  t.curr-node =   
+          <Tr t.curr-node (Basics e.basics)> <Dpth Inc>
+           <ExRed <Reduce t.curr-node To Basics (Basics e.basics)> 
+                  e.br '^'(Subgraph e.subgrs (Basics e.basics)) t.curr-node>;
+
+*2. A secondary node is encountered. 
+*   Try to reduce the current node to the list of basic situations.
+  e.br t.prev-node(Dev e.dev) t.curr-node, <IsSec Node t.prev-node>:True
+        =
+*           <Tr t.curr-node t.basics> <Dpth Inc>
+           <ExRed <Reduce t.curr-node To Basics <Basics From Node t.prev-node>> 
+                   e.br t.prev-node(Dev e.dev) t.curr-node>;
+
+*3. The current node is reached. Reducing did not success. Try generalize. 
+  e.br t.prev-node(e.dev) t.curr-node, <EqNode t.prev-node t.curr-node>:True =
+  e.br t.prev-node(e.dev) (GenStart t.curr-node) <Dpth Init>;
+
+*4. A primary node is encountered. There is just one branch.
+*   Transitive situation. This case can be a reason for looping forever.
+*  e.br t.prev-node(Dev () '+'t.br1) t.curr-node,
+*  <Basics From Node t.prev-node> : t.basics = 
+*              <Trace> <Trace 'Try reducing Node: '> <Trace t.curr-node>
+*              <Trace 'To the list of basic situations: '>
+*              <Trace t.basics>
+*           <ExRed <Reduce t.curr-node To Basics t.basics> 
+*                   e.br t.prev-node(Dev () '+'t.br1) t.curr-node>;
+
+*5. A primary node is encountered. 
+*   Try real reducing and analyse a result of the reducing.
+  e.br t.prev-node(Dev e.dev) t.curr-node =
+              <Trace> <Trace 'Try reducing Node: '>
+              <Trace t.curr-node>
+              <Trace 'To Node: '>
+              <Trace t.prev-node> <Dpth Inc>
+                           <ExRed <Reduce t.curr-node To t.prev-node> 
+                                  e.br t.prev-node(Dev e.dev) t.curr-node>; 
+} /* End of RedHist */
+
+
+/* Function ExRed just examines the result of a reducing.
+   This function is auxiliary for the function RedHist.  
+   See the comments to the function RedHist for an additional explanation. 
+*/
+* <ExRed t.reduct t.prev-node(e.develop) t.curr-node> 
+*                == See  comments to the function RedHist.
+ExRed { 
+*1. The current node can not be reduced to the previous. 
+*   Try to reduce the following node.
+  (False) e.br t.prev-node(Dev (e.c-dev)'+'(e.br1) e.p-brs) 
+  t.curr-node = 
+      <Trace 'Reducing is not successful. '> <Trace>
+      <History e.br t.prev-node(Dev (e.c-dev)'+'(<RedHist e.br1 t.curr-node>) 
+                                e.p-brs)>;
+
+*1a. The current node can not be reduced to the list of basic situation. 
+*    Subgraphs are encountered. Go inside the first of them.
+  (False) e.br '^'(Subgraph (As e.ass)(Begin e.gr ':'t.out End) e.subgrs) 
+  t.curr-node = 
+      <Trace 'Reducing is not successful. '> <Trace>
+      <History e.br '^'
+       (Subgraph (As e.ass)(Begin <HistTop (Middle) <RedHist e.gr t.curr-node>> ':'t.out End) 
+                    e.subgrs)>;
+
+*2a-c. Reducing is successful. Go backwards the leaf ( the current node ) and
+*   form a reference to the previous node or to the basic configuration
+*   where the reducing was happened.  
+*2a. Reducing to the previous node. Branching.
+  (ToPrev e.red)  e.br t.prev-node(Dev (e.c-dev)'+'(e.br1) e.p-brs) t.curr-node
+   = <RedTrace (ToPrev e.red)>
+     <History e.br <SetType Of Node t.prev-node As Recur>(Dev (e.c-dev)'+'
+           (<BackDn e.br1 (Reduce <NameNd t.curr-node> (e.red))>) e.p-brs)>;
+
+*2b. Reducing to a basic configuration. Branching.
+  (ToBasic e.red) e.br t.prev-node(Dev (e.c-dev)'+'(e.br1) e.p-brs) t.curr-node
+   = <RedTrace (ToBasic e.red)>
+     <History e.br t.prev-node(Dev (e.c-dev)'+'
+           (<BackDn e.br1 (Reduce <NameNd t.curr-node> (e.red))>) e.p-brs)>;
+
+*2c. Reducing to a basic configuration. Subgraphs.
+ (ToBasic e.red) e.br '^'(Subgraph (As e.ass)(Begin e.gr ':'t.out End) e.subgrs) 
+  t.curr-node
+  = <RedTrace (ToBasic e.red)>
+    <History e.br '^'
+      (Subgraph (As e.ass)(Begin <HistTop (Middle) 
+            <History <BackDn e.gr (Reduce <NameNd t.curr-node> (e.red))>>> 
+                ':'t.out End)
+     e.subgrs)>;
+} /* End of ExRed */
+
+
+* Trace an information of a successful reduction.
+RedTrace {    
+ t.reduct = <CommTrace 'Reducing is successful.'>
+            <CommTrace 'The reduct is:'>
+            <CommTrace t.reduct> <CommTrace> <Dpth Init>;
+}  
+
+* Trace an attempt of reducing to the list of basic situations.
+Tr {
+ t.curr-node (Basics ) = ;
+ t.curr-node (Basics e.basics) =
+              <Trace> <Trace 'Try reducing Node: '> <Trace t.curr-node>
+              <Trace 'To the list of basic situations: '>
+              <Trace (Basics e.basics)>;
+}
+
+/*
+ Every call to the History function is a trace of development's history
+ along the current branch. Functions set an information about the current
+ branch on the end of the branch. The information says to the History
+ function what we have to do with a node in the History that is a top
+ node in the view of this function.
+*/
+* <History e.current-branch
+*     t.node(Dev (e.c-dev)'+'(e.current-branch t.info) e.p-brs)>    
+*  | '^'(Subgraph
+*         t.assignment (Begin e.current-branch t.info ':'t.out End)>
+*
+* where t.info ::= (Ready e.basics)
+*                       * the current branch is full ready,
+*                       * e.basics configurations were built
+*                       * along this branch;
+*                | (Gener t.node)
+*                       * t.node is a last node on the branch;
+*                       * a passage along the branch for generalization
+*                       * the node with primary nodes from the branch;
+*                | (GenStart t.node)
+*                       * passage for generalization starts;
+*                | (Reduce t.node)
+*                       * t.node is a last node on the branch;
+*                       * a passage along the branch for reducing
+*                       * the node to primary nodes from the branch;
+*                | Zero
+*                       * the current branch has to be pruned.
+History {    
+*1. Subgraph is full ready. Put it outside the subrgaph's bag.
+*   Take the list of basic situations. Analyze the c-subgraph
+*   for normalization befor final output on the disk.
+*   Look for the next p-branch or cp-subgraph to continue development.
+*   Pick up a list basic configurations for the next subgraphs. 
+ e.br '^'(Subgraph (As e.as)(Begin e.gr (Ready e.basics) ':'t.out End) 
+                   e.cp-subgrs (Basics e.basics1)) =
+    <History
+      <Histon e.br 
+          <AnlzGr (Subgraph e.cp-subgrs (Basics <ClBasics e.basics1 e.basics>)) 
+                      (As e.as)(Begin e.gr ':'t.out End)> 
+      >
+    >; 
+
+
+*2. A node is full ready inside a subgraph's structure. 
+*   Just put it outside the subrgaph's bag. See comments to the case #1.
+ e.br '^'(Subgraph t.reduction t.node (Ready e.basics)  
+                   e.cp-subgrs (Basics e.basics1)) =
+    <History
+     <Histon e.br t.reduction t.node 
+            '^' (Subgraph e.cp-subgrs (Basics <ClBasics e.basics1 e.basics>))> 
+    >; 
+
+*3. Subgraph is Zero. The current branch has to be pruned.
+ e.br '^'(Subgraph (As e.as)(Begin e.gr Zero ':'t.out End) e.cp-subgrs) = Zero;
+
+*4. The last branch is full ready. The node is recurrent.
+*   There can be two assignments together whenever this node was
+*   generalized (generalization of generalization ).
+*   Combine these assignments. See comments to the case #1.
+*   Remove delimiter of p-branches and c-branches.
+*!! We cannot remove this trival branching because of there are !!
+*!! references to it.                                           !!
+ e.br t.node(Dev (e.c-dev)'+'(e.br1 (Ready e.basic)) ), 
+ <IsRecur Node t.node>:True = 
+     <CombAss e.br 
+*= A call for debugging.        
+*=            <Result0 (Basics e.basic) t.node(Dev e.c-dev'+'(e.br1))> 
+            <AnlzGr (Recur (Basics e.basic)) t.node(Dev e.c-dev'+'(e.br1))>>; 
+
+*5a. The last branch is full ready. The previous development is empty.
+*    The node is not recurrent. Remove the node.
+ e.br t.node(Dev ()'+'(e.br1 (Ready e.basic)) )
+        = e.br e.br1 (Ready <Basics1 From Node t.node> e.basic); 
+
+*5b. The last branch is full ready. The node is not recurrent.
+*   General case.
+ e.br t.node(Dev (e.c-dev)'+'(e.br1 (Ready e.basic)) ) =
+* The basics configurations can be thrown.
+        e.br <PutBas /*empty*/ Inside t.node>
+        (Dev e.c-dev'+'(e.br1)) (Ready <Basics1 From Node t.node> e.basic); 
+
+*6. Branch is full ready. That branch is not last.
+*   Put it inside the c-development. Go to the next branch. 
+ e.br t.node(Dev (e.c-dev)'+'(e.br1 (Ready e.basics)) '+'e.cp-brs) = 
+             <History e.br <PutBas e.basics Inside t.node>
+                      (Dev (e.c-dev'+'(e.br1)) <Histon '+'e.cp-brs>)>; 
+
+*7. The branch is Zero. Remove it.
+ e.br t.node(Dev (e.c-dev)'+'(e.br1 Zero) e.cp-brs) = 
+    <HistZero e.br t.node(Dev (e.c-dev) e.cp-brs) <Basics From Node t.node>>; 
+
+*8. Exit from a subgraph. Just move  an information about. 
+ e.br '^'(Subgraph (As e.ass)(Begin e.gr t.info ':'t.out End) e.cp-subgrs) = 
+     e.br '^'(Subgraph  (As e.ass)(Begin e.gr ':'t.out End) e.cp-subgrs) <ChInfo t.info>; 
+
+*9. Exit from a sub-branch. The second passage over the branch from bottom 
+*   to up. The previous node is not secondary. Generalization is required.
+ e.br t.node(Dev (e.c-dev)'+'
+            (e.br1 t.prev-node(Dev e.dev) (Gener t.curr-node)) e.p-brs),
+    <IsSec Node t.prev-node>:False   = 
+    <Trace> <Trace 'Try generalise Node: '>
+    <Trace t.curr-node>
+    <Trace 'With Node: '>
+    <Trace t.prev-node>
+    <ExGen <Gener t.curr-node With t.prev-node> (Branching)
+           e.br t.node(Dev (e.c-dev)'+'
+                      (e.br1 t.prev-node(Dev e.dev)) e.p-brs) (Gener t.curr-node)>; 
+
+*10. Exit from a sub-branch. The first passage over the branch from bottom 
+*   to up. Or the second one starts or a secondary node. Just move an information. 
+*   The information must be changed with Gener in the second case.
+ e.br t.node(Dev (e.c-dev)'+'(e.br1 t.info) e.p-brs) = 
+      e.br t.node(Dev (e.c-dev)'+'(e.br1) e.p-brs) <ChInfo t.info>; 
+
+*11. Exit from History.
+ e.br s.info = e.br s.info;
+ e.br t.info = e.br t.info;
+} /* End of History */
+
+* An auxiliary function for History.
+Basics1 { From Node (Node e.node (Basics e.basics)) = e.basics; }
+
+/*
+  HistZero takes care of ZERO situation along the current branch.
+*/
+* <HistZero e.current-branch t.node(Dev e.dev) t.basics>
+HistZero {    
+*1. The branching is full pruned.
+  e.br t.node(Dev () ) t.basics = Zero;
+
+*2a. There is only c-branch. The node is recurrent.  
+*    We have to output this function because it is a basic configuration
+*    and there can be a reference to it.
+  e.br t.node(Dev ('+'(e.c-br)) ) (Basics e.basic), 
+  <IsRecur Node t.node>:True =
+      <EmptyRes (e.br) (<AnlzGr (Recur (Basics e.basic)) t.node(Dev '+'(e.c-br))>) 
+                e.c-br (Ready e.basic)>;
+
+*2b. There is only c-branch. The node is not recurrent.
+  e.br t.node(Dev ('+'(e.c-br)) ) (Basics e.basic) 
+        = e.br e.c-br (Ready e.basic);
+
+*3. There are at least two c-branches. Node is recurrent.  No p-braches.
+  e.br t.node(Dev (e.c-dev) ) (Basics e.basic), <IsRecur Node t.node>:True 
+*  a call for debugging.
+*        = <Result0 (Basics e.basic) t.node(Dev e.c-dev)>
+         = <CombAss e.br <AnlzGr (Recur (Basics e.basic)) t.node(Dev e.c-dev)>>; 
+
+*4. There are at least two c-branches. Node is not recurrent. No p-braches.
+  e.br t.node(Dev (e.c-dev) ) (Basics e.basic) 
+        = e.br <PutBas /*empty*/ Inside t.node>
+               (Dev e.c-dev) (Ready e.basic); 
+
+*5. There are p-branches. General case.
+*   Take care of next branches.
+ e.br t.node(Dev (e.c-dev) '+'e.cp-brs) (Basics e.basic) = 
+             <History e.br t.node(Dev (e.c-dev) <Histon '+'e.cp-brs>)>; 
+} /* End of HistZero */
+
+* An auxiliary function for HistZero.
+EmptyRes {
+ (e.br) (e.1 Zero) e.branch = Zero;
+ (e.br) (e.result (Ready e.basics)) e.branch (Ready e.basics1) 
+                     = e.br e.result (Ready e.basics); 
+*+                     = e.result (Ready e.basics); 
+}
+
+/*
+  HistTop function is a delimiter of the history for a subgraph.
+*/
+* Top of the tree. 
+* <HistTop (s.top) e.current-branch '^' (Subgraph e.cp-subgrs) t.info>
+* <HistTop (s.top) e.current-branch t.node(Dev e.dev) t.info>
+*  where s.top ::= Top    * the top of the whole tree.
+*                | Middle * the top of a subgraph. 
+HistTop {    
+/*1. Top of the whole tree. Subgraph is encountered. Reducing must be done. 
+*   Do it.
+ (Top) e.br '^'(Subgraph e.cp-subgrs) (Reduce t.curr-node) = 
+      <HistTop (Top) <History <RedHist e.br '^'(Subgraph e.cp-subgrs) t.curr-node>>>; 
+
+*2. Top of the whole tree. Node is encountered. Reducing must be done. Do it.
+ (Top) e.br t.node(Dev e.dev) (Reduce t.curr-node) = 
+     <HistTop (Top) <History <RedHist e.br t.node(Dev e.dev) t.curr-node>>>;
+*/     
+
+*1. Top of the whole tree. Reducing must be done. Do it.
+ (Top) e.br (Reduce t.curr-node) = 
+      <HistTop (Top) <History <RedHist e.br t.curr-node>>>; 
+
+*2. Top of the whole tree. Subgraph is encountered. 
+ (Top) e.br  '^'(Subgraph e.cp-subgrs) (Gener t.curr-node) = 
+    <HistTop (Top) <History <BackDn e.br '^'(Subgraph e.cp-subgrs) (Gener t.curr-node)>>>; 
+
+*3. Node is encounered. The node is not secondary.
+*   Try to generalize the upper situation.
+ (s.top) e.br t.prev-node(Dev e.dev) (Gener t.curr-node), 
+ <IsSec Node t.prev-node>: False = 
+    <Trace> <Trace 'Try generalise Node: '>
+    <Trace t.curr-node>
+    <Trace 'With Node: '>
+    <Trace t.prev-node>
+                          <ExGen <Gener t.curr-node With t.prev-node> (s.top)
+                             e.br t.prev-node(Dev e.dev) (Gener t.curr-node)>; 
+
+*4. A secondary node is encountered. 
+ (s.top) e.br t.prev-node(Dev e.dev) (Gener t.curr-node) = 
+      <ExGen (False) (s.top) e.br t.prev-node(Dev e.dev) (Gener t.curr-node)>; 
+
+*5. The graph is full ready. 
+ (s.top) e.br (Ready e.basics) = 
+*= A call for debugging.        
+*=        <Result0 (Finish s.top) (Basics e.basics) e.br>
+          <AnlzGr (Recur (Basics e.basics)(Finish s.top)) e.br>;
+
+*6. Top of the tree. The graph is Zero. 
+ (s.top) e.br Zero = <Result Zero (Finish s.top) (Basics ) Zero>;
+
+******************************************************************************
+* This part works out a result of the first development when the SCP starts. *
+* On the end of a branch can be a flag. The flag is just a result            *
+* of driving along the branches where histoty's passages were not done.      *
+******************************************************************************
+*7. History starts on the top of the whole SCP. Result is passive.
+ (s.top) e.br Passive = <Result GRAPH (Finish s.top) (Basics ) e.br>;
+
+*8. History starts on the top of a subgraph. Result is an active branching.
+ (Middle) e.br t.node(Dev ()'+'e.cp-brs) s.prim-flag
+* ,<SetType Of Node t.node As Prim>: t.node1 =
+*                  e.br t.node1(Dev ()'+'e.cp-brs) (Reduce t.node1);  
+     = <HsT-Bas1 e.br <SetType Of Node t.node As Prim>(Dev ()'+'e.cp-brs)>;  
+
+*9. History starts on the top of the whole SCP. Result is an active branching.
+ (Top) e.br t.node(Dev ()'+'e.cp-brs) s.prim-flag =  
+       <HistTop (Top) <History e.br t.node(Dev () <Histon '+'e.cp-brs>)>>;  
+
+*10. History starts on the top of the whole SCP. Result is a subgraph.
+ (s.top) e.br '^'(Subgraph e.subgraphs) s.prim-flag =  
+         <HistTop (s.top) <History <Histon e.br '^'(Subgraph e.subgraphs)>>>;  
+
+*11. History starts on the top of the whole tree or a subgraph after
+*    a transitive step. Result is an active node. We call Scp again.
+ (s.top) e.br (Node e.node) s.active-flag = 
+          <HistTop (s.top) <History <Scp e.br (Node e.node)>>>;
+
+*12. Top of a subgraph. Just move an information. 
+ (Middle) e.br t.info = e.br t.info; 
+} /* End of HistTop */
+
+* An auxiliary function for HistTop.
+HsT-Bas1 {    
+*8. History starts on the top of a subgraph. Result is an active branching.
+ e.br t.node1(Dev e.dev) = e.br t.node1(Dev e.dev) (Reduce t.node1);  
+}
+
+ChInfo {
+  (GenStart e.info) = (Gener e.info);
+  e.info = e.info;
+} /* End of ChInfo */
+
+/* Function ExGen just examines the result of a generalization.
+   This function is auxiliary for the function History.  
+*/
+* <ExGen t.generalization t.where t.prev-node(e.develop) t.info> 
+ExGen { 
+*1. The current node is not generalized with the previous. 
+*   We are on the top of the tree. Generalization was not happened. 
+*   Go backwards the current node to continue the development.
+    (False) (Top) e.br t.info = 
+                       <Trace 'Generalisation is not successful. '> 
+                       <Trace 'The top of the tree. '> <Trace>
+                       <HistTop (Top) <History <BackDn e.br t.info>>>; 
+
+*2. The current node is not generalized with the previous. 
+*   We are in a middle point of the tree. Try to generalize the next node.
+    (False) (s.flag) e.br t.info = 
+                       <Trace 'Generalisation is not successful. '> 
+                       <Trace 'A middle point of the tree. '> <Trace>
+                        e.br t.info;
+
+*3. General case. We are in a baranching of the tree.
+*   There can be a repeated generalization and two assignments together.
+*   Distribute a first assignment over others.
+  t.generalization (Branching)
+  e.br t.node(Dev (e.c-dev)'+'(e.br1 t.prev-node(e.dev)) e.p-brs) t.info =
+     <CommTrace 'Generalisation is successful. '> 
+     <Trace 'A middle point of the tree. '> 
+     <CommTrace 'The generalisation is: '>  <CommTrace t.generalization> <CommTrace>
+     <Trace0 <Step> 'Gener'>
+     <History e.br t.node(Dev (e.c-dev)  <Histon '+'(  
+                <DistrAs  e.br1 <CommTraceRes ('After generalization: ') 
+                     <FormGen t.generalization t.prev-node>>> Active) e.p-brs>)>; 
+
+*4. The upper situation was generalized.
+  t.generalization (s.top) e.br t.prev-node(Dev e.dev) t.info =
+     <CommTrace 'Generalisation is successful. '> 
+     <CommTrace2 'The upper situation was generalized. '> 
+     <CommTrace2 'The generalisation is: '> <CommTrace t.generalization> <CommTrace>
+     <Trace0 <Step> 'Gener'>
+       <HistTop (s.top) 
+           <History  <Scp <DistrAs e.br <CommTraceRes ('After generalization: ') 
+                           <FormGen t.generalization t.prev-node>>>>>  
+       >;
+} /* End of ExGen */
+
+/*
+  BackDn function looks for a node along the current branch and
+  starts an action in according to an information inside the t.info-bag.
+  The node is hidden inside the information. The search is done up to
+  down along the branch. At present it is necessary after a unsuccessful
+  reducing or generalization along the whole current branch.
+*/
+* <BackDn e.branch '^'(Subgraph e.sybgraphs) t.info> 
+* <BackDn e.branch t.node(Dev e.development) t.info> 
+BackDn {    
+*1. Subgraphs are encountered. Go inside the first of them.
+  e.br '^'(Subgraph (As e.ass)(Begin e.gr ':'t.out End) e.subgrs) t.info =  
+    <History e.br '^'
+        (Subgraph (As e.ass)(Begin <HistTop (Middle) <History <BackDn e.gr t.info>>> ':'t.out End)
+        e.subgrs)>; 
+
+*2. The current node is reached. Reducing success.  
+*   A rest in the current stack can exist so a subgraph still is possible. 
+*   We call the DistrAs function because of a generalized node can be reduced
+*   to a previous, so there can be two assignments together. One from
+*   the generalization another from the reducing. This situation can 
+*   happened when the reason of the generalization was just different paths.
+*   (e.prev-path) = (), (e.current-apth) = (e.is-not-empty). 
+  e.br t.node(e.dev) (Reduce s.curr-index e.reduct), 
+  <Found Node t.node By s.curr-index>: True =
+         <History  <Histon <Scp <DistrAs e.br <CommTraceRes ('Reference: ') 
+                              <Refer From t.node To e.reduct>>> >> >;
+
+*3. The current node is reached. Generalization does not success. 
+*   History is ongoing ! Ahead to a win of the capitalism.
+  e.br t.node(Dev ()'+'e.brs) (Gener t.curr-node), 
+  <EqNode t.node t.curr-node>: True =
+                  <Trace 'The history is ongoing!'>
+                  <History e.br t.node(Dev () <Histon '+'e.brs>)>;
+
+*4. Branchin is encountered. The current node is not reached.
+*   Go on to look for this node.
+  e.br t.prev-node(Dev (e.c-dev)'+'(e.br1) e.p-brs)  t.info =
+      <History e.br t.prev-node(Dev (e.c-dev)'+'(<BackDn e.br1 t.info>) 
+                               e.p-brs)>;
+} /* End of BackDn */
+
+/*
+  Histon function has worked just after a unsuccessful generalization
+  along the whole history. The argument of the function is a tree
+  that was constructed by the driving. Each node was marked by
+  the driving as Prim (primary) or Sec (secondary). Primary nodes
+  are exactly those nodes that are considered by  generalization and
+  reducing. If you do not want to have a node in the history just set
+  its type as secondary. This action can be the reason of an infinit
+  loop when the supercompiler works. The driving also marked each branch
+  on its end with an information. The information sais whether is there
+  a primary node along the branch. See the driving for an additional
+  comment.
+  The Histon function looks for a first primary node on the current
+  branch  or an active node on the end of the branch. It mark itself
+  trace with calls to the History function. The stack of these calls
+  is a really history. The last means we keep our history in the form
+  of a stack:
+        <History ... <History ... <History ... > ...> ... > ...>
+  There is no data-structure to keep the whole history.
+  
+  If a primary will be found then
+     -  this function just put (Reduce t.primary-node) after
+        the branching that is defined by  the primary node;
+  If an active node will be found on the end of the current branch then
+     -  this function developes the active node and analyses
+        a result of the development. That is a depth-first strategy
+        to develop;
+  If a passive node will be found on the end of the current branch then
+     -  this function put (Ready) on the end of the branch;
+  
+  A first call to the History-function will take care of an action
+  in according the information from the Histon-function.
+*/
+
+* <Histon '+'(e.branch t.node(e.dev) s.primary-flag) e.cp-branchs>
+* <Histon '+'(e.branch '^'(Subgraph e.subrs) s.primary-flag) e.cp-branchs>
+* <Histon e.branch '^'(Subgraph e.subrs)>
+Histon {    
+*1. Secondary node is encountered. A primary node exist inside the development.  
+*   Go to the primery node to reduce it. 
+*   Mark the track with the History function.
+ '+'(e.br t.node(Dev ()'+'e.brs) Primary) e.cp-brs, <IsSec Node t.node>:True = 
+         '+'(<History e.br t.node(Dev () <Histon '+'e.brs>)>) e.cp-brs; 
+
+*2. Pimary node is encountered. Try to reduce it to nodes along the history.
+* The reducing is doing by functions in the SCP's stack that were put
+* along the history to mark it. So we just have to give an information for
+* them on the end of the current branch.
+  '+'(e.br t.node(Dev ()'+'e.brs) Primary) e.cp-brs = 
+         '+'(e.br t.node(Dev ()'+'e.brs) (Reduce t.node)) e.cp-brs; 
+
+*3. Secondary node is encountered. The development has secondary and passive 
+*   nodes only. The branch has been worked out. Put an information 
+*   for the History function to go to the following branch.    
+  '+'(e.br t.node(Dev ()'+'e.brs) Passive) e.cp-brs = 
+         '+'(e.br t.node(Dev '+'e.brs) (Ready)) e.cp-brs;
+*3a.         
+  '+'(e.br t.node(Dev '+'e.brs) Passive) e.cp-brs = 
+         '+'(e.br t.node(Dev '+'e.brs) (Ready)) e.cp-brs; 
+
+*4. Secondary node is encountered. The development has active nodes inside. 
+*   Go to the active nodes to develope them. 
+  '+'(e.br t.node(Dev ()'+'e.brs) Active) e.cp-brs = 
+         '+'(<History e.br t.node(Dev () <Histon '+'e.brs>)>) e.cp-brs; 
+
+*5. Active node is encountered on the end of a development.
+*   Develop the node. In fact that is a depth first strategy of the driving.  
+  '+'(e.br (Node e.node) Active) e.cp-brs = 
+              <Histon '+'(e.br <Develop (Node e.node)>) e.cp-brs>; 
+
+*6. Passive node is encountered on the end of a development.
+*   The branch is ready.
+  '+'(e.br (Node e.node) Passive) e.cp-brs = 
+         '+'(e.br (Node e.node) (Ready)) e.cp-brs; 
+
+*7. Zero is encountered. 
+  '+'(e.br Zero) e.cp-brs = '+'(Zero) e.cp-brs;
+
+*8. Subgraph is encountered inside a sub-branch. 
+  '+'(e.br '^'(Subgraph e.cp-subgrs) Active)  e.cp-brs  = 
+         '+'(<History <Histon e.br '^' (Subgraph  e.cp-subgrs) >>) e.cp-brs; 
+
+*9a?. Reducing is encountered on the end of the current branch 
+*    in the subgraph's structure. 
+   e.br (As e.as1) '^'(Subgraph e.cp-subgrs t.basics) = 
+            <Histon e.br '^'(Subgraph <DistrAs (As e.as1) e.cp-subgrs> t.basics)>; 
+
+*9. Subgraph is encountered on the end of the current branch.
+   e.br '^'(Subgraph (As e.as) (Begin e.gr ':'t.out End) e.cp-subgrs) = 
+       e.br '^'(Subgraph (As e.as)
+                         (Begin <HistTop (Middle) <History <Scp e.gr>>> ':'t.out End)
+                         e.cp-subgrs); 
+ 
+*9b. Definition is encountered on the end of the current branch 
+*    inside the subgraph's structure. Get it out.
+   e.br '^'(Subgraph (Def e.def) e.cp-subgrs) = 
+            <Histon e.br (Def e.def) '^'(Subgraph e.cp-subgrs)>; 
+
+*9c. Reducing is encountered on the end of the current branch 
+*    inside the subgraph's structure. Get it out.
+   e.br '^'(Subgraph (As e.as)(Basic e.basic) e.cp-subgrs) = 
+           <Histon e.br (As e.as)(Basic e.basic)  '^'(Subgraph e.cp-subgrs)>; 
+
+*10. A list of subgraphs is finished. 
+  e.br '^'(Subgraph (Basics e.basics)) = <CombAss e.br> (Ready e.basics); 
+
+*** The last cases can be happened just after anlyzing of a residual graph.
+*10a. A (Begin End) was removed by the clearning. 
+  e.br (Ready e.basics) = <CombAss e.br> (Ready e.basics); 
+
+*10b. A (Begin End) was removed by distribution of subgraphs. 
+  e.br t.node(Dev () '+' e.cp-brs) = 
+               e.br t.node(Dev () <Histon '+' e.cp-brs>); 
+
+*11. A subgraph is Zero after analyzing. 
+  e.br Zero = Zero; 
+} /* End of Histon */
+
+
+/*
+  The Result-function is the last that watches a c-graph to be saved on a disk.
+  It just calls a reformating function and pretty print.
+  This function finishes a current work of the SCP4 whenever it see the top
+  of a whole c-graph.
+*/
+* <Result t.outfmt (Basics e.basics) t.node(e.dev)> 
+*                == t.reduction t.basic (Ready e.basics);
+* <Result (Finish s.where) (Basics e.basics) e.branch> 
+*                == e.branch (Ready e.basics);
+*                == Zero;
+*                == /* Full stop of supercompilation */;
+Result0 { e.X = ; }
+$ENTRY Result {
+ s.type (Output e.outfmt) (Basics e.basics) 
+ (Node s.id Recur t.restr 
+      (Stack e.calls (Conf (e.conf':'t.out-var))) (Basics e.basics1))(e.dev),
+   <NameBas s.id>: s.name  = 
+      <ResultTransit 
+        <IdAss From Stack (Stack e.calls (Conf (e.conf':'t.out-var)))> 
+        (Basic s.id s.type (Output e.outfmt) ':'t.out-var) 
+      (Node s.id Recur t.restr 
+      (Stack e.calls (Conf (e.conf':'t.out-var))) (Basics e.basics1))(e.dev)
+        (Ready e.basics1 e.basics 
+               (s.id s.type (Input t.restr (e.calls)) (Output e.outfmt)) )
+     >
+    <Trace 'New graph was built:' >
+    <Trace 'From the next node:' >
+    <Trace (Node s.id Recur t.restr (Stack e.calls (Conf (e.conf':'t.out-var))) 
+                (Basics e.basics1))>
+    <OutGraph s.name (Output e.outfmt)
+           (Node s.id Recur t.restr (Stack  e.calls (Conf (e.conf':'t.out-var))) 
+                 (Basics e.basics1))(e.dev)>;
+
+ s.type (Finish Top) (Basics e.basics) e.br, <UnBr e.br>: e.br1 
+      = (GRAPH <New Graph> e.br1 (Ready e.basics))
+       <Trace0 'The top of a whole subgraph was built:' >
+       <OutGraph MiddleGraph (Output (Rs) ((No)':'(Var 'e' 0))) e.br1>
+       <Trace 'The list of the basic situations:' >
+       <OutCont MiddleGraph (Basics e.basics)>;
+
+ s.type (Finish Middle) (Basics e.basics) Zero = Zero;
+ s.type (Finish Middle) (Basics e.basics) e.br 
+                                   = <CombAss e.br> (Ready e.basics);
+} /* End of Result */
+
+ResultTransit {
+* Residual graph is transient.
+ t.assign t.basic t.node(Dev '+'(e.br (Node s.id Passive e.node1) e.trash)) t.ready
+         = e.br (Node s.id Passive e.node1) t.ready;
+
+* An imitation from normalization. 
+ t.assign t.basic 
+ (Node s.id Recur t.restr (Stack e.calls (Conf e.conf)) t.basics)
+ (Dev ) t.ready 
+         = (Node <New Node> Passive t.restr (Stack (Conf <SubsAs t.assign e.conf>)) 
+                 t.basics) t.ready ;
+ t.assign t.basic t.node(Dev e.dev) t.ready = t.assign t.basic t.ready;
+}
+
+* ===================== End of Examination of History ========================
+
+* =========================== Decomposition ==================================
+* <Decomp t.node> == t.node
+*                 == '^' (Subgraph e.subgraphs (Basic))
+$ENTRY Decomp {
+*1. Node is flat and passive.
+  (Node s.index s.type t.restr 
+               (Stack (Conf ((Var 'h' e.hvar)':'t.var))) t.basics) = 
+          (Node s.index Passive t.restr 
+                        (Stack (Conf ((Var 'h' e.hvar)':'t.var))) t.basics); 
+
+*2. Node is unitary active. There is only a bottom in the stack.
+  (Node e.node (Stack (Conf (('!' (Fn s.name e.arg)':'t.var)':'t.outvar) )) 
+    t.basics), <NewHVar t.var>:t.hvar =
+   (Node e.node (Stack (Call <New Call> (s.name) 
+                       (('!' (Fn s.name e.arg)':'t.var)':'t.hvar))
+                       (Conf (t.hvar':'t.outvar)) ) t.basics);
+
+*3. Node is unflat. There is only a bottom in the stack.
+*   General case. There are an passive constructor on the upper level.
+*   Real decomposition is tried. 
+**  (Node s.index s.type t.restr (Stack (Conf t.assign)) t.basics)
+**  ,<DecAss t.restr (As t.assign)>: 
+**         {
+***3a. There is no call.
+**           (As t.assign1) = /-* Here t.assign = t.assign1 *-/
+**           (Node s.index Passive t.restr (Stack (Conf t.assign)) t.basics); 
+**
+***3b. Decomposition is happened.  
+**          e.decomp (As (e.expr':'t.outvar)),
+**          <ListVar Of Situation (Conf (e.expr':'t.outvar))>: e.listvar =
+**          '^'(Subgraph e.decomp  <IdAss From Vars e.listvar>
+**               (Begin 
+**                 <NewNode <ClearR t.restr e.listvar> 
+**                           t.basics (Conf (e.expr':'t.outvar))>':'t.outvar 
+**               End) (Basics )
+**             ); 
+**       };
+  (Node e.node t.restr (Stack (Conf t.assign)) t.basics) =
+         <Dcp-Bas1 (Node e.node t.restr (Stack (Conf t.assign)) t.basics)
+                   <DecAss t.restr (As t.assign)>>;
+
+*4. Node has nonempty stack.
+  t.node = <Cutting t.node>;
+} /* End of Decomp */
+
+* An auxiliary function for Decomp.
+Dcp-Bas1 {    
+*3. Node is unflat. There is only a bottom in the stack.
+*   General case. There are an passive constructor on the upper level.
+*   Real decomposition is tried. 
+*3a. There is no call.
+  (Node s.index s.type t.restr (Stack (Conf t.assign)) t.basics)
+  (As t.assign1) = /* Here t.assign1 == t.assign */
+           (Node s.index Passive t.restr (Stack (Conf t.assign)) t.basics); 
+
+*3b. Decomposition is happened.  
+**  (Node s.index s.type t.restr (Stack (Conf t.assign)) t.basics)
+**  e.decomp (As (e.expr':'t.outvar)),
+**          <ListVar Of Situation (Conf (e.expr':'t.outvar))>: e.listvar =
+**          '^'(Subgraph e.decomp  <IdAss From Vars e.listvar>
+**               (Begin 
+**                 <NewNode <ClearR t.restr e.listvar> 
+**                           t.basics (Conf (e.expr':'t.outvar))>':'t.outvar 
+**               End) (Basics )
+**             ); 
+  (Node e.node) e.decomp (As (e.expr':'t.outvar))
+         = <Dcp-Bas2 (Node e.node) (e.decomp (As (e.expr':'t.outvar)))
+                      <ListVar Of Situation (Conf (e.expr':'t.outvar))>>;
+}  
+
+* An auxiliary function for Decomp.
+Dcp-Bas2 {    
+*3b. Decomposition is happened.  
+  (Node e.node t.restr (Stack (Conf t.assign)) t.basics)
+  (e.decomp (As (e.expr':'t.outvar))) e.listvar =
+          '^'(Subgraph e.decomp  <IdAss From Vars e.listvar>
+               (Begin 
+                 <NewNode <ClearR t.restr e.listvar> 
+                           t.basics (Conf (e.expr':'t.outvar))>
+                           ':' (Output (Rs ) ((Expectant)':'t.outvar)) 
+               End) (Basics )
+             ); 
+}  
+
+/*
+  DecAss-function decomposes an assignment. Decomposition of
+  an assignment is movement of calls from the assignment to out.
+  The calls are formed as new subgraphs. We put output variables on
+  the call's places in the old assignment. The output variables are
+  'h'-variables. They are ordinary parameters to be splitted. Any
+  h-variable has full local meaninig inside a node. It is a place
+  to subsitute an inner call of the node. So a first call inside any
+  stack has no h-variable. To implement an applicative mode of
+  supercomilation we have to decompose every right-side of p-graph by
+  this function.
+*/
+* <DecAss t.restriction t.assignment> == e.subgraphs t.assignment
+$ENTRY DecAss {
+ t.restr (As e.assignment)
+** ,<DecmpAs e.assignment (Calls )>: t.calls e.assign1
+**                = <PutCall t.restr t.calls (As e.assign1)>;
+            = <DcA-Bas1 t.restr <DecmpAs e.assignment (Calls )>>;
+} /* End of DecAss */
+
+* An auxiliary function for DecAss.
+DcA-Bas1 {    
+*+ t.restr t.calls e.assign1 = <PutCall t.restr t.calls (As e.assign1)>;
+ t.restr t.calls e.assign1 = <PutCall t.restr t.calls> (As e.assign1);
+}  
+
+* Decomosition of an assignment step by step.
+* <DecmpAs e.assignments (Calls e.calls)> == (Calls e.calls) e.assignments
+DecmpAs {
+ e.assignment (e.expr ':' t.var) t.calls
+** ,<DecmpExp All e.expr t.calls>: e.expr1 t.calls1 =
+**                     <DecmpAs e.assignment t.calls1> (e.expr1 ':' t.var);
+         = <DcA-Bas2 e.assignment t.var (<DecmpExp All e.expr t.calls>)>; 
+
+ t.calls = t.calls;
+} /* End of DecmpAs */
+
+* An auxiliary function for DecmpAs.
+DcA-Bas2 {    
+ e.assignment t.var (e.expr1 t.calls1) 
+         = <DecmpAs e.assignment t.calls1> (e.expr1 ':' t.var);
+}  
+
+* Applicative decomosition of an assignment step by step.
+* <ApplDecmpCall t.call> == e.calls
+ApplDecmpCall {
+ (Call s.id t.path (('!' (Fn s.f e.args)':'t.var1)':'t.h-var)),
+ <ApplDecmpAs e.args>: 
+  { e.args1 (Calls t.call) 
+     = <ApplDecmpCall t.call> (Call <New Call> t.path (('!' (Fn s.f e.args1)':'t.var1)':'t.h-var));
+    e.args1 (Calls ) /* here e.args == e.args1 */ 
+     = (Call s.id t.path (('!' (Fn s.f e.args)':'t.var1)':'t.h-var));
+  };
+} /* End of ApplDecmpCall */
+
+* <ApplDecmpAs e.assignments> == e.assignments (Calls e.calls) 
+ApplDecmpAs {
+ (e.expr ':' t.var) e.assignment ,<DecmpExp One e.expr (Calls)>: 
+  { e.expr1 (Calls) = (e.expr ':' t.var) <ApplDecmpAs e.assignment>;
+    e.expr1 (Calls t.call) = (e.expr1 ':' t.var) e.assignment (Calls t.call);
+  };
+  = (Calls );
+} /* End of ApplDecmpAs */
+
+* Decomposition of an expression.
+* <DecmpExp s.flag e.expr (Calls)> == e.expr t.calls
+* , where s.flag ::= All | One
+*   ALL means: take out all calls from the expression;
+*   One means: take out a first call from the expression,
+*              depth-first strategy to look for the call.       
+DecmpExp {
+*1. A simbol is encountered just go on looking for a call. 
+ s.flag s.x    e.expr t.calls = s.x <DecmpExp s.flag e.expr t.calls>;
+
+/*
+*2a. An h-variable is encoutered. Imitate an identety call.
+ s.flag (Var 'h' s.id e.var) e.expr (Calls e.calls), <New Var>:s.id1
+    = (Var 'e' s.id1 e.var) <DecmpExp s.flag e.expr 
+                    (Calls  e.calls
+                            (Cut ((Var 'h' s.id e.var) ':'(Var 'e' s.id1 e.var)))
+                    )>;
+*/
+*2. A variable is encoutered just go on looking for a call. 
+ s.flag (Var e.var) e.expr t.calls = 
+                           (Var e.var) <DecmpExp s.flag e.expr t.calls>;
+
+*3. Parenthethis are encountered. Depth first strategy to look for.
+*   Function Lift keeps the track of the search to give a possiblity of
+*   backtracking  to move an information of the search one step up the tree.   
+ s.flag ('*' e.expr1) e.expr t.calls = 
+           <Lift s.flag ('*' <DecmpExp s.flag e.expr1 t.calls>) e.expr>;
+
+*4a. A call is encountered. Form the stack's format of the call and put
+*  the calls on the end of the branch. The function Lift will take care 
+*  about them. Put the created out-variable on the place where the call
+*  was taken. The flag is "All" so to continue the search of the next calls. 
+ All ('!' (Fn s.name e.arg)':'t.var) e.expr (Calls e.calls),
+ <NewHVar t.var>:t.hvar, <NewInd To Variable t.var>: t.outvar
+    = t.outvar <DecmpExp All e.expr 
+                    (Calls  e.calls
+                           (Call <New Call> (s.name) 
+                           (('!' (Fn s.name e.arg)':'t.var)':'t.hvar))
+                           (Conf (t.hvar':'t.outvar))
+                    )>;
+
+*4b. A call is encoutered. Form the stack's format of the call and put
+*  the calls on the end of the branch. The function Lift will take care 
+*  about them. Put the created out-variable on the place where the call
+*  was taken. The flag is "One" so to stop the search. 
+ One ('!' (Fn s.name e.arg)':'t.var) e.expr (Calls ),
+ <NewHVar t.var>:t.hvar
+    = t.hvar e.expr (Calls (Call <New Call> (s.name) 
+                           (('!' (Fn s.name e.arg)':'t.var)':'t.hvar)) );
+*5. Expression is finished merely to return the founded calls.
+ t.flag t.calls  = t.calls;
+} /* End of DecmpExp */
+
+* Lift an information one step up the tree.
+Lift {
+ All ('*' e.expr1 t.calls) e.expr = ('*' e.expr1) <DecmpExp All e.expr t.calls>; 
+ One ('*' e.expr1 (Calls )) e.expr 
+                           = ('*' e.expr1) <DecmpExp One e.expr (Calls )>; 
+ One ('*' e.expr1 t.calls) e.expr = ('*' e.expr1) e.expr t.calls; 
+} /* End of Lift */
+
+* Put the founded calls (if any) inside subgraph's structures.
+* <PutCall t.restriction (Calls t.call t.bottom ... )>
+*          ==> (As e.assignment) (Begin t.node':'t.out End) ...
+PutCall {
+*+  (Conf (e.expr (Calls t.call)':'t.var)) = t.call (Conf (e.expr':'t.var)); 
+*+  (Conf (e.expr (Calls       )':'t.var)) = (Conf (e.expr':'t.var));
+
+*++  t.restr (Calls e.calls) (As e.assign) = 
+*++                     <PutCall t.restr (Calls e.calls)> (As e.assign);
+
+** t.restr (Calls (Call e.call)(Conf (e.expr':'t.outvar)) e.calls)
+** ,<ListVar Of Situation (Call e.call)(Conf (e.expr':'t.outvar))>: e.listvar =
+**  <IdAss From Vars e.listvar>
+**   (Begin 
+**     <NewNode <ClearR t.restr e.listvar> 
+**               (Basics) (Call e.call)(Conf (e.expr':'t.outvar))>':'t.outvar 
+**   End) <PutCall t.restr (Calls e.calls)>;
+  t.restr (Calls t.call t.conf e.calls) 
+           = <PCl-Bas1 t.restr (Calls t.call t.conf e.calls)
+                      (<ListVar Of Situation t.call t.conf>)>;
+
+  t.restr (Calls ) = ;
+} /* End of PutCall */
+
+* An auxiliary function for PutCall.
+PCl-Bas1 {    
+  t.restr (Calls t.call (Conf (e.expr':'t.outvar)) e.calls) 
+  (e.listvar) =
+  <IdAss From Vars e.listvar>
+   (Begin 
+     <NewNode <ClearR t.restr e.listvar> 
+               (Basics) t.call (Conf (e.expr':'t.outvar))>
+               ':' (Output (Rs ) ((Expectant)':'t.outvar)) 
+   End) <PutCall t.restr (Calls e.calls)>;
+}  
+
+/*
+  SetSubgr-function set a subgraph's pointer over an result of
+  decomposition after reducing or generlization.
+*/
+* <SetSubgr (e.decomp) e.subgrs>
+*         ==> '^'(Subgraph e.decomp e.subgr)
+*         ==> t.assignment t.basic t.ready
+*         ==> t.assignment t.node
+$ENTRY SetSubgr {
+*1a. Reducing without applicative assignments. Call a constant. Flat case.
+*   Nothing to develope.
+ (t.reduction) (Basic s.id Const (Output t.Rs (e.const':'t.var1)) ':' t.var) 
+ (Basics e.basics) =  
+     (Node <New Node> Passive (Rs) (Stack (Conf (e.const':'t.var))) (Basics))
+     (Ready e.basics);
+
+* Projection. Flat case. Temporary definition.
+ (t.reduction) (Basic s.id Project (Output t.Rs (e.proj':'t.var1)) ':' t.var) 
+ (Basics e.basics) =  
+     (Node <New Node> Passive (Rs )
+           (Stack (Conf (<Subs t.reduction e.proj>':'t.var))) (Basics))
+     (Ready e.basics);
+
+* Identety. Flat case. Temporary definition.
+ (t.reduction) (Basic s.id Identety (Output t.Rs (e.id-var':'t.var1)) ':' t.var) 
+ (Basics e.basics) =  
+     (Node <New Node> Passive (Rs )
+           (Stack (Conf (<Subs t.reduction e.id-var>':'t.var))) (Basics))
+     (Ready e.basics);
+
+*1b. Reducing without applicative assignments.  Flat case.
+*   Nothing to develope.
+ (t.reduction) (Basic e.basic) (Basics e.basics) = 
+     t.reduction (Basic e.basic) (Ready e.basics);
+
+*2a. Reducing without applicative assignments. Unflat case. Call a constant.
+*   Form the unflatten context as a subgraph. 
+ (t.reduction) (Basic s.id Const (Output t.Rs (e.const':'t.var0))':' t.var1) 
+ (Node e.node (Stack (Conf (e.conf':'t.var))) t.basic1) (Basics e.basics),
+ <Subs (As (e.const':'t.var1)) e.conf>: e.conf1
+  = 
+     <IdAss From Stack (Stack (Conf (e.conf1':'t.var)))> 
+     (Begin (Node e.node (Stack (Conf (e.conf1':'t.var))) t.basic1)
+     (Ready (Diction) (Refrs)) ':' (Output (Rs ) ((Expectant)':'t.var)) End) 
+     (Ready);
+  /* ^ For normalization. */
+
+* Projection. Temporary definition.
+ (t.reduction) (Basic s.id Project (Output t.Rs (e.proj':'t.var0))':' t.var1) 
+ (Node e.node t.Rs1 (Stack (Conf (e.conf':'t.var))) t.basic1) (Basics e.basics),
+ <Subs (As (<Subs t.reduction e.proj>':'t.var1)) e.conf>: e.conf1
+  = 
+     <IdAss From Stack (Stack (Conf (e.conf1':'t.var)))> 
+     (Begin (Node e.node (Rs) (Stack (Conf (e.conf1':'t.var))) t.basic1)
+     (Ready (Diction) (Refrs)) ':' (Output (Rs ) ((Expectant)':'t.var)) End) 
+     (Ready);
+  /* ^ For normalization. */
+
+* Identety. Temporary definition.
+ (t.reduction) (Basic s.id Identety (Output t.Rs (e.idvar':'t.var0))':' t.var1) 
+ (Node e.node t.Rs1 (Stack (Conf (e.conf':'t.var))) t.basic1) (Basics e.basics),
+ <Subs (As (<Subs t.reduction e.idvar>':'t.var1)) e.conf>: e.conf1
+  = 
+     <IdAss From Stack (Stack (Conf (e.conf1':'t.var)))> 
+     (Begin (Node e.node (Rs) (Stack (Conf (e.conf1':'t.var))) t.basic1)
+     (Ready (Diction) (Refrs)) ':' (Output (Rs ) ((Expectant)':'t.var)) End) 
+     (Ready);
+  /* ^ For normalization. */
+
+*2. Reducing without applicative assignments. Unflat case.
+*   Form the unflatten context as a subgraph. 
+ (t.reduction) (Basic e.basic) 
+ (Node e.node (Stack (Conf (e.conf':'t.var))) t.basic1) (Basics e.basics) = 
+     t.reduction (Basic e.basic)
+     <IdAss From Stack (Stack (Conf (e.conf':'t.var)))> 
+     (Begin (Node e.node (Stack (Conf (e.conf':'t.var))) t.basic1)
+     (Ready (Diction) (Refrs)) ':' (Output (Rs ) ((Expectant)':'t.var)) End) (Ready);
+  /* ^ For normalization. */
+
+*3. Generalization without applicative assignments. 
+*   Nothing to develope.
+ (t.reduction) (Node e.node) (Basics e.basics) = t.reduction (Node e.node); 
+
+*4. Generalization or reducing with applcative assignments.
+*   There is a subgraph's pointer. Just put the created subgraphs as
+*   undevelopmented
+ ( e.decomp ) e.subgr1 '^'(Subgraph e.subgr) 
+                      =  '^'(Subgraph e.decomp e.subgr1 e.subgr); 
+
+*5. Generalization or reducing with applcative assignments. 
+*   There is no subgraph's pointer. Put it before the created subgraphs.
+/*-- Constant ??.
+ (t.reduction) (Basic s.id Const (Output t.Rs (e.const':'t.var0))':' t.var1) 
+               (As e.assign) t.begin (Basics e.basics) 
+       = '^'(Subgraph (As <SubsAs (As (e.const':'t.var1)) e.assign>) 
+                      t.begin (Basics e.basics)); 
+
+*--- Projection.
+ (t.reduction) (Basic s.id Project (Output t.Rs (e.proj':'t.var0))':' t.var1) 
+               (As e.assign) t.begin (Basics e.basics) 
+       = '^'(Subgraph (As <SubsAs (As (<Subs t.reduction e.proj>':'t.var1)) e.assign>) 
+                      t.begin (Basics e.basics)); 
+??*/
+
+*--- Identety.
+ (t.reduction) (Basic s.id Identety (Output t.Rs (t.id-var ':'t.var0))':' t.var1) 
+               (As e.assign) t.begin (Basics e.basics) 
+       = '^'(Subgraph (As <SubsAs (As (<Subs t.reduction t.id-var>':'t.id-var)) e.assign>) 
+                      t.begin (Basics e.basics)); 
+
+ ( e.decomp ) e.subgr = '^'(Subgraph e.decomp e.subgr); 
+}
+
+/*
+  PushSt-function put a call on the top of a stack. The top is just
+  a place where a result has to be substituted. Real arguments of
+  the call are brought out as an assignment. The same is true for
+  a path to start the driving. That is just a format of the driving.
+*/
+* <PushSt (('!' e.call)':'t.h-var) t.path (As e.assign) t.stack> 
+*                == t.stack (As e.assign) t.path
+$ENTRY PushSt { 
+*1. Put a call of the driving on the top of a stack.
+ (('!' (Fn s.f1 e.arg)':'t.var1)':'t.h-var1) t.path1 (As e.assign)
+ (Stack (Call s.id t.path (('!' (Fn s.f Place)':'t.var)':'t.h-var)) e.stack) 
+   =
+    (Stack (Call <New Call> (s.f1) (('!' (Fn s.f1 Place)':'t.var1)':'t.h-var1)) 
+        (Call s.id t.path1 (('!' (Fn s.f e.assign)':'t.var)':'t.h-var))
+     e.stack) (As e.arg) (s.f1);
+*2.
+ (Hindrance Left (('!' e.call) e.value':'t.var)) t.path1 t.assign t.stack 
+   = <PSt-Bas1 ('!' e.call) t.path1 t.assign t.stack>;
+*3.
+ (Hindrance Right (e.value ('!' e.call)':'t.var)) t.path1 t.assign t.stack 
+   = <PSt-Bas1 ('!' e.call) t.path1 t.assign t.stack>;
+}
+
+* An auxiliary function for PushSt.
+PSt-Bas1 {
+***
+ ('!' (Fn s.f1 e.arg)':'t.var1) t.path1 (As e.assign)
+ (Stack (Call s.id t.path (('!' (Fn s.f Place)':'t.var)':'t.h-var)) e.stack)
+ =  <PSt-Bas2
+     <NewHVar t.var1> (<PushSt1 (t.h-var s.f1) e.assign>)
+    (Stack (Call <New Call> (s.f1) (('!' (Fn s.f1 Place)':'t.var1)':'HVAR1)) 
+        (Call s.id t.path1 (('!' (Fn s.f ASSIGN1)':'t.var)':'t.h-var))
+     e.stack) (As ARG1) (s.f1)>;
+}
+
+* An auxiliary function for PushSt.
+PSt-Bas2 {
+***
+ t.h-var1 (e.assign1 (As e.arg1))
+    (Stack (Call e.call1 (('!' (Fn s.f1 Place)':'t.var1)':'HVAR1)) 
+        (Call e.call2 (('!' (Fn s.f ASSIGN1)':'t.var)':'t.h-var))
+     e.stack) (As ARG1) t.path
+   =
+    (Stack (Call e.call1 (('!' (Fn s.f1 Place)':'t.var1)':'t.h-var1)) 
+        (Call e.call2 (('!' (Fn s.f e.assign1)':'t.var)':'t.h-var))
+     e.stack) (As e.arg1) t.path;
+}
+
+PushSt1 { 
+ t.what (e.value':'t.var) e.where 
+       = <ContPush t.what (e.value':'t.var)  e.where (<ChngStk t.what e.value>)>; 
+ t.what = ;
+}
+
+ContPush { 
+ t.what (e.value':'t.var) e.where (e.expr (As e.arg)) 
+                       = (e.expr':'t.var) e.where (As e.arg);
+ t.what (e.where1) e.where (e.xxx) 
+                       = (e.where1) <PushSt1 t.what e.where>; 
+}
+
+ChngStk { 
+ t.what (Var e.var) e.where  = (Var e.var) <ChngStk t.what e.where>;
+ t.what ('*' e.where1) e.where
+        = <ContCh t.what ('*' e.where1) e.where (<ChngStk t.what e.where1>)>; 
+ (t.h-var s.func) ('!' (Fn s.func e.arg1)':'t.var) e.where 
+                         = t.h-var e.where (As e.arg1);
+
+ t.what ('!' (Fn s.func e.arg1)':'t.var) e.where
+       = <ContCh t.what ('!' (Fn s.func e.arg1)':'t.var) e.where 
+                        (<PushSt1 t.what e.arg1>)>;
+ t.what s.symbol e.where = s.symbol <ChngStk t.what e.where>;
+ t.what /* empty */ = ;
+}
+
+ContCh { 
+ t.what ('*' e.where1) e.where (e.expr (As e.arg)) 
+                       = ('*' e.expr) e.where (As e.arg);
+ t.what ('!' (Fn s.func e.arg1)':'t.var) e.where (e.arg2 (As e.arg)) 
+                       = ('!' (Fn s.func e.arg2)':'t.var) e.where (As e.arg); 
+ t.what (e.where1) e.where (e.xxx) 
+                       = (e.where1) <ChngStk t.what e.where>; 
+}
+
+*  <PopSt e.c-walk t.restr (Stack e.stack)(Conf e.conf)> = 
+$ENTRY PopSt { 
+*1. The first case is used just by c-driving to keep the situation.
+  e.c-walk t.restr (Stack)(Conf e.assign) 
+      = e.c-walk t.restr (As e.assign) Passive;
+*2. 
+  e.c-walk t.restr (Stack e.stack)(Conf e.conf) 
+      = <SetBeg <PopDef e.c-walk (<PopSt1 t.restr (Stack e.stack)(Conf e.conf)>)>>;
+}
+
+PopSt1 { 
+*0.  Cutting.
+ t.restr (Stack (Call e.id1 (('!' (Fn Cut__ Place)':'t.var)':'t.h-var)) 
+  e.stack) (Conf (e.expr':'t.out-var)),
+     <Decomp   <NewNd t.restr (Basics) 
+   (Stack (Call <New Call> (Cut__) 
+                (('!' (Fn Cut__ (e.expr':'t.var))':'t.var)':'t.h-var)) e.stack)
+               >>:
+      { (Node s.index s.type e.node) = (Node s.index s.type e.node) s.type;
+        e.subgrs  = e.subgrs Active;
+      };
+
+*1. Unitary active result. There is not new information for the next call.  
+ t.restr (Stack (Call e.id (t.call1 ':' t.h-var)) e.stack)
+ (Conf (('!' (Fn s.f e.arg)':'t.var)':'t.outvar)) =
+  <NewNd t.restr (Basics) 
+   (Stack (Call <New Call> (s.f) (('!' (Fn s.f e.arg)':'t.var)':'t.h-var)) e.stack)
+  > Active; 
+
+*2. Non-unitary active result. There is a new information for the next call.
+ t.restr (Stack (Call e.id1 (('!' (Fn s.f1 Place)':'t.var1)':'t.h-var1)) 
+        (Call e.id (('!' (Fn s.f e.arg)':'t.var)':'t.h-var)) 
+  e.stack) (Conf (e.expr':'t.out-var)) =
+ <NewNd t.restr (Basics) 
+  (Stack 
+   (Call e.id 
+    (('!' (Fn s.f <SubsAs (As (e.expr':'t.h-var1)) e.arg>)':'t.var)':'t.h-var)
+   ) e.stack)
+ > Active; 
+
+*3. Non-unitary active result. The last call.
+ t.restr (Stack (Call e.id1 (('!' (Fn s.f1 Place)':'t.var1)':'t.h-var1)) 
+        (Conf (e.expr':'t.out-var)))  (Conf (e.expr1':'t.out-var1)), 
+     <Decomp <NewNd t.restr (Basics) (Conf (e.expr1':'t.out-var1))>>:
+      { (Node s.index s.type e.node) = (Node s.index s.type e.node) s.type;
+        e.subgrs  = e.subgrs Active;
+      };
+}
+
+*  <PopDef e.c-walk (e.subgrs s.act-flag)> = 
+PopDef { 
+*1. A residue call is encountered. It can contain applicative assignments.
+*   Decompose them.
+  e.c-walk (Rs e.restr)(Def (('!' (Fn s.fun-name t.assign)':'t.var)':'t.out))
+  (e.subgrs s.act-flag)
+**  , <DecAss (Rs e.restr) (As t.assign)>: 
+**           { (As t.assign1) = /+* Here t.assign = t.assign1 *+/
+**                 <PopDef e.c-walk 
+**                     ( (Def (('!' (Fn s.fun-name t.assign)':'t.var)':'t.out)) 
+**                                      e.subgrs s.act-flag)>;
+***1b. Decomposition is happened.  There are applicative assignments.
+**          e.decomp (As t.assign1) =
+**                 <PopDef e.c-walk (<SetSubgr (e.decomp)
+**                       (Def (('!' (Fn s.fun-name t.assign1)':'t.var)':'t.out))
+**                                           e.subgrs > Active)>; 
+**       };
+  = <PDf-Bas1
+     e.c-walk (Rs e.restr)(Def (('!' (Fn s.fun-name t.assign)':'t.var)':'t.out))
+     (e.subgrs s.act-flag)(<DecAss (Rs e.restr) (As t.assign)>)>; 
+
+*3. No definition. Just give a result.
+  e.c-walk (e.subgrs s.act-flag) = e.c-walk e.subgrs s.act-flag;
+
+} /* End of PopDef */
+
+* An auxiliary function for PopDef.
+PDf-Bas1 {
+*1. A residue call is encountered. It can contain applicative assignments.
+*.  No applicative assignments.
+  e.c-walk (Rs e.restr)(Def (('!' (Fn s.fun-name t.assign)':'t.var)':'t.out))
+  (e.subgrs s.act-flag) ((As t.assign1)) /* Here t.assign = t.assign1 */
+       = <PopDef e.c-walk 
+                 ( (Def (('!' (Fn s.fun-name t.assign)':'t.var)':'t.out)) 
+                 e.subgrs s.act-flag)>;
+*1b. Decomposition is happened.  There are applicative assignments.
+  e.c-walk (Rs e.restr)(Def (('!' (Fn s.fun-name t.assign)':'t.var)':'t.out))
+  (e.subgrs s.act-flag) (e.decomp (As t.assign1))
+       = <PopDef e.c-walk (<SetSubgr (e.decomp)
+                 (Def (('!' (Fn s.fun-name t.assign1)':'t.var)':'t.out))
+                   e.subgrs > Active)>; 
+}
+
+* There are just two cases!
+TakeCall {
+ (Calls t.call) = t.call;
+ (Calls ) = ;
+}
+
+SetBeg {
+ e.c-walk '^'
+ (Subgraph e.subgrs (Def e.def)(Node e.node (Stack e.calls (Conf (e.conf':'t.out-var))) t.basic)) 
+ s.act-flag
+   = e.c-walk '^'
+     (Subgraph e.subgrs (Def e.def)
+       <IdAss From Vars <ListVar Of Situation e.calls (Conf (e.conf':'t.out-var))>>
+       (Begin (Node e.node (Stack e.calls (Conf (e.conf':'t.out-var))) t.basic)
+        ':' (Output (Rs ) ((Expectant)':'t.out-var)) End) (Basics)
+     ) s.act-flag;
+  e.c-walk = e.c-walk;
+}
+
+***** ?????????
+ApplPop { 
+*1. Passive result. The last call. 
+ t.restr (Stack (Call e.id1 (('!' (Fn s.f1 Place)':'t.var1)':'t.h-var1))
+ (Conf e.conf)) (Conf (Conf (e.expr':'t.out-var))) 
+     = <NewNd t.restr (Basics) (Conf <SubsAs (As (e.expr':'t.h-var1)) e.conf>)> Passive;
+
+*2. Active result. The call is not last.
+ t.restr (Stack (Call e.id1 (('!' (Fn s.f1 Place)':'t.var1)':'t.h-var1)) 
+          e.stack)  (Conf e.calls (Conf (e.expr':'t.out-var))),
+ <ApplOuts e.calls (Conf (e.expr':'t.out-var))>: 
+ e.calls1 (Conf (e.expr1':'t.out)) =
+  <NewNd t.restr (Basics) 
+         (Stack e.calls1 <SubsSt (As (e.expr1':'t.h-var1)) e.stack>)
+  > Active; 
+}
+
+ApplDef { 
+*1. A residue call is encountered. They can contain applicative assignments.
+*   Decompose them.
+  e.c-walk (Rs e.restr)(Def e.def) (e.walk1 s.act-flag) 
+                   =  <ApplDef e.c-walk  ((Def e.def) e.walk1 s.act-flag)>;
+*2. No definition. Just give a result.
+  e.c-walk (e.walk1 s.act-flag) = e.c-walk e.walk1 s.act-flag;
+}
+
+ApplDecomp {
+  (Call s.id e.call) e.stack = (Call <New Call> e.call) <ApplDecomp e.stack>;
+   = ;
+}
+
+ApplOuts { 
+ e.calls (Conf e.conf) 
+                  = <ApplOuts2 (<ApplOuts1  (As) e.calls>) (Conf e.conf)>; 
+}
+
+ApplOuts2 { 
+ (e.calls (As e.assign)) t.conf = <SubsSt (As e.assign) e.calls t.conf>;
+}
+ 
+ApplOuts1 {
+  (As e.assign)
+  (Call e.call (('!' (Fn s.name e.arg)':'t.var)':'(Var 'h' s.id e.elev))) 
+  e.stack, <New Var>:s.id1 
+      = (Call e.call (('!' (Fn s.name e.arg)':'t.var)':'(Var 'h' s.id1 e.elev))) 
+        <ApplOuts1 (As e.assign ((Var 'h' s.id1 e.elev)':'(Var 'h' s.id e.elev))
+                  ) e.stack>;
+ (As e.assgn) = (As e.assgn);
+}
+
+*<Appl__Call (Call e.call)>: (Call e.call1)
+Appl__Call {
+ (Call s.index (Appl__ e.path) e.arg) = (Call <New Call> (Appl1__ e.path) e.arg);
+ (Call e.call) = False;
+}
+
+* ======================== End Decomposition =================================
+ClBasics { 
+  e.basics (s.id e.basic) e.1 (s.id e.baisc1) e.2
+           =  <ClBasics e.basics (s.id e.basic) e.1 e.2>;
+  e.basics = e.basics;
+}
+
+Cutting {
+*1. There is no prefix before Cut__.
+ (Node e.node t.restr (Stack  
+      (Call s.id (Cut__ ) (('!' (Fn Cut__ (e.args':'t.var1))':'t.var)':'t.hvar))
+               e.stack (Conf (e.expr':'t.out-var))) t.basics),
+ <NewInd To Variable t.var>: t.var2,
+ <ListVar Of Situation e.stack (Conf (e.expr':'t.out-var))>: e.listvar1,
+ <ListVar Of Expr e.args>: e.listvar2 =
+  '^'(Subgraph <DecAss t.restr (As (e.args':'t.var1))>  
+      (Begin  
+            <NewNode <ClearR t.restr e.listvar2> t.basics
+                             (Conf (e.args':'t.var2))
+            >':' <ExpectOut1 t.var2>
+      End) <IdAss From Vars e.listvar1 t.var2>
+      (Begin  
+            <NewNode <ClearR t.restr e.listvar1> t.basics
+                     <SubsSt (As (t.var2':'t.hvar)) 
+                             e.stack (Conf (e.expr':'t.out-var))>
+            >':' <ExpectOut1 t.out-var>
+     End) (Basics ));
+     
+
+*2. There is a prefix before Cut__. 
+ (Node e.node t.restr (Stack e.prefix t.call 
+      (Call s.id (Cut__ e.path) e.cut) e.context (Conf (e.expr':'t.out-var))) t.basics),
+ <MakeOut t.call>: t.var t.hvar, 
+ <ListVar Of Stack e.prefix t.call>: e.listvar1,
+ <ListVar Of Situation (Call s.id (Cut__ e.path) e.cut) 
+          e.context (Conf (e.expr':'t.out-var))>: e.listvar2 =
+  '^'(Subgraph  <IdAss From Vars e.listvar1>
+      (Begin <NewNode <ClearR t.restr e.listvar1> t.basics
+                 e.prefix t.call (Conf (t.hvar':'t.var))>
+                                  ':' <ExpectOut1 t.var> 
+       End)  <IdAss From Vars e.listvar2 t.var>
+      (Begin   
+       <NewNode <ClearR t.restr e.listvar2> t.basics
+                      <SubsSt (As (t.var':'t.hvar)) (Call s.id (Cut__ e.path) e.cut)
+                               e.context (Conf (e.expr':'t.out-var))>
+       >':' <ExpectOut1 t.out-var>
+       End) 
+     (Basics ));
+
+*3. There exist no Cut__.
+  t.node = t.node;   
+
+}
