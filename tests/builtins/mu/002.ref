@@ -1,0 +1,9 @@
+$ENTRY Go
+{
+	= <Func "Prout" 'Hello, World!!!'>;
+}
+
+Func
+{
+	s.1 e.1 = <Mu s.1 e.1>;
+}

@@ -77,6 +77,9 @@ struct func_result_t Lenw(int entryStatus);
 /// Возвращает общее количество вызванных функций.
 struct func_result_t Step(int entryStatus);
 
+/// Оборачивает свой аргумент в скобки активации.
+struct func_result_t Mu(int entryStatus);
+
 /* Вспомогательные функции.*/
 
 /// Обрабатывает аргументы командной строки и заполняет _refalProgramArgs.

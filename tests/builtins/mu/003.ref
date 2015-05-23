@@ -1,0 +1,15 @@
+$ENTRY Go
+{
+	= 	<Prout <Mu <ParseOp "ADD"> 6 3>>
+		<Prout <Mu <ParseOp "SUB"> 6 3>>
+		<Prout <Mu <ParseOp "MUL"> 6 3>>
+		<Prout <Mu <ParseOp "DIV"> 6 3>>
+}
+
+ParseOp
+{
+	"ADD" = Add;
+	"SUB" = Sub;
+	"MUL" = Mul;
+	"DIV" = Div;
+}

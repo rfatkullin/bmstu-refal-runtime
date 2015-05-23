@@ -31,6 +31,23 @@ void gcInitBuiltinEnv()
     ASSEMBLY_FIELD(0, CURR_FUNC_CALL->fieldOfView);
 }
 
+struct func_result_t Mu(int entryStatus)
+{
+    checkAndCleanHeaps(0, 2 * CHAIN_LTERM_SIZE + FUNC_CALL_LTERM_SIZE);
+
+    struct lterm_t* chain = allocateSimpleChain();
+    struct lterm_t* funcCallChain = allocateSimpleChain();
+    struct lterm_t* funcTerm = allocateFuncCallLTerm();
+
+    funcTerm->funcCall->failEntryPoint = -1;
+    funcTerm->funcCall->fieldOfView = CURR_FUNC_CALL->fieldOfView;
+
+    ADD_TO_CHAIN(chain, funcTerm);
+    ADD_TO_CHAIN(funcCallChain, funcTerm);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = chain, .callChain = funcCallChain};
+}
+
 struct func_result_t Arg(int entryStatus)
 {
     gcInitBuiltinEnv();
