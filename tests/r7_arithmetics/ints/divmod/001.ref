@@ -1,0 +1,4 @@
+$ENTRY Go
+{
+	= <Prout <Divmod 7 4>>;
+}

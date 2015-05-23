@@ -14,7 +14,9 @@
 #include <builtins/case_mapping.h>
 #include <defines/data_struct_sizes.h>
 
+static int getCharInfo(uint32_t ch, uint32_t* first, uint32_t* add);
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch));
+static int getFragmentFirstVTermType(struct fragment_t* frag, uint32_t* first, uint32_t* add);
 static void recApplyCaseMappingOp(uint64_t offset, uint64_t length, uint32_t op(uint32_t ch));
 
 void initBuiltins()
@@ -223,6 +225,133 @@ struct func_result_t Step(int entryStatus)
     struct lterm_t* res = gcConstructSingleIntNumBuiltinResult(_step);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
+}
+
+struct func_result_t Type(int entryStatus)
+{
+    int res = 0;
+    uint32_t first = 'O';
+    uint32_t add = 'O';
+
+    checkAndCleanHeaps(2, BUILTINS_RESULT_SIZE);
+
+    if (CURR_FUNC_CALL->fieldOfView->next == CURR_FUNC_CALL->fieldOfView)
+    {
+        first = '*';
+    }
+    else
+    {
+        switch (CURR_FUNC_CALL->fieldOfView->next->tag)
+        {
+        case L_TERM_FRAGMENT_TAG:
+            res = getFragmentFirstVTermType(CURR_FUNC_CALL->fieldOfView->next->fragment, &first, &add);
+            break;
+
+        case L_TERM_CHAIN_KEEPER_TAG:
+            first = 'B';
+            break;
+
+        case L_TERM_FUNC_CALL:
+            first = 'F';
+            break;
+        }
+    }
+
+    uint64_t offset = allocateSymbolVTerm(first);
+
+    if (res)
+        allocateSymbolVTerm(add);
+    else
+        allocateUInt8VTerm(0);
+
+    struct lterm_t* headChain = allocateBuiltinsResult(offset, 2);
+
+    CONCAT_CHAINS(headChain, CURR_FUNC_CALL->fieldOfView);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = headChain, .callChain = 0};
+}
+
+static int getFragmentFirstVTermType(struct fragment_t* frag, uint32_t* first, uint32_t* add)
+{
+    int res = 0;
+    *first = '*';
+
+    if (frag->length == 0)
+        return res;
+
+    switch (_memMngr.vterms[frag->offset].tag)
+    {
+    case V_CHAR_TAG:
+    {
+        return getCharInfo(_memMngr.vterms[frag->offset].ch, first, add);
+    }
+    case V_IDENT_TAG:
+    case V_CLOSURE_TAG:
+        *first = 'W';
+        *add = 'i';
+        res = 1;
+        break;
+
+    case V_INT_NUM_TAG:
+        *first = 'N';
+        break;
+
+    case V_BRACKETS_TAG:
+        res = 'B';
+        break;
+
+    default:
+        res = 'O';
+    }
+
+    return res;
+}
+
+static int getCharInfo(uint32_t ch, uint32_t* first, uint32_t* add)
+{
+    if ((ch >=0 && ch <= 32) || (ch >= 127 && ch <= 159))
+    {
+        *first = 'O';
+
+        if (isUpperCase(ch))
+            *add = 'u';
+        else
+            *add = 'l';
+
+        return 1;
+    }
+
+    if (ch >= '0' && ch <= '9')
+    {
+        *first = 'D';
+        return 0;
+    }
+
+    if (ch >= 'a' && ch <= 'z')
+    {
+        *first = 'L';
+        *add = 'l';
+
+        return 1;
+    }
+
+    if (ch >= 'A' && ch <= 'Z')
+    {
+        *first = 'L';
+        *add = 'u';
+
+        return 1;
+    }
+
+
+    *first = 'P';
+
+    if (isUpperCase(ch))
+        *add = 'u';
+    else
+        *add = 'l';
+
+    return 1;
 }
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch))

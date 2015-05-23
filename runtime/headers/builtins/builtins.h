@@ -80,6 +80,9 @@ struct func_result_t Step(int entryStatus);
 /// Оборачивает свой аргумент в скобки активации.
 struct func_result_t Mu(int entryStatus);
 
+/// Возвращает информацию о первом символе.
+struct func_result_t Type(int entryStatus);
+
 /* Вспомогательные функции.*/
 
 /// Обрабатывает аргументы командной строки и заполняет _refalProgramArgs.

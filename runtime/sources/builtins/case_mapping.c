@@ -8,6 +8,23 @@
 static uint32_t unicodeCaseMapTable[UNICODE_CASE_MAP_TABLE_SIZE];
 static uint32_t switchCase(uint32_t ch, uint32_t offset);
 
+int isUpperCase(uint32_t ch)
+{
+    uint32_t i = 0;
+    for (i = 0; i < UNICODE_CASE_MAP_TABLE_SIZE; i += GROUP_SIZE)
+    {
+        if (unicodeCaseMapTable[i] == ch)
+        {
+            if (unicodeCaseMapTable[i + OFFSET_TO_LOWER_CASE] != 0)
+                return 1;
+
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
 uint32_t toUpperCase(uint32_t ch)
 {
     return switchCase(ch, OFFSET_TO_UPPER_CASE);
