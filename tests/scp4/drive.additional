@@ -1,0 +1,1768 @@
+* ==============  NJ-97/PZ-98: DRIVING  =================
+* DRIVE.REF (scp4.ref) without MST jumps 
+* version 18.02.2000, Functional hindrances, new
+
+* $ENTRY Drive, Drv, MultGrL, MultGrR, FullTrn, Mu-Comp1 ;
+
+* $INTERIOR  Branch, Branchon, Driveon, DrvBr, ExitBrs, C-brs;
+* $INTERIOR  Riser, MultGrL, MultGrR, TypeNode, ActFlag, BrNode;
+
+* See !!!!-- case.
+* The end's information about the branches. 
+
+* $TEMPORARY Mu-comp;
+
+* scp4.ref:
+$EXTRN PopSt, PushSt;
+
+* access.ref:
+$EXTRN New, GetGraph, Redef, DelDef, Self, RestAss, NewNode, CleanRs;
+$EXTRN NewHVar, FunName, TypeNd, ClPath, ClPath1, SelfVar, NewInd, OutVar;
+$EXTRN GetGoAhead, InputVar, Equal, GetExecutable, GetExtFunc, ListVar, GetKey, EmptyCVar;
+$EXTRN Infinit;
+
+* basic.ref:
+$EXTRN RuleAC, RuleRC, RedElev, RuleRR, RuleAR, RuleAA;
+$EXTRN Subs, SubsAs, SubsConf, Subtract;
+
+* trace.ref:
+$EXTRN Trace, TraceRes, Trace0, PrArgUser;
+
+* key.ref:
+$EXTRN Transient, PutInHistory;
+
+$ENTRY Go
+{
+  =;
+}
+
+/*
+ Drive uses the graph from the original program to make one step of driving
+ which results in the construction of an one-step transition graph for a node.
+ That means Drive does one step Refal machine in a lazy fashion over each branch.
+ Start's nodes of the steps can be special for each branch. These nodes
+ are marked as primary. Every primary node is a non-trivial development which
+ contains at least two branches. We cannot mark a node befor the driving 
+ because it can be decomposed after that this node can be considered as 
+ a primary along one branch of it's development and as a secondary along 
+ another. To keep an information about a branch that a primary node belongs 
+ to we mark the nodes with a path from p-contractions and branch's indexes. 
+ This path emanates from the start's node and terminates at the labeled node. 
+ Ends of branches are composed by the driving so we can start a next step
+ whithout decomposition. The driving return also an information about
+ activites of constracted branches on the end of them.
+*/
+
+* <Drive t.path t.node e.p-graph> ==> e.c-graph s.active-flag
+*                                 ==> Zero
+$ENTRY Drive {    
+*1. Pick up restriction and assignment from the node. 
+*   Type of the branching is "Decomposition". 
+*   ( See comments to the function Driveon )
+  t.path t.node (Fork e.p-branches), <RestAss Of Node t.node>:e.situation = 
+*    <TraceRes ('Graph has just been driven. Result:  ') 
+       <RmEmptyCt <ExitBrs Decomposition t.path (e.situation)
+          <Drv t.path (e.situation) (Fork e.p-branches)>
+       >>
+*    >;
+     ;
+*2. Single branch. Reduce to a p-fork.
+*  t.path t.node s.index e.p-branch = 
+*          <Drive t.path t.node (Fork '+'(s.index e.p-branch))>;
+
+*2. Single branch. Pick up restriction and assignment from the node. 
+*  t.path t.node e.p-branch, <RestAss Of Node t.node>:e.situation = 
+*    <TraceRes ('SubGraph has just been driven. Result:  ') 
+*          <Drv t.path (e.situation) e.p-branch>
+*    >;
+
+} /* End of Drive */
+
+RmEmptyCt { 
+ (Node e.node)(Dev () '+' e.brs) e.flag 
+     = (Node e.node)(Dev () <RmEmptyCt '+' e.brs>) e.flag;
+ '+' ((Ct ) e.br1) e.brs = '+' (e.br1) <RmEmptyCt e.brs>;
+ e.1 = e.1; 
+}
+
+/*
+  Drv is just a version of the function Drive. The node to be driven is 
+  presented in more detail structure. This structure is 
+  s.situation ::= (t.restriction t.stack t.assignment).
+  Here t.assignment presents arguments of a function from the top of t.stack. 
+  The stack is a current decomposition of a configuration. This stack is 
+  formed by lazy evaluation.
+*/
+* <Drv t.path t.situation t.p-fork> ==> e.c-graph s.active-flag
+*                                   ==> Zero
+$ENTRY Drv {    
+*1. Non-empty p-branching.  Set the start value of the primary-flag as 
+*   Passive. Drive the situation through the first branch.
+    t.path t.situation (Fork '+'e.p-branches) = 
+                       <DrvBr Passive t.path t.situation '+'e.p-branches>;
+
+*2. Empty branching. Recognition impossible.
+  t.path t.situation (Fork ) = Zero;
+
+*3. P-branch.  Set the start value of the primary-flag as 
+*   Passive. Drive the situation through this branch.
+*    t.path t.situation e.p-branch = 
+*                       <DrvBr Passive t.path t.situation e.p-branch>;
+} /* End of Drv */
+
+/* An auxiliary function for the function Drv.  
+   Drive the node through the first branch and analyze whether 
+   the current branch screens the following branches.
+*/
+DrvBr {    
+*1. C-branch was constracted as result of splitting of parametrs (c-variables).
+ s.flag (e.path) t.situation '+'(Split e.c-contr) e.p-branches =
+        <Driveon s.flag (e.path) 
+              <Branchon <Branch (e.path) t.situation '^' (Split e.c-contr)> 
+                         t.situation (e.p-branches)>
+        >; 
+
+*2. P-branch starts.
+  s.flag (e.path) t.situation '+'(s.index e.p-branch) e.p-branches =
+        <Driveon s.flag (e.path) 
+              <Branchon <Branch 
+*                     (<ClPath e.path> s.index) t.situation '^' e.p-branch> 
+                     (e.path s.index) t.situation '^' e.p-branch> 
+                         t.situation (e.p-branches)>
+        >; 
+
+*3. P-branch: middle point. No name of the branch.
+* The branch was already consedered. 
+  s.flag (e.path) t.situation '+'(e.p-branch) e.p-branches =
+        <Driveon s.flag (e.path) 
+              <Branchon <Branch (e.path) t.situation '^' e.p-branch> 
+                         t.situation (e.p-branches)>
+        >; 
+
+*+   s.flag (e.path) t.situation e.p-branch =
+*+      <ExitBrs Decomposition (e.path) t.situation
+*+        <Driveon s.flag (e.path) 
+*+              <Branchon <Branch (e.path) t.situation '^' e.p-branch> 
+*+                         t.situation ()>
+*+        >
+*+      >; 
+
+} /* End of DrvBr */
+
+*-- The first part of the definition executes combine-commute operations. --*
+/*****************************************************************************
+******************************************************************************
+** Drive works by this principle: the pointer ^ separates                   **
+** the members of the pair to be combined or commuted.                      **
+** So, the combination of two CRAs proceeds as follows:                     **
+**                                                                          **
+**      CRA^CRA; CR^CARA; C^CRARA; CC^RARA; CCR^ARA; CCRA^RA;               **
+**      CCR^RAA; CCR^AA; CCRA^A; CCRA^                                      **
+**                                                                          **
+** Contractions are not combined.                                           **
+** There is one more pair, CA, which appears when in one or both components **
+** of the walk being normalized the restriction R is absent.                **
+** All in all 3*3 = 9 pairs.                                                **
+******************************************************************************
+******************************************************************************/
+
+/*
+ Function Branch drives a node through a linear segment of a p-branch       
+ using the Turchin's CRA rules. The path accomulates past p-contractions. 
+*/
+* <Branch (e.path) (e.c-walk) '^' e.p-graph> 
+*         ==> (e.path) (e.c-walk Zero) '^'  /* operation impossible */
+*         ==> (e.path) (e.c-walk) '^' t.cc-fork  e.p-graph
+*         ==> (e.path) (e.c-walk) '^' t.hinder-call e.p-graph
+*         ==> (e.path) (e.c-walk) '^' t.c-node e.p-graph
+*         ==> (e.path) (e.c-walk) '^' t.passive-node
+*         ==> (e.path) (e.c-walk) '^' t.prim-node
+*         ==> (e.path) (e.c-walk) '^' t.p-fork
+
+$ENTRY Branch {
+*0a. Function call of an extern residual function.
+*   The umbrella f-n Residue is defined so as to cause 
+*   the recognition-impossible if it is called in the freezer; 
+*   it is then intercepted by Msjump. The format: <Residue sT sF e.Arg>, 
+*   where sT is the type (e,s) of the value of sF.
+  t.path (e.c-walk (Rs e.restrs)(Stack e.stack)(As e.assigns)) '^' 
+        (Def (('!' (Fn Residue (s.fun-name e.args':'t.inpvar))':'t.var)':'t.out) ) e.p-graph
+, <ResidFmt s.fun-name t.out>: e.fmt t.var1 =
+*+,<SelfVar t.out>: t.var1 =
+        <Branch t.path (e.c-walk (Rs e.restrs)
+               (Def (('!' (Fn s.fun-name  <SubsAs (As e.assigns) (e.args':'t.inpvar)>)':'t.var)':'t.var1)  
+                    ) 
+           (Rs e.restrs)(Stack e.stack)
+           <Redef (e.fmt ':'t.out) (As e.assigns)>) '^' e.p-graph>;
+
+*0b. Function call of an extern executable function.
+  t.path (e.c-walk (Rs e.restrs)(Stack e.stack)(As e.assigns)) '^' 
+        (Def (('!' (Fn Executable (s.fun-name e.args':'t.inpvar))':'t.var)':'t.out) ) e.p-graph,
+ <Mu-comp ('!' s.fun-name <Subs (As e.assigns) e.args>)>:
+    {/* the execution is successful */ 
+     e.result (True) = 
+       <Branch t.path 
+         (e.c-walk (Rs e.restrs)(Stack e.stack)<Redef (e.result':'t.out) (As e.assigns)>) '^' e.p-graph>;
+     /* the execution was held mark the held calls as Residue */ 
+
+   (Hindrance e.hinder) t.def (False) =
+              <Branch t.path (e.c-walk (Rs e.restrs)(Stack e.stack)(As e.assigns)) 
+              '^' (Hindrance e.hinder) t.def e.p-graph>;
+
+    e.hold (False), <DcmpExeDefs e.hold>: e.result (Defs e.defs) = 
+       <Branch t.path (e.c-walk (Rs e.restrs)(Stack e.stack)<Redef (e.result':'t.out) (As e.assigns)>) 
+                         '^' (ExeDefs e.defs) e.p-graph>;
+
+     /* the execution is not successful. */ 
+     e.trash (Zero) = <Branch t.path (e.c-walk) '^' Zero>;
+
+
+     /* narrowing is encounterd. Temporary definition. At present just for Equal__ */
+/*
+     (As (e.val ':' t.var2)) = 
+       <Branch t.path 
+         (e.c-walk (Rs e.restrs)(Stack e.stack)<Redef (e.val ':' t.var2) <Redef (True':'t.out) (As e.assigns)>>) 
+        '^' e.p-graph>;
+*/
+
+    (Hindrance e.hinder) e.hold (As e.assign) =
+              <Branch t.path (e.c-walk (Rs e.restrs)(Stack e.stack)(As e.assigns)) 
+              '^' (Hindrance e.hinder) e.hold e.p-graph>;
+
+    e.hold (As (e.val ':' t.var2)), <DcmpExeDefs e.hold>: e.result (Defs e.defs)  =
+       <Branch t.path 
+               (e.c-walk (Rs e.restrs)(Stack e.stack)<Redef (e.val ':' t.var2) <Redef (True':'t.out) (As e.assigns)>>) 
+           '^' (ExeDefs e.defs) e.p-graph>;
+
+     /* the execution is not successful just mark the call as Residue */ 
+/*
+     e.trash (False) = 
+       <Branch t.path (e.c-walk (Rs e.restrs)(Stack e.stack)(As e.assigns)) '^' 
+        (Def (('!' (Fn Residue (s.fun-name e.args':'t.inpvar))':'t.var)':'t.out) ) e.p-graph>;
+*/
+    };
+
+*0c. Function call of an extern residual function was unfolded on meta-level.
+* Just jump over the residuals calls. 
+  t.path (e.c-walk (Rs e.restrs)(Stack e.stack)(As e.assigns)) '^' 
+  (ExeDefs (Def (e.call ':' t.out)) e.defs) e.p-graph 
+    = <Branch t.path (e.c-walk (Rs e.restrs)(Def (e.call ':' t.out))
+        (Rs e.restrs)(Stack e.stack)
+        <Redef (t.out':'t.out) (As e.assigns)>) '^' (ExeDefs e.defs) e.p-graph>;
+
+*00c.
+  t.path (e.c-walk) '^' (ExeDefs ) e.p-graph  
+                           = <Branch t.path (e.c-walk) '^' e.p-graph>;  
+
+*0d. Zero is encountered
+  t.path (e.c-walk) '^' Zero e.p-graph   = t.path (e.c-walk Zero) '^';
+
+****************** the Turchin's CRA rules.**************************
+*1. Rule RC: R ^ C  ==>  ^ C R'
+  t.path (e.c-walk (Rs e.rests)) '^' (Ct e.contr) e.p-graph   = 
+        <Branch t.path (e.c-walk (Ct e.contr)) '^' 
+                       <CleanRs <RuleRC (Rs e.rests)(Ct e.contr)>> e.p-graph>;
+
+*2. Rule AC, Clash. A ^ C ==> ^ C1 A1 A; See definition of Clash for details.
+*                         ==> A' ^
+*                         ==> ^ Zero
+* These transformations are performed by a "big" step of the driving.
+* In fact there exist a number of "small" steps of the driving which run
+* under the "big" step. Clash informs the driving about a next "small" step
+* by means of the following interface:
+*                                _* t.cc-contraction *_
+*                         ==> ^ (Split t.contraction)   *-- t.split --*
+*                                ___* t.cc-fork *___
+*                         ==> ^ (Fork Split t.split '+' t.split) t.contraction
+*                         ==> ^ (Def e.assignment) ...
+*                         ==> ^ (Del t.var)
+*                         ==> ^ (Hindrance e.hinder) t.contraction
+*                         ==> ^ (Path t.p-contraction)
+  t.path (e.c-walk (As e.assigns)) '^' (Ct e.contr) e.p-graph   = 
+        <Branch t.path (e.c-walk (As e.assigns)) '^' 
+                       <RuleAC (As e.assigns)(Ct e.contr)> e.p-graph>;
+
+*3. C-contraction resulting from clash. Swap with c-p assignment
+*  and add conjugated assignment. Put the pointer befor the new c-contraction.
+*  We have to do that for updateing a restriction. It stand befor (As eA).
+*  It seems that is not so good because of the RC-rule must take care of 
+*  a correct scanning of unknown data with a negative degree.
+*  Function RedElev metacodes our splitting in according to the elevation. 
+*  The reason: at present Refal has not the elevated p-varables. 
+  t.path (e.c-walk (Stack e.stack)(As e.assigns))'^'
+  (Split t.contr e.p-gr) e.p-graph = 
+    <Branch t.path (e.c-walk) '^' 
+           <RedElev t.contr> (Stack e.stack)(As e.assigns) e.p-gr e.p-graph>;
+
+*4. Define a new variable or redefine an old one. 
+*   Here Def is not a call of an extern function.
+  t.path (e.c-walk (As e.assigns)) '^' (Def (e.value':'t.var)) e.p-graph =
+        <Branch t.path 
+          (e.c-walk <Redef (e.value':'t.var) (As e.assigns)>) '^' 
+                      e.p-graph>;
+*5. Delete a variable.
+  t.path (e.c-walk (As e.assigns)) '^' (Del t.var) e.p-graph =
+       <Branch t.path (e.c-walk <DelDef t.var (As e.assigns)>) '^' e.p-graph>;
+
+*6. Add a past p-contraction to e.path.
+  (e.path) (e.c-walk) '^' (Path t.contr) e.p-graph =
+        <Branch (e.path t.contr) (e.c-walk) '^' e.p-graph>;
+
+*7. Rule XC: X ^ C  ==>  X C ^   where X is not R or A.
+  t.path (e.c-walk) '^' (Ct e.contr) e.p-graph = 
+        <Branch t.path (e.c-walk (Ct e.contr)) '^' e.p-graph>;
+
+*8. Rule RR: R ^ R'  ==>  {R R'} ^ . Combine restrictions.
+  t.path (e.c-walk (Rs e.restrs)) '^' (Rs e.restrs1) e.p-graph  = 
+        <Branch t.path (e.c-walk (Rs <RuleRR (Rs e.restrs) (Rs e.restrs1)>)) '^' 
+                e.p-graph>;
+
+*9. Rule AR: A ^ R  ==>  ^ R' A
+  t.path (e.c-walk (As e.assigns)) '^'(Rs e.rests) e.p-graph = 
+    <Branch t.path (e.c-walk) '^' 
+                   <CleanRs <RuleAR (As e.assigns)(Rs e.rests)>> e.p-graph>;
+
+*10.  Stack ^ R  ==>  ^ R  Stack.
+  t.path (e.c-walk (Stack e.stack)) '^'(Rs e.rests) e.p-graph = 
+    <Branch t.path (e.c-walk) '^' (Rs e.rests)(Stack e.stack) e.p-graph>;
+
+*11. Rule XR: X ^ R  ==>  X R ^  where X  is not R or A or Stack.
+  t.path (e.c-walk) '^' (Rs e.rests) e.p-graph = 
+        <Branch t.path (e.c-walk (Rs e.rests)) '^' e.p-graph>;
+
+*11a. Rule AA: A ^ A  ==>  A' ^   Combine assignments. 
+  t.path (e.c-walk (As e.assigns))'^'(Stack e.stack)(As e.assigns1) e.p-graph = 
+      <Branch t.path (e.c-walk 
+             <RuleAA (As e.assigns)(Stack e.stack)(As e.assigns1)>) '^' 
+                     e.p-graph>;
+
+*00. This case is used just by the driving a c-graph!! See analyses.
+*  (As e.assign) '^' (Conf) ==> (Conf e.assign) '^'  
+*   Driving over a c-graph. Keep the assignment. 
+  t.path (e.c-walk (As e.assigns)) '^'(Conf) = 
+                            <Branch t.path (e.c-walk (Conf e.assigns)) '^'>;
+
+
+*11b. Rule AA: Stack A ^ A  ==>  Stack A' ^   Combine assignments. 
+  t.path (e.c-walk (Stack e.stack)(As e.assigns))'^'(Conf e.conf) = 
+      <Branch t.path (e.c-walk 
+                        (Stack e.stack)(Conf <SubsConf (As e.assigns) e.conf>)) '^' 
+                     >;
+
+*12a. Rule XA: X ^ Stack A  ==>  X Stack A ^ , where X is not A.
+  t.path (e.c-walk) '^' (Stack e.stack)(As e.assigns) e.p-graph = 
+       <Branch t.path (e.c-walk (Stack e.stack)(As e.assigns)) '^' e.p-graph>;
+ 
+*12b. Rule XA: X ^ A  ==>  X A ^ , where X is not A.
+  t.path (e.c-walk) '^' (As e.assigns) e.p-graph = 
+        <Branch t.path (e.c-walk (As e.assigns)) '^' e.p-graph>;
+
+*13. End in the whole walk. Modify the stack and create a new node.
+*    The stack can be changed also with a definition inside e.c-walk. 
+  t.path (e.c-walk (Rs e.restr)(Stack e.stack)(Conf e.conf)) '^'
+     =  t.path  
+         (<PopSt e.c-walk (Rs e.restr) (Stack e.stack)(Conf e.conf)> ) '^';
+
+*16. A problem is encountered. End in the linear segment of the walk.
+  t.path (e.c-walk) '^' t.cp-interface e.p-graph = 
+                  t.path (e.c-walk) '^' t.cp-interface e.p-graph;
+} /* End of Branch */
+
+
+
+**************************************************************************
+* The second part of the definition deals with moving through graph.    **
+**************************************************************************
+
+/*
+ Function Branchon goes on to drive the situation through a p-subgraph
+ after resolving the problem which was encountered by the function Branch.
+*/
+* <Branchon t.path (e.c-walk) '^' e.cp-graph> 
+*                           ==> (e.c-walk) '^' e.cp-graph
+*                           ==> (Riser e.c-branches) '^' e.cp-graph
+Branchon {
+*1. C-branching of a parameter. Drive the situation over this c-branching.
+*   Remember that this branching was inserted by Clash and the e.p-graph is
+*   a part of a p-graph which is a continuation of all branches of this
+*   c-branching. Function MultGrR just distributes this part over 
+*   the c-branches. To save our unbacktracking property of the graph
+*   we have to destribute the closest factor ( a shaft of the c-fork ) 
+*   on the left hand side over a result of the driving as well. 
+*   Function Riser does that. This branch is finished.
+*   We put a special RiserSec-flag for the function ExitBrs because if
+*   the branchin can be reduced to a single branch,
+*   we have to cancel the riseing.
+  t.path (e.c-walk (Rs e.restr)(Stack e.stack)(As e.assign)) '^' 
+         (Fork Split e.split) e.p-graph t.situation t.p-branches =
+    <Riser (e.c-walk 
+         <ExitBrs RiserSec t.path ((Rs e.restr)(Stack e.stack)(As e.assign))
+                    <Drv t.path ((Rs e.restr)(Stack e.stack)(As e.assign)) 
+                          (Fork <MultGrR (e.split) (e.p-graph)>)> 
+         > ) '^' t.situation t.p-branches>;
+
+*2. P-fork. Process this P-fork and go on to drive.
+  t.path (e.c-walk (Rs e.restr)(Stack e.stack)(As e.assign)) '^' 
+                                              (Fork e.p-fork) e.cp-graph =
+    (e.c-walk 
+      <ExitBrs Secondary t.path ((Rs e.restr)(Stack e.stack)(As e.assign))
+        <Drv t.path ((Rs e.restr)(Stack e.stack)(As e.assign)) (Fork e.p-fork)>
+      >
+    ) '^' e.cp-graph;
+
+/* !!!  (3) take care of situations after cc-branching!!! Do not forget them!
+*3. An assignment to an h-variable from an hindrance. Decomposition.
+*   Throw away the unpassed part of the p-branch. Remove those p-branches
+*   which demand the same decomposition. The driving takes care of them
+*   along the current branch ( after this decomposition ).
+*   Push on the top of the stack the hinder and start to drive this
+*   decomposed situation over the function on the top. 
+  (e.path) (e.c-walk) '^' (Hindrance e.hinder) e.p-branch 
+                        ((Rs e.restr)(Stack e.stack)(As e.assign)) t.p-fork,
+  <ClPath e.path>: e.path2,
+  <PushSt (Hindrance e.hinder) (e.path2) (As e.assign)(Stack e.stack)>:
+                                  (Stack e.stk)(As e.ass) t.path1 =
+    (
+     <ExitBrs Decomposition t.path1 ((Rs e.restr)(Stack e.stk)(As e.ass))
+        <Drv t.path1 ((Rs e.restr)(Stack e.stk)(As e.ass)) <GetGraph t.path1> 
+     >>
+    ) '^' ((Rs e.restr)(Stack e.stack)(As e.assign))();
+*/    
+  (e.path) (e.c-walk) '^' (Hindrance e.hinder) e.p-branch t.situation (e.p-brs) 
+*,  <ClPath1 e.path>: e.path2 =
+*                 () '^' (Hindrance e.hinder) 
+*                 t.situation ('+' (e.path2 e.p-branch) e.p-brs);
+            =    () '^' (Hindrance ((e.path) e.p-branch) e.hinder) 
+                 t.situation (e.p-brs);
+
+*4. The linear segment is finished. 
+  t.path (e.c-walk) '^' e.cp-graph = (e.c-walk) '^' e.cp-graph; 
+
+} /* End of Branchon */
+
+/*
+Function Driveon takes care of continuation of the driving a node along
+the p-fork. A situation  can be happened when the current c-branch screens
+the next p-branches. This function chooses the first next branch for
+driving. There is a freedom in this choice because of commutativity
+of branches. That is a posibility of variations - a strategy of the driving.
+Primery-flag is equal "Passive" in a start call to this function.
+The primary-flag is changed from branch to branch and means:
+
+ s.primary-flag ::= Passive   -- befor driven branches have passive ends;
+                  | Active    -- there was a sub-branch with an active end and
+                                 this branch does not hang under a primery node;
+                  | Primary   -- there were active branches and each of them
+                                 hangs under a primery node;
+
+This flags over each branch are set by functions Branch or ExitBrs on the ends
+of this branches.  
+*/
+* <Driveon s.primery-flag t.path (e.c-walk) '^' e.cp-graph> 
+*                            ==>  s.primery-flag
+*                            ==>  '+' t.c-branch ... s.primery-flag
+Driveon {
+*1. An operation impossible. The last branch. 
+  s.flag t.path (e.c-walk Zero) '^' e.z t.situation() = s.flag;
+
+*2. An operation impossible. Not last branch in p-fork. 
+*   The branch is pruned. Eleminate it. Go on driving. We have to clean the
+*   path to remove contractions wich were passed along the impossible branch.
+  s.flag t.path (e.c-walk Zero) '^' e.z t.situation('+' e.p-branches) = 
+         <DrvBr s.flag t.path t.situation '+' e.p-branches>;
+
+*3. A linear segment is finished. A branching was arised. Process the next 
+*   branch. There are c-contractions along the current branch.  Go on driving.
+   s.flag t.path (Riser e.c-branches s.flagw) '^' 
+        t.situation ('+' e.p-branches) =  e.c-branches 
+        <DrvBr <ActFlag s.flag s.flagw> t.path  t.situation '+' e.p-branches>;
+
+* 3.a Imitation of the contraction from an Hindrance *
+   s.flag t.path (RiserHindrance (e.c-walk s.flagw)) '^' 
+        t.situation ('+' e.p-branches) =  
+        '+' (e.c-walk s.flagw) 
+        <DrvBr <ActFlag s.flag s.flagw> t.path t.situation '+' e.p-branches>;
+
+   s.flag t.path (RiserHindrance (e.c-walk s.flagw)) '^' 
+        t.situation () =  
+        '+' (e.c-walk s.flagw) <ActFlag s.flag s.flagw>;
+
+*4. A liner segment is finished. Process the next branch.
+*   There are c-contractions along the current branch.  Go on driving.
+   s.flag t.path ( (Ct ) e.c-walk s.flagw) '^' 
+        t.situation ('+' e.p-branches) =  
+        '+' (e.c-walk s.flagw) 
+        <DrvBr <ActFlag s.flag s.flagw> t.path t.situation '+' e.p-branches>;
+
+   s.flag t.path (e.c-walk s.flagw) '^' 
+        t.situation ('+' e.p-branches), <FullTrn e.c-walk>:False  =  
+        '+' (e.c-walk s.flagw) 
+*        <Trace 'Branch was driven. ' >
+*        <Trace 'Result: ' e.c-walk s.flagw>
+        <DrvBr <ActFlag s.flag s.flagw> t.path t.situation '+' e.p-branches>;
+
+*5. The linear segment is finished. There are not contractions or 
+*   the last branch. The driving of a branching is finished.
+  s.flag t.path ((Ct ) e.c-walk s.flagw) '^' t.situation (e.p-branches) = 
+        '+'(e.c-walk s.flagw) <ActFlag s.flag s.flagw>;
+
+  s.flag t.path (e.c-walk s.flagw) '^' t.situation (e.p-branches) = 
+        '+'(e.c-walk s.flagw) <ActFlag s.flag s.flagw>;
+
+*6.
+  s.flag t.path (e.c-walk) '^' e.cp-graph = s.flag e.cp-graph; 
+           
+/*  s.flag t.path () '^' (Hindrance e.hinder)  
+           ((Rs e.restr)(Stack e.stack)(As e.assign)) ('+'e.p-branches),
+  <PushSt (Hindrance e.hinder) t.path (As e.assign)(Stack e.stack)>:
+                                  (Stack e.stk)(As e.ass) t.path1 =
+      <DrvBr s.flag t.path1 ((Rs e.restr)(Stack e.stk)(As e.ass))
+             '+' e.p-branches>;
+/*    (
+     <ExitBrs Decomposition t.path ((Rs e.restr)(Stack e.stk)(As e.ass))
+        <Drv t.path ((Rs e.restr)(Stack e.stk)(As e.ass))
+                    (Fork '+'e.p-branches)
+     >>
+    ) '^' ((Rs e.restr)(Stack e.stack)(As e.assign))();
+*/    
+} /* End of Driveon */
+
+/* Take into account the primery information of the previous branches
+   of this branching. See the comments to the Driveon function.
+*/ 
+* <ActFlag s.flag s.flagw> ==  s.flag
+ActFlag {
+ Passive s.flagw = s.flagw;
+ Active  s.flagw = Active;
+ Primary  Active = Active;
+ Primary s.flagw = Primary;
+} /* End of ActFlag */
+
+/* Riser splits a c-branch in two ones according to a c-branching of
+   parametrs. We do that to have no backtracking points in 
+   the pattern-matching of graph. The "inref.ref" compiler also garantees
+   this property.
+*/
+* <Riser (e.c-branch)'^' e.cp-graph> 
+*                      ==> (Riser e.c-branches s.primary-flag)'^' e.cp-graph
+*                      ==> (e.c-branch)'^' e.cp-graph
+Riser {
+*1. The branching to rise was reduced to a single branch. Cancel riseing.
+   (e.c-walk Hindrance CancelRiser) '^' t.situation(e.p-brs) = 
+                       (RiserHindrance  (e.c-walk) ) '^' t.situation(e.p-brs); 
+   (e.c-walk CancelRiser) '^' t.situation(e.p-brs) = 
+                                          (e.c-walk) '^' t.situation(e.p-brs); 
+
+*Cases 2-3. Not last branch.
+*   Raise the c-splitting to the preceding node. That is the same as
+*   to distribute the multiplication over the addition. Go on driving.
+*2. The removed branching was active. Delete the c-branch's bag. 
+   (e.c-walk t.node(Dev () e.c-brs) s.flag) '^' t.situation('+'e.p-brs) = 
+                   (Riser <MultGrL (e.c-walk) (e.c-brs)> s.flag) '^'
+                                          t.situation('+' e.p-brs);
+
+*3. There is not the c-branch's bag. 
+*   This bag is created whenever we finish an active branching. 
+   (e.c-walk t.node(Dev e.c-brs) s.flag) '^' t.situation('+'e.p-brs) = 
+                   (Riser <MultGrL (e.c-walk) (e.c-brs)> s.flag) '^'
+                                          t.situation('+' e.p-brs);
+
+*4. Last branch or not node as a result of a pruning. 
+  e.cp-graph = e.cp-graph;  
+} /* End of Riser */
+
+* Right distributive rule: multiply a summa by a graph. Just two branches. 
+$ENTRY MultGrR {
+ ((e.branch1) '+' (e.branch2)) (e.graph) =
+                               '+'(e.branch1 e.graph) '+' (e.branch2 e.graph);
+} /* End of MultGrR */
+
+* Left distributive rule: multiply a graph by a summa.  
+$ENTRY MultGrL {
+ (e.graph) ('+'(Zero) e.brs) = <MultGrL (e.graph) (e.brs)>;
+ (e.graph) ('+'(e.br) e.brs) = '+'(e.graph e.br) <MultGrL (e.graph) (e.brs)>;
+ (e.graph) () = ;
+} /* End of MultGrL */
+
+
+
+/*
+ Function ExitBrs: exit from a branching. 
+ Type-of-branching can be "Decomposition" or "Secondary". In the first
+ case a decomposition was done in that current point. We throw away secondary 
+ branchings whenever they have only branch. 
+
+ The primary-flag is set "Primary" whenever both a branch has an active end
+ and the type-of-branching is "Decomposition". 
+ When we have just finished a Refal-step the created node is denoted 
+ as primary. We cannot mark a node befor driving because of it can be
+ decomposed later. This node can be considered as primary along 
+ one branch of it's development and as secondary along another.
+ We declare the new node as primary if there is an active sub-branch which was 
+ labeled with the Active-label. That means this sub-branch does not hang 
+ under a primary-node. In fact, a branch can have a number of nodes 
+ marked as primary but it's real primary node is the lowest on the branch.
+ Other primary nodes are real primary only for a parallel sub-branches.
+
+ For example:
+  ----(Node Prim 1) ---------->(Node Prim 2)--->ActiveEnd1  
+                    \__________________________>ActiveEnd2
+
+ Here Node2 is primary for ActiveEnd1 but Node1 is primary for Active2.
+
+ See also comments to the function Driveon.
+*/
+* <ExitBrs s.type-of-branching t.path t.situation e.c-branches>
+*                 ==  e.c-branch s.primery-flag
+*                 ==  Zero
+ExitBrs {
+*0.
+* 24.04.2000
+
+  RiserSec t.path ((Rs e.restr)(Stack e.stack)(As e.assign)) e.c-brs
+  s.flag (Hindrance (t.path1 e.p-branch) e.hinder)
+           t.st1 (e.p-brs),
+*?  RiserSec t.path t.st e.c-brs
+*?  s.flag (Hindrance (t.path1 e.p-branch) e.hinder)
+*?  ((Rs e.restr)(Stack e.stack)(As e.assign)) (e.p-brs),
+*?  <PushSt (Hindrance e.hinder) t.path1 (As e.assign)(Stack e.stack)>:
+  <PushSt (Hindrance e.hinder) t.path (As e.assign)(Stack e.stack)>:
+                                  (Stack e.stk)(As e.ass) t.path3 =
+    <ExitBrs Secondary t.path3 ((Rs e.restr)(Stack e.stk)(As e.ass))
+*    <ExitBrs Decomposition t.path3 ((Rs e.restr)(Stack e.stk)(As e.ass))
+/* We have to imitate the contraction to save a next branch whenever 
+   the Hindrance is transitive. */
+            <Drv t.path3 ( (Rs e.restr)(Stack e.stk)(As e.ass))
+                         <GetGraph t.path3>>> Hindrance CancelRiser;
+
+
+/*  
+* 24.04.2000
+
+  RiserSec t.path ((Rs e.restr)(Stack e.stack)(As e.assign)) '+'e.c-brs
+  s.flag (Hindrance (t.path1 e.p-branch) e.hinder)
+           t.st1 (e.p-brs),
+  <PushSt (Hindrance e.hinder) t.path (As e.assign)(Stack e.stack)>:
+                                  (Stack e.stk)(As e.ass) t.path3 =
+    <ExitBrs RiserSec t.path ((Rs e.restr)(Stack e.stack)(As e.assign))
+                           '+' e.c-brs
+        <ExitFlag s.flag
+       '+'( <ExitBrs RiserSec
+                     t.path ((Rs e.restr)(Stack e.stack)(As e.assign)) 
+            <Drv t.path3 ((Rs e.restr)(Stack e.stk)(As e.ass))
+                         <GetGraph t.path3>>>
+          )>
+    >;
+  
+  RiserSec t.path ((Rs e.restr)(Stack e.stack)(As e.assign)) 
+  s.flag (Hindrance ((e.path1) e.p-branch) e.hinder) t.st1 (e.p-brs)
+,  <PushSt (Hindrance e.hinder) t.path (As e.assign)(Stack e.stack)>:
+                                  (Stack e.stk)(As e.ass) t.path3 
+  =  <ExitBrs RiserSec t.path3 ((Rs e.restr)(Stack e.stk)(As e.ass))
+            <Drv t.path3 ((Rs e.restr)(Stack e.stk)(As e.ass))
+                         <GetGraph t.path3>>>;
+*/
+************************* 24.04. 2000 ***********************************  
+
+  
+*0.
+  s.type t.path ((Rs e.restr)(Stack e.stack)(As e.assign)) '+'e.c-brs
+  s.flag (Hindrance ((e.path1) e.p-branch) e.hinder) t.st1 (e.p-brs),
+*  <ClPath1 e.path1>: e.path2,
+  <PushSt (Hindrance e.hinder) t.path (As e.assign)(Stack e.stack)>:
+                                  (Stack e.stk)(As e.ass) t.path3 =
+    <ExitBrs s.type t.path ((Rs e.restr)(Stack e.stack)(As e.assign))
+                           '+' e.c-brs
+        <ExitFlag s.flag
+       '+'( 
+            <ExitBrs Decomposition
+                     t.path ((Rs e.restr)(Stack e.stack)(As e.assign)) 
+            <Drv t.path3 ((Ct ) (Rs e.restr)(Stack e.stk)(As e.ass))
+                         <GetGraph t.path3>>>
+          )>
+    >;
+  
+*0.
+  s.type t.path ((Rs e.restr)(Stack e.stack)(As e.assign)) 
+  s.flag (Hindrance ((e.path1) e.p-branch) e.hinder) t.st1 (e.p-brs)
+*?  s.type t.path t.st e.c-brs
+*?  s.flag (Hindrance ((e.path1) e.p-branch) e.hinder)
+*?  ((Rs e.restr)(Stack e.stack)(As e.assign)) (e.p-brs)
+*,  <ClPath1 e.path1>: e.path2
+,  <PushSt (Hindrance e.hinder) t.path (As e.assign)(Stack e.stack)>:
+                                  (Stack e.stk)(As e.ass) t.path3 
+  =  <ExitBrs Decomposition t.path3 ((Rs e.restr)(Stack e.stk)(As e.ass))
+            <Drv t.path3 ((Ct ) (Rs e.restr)(Stack e.stk)(As e.ass))
+                         <GetGraph t.path3>>>;
+  
+*1. Every branch was pruned.
+ s.type t.path t.situation s.flag = Zero; 
+
+*2a. Single secondary branch from decomposition.
+*  The function to drive was declared as untransient. 
+  Decomposition t.path t.situation '+'(e.branch) s.flag, <UnTransit t.path>:True = 
+             <BrNode Prim t.path t.situation>
+             (Dev () '+'(e.branch)) Primary;
+
+*2. Single secondary branch from decomposition. 
+*   Just remove the marker of branching .
+*-Transit. 
+  Decomposition t.path t.situation '+'(e.branch) s.flag , 
+  <GetKey Transient>: No, s.flag: { Primary = e.branch;
+                                    s.flag1 = <PutPrimary t.path e.branch>; 
+                                  };  
+*NoTransit  
+  Decomposition t.path t.situation '+'(e.branch) Primary = e.branch;
+
+*3. Single secondary branch from decomposition with an active end 
+*   (Active or Primary). Declare the new node as Prim if there is an active
+*   sub-branch which was labeled with the Active-label. That means 
+*   those sub-branch does not hang under a Prim-node. 
+  Decomposition t.path t.situation '+'(e.branch) s.flag = 
+             <BrNode Prim t.path t.situation>
+             (Dev () '+'(e.branch)) Primary;
+
+*4. Single secondary branch as the result of a pruning. 
+*   Just remove the label of branching .
+ Secondary t.path t.situation '+'(e.branch) s.flag = e.branch;
+
+*4. Single secondary branch as the result of a pruning. 
+*   That is a c-branching of a parametr. Cancel the riseing. 
+*   Remove the label of branching .
+ RiserSec t.path t.situation '+'(e.branch) s.flag = e.branch CancelRiser;
+
+*5. A real secondary branching is encountered. 
+*   That is a c-branching of a parametr. Just set the type as Secondary
+ RiserSec t.path t.situation '+'(e.branch)'+'e.brs s.flag =
+       <ExitBrs Secondary t.path t.situation '+'(e.branch)'+'e.brs s.flag>;
+
+*5. A real secondary branching is encountered. Create a new secondary node.
+*   Function C-brs initializes the set of ready c-branches as ()
+*   if that is really necessary to pass p-branches. That is just
+*   an help for history functions. 
+ Secondary t.path t.situation '+'(e.branch)'+'e.brs s.flag =
+        <BrNode Sec t.path t.situation>
+        (Dev <C-brs s.flag> '+'(e.branch)'+'e.brs) s.flag;
+
+*6. A real branching from decomposition is encountered. 
+*   All branches are passive. Create a new secondary node.
+ Decomposition t.path t.situation '+'(e.branch)'+'e.brs Passive = 
+         <BrNode Sec t.path t.situation>(Dev '+'(e.branch)'+'e.brs) Passive;
+
+*7. A real branching from decomposition is encountered.
+*  There exists an active or primary branch. See comments to the Case #3.
+ Decomposition t.path t.situation '+'(e.branch)'+'e.brs s.flag = 
+             <BrNode <TypeNode t.path s.flag> t.path t.situation>
+             (Dev () '+'(e.branch)'+'e.brs) Primary;
+             
+/******             
+  s.flag t.path (e.c-walk) '^' (Hindrance e.hinder) e.p-branch 
+                        ((Rs e.restr)(Stack e.stack)(As e.assign)) t.p-fork,
+  <PushSt (Hindrance e.hinder) (e.path2) (As e.assign)(Stack e.stack)>:
+                                  (Stack e.stk)(As e.ass) t.path1 =
+    (
+     <ExitBrs Decomposition t.path1 ((Rs e.restr)(Stack e.stk)(As e.ass))
+        <Drv t.path1 ((Rs e.restr)(Stack e.stk)(As e.ass)) <GetGraph t.path1> 
+     >>
+    ) '^' ((Rs e.restr)(Stack e.stack)(As e.assign))();
+*/    
+  } /* End of ExitBrs */
+
+ExitFlag {
+ s.flag '+' (e.br s.flagw) = '+' (e.br s.flagw) <ActFlag s.flag s.flagw>;
+}
+
+PutPrimary {
+ (s.Func e.path) e.branch, <GetKey GoAhead>: e.1 s.Func e.GoAhead = e.branch;
+ t.path e.br Passive = e.br Passive;
+ t.path e.br (Node s.id Sec e.node)(Dev '+' e.dev) s.flag 
+               = e.br (Node s.id Prim e.node)(Dev () '+'e.dev) Primary;
+ t.path e.br (Node s.id Sec e.node)(Dev () '+' e.dev) s.flag 
+               = e.br (Node s.id Prim e.node)(Dev () '+'e.dev) Primary;
+ t.path e.br (Node e.node)(Dev () '+' e.dev) s.flag 
+               = e.br (Node e.node)(Dev () '+'e.dev) s.flag;
+ t.path e.branch = e.branch;
+} 
+
+* An auxiliary function for the function ExitBrs. See comments to the Case #3.
+TypeNode {
+ t.path Primary = Sec;
+ (s.Func e.path) s.active, <GetKey GoAhead>: e.1 s.Func e.GoAhead = Sec;
+ t.path s.active = Prim;
+ } /* End of TypeNode */
+
+* <C-brs s.flag> ==  () | []
+C-brs {
+ Passive = ;
+ s.flagw = ();
+} /* End of C-brs */
+
+* Create a node from a situation.
+* <BrNode s.type t.path t.situation> = t.node
+BrNode {
+ s.type t.path 
+ (t.restr 
+  (Stack (Call s.id t.path1 (('!' (Fn s.f Place)':'t.var)':'t.h-var)) e.stk)
+   (As e.arg)) =
+   (Node <New Node> s.type t.restr 
+     (Stack (Call s.id t.path (('!' (Fn s.f e.arg)':'t.var)':'t.h-var)) e.stk)
+     (Basics));
+
+ Sec e.xxx =  (Node <New Node> Sec (Rs) (Stack) (Basics));
+}
+
+* The driving's step is full transient. 
+* Temporary defininion.
+$ENTRY FullTrn {
+ (Ct e.contr) e.c-walk  = False;
+
+/*
+ '^' (Subgraph e.1 (Def (('!' (Fn Open___ e.arg)':'t.var)':'t.outvar)) e.2) = False;
+ '^' (Subgraph e.1 (Def (('!' (Fn Equal___ e.arg)':'t.var)':'t.outvar)) e.2) = False;
+
+ e.1 (Def (('!' (Fn Open___ e.arg)':'t.var)':'t.outvar)) e.2 = False;
+ e.1 (Def (('!' (Fn Equal___ e.arg)':'t.var)':'t.outvar)) e.2 = False;
+
+* For a final driving
+ e.1 (Basic Open___ e.basic) e.2 = False;
+ e.1 (Basic Equal___ e.basic) e.2 = False;
+*/
+
+ e.walk = True;
+ }
+
+UnTransit {
+ (s.Func e.path), <GetKey PutInHistory>: e.1 s.Func e.2 = True;
+ e.trash = False;
+}
+
+*=========================================================================
+* Compute a metacoded function call, remaining in the same level
+Mu-comp { 
+  ('!' Equal___ e.Arg) = 
+*+                 <Trace0 <Step> 'Output of an executable call was generalized:'>
+*+                 <Trace0 '<' Equal___ <PrArgUser e.Arg> '>' >
+                          <Meta-Rules ('!' Equal___ e.Arg)>;
+  ('!' Open___ e.Arg) = 
+*                 <Trace0 <Step> 'Output of an executable call was generalized:'>
+*                 <Trace0 '<' Open___ <PrArgUser e.Arg> '>' >
+                          <Meta-Rules ('!' Open___ e.Arg)>;
+  ('!' Prout e.Arg) = <Prout e.Arg> (True); 
+  ('!' s.F e.Arg), <Up0 e.Arg>: 
+      { e.Arg1 (True) = <Dn0 <Mu s.F e.Arg1>> (True); 
+        e.trash (False) = 
+                 <Trace0 <Step> 'Output of an executable call was generalized:'>
+                 <Trace0 '<' s.F <PrArgUser e.Arg> '>' >
+                          <Meta-Rules ('!' s.F e.Arg)>;
+/*
+        e.trash (False) = ('!' s.F e.Arg) (False)
+                 <Trace0 <Step> 'Output of an executable call was generalized:'>
+                 <Trace0 '<' s.F <PrArgUser e.Arg> '>' >;
+*/
+      };
+}
+
+* Try do some steps with parametrs in accoding properties 
+* of an executable function.
+Meta-Rules { 
+  ('!' Add e.Arg) = <Mu Add___ e.Arg>;
+  ('!' Sub e.Arg) = <Mu Sub___ e.Arg>;
+  ('!' Mul e.Arg) = <Mu Mul___ e.Arg>;
+  ('!' Divmod e.Arg) = <Mu Divmod___ e.Arg>;
+  ('!' Div e.Arg) = <Mu Div___ e.Arg>;
+  ('!' Mod e.Arg) = <Mu Mod___ e.Arg>;
+  ('!' Equal___ e.Arg) = <Mu Equal___ e.Arg>;
+  ('!' Open___ e.Arg) = <Mu Open___ e.Arg>;
+  ('!' s.Fn e.Arg) = <Hold s.Fn e.Arg> (False);
+}
+
+$ENTRY Mu-Comp1 {
+* while error in Ev-met is not corrected. 
+ (Def (('!' (Fn s.fun-name (e.args':'t.inpvar))':'t.var)':'t.out)),
+ <GetExecutable>: e.1 s.fun-name e.2, 
+ <Mu-comp ('!' s.fun-name e.args)>:
+   { e.expr (True) = (As (e.expr':'t.out));
+* a meta-contraction.
+     e.expr (Zero), s.fun-name: Equal___ = (As (False':'t.out)); 
+     e.default = (Def (('!' (Fn s.fun-name (e.args':'t.inpvar))':'t.var)':'t.out));
+   };
+*
+ (Def e.def) = (Def e.def);
+}
+
+* Output format of residual function.
+ResidFmt {
+ Prout  t.var = <SelfVar t.var>;
+ Putout t.var = <SelfVar t.var>;
+ Open   t.var = <SelfVar t.var>;
+ Br     t.var = <SelfVar t.var>;
+ Rp     t.var = <SelfVar t.var>;
+ Get    t.var = <ElevToInf t.var>; 
+ Card   t.var = <ElevToInf t.var>; 
+ Explode t.var = <ElevToInf t.var>; 
+ Symb    t.var = <ElevToInf t.var>; 
+ Time    t.var = <ElevToInf t.var>; 
+ Arg     t.var = <ElevToInf t.var>; 
+ s.name  t.var, <SelfVar t.var>: t.var1 = t.var1 t.var1;
+}
+
+ElevToInf {
+ (Var s.t s.id e.var), <New Var>: s.id1, <Infinit>: e.inf
+           = (Var s.t s.id1 e.inf) (Var s.t s.id1 e.inf); 
+}
+
+* Down the MST stairway (metacode)
+$ENTRY Dn0 {
+  ( e.1 ) e.2 = ('*' <Dn0 e.1> ) <Dn0 e.2>;
+  s.1 e.2 = s.1 <Dn0 e.2>;
+    = ; }
+
+* Up the MST stairway (demetacode)
+$ENTRY Up0 {
+  ('*'e.1) e.2 = <Up1 (<Up0 e.1>) e.2>;
+  (Var 'c' s.id e.1) e.2 = e.1 <Up0 e.2>;
+  s.1 e.2 = s.1 <Up0 e.2>;
+   = (True);
+  e.1 = (False);}
+
+Up1 {
+* Demetacoding is successful. Continue.
+  (e.1 (True)) e.2 = (e.1) <Up0 e.2>;
+* Demetacoding is not successful.
+* (e.1) e.2 = <Prout 'Cannot demetacode: (' e.1 ')' > <Add >;
+  (e.1 (False)) e.2 = (e.1) e.2 (False);
+}
+
+*<DcmpExeDefs e.expr> ==> e.result (e.defs)
+DcmpExeDefs { e.expr = <DcmpExeDef e.expr (Def All) (Defs)>; }
+DcmpExeFun { e.expr = <DcmpExeDef e.expr  (Func One) (Defs)>; }
+
+*<DcmpExeDef e.expr> ==> e.result t.defs
+DcmpExeDef {
+*1. A simbol is encountered just go on looking for a call. 
+  s.x    e.expr t.flags t.defs = s.x <DcmpExeDef e.expr t.flags t.defs>;
+
+*2. A variable is encoutered just go on looking for a call. 
+ (Var e.var) e.expr t.flags t.defs = (Var e.var) <DcmpExeDef e.expr t.flags t.defs>;
+
+*3. Parenthethis are encountered. Depth first strategy to look for.
+*   Function Lift keeps the track of the search to give a possiblity of
+*   backtracking  to move an information of the search one step up the tree.   
+ ('*' e.expr1) e.expr t.flags t.defs = 
+           <LiftDef ('*' <DcmpExeDef e.expr1 t.flags t.defs>) e.expr t.flags>;
+
+*4a. A call is encountered. Form the stack's format of the call and put
+*  the calls on the end of the branch. The function Lift will take care 
+*  about them. Put the created out-variable on the place where the call
+*  was taken. 
+ ('!' (Fn s.name e.arg)':'t.var) e.expr (Def All) (Defs e.defs),
+<NewInd To Variable t.var>: t.outvar
+    = t.outvar <DcmpExeDef e.expr (Def All)
+                    (Defs  e.defs
+                         (Def (('!' (Fn s.name e.arg)':'t.var)':'t.outvar))
+                    )>;
+
+ ('!' (Fn s.name e.arg)':'t.var) e.expr (Func One) (Defs e.defs),
+<NewInd To Variable t.var>: t.outvar
+    = t.outvar e.expr 
+                    (Defs  e.defs
+                         (Def (('!' (Fn s.name e.arg)':'t.var)':'t.outvar))
+                    );
+
+*5. Expression is finished merely to return the founded calls.
+ t.flags t.defs  = t.defs;
+} /* End of DcmpExeDef */
+
+* Lift an information one step up the tree.
+LiftDef {
+ ('*' e.expr1 t.defs) e.expr t.flags = ('*' e.expr1) <DcmpExeDef e.expr t.flags t.defs>; 
+} /* End of LiftDef */
+
+*============= Meta-rules for executable built-in function. ===========
+/*
+  Driving try to perform the rules if arguments of the functions are not
+  constants. 
+*/
+
+Add___ { e.mn = <GetStatus <DelZero <ArgsNumb Add__ e.mn>>>; }
+Add__ {
+ ('*' e.n) t.1, <Prefix2 (0) (t.1)>: True () = e.n;
+ ('*' t.1) e.n, <Prefix2 (0) (t.1)>: True () = e.n;
+
+ ('*' t.1 e.n) e.m, <Prefix2 ('-') (t.1)>: True (e.11)
+ , <Equal (e.11 e.n) (e.m)>:True = 0;
+ ('*' e.n) t.1 e.m, <Prefix2 ('-') (t.1)>: True (e.11)
+ , <Equal (e.n) (e.11 e.m)>:True = 0;
+
+ ('*' t.1 e.n) t.2 e.m
+, <Prefix2 ('-') (t.1)>: True (e.11), <Prefix2 ('-') (t.2)>: True (e.22)
+            = '-' <AddP__ ('*' e.11 e.n) e.22 e.m>;
+
+ ('*' t.1 e.n) t.2 e.m, <Prefix2 ('-') (t.1)>: True (e.11) , <LType t.2>: 'N' 
+          = <SubP__ ('*' t.2 e.m) e.11 e.n>;
+ ('*' t.1 e.n) t.2 e.m, <Prefix2 ('-') (t.2)>: True (e.22) , <LType t.1>: 'N' 
+          = <SubP__ ('*' t.1 e.n) e.22 e.m>;
+ ('*' t.d1 e.n) t.d2 e.m, <LType t.d1>: 'N', <LType t.d2>: 'N'
+          = <AddP__ ('*' t.d1 e.n) t.d2 e.m>;
+
+  e.args = <Hold Add e.args>;
+}
+
+AddP__ {
+ ('*' e.n) t.1, <Prefix2 (0) (t.1)>: True () = e.n;
+ ('*' t.1) e.n, <Prefix2 (0) (t.1)>: True () = e.n;
+
+ ('*' e.n t.d) e.m t.z,<Postfix2 (0) (t.z)>: True (e.22), <RType t.d>: 'N' 
+                     = <AddP__ ('*' e.n) e.m e.22> t.d;
+ ('*' e.n (Var 's' e.var)) e.m t.z,<Postfix2 (0) (t.z)>: True (e.22)
+                     = <AddP__ ('*' e.n) e.m e.22> (Var 's' e.var);
+ ('*' e.n (Var 't' e.var)) e.m t.z,<Postfix2 (0) (t.z)>: True (e.22)
+                     = <AddP__ ('*' e.n) e.m e.22> (Var 't' e.var);
+
+ ('*' e.n t.z) e.m t.d,<Postfix2 (0) (t.z)>: True (e.22), <RType t.d>: 'N' 
+                     = <AddP__ ('*' e.n e.22) e.m> t.d;
+ ('*' e.n t.z) e.m (Var 's' e.var),<Postfix2 (0) (t.z)>: True (e.22)
+                     = <AddP__ ('*' e.n e.22) e.m> (Var 's' e.var);
+ ('*' e.n t.z) e.m (Var 't' e.var),<Postfix2 (0) (t.z)>: True (e.22)
+                     = <AddP__ ('*' e.n e.22) e.m> (Var 't' e.var);
+ ('*' ) e.m = e.m;
+ ('*' e.n)  = e.n;
+  e.args = <Hold Add e.args>;
+}
+
+Sub___ { e.mn = <GetStatus <DelZero <ArgsNumb Sub__ e.mn>>>; }
+Sub__ {
+ ('*' e.n) t.1, <Prefix2 (0) (t.1)>: True() = e.n;
+ ('*' t.z)  t.m e.n, 
+ <Prefix2 (0) (t.z)>: True(),<Prefix2 ('-') (t.m)>: True(e.22) = e.22 e.n;
+
+ ('*' e.n) = e.n;
+ ('*' ) t.m e.n,<Prefix2 ('-') (t.m)>: True(e.22) = e.22 e.n;
+ ('*' e.n) e.m, <Equal (e.n)(e.m)>:True = 0;
+
+ ('*' t.1 e.n) t.2 e.m 
+, <Prefix2 ('-') (t.1)>: True (e.11), <Prefix2 ('-') (t.2)>: True (e.22)
+          = <SubP__ ('*' e.22 e.m) e.11 e.n>;
+
+ ('*' t.1 e.n) t.2 e.m, <Prefix2 ('-') (t.1)>: True (e.11) , <LType t.2>: 'N' 
+          = '-' <AddP__ ('*' e.11 e.n) t.2 e.m>;
+ ('*' t.1 e.n) t.2 e.m, <Prefix2 ('-') (t.2)>: True (e.22) , <LType t.1>: 'N' 
+          = <AddP__ ('*' t.1 e.n) e.22 e.m>;
+ ('*' t.d1 e.n) t.d2 e.m, <LType t.d1>: 'N', <LType t.d2>: 'N'
+          = <SubP__ ('*' t.d1 e.n) t.d2 e.m>;
+
+  e.args = <Hold Sub e.args>;
+}
+
+SubP__ {
+ ('*' e.n) t.1, <Prefix2 (0) (t.1)>: True() = e.n;
+ ('*' e.n) e.m, <Equal (e.n)(e.m)>:True = 0;
+ ('*' e.n s.d) e.m s.d = <SubP__ ('*' e.n) e.m> 0;
+ ('*' e.n (Var 's' s.id e.var1)) e.m (Var 's' s.id e.var2) 
+         = <SubP__ ('*' e.n) e.m> 0;
+ ('*' e.n (Var 't' s.id e.var1)) e.m (Var 't' s.id e.var2) 
+         = <SubP__ ('*' e.n) e.m> 0;
+ ('*' e.n (Var 'c' s.id e.c1 s.1)) e.m (Var 'c' s.id2 e.c2 s.1)
+         = <SubP__ ('*' e.n <EmptyCVar (Var 'c' s.id e.c1)>) 
+                     e.m <EmptyCVar (Var 'c' s.id2 e.c2)>> 0;
+ ('*' e.n (Var 'c' s.id e.c1 s.1)) e.m s.1
+         = <SubP__ ('*' e.n <EmptyCVar (Var 'c' s.id e.c1)>) e.m> 0;
+ ('*' e.n s.1) e.m (Var 'c' s.id2 e.c2 s.1)
+         = <SubP__ ('*' e.n) e.m <EmptyCVar (Var 'c' s.id2 e.c2)>> 0;
+ e.args = <Hold Sub e.args>;
+}
+
+Mul___ { e.mn = <GetStatus <DelZero <ArgsNumb Mul__ e.mn>>>; }
+Mul__ {
+ ('*' e.n) t.1, <Prefix2 (0) (t.1)>: True () = 0;
+ ('*' t.1) e.n, <Prefix2 (0) (t.1)>: True () = 0;
+ ('*' e.n) t.1, <Prefix2 (1) (t.1)>: True () = e.n;
+ ('*' t.1) e.n, <Prefix2 (1) (t.1)>: True () = e.n;
+
+ ('*' t.1 e.n) t.2 e.m
+, <Prefix2 ('-') (t.1)>: True (e.11), <Prefix2 ('-') (t.2)>: True (e.22)
+            = <MulP__ ('*' e.11 e.n) e.22 e.m>;
+
+ ('*' t.1 e.n) t.2 e.m, <Prefix2 ('-') (t.1)>: True (e.11) , <LType t.2>: 'N' 
+          = '-' <MulP__ ('*' e.11 e.n) t.2 e.m>;
+ ('*' t.1 e.n) t.2 e.m, <Prefix2 ('-') (t.2)>: True (e.22) , <LType t.1>: 'N' 
+          = '-' <MulP__ ('*' t.1 e.n) e.22 e.m>;
+ ('*' t.d1 e.n) t.d2 e.m, <LType t.d1>: 'N', <LType t.d2>: 'N'
+          = <MulP__ ('*' t.d1 e.n) t.d2 e.m>;
+
+ ('*' e.n t.z) e.m,<Postfix2 (0) (t.z)>: True(e.22) = <MulP__ ('*' e.n e.22) e.m> 0;
+ ('*' e.n) e.m t.z,<Postfix2 (0) (t.z)>: True(e.22) = <MulP__ ('*' e.n) e.m e.22> 0;
+  e.args = <Hold Mul e.args>;
+}
+
+MulP__ {
+ ('*' e.n) t.1, <Prefix2 (0) (t.1)>: True () = 0;
+ ('*' t.1) e.n, <Prefix2 (0) (t.1)>: True () = 0;
+ ('*' e.n) t.1, <Prefix2 (1) (t.1)>: True () = e.n;
+ ('*' t.1) e.n, <Prefix2 (1) (t.1)>: True () = e.n;
+
+ ('*' e.n t.z) e.m,<Postfix2 (0) (t.z)>: True(e.22) = <MulP__ ('*' e.n e.22) e.m> 0;
+ ('*' e.n) e.m t.z,<Postfix2 (0) (t.z)>: True(e.22) = <MulP__ ('*' e.n) e.m e.22> 0;
+  e.args = <Hold Mul e.args>;
+}
+
+Div___ { e.mn = <Div__ <ArgsNumb Divmod1___ e.mn>>; }
+Div__ {
+ (Zero) = (Zero);
+ ('!' Divmod e.args ('-' e.q)(e.r)) = '-' <Hold Div e.args> e.q (False); 
+ ('!' Divmod e.args (e.q)(e.r)) = <Hold Div e.args> e.q (False); 
+ (e.q)(e.r) = e.q (True);
+}
+
+Mod___ { e.mn = <Mod__ <ArgsNumb Divmod1___ e.mn>>; }
+Mod__ {
+ (Zero) = (Zero);
+ ('!' Divmod e.args (e.q)('-' e.r)) = '-' <Hold Mod e.args> e.r (False); 
+ ('!' Divmod e.args (e.q)(e.r)) = <Hold Mod e.args> e.r (False); 
+ (e.q)(e.r) = e.r (True);
+}
+
+Divmod___ { e.mn = <Divmod2 (e.mn) <ArgsNumb Divmod1___ e.mn>>; }
+Divmod1___ { e.mn = <DelZero1 <Divmod__ e.mn ()()>>; }
+Divmod2 { 
+ (e.mn) (Zero) = (Zero);
+* Temporary definition. 
+ (e.mn) ('!' Divmod e.args (e.q)(e.r)) = <Hold Divmod e.mn> (False); 
+ (e.mn) (e.q)(e.r) = (e.q) e.r (True);
+}
+
+Divmod__ {
+ ('*' e.n) t.1 (e.q)(e.r), <Prefix2 (0) (t.1)>: True () = (Zero);
+ ('*' e.n) t.1 (e.q)(e.r), <Prefix2 (1) (t.1)>: True () = ('*' e.n e.q) (e.r);
+
+ ('*' t.1 e.n) t.2 e.m (e.q)(e.r) 
+, <Prefix2 ('-') (t.1)>: True (e.11), <Prefix2 ('-') (t.2)>: True (e.22)
+                       = <DivmodP__ ('*' e.11 e.n) e.22 e.m (e.q)('-' e.r)>; 
+
+ ('*' t.1 e.n) t.2 e.m (e.q)(e.r) 
+, <Prefix2 ('-') (t.1)>: True (e.11) , <LType t.2>: 'N' 
+          = <DivmodP__ ('*' e.11 e.n) t.2 e.m ('-' e.q)(e.r)>;
+ ('*' t.1 e.n) t.2 e.m (e.q)(e.r) 
+, <Prefix2 ('-') (t.2)>: True (e.22) , <LType t.1>: 'N' 
+          = <DivmodP__ ('*' t.1 e.n) e.22 e.m ('-' e.q)('-' e.r)>;
+ ('*' t.d1 e.n) t.d2 e.m (e.q)(e.r), <LType t.d1>: 'N', <LType t.d2>: 'N'
+          = <DivmodP__ ('*' t.d1 e.n) t.d2 e.m (e.q)(e.r)>;
+
+ ('*' e.n t.d) e.m t.z (e.q)(e.r)
+,<Postfix2 (0) (t.z)>: True (e.22), <RType t.d>: 'N' 
+          = <Divmod__ ('*' e.n) e.m e.22 (e.q)(e.r t.d)>;
+ ('*' e.n (Var 's' e.var)) e.m t.z (e.q)(e.r)
+,<Postfix2 (0) (t.z)>: True (e.22)
+          = <Divmod__ ('*' e.n) e.m e.22 (e.q)(e.r (Var 's' e.var))>;
+ ('*' e.n (Var 't' e.var)) e.m t.z (e.q)(e.r)
+,<Postfix2 (0) (t.z)>: True (e.22)
+          = <Divmod__ ('*' e.n) e.m e.22 (e.q)(e.r (Var 't' e.var))>;
+
+  e.args (e.q)(e.r) = ('!' Divmod e.args (e.q)(e.r));
+}
+
+DivmodP__ {
+ ('*' e.n) t.1 (e.q)(e.r), <Prefix2 (0) (t.1)>: True () = (Zero);
+ ('*' e.n) t.1 (e.q)(e.r), <Prefix2 (1) (t.1)>: True () = ('*' e.n e.q) (e.r);
+ ('*' e.n) e.n1 (e.q)(e.r), <Equal (e.n)(e.n1)>: True = ('*' 1 e.q) (e.r);
+ ('*' e.n) e.m e.n1 e.k (e.q)(e.r), <Equal (e.n)(e.n1)>: True 
+          = ('*' <PutNum (0) e.q>) <PutNum (e.n) e.r>;
+
+ ('*' e.n t.d) e.m t.z (e.q)(e.r)
+,<Postfix2 (0) (t.z)>: True (e.22), <RType t.d>: 'N' 
+          = <Divmod__ ('*' e.n) e.m e.22 (e.q)(e.r t.d)>;
+ ('*' e.n (Var 's' e.var)) e.m t.z (e.q)(e.r)
+,<Postfix2 (0) (t.z)>: True (e.22)
+          = <Divmod__ ('*' e.n) e.m e.22 (e.q)(e.r (Var 's' e.var))>;
+ ('*' e.n (Var 't' e.var)) e.m t.z (e.q)(e.r)
+,<Postfix2 (0) (t.z)>: True (e.22)
+          = <Divmod__ ('*' e.n) e.m e.22 (e.q)(e.r (Var 't' e.var))>;
+
+  e.args (e.q)(e.r) = ('!' Divmod e.args (e.q)(e.r));
+}
+
+PutNum {
+ (e.n) '-' e.m = '-' e.n e.m;
+ (e.n) e.m = e.n e.m;
+}
+
+ArgsNumb {
+ s.Fun ('*' e.n) e.m, <Numbs (e.n) (e.m)>: 
+       { True = <Mu s.Fun ('*' e.n) e.m>;
+         Zero = (Zero);
+         False = <ArgsNumb1  s.Fun ('*' e.n) e.m>;
+       };
+ s.Fun e.mn = <ArgsNumb1 s.Fun e.mn>;
+}
+
+ArgsNumb1 {
+ s.Fun ('*' e.n) e.m, <Metas (e.n) (e.m)>: 
+       { False = (Zero);
+         e.trash = <Mu s.Fun ('*' e.n) e.m>;
+       };
+ s.Fun t.1 e.nm, <Prefix2 ('-') (t.1)>: 
+      { True (), e.nm :
+                 { t.2 e.m = <ArgsNumb s.Fun ('*' t.1 t.2) e.m>;
+                           = (Zero);
+                 };
+        True ((Var 'c' s.id s.x e.const) e.11) 
+             = <ArgsNumb s.Fun ('*' (Var 'c' <New Var> '-' s.x)) 
+                               <EmptyCVar (Var 'c' s.id e.const)> e.11 e.nm>;
+        False, t.1 :
+               { (Var 'c' s.id s.x e.const) 
+                      = <ArgsNumb s.Fun ('*' (Var 'c' <New Var> s.x)) 
+                               <EmptyCVar (Var 'c' s.id e.const)> e.nm>;
+                 ('!' e.fun) = <Mu s.Fun t.1 e.nm>; 
+                 e.xxx = <ArgsNumb s.Fun ('*' t.1) e.nm>;
+               };
+      };
+ s.Fun e.mn = <Mu s.Fun e.mn>;
+}
+
+Numbs {
+   = True;
+ t.1 e.2, <Numb1 t.1>: 
+       { True = <Numbs e.2>;
+         s.False = s.False;
+       };
+ e.2 = False;
+}
+   
+Numb1 {
+ (t.1 e.n) , <Prefix2 ('-') (t.1)>: True (e.11) = <NumbP (e.11 e.n)>;
+ (e.n) = <NumbP (e.n)>;
+}
+
+NumbP {
+ (t.1 e.n) , <LType t.1>: 
+               { 'N' = True;
+                 Bad = False;
+                 e.trash = Zero;
+               };
+ (e.n) = False;
+}
+
+Metas {
+   = False;
+ t.1 e.2, <MetaNumb t.1>: False = <Metas e.2>;
+ e.2 = True;
+}
+ 
+MetaNumb {
+ (t.1 e.n) , <Prefix2 ('-') (t.1)>: True (e.11) = <MetaP (e.11 e.n)>;
+ (e.n) = <MetaP (e.n)>;
+}
+
+MetaP { (t.1 e.n) = <Meta t.1>; }
+
+Prefix2 { e.1 = <Fix2 Left e.1>; }
+Postfix2 { e.1 = <Fix2 Right e.1>; }
+
+Fix2 {
+s.Fl (s.1) (s.1) = True ();
+Left (s.1) ((Var 'c' s.id s.1 e.c))
+     = True (<EmptyCVar (Var 'c' s.id e.c)>);
+Right (s.1) ((Var 'c' s.id e.c s.1))
+     = True (<EmptyCVar (Var 'c' s.id e.c)>);
+s.Fl (s.1) (e.2) = False;
+}
+
+LType { e.1 = <CType Left e.1>; }
+RType { e.1 = <CType Right e.1>; }
+
+CType {
+ s.Fl s.2, <Type s.2>: s.1 e.x = s.1;
+ Left (Var 'c' s.id s.2 e.c), <Type s.2>: s.1 e.x = s.1;
+ Right (Var 'c' s.id e.c s.2), <Type s.2>: s.1 e.x = s.1;
+ e.2 = Bad;
+}
+
+Meta {
+ s.1 = False;
+ (Var 'c' e.var) = False;
+ (e.1) = True;
+}
+
+Hold { 
+ Open___  e.args = <Hold1 Open___ <DcmpExeFun e.args>>; 
+ Equal___  e.args = <Hold1 Equal___ <DcmpExeFun e.args>>; 
+ s.Fname e.args = <Hold1 s.Fname e.args (Defs)>; 
+}
+
+Hold1 { 
+ s.Fname e.args (Defs) = ('!' (Fn s.Fname (e.args':'<InputVar>))':'<OutVar>); 
+*+ s.Fname e.args (Defs (Def (('!' e.call)':'t.outvar))  )
+ s.Fname e.args (Defs (Def (('!' e.call)':'t.outvar))  e.defs)
+         = (Hindrance Left (('!' e.call) ':'t.outvar)) 
+           ('!' (Fn s.Fname (e.args':'<InputVar>))':'<OutVar>);
+}
+
+GetStatus {
+ e.1 (Zero) e.2 = (Zero);
+ e.1 ('!' e.call) e.2 =  e.1 ('!' e.call) e.2 (False);
+ e.1 = e.1 (True);
+}
+
+DelZero { 
+ 0 s.d e.1 = <DelZero s.d e.1>;
+ (Var 'c' s.id 0 e.c) e.1 = <DelZero <EmptyCVar (Var 'c' s.id e.c)> e.1>;
+ '-' e.1 = '-' <DelZero e.1>;
+ (Var 'c' s.id '-' e.c) e.1 = <DelZero <EmptyCVar (Var 'c' s.id e.c)> e.1>;
+ e.1 = e.1
+} 
+
+DelZero1 { 
+ (Zero) = (Zero);
+ ('!' Divmod e.args (e.q)(e.r)) = ('!' Divmod e.args <DelZero1 (e.q)(e.r)>); 
+ (e.q)(e.r) = (<DelZero e.q>) (<DelZero e.r>);
+} 
+
+* Temporary definition.
+Equal___ { 
+ ('*' (Var 'e' s.id e.var))('*' (Var 'e' s.id e.var1)) = True (True);
+ ('*' (Var 't' s.id e.var))('*' (Var 't' s.id e.var1)) = True (True);
+ ('*' (Var 's' s.id e.var))('*' (Var 's' s.id e.var1)) = True (True);
+ ('*' e.1)('*' (Var 'e' e.var)) 
+          = <ZeroTst (e.1) (As (e.1 ':' (Var 'e' e.var))) <ListVar Of ExprUnFunc e.1>>; 
+ ('*' (Var 'e' e.var))('*' e.2) 
+          = <ZeroTst (e.2) (As (e.2 ':' (Var 'e' e.var))) <ListVar Of ExprUnFunc e.2>>; 
+ ('*' e.1)('*' e.2) = <Equal__ Left ('*' e.1)('*' e.2)>; 
+}
+
+* Temporary definition.
+ZeroTst {
+ (e.2 (Var 'e' s.id0 e.var0) e.3) t.As e.vars = <ZeroTst (e.2 e.3) t.As e.vars>;
+* () t.As e.vars = <HoldEq t.As>;
+
+ () (As (e.1 ':' (Var 'e' s.id e.var))) e.vars 
+                             = <Equal__ Left ('*' e.1)('*' (Var 'e' s.id e.var))>;
+ (e.2) (As (e.1 ':' (Var 'e' s.id e.var))) e.1 (Var 'e' s.id e.var1) e.2 = (Zero);
+
+* (e.2) t.As e.vars = <HoldEq t.As>; 
+ (e.2) (As (e.1 ':' (Var 'e' s.id e.var))) e.vars 
+                             = <Equal__ Left ('*' e.1)('*' (Var 'e' s.id e.var))>;
+}
+
+HoldEq {
+ (As (e.1 ':' t.Var)) = <Hold Equal___ ('*' e.1)('*' t.Var)> (As (e.1 ':' t.Var)); 
+}
+
+Equal__ { 
+ Left ('*' t.term1 e.1)('*' t.term2 e.2) =
+         <ContEq Left <EqTerms__ Left t.term1 t.term2> ('*' e.1)('*' e.2)>;
+ Right ('*' e.1 t.term1)('*' e.2 t.term2) =
+         <ContEq Right <EqTerms__ Right t.term1 t.term2> ('*' e.1)('*' e.2)>;
+ s.side ('*') ('*') = True (True);
+ s.side ('*' e.1)('*') =
+         <ContEq s.side <EqEmpty__ True e.1> ('*' e.1)('*')>;
+ s.side ('*')('*' e.2) =
+         <ContEq s.side <EqEmpty__ True e.2> ('*')('*' e.2)>;
+}
+
+* Temporary definition.
+ContEq {
+* Uknown status on left side.
+ Left (As )(e.11)(e.22) ('*' e.1)('*' e.2) 
+         = <Equal__ Right ('*' e.11 e.1) ('*' e.22 e.2)>;
+* Uknown status on right side.
+ Right (As )(e.11)(e.22) ('*' e.1)('*' e.2) 
+         = <Hold Equal___ ('*' e.1 e.11)('*' e.2 e.22)> (False);
+
+* Substitution.
+ s.side (As t.assign)(e.11)(e.22) ('*' )('*' ) 
+         = <HoldEq (As t.assign)>;
+
+ Left True (e.11)(e.22) ('*' e.1)('*' e.2) 
+         = <Equal__ Left ('*' e.11 e.1) ('*' e.22 e.2)>;
+ Right True (e.11)(e.22) ('*' e.1)('*' e.2) 
+         = <Equal__ Right ('*' e.1 e.11) ('*' e.2 e.22)>;
+ s.side False (e.11)(e.22) ('*' e.1)('*' e.2) = (Zero);
+
+* Empty case.
+ s.side (As ) ('*'e.1)('*'e.2) 
+         = <Hold Equal___ ('*' e.1)('*' e.2)> (False);
+ s.side True ('*'e.1)('*'e.2) = <Equal__ s.side ('*') ('*')>;
+ s.side False ('*'e.1)('*'e.2) = (Zero);
+}
+
+EqTerms__ { 
+ s.side t.term t.term = True ()();
+ s.side ('*' e.exp e.exp1)('*' e.exp e.exp2) = True (e.exp1)(e.exp2); 
+ Left (Var 'c' s.id1 t.term e.11) (Var 'c' s.id2 t.term e.22) 
+              = True (<EmptyCVar (Var 'c' s.id1 e.11)>)
+                     (<EmptyCVar (Var 'c' s.id2 e.22)>);
+ Left (Var 'c' s.id1 s.10 e.11) s.10 
+              = True (<EmptyCVar (Var 'c' s.id1 e.11)>)();
+ Left (Var 'c' s.id1 (e.10) e.11) ('*' e.20) 
+              = True (<EmptyCVar (Var 'c' s.id1 e.10 e.11)>)(e.20);
+ Left s.10 (Var 'c' s.id2 s.10 e.22) 
+              = True ()(<EmptyCVar (Var 'c' s.id2 e.22)>);
+ Left ('*' e.10) (Var 'c' s.id2 (e.20) e.22) 
+              = True (e.10)(<EmptyCVar (Var 'c' s.id2 e.20 e.22)>);
+
+ Right (Var 'c' s.id1 e.11 t.term) (Var 'c' s.id2 e.22 t.term) 
+              = True (<EmptyCVar (Var 'c' s.id1 e.11)>)
+                     (<EmptyCVar (Var 'c' s.id2 e.22)>);
+ Right (Var 'c' s.id1 e.11 s.10) s.10 
+              = True (<EmptyCVar (Var 'c' s.id1 e.11)>)();
+ Right (Var 'c' s.id1 e.11 (e.10)) ('*' e.20) 
+              = True (<EmptyCVar (Var 'c' s.id1 e.11 e.10)>)(e.20);
+ Right s.10 (Var 'c' s.id2 e.22 s.10) 
+              = True ()(<EmptyCVar (Var 'c' s.id2 e.22)>);
+ Right ('*' e.10) (Var 'c' s.id2 e.22 (e.20)) 
+              = True (e.10)(<EmptyCVar (Var 'c' s.id2 e.22 e.20)>);
+
+* Temporary definition.
+ s.side (Var 'c' e.var1) (Var 'c' e.var2) 
+                        = False ((Var 'c' e.var1))((Var 'c' e.var2));
+/*
+ s.side s.1 (Var 's' s.id e.var) 
+                        = (As (s.1':'(Var 's' s.id e.var))) (s.1)((Var 's' s.id e.var));
+ s.side (Var 's' s.id e.var) s.1
+                        = (As (s.1':'(Var 's' s.id e.var))) ((Var 's' s.id e.var))(s.1);
+
+ s.side (Var 'c' s.id1 s.1) (Var 's' s.id e.var) 
+                        = (As ((Var 'c' s.id1 s.1)':'(Var 's' s.id e.var))) 
+                          ((Var 'c' s.id1 s.1))((Var 's' s.id e.var));
+ s.side (Var 's' s.id e.var) (Var 'c' s.id1 s.1) 
+                        = (As ((Var 'c' s.id1 s.1)':'(Var 's' s.id e.var))) 
+                          ((Var 's' s.id e.var))((Var 'c' s.id1 s.1));
+*/
+
+ s.side t.1 (Var e.var) = (As) (t.1)((Var e.var));
+ s.side (Var e.var) t.2 = (As) ((Var e.var))(t.2);
+
+ s.side t.1 ('!' e.func) = (As) (t.1)(('!' e.func));
+ s.side ('!' e.func) t.2 = (As) (('!' e.func))(t.2);
+
+ s.side t.term1 t.term2 = False (t.term1)(t.term2); 
+}
+
+EqEmpty__ { 
+* Temporary definition.
+ s.bool (Var 'c' s.id ) e.1 = <EqEmpty__ s.bool e.1>; 
+ s.bool (Var 'e' e.var) e.1 = <EqEmpty__ Unknown e.1>;
+ s.bool t.term e.1 = False; 
+ True  = True; 
+ Unknown = (As);
+}
+
+
+************************  Open **********************************
+Open___ { 
+ s.name e.args, <Up0 e.args>: 
+      { e.arg1 (True) = <OpenInt s.name (Const e.args)>; 
+        e.trash (False) = <OpenInt s.name (Param e.args)>;
+      };
+}
+
+/*
+Dn00 {
+ e.result t.type = <Dn0 e.result> t.type;
+}
+*/
+ 
+Open__ { 
+ (e.args) (As ) (Right e.R) = <Hold Open___ e.args> (False);
+ (e.args) (As e.as) (Right e.R) = <Subs (As e.as) e.R> (True);
+ (e.args) False     (Right e.R) = (Zero);
+}
+
+OpenInt { 
+ s.name (s.type e.args) 
+      = <Open__  (s.name e.args) <OpenInt1 (Prog <GetExtFunc s.name>) (s.type e.args)>>; 
+}
+
+OpenInt1 { 
+ (Prog ((e.L)'='(e.R)) e.body) (s.type e.args)  
+      = <OpenMatch s.type <EqPairs (Prog e.L) (s.type e.args)>> (Right e.R); 
+}
+
+* Temporary definition.
+OpenMatch {
+ Const e.pairs = <MatchOp e.pairs (As)>;
+ Param e.pairs = <UnMatchOp e.pairs>; 
+ 
+}
+
+UnMatchOp {
+ ((e.patt)'='(e.data)) e.pairs, <CompExpr_Op (e.patt) With (e.data)>:
+   { False = False;
+     True  = <UnMatchOp e.pairs>;
+   };
+
+  = (As);
+}
+
+* <EqPairs t.program t.args> ==> ((e.left)'='(e.right)) ....
+* where e.left contains variables, while e.right contains parametrs.
+EqPairs { 
+* We keep the first pattern without parenthesis. 
+ (Prog e.1 (Var 'e' e.var)) (s.type e.args) 
+       = ((e.1 (Var 'e' e.var))'='(e.args));
+
+* t- or s- repeated variables.
+ (Prog e.L (Var e.var)) (s.type e.args t.term) 
+       = <EqPairs (Prog e.L) (s.type e.args)> (((Var e.var))'='(t.term));
+
+ (Prog e.L ('*' e.L1)) (s.type e.args ('*' e.A1)) 
+       = <EqPairs (Prog e.L) (s.type e.args)> ((e.L1)'='(e.A1));
+ (Prog) (s.type) = ; 
+ (Prog e.L) (s.type e.args) = ((e.L)'='(e.args));
+}
+
+
+
+MatchOp {
+ e.pairs (As e.as0), <MatchOp1 <RigitMatch (As e.as0) e.pairs>>: 
+     { (As e.as) = (As e.as);
+       False = <MatchOp <Lenthing (As e.as0) e.pairs>>; 
+     };
+
+ e.trash False = False;
+}
+
+Lenthing {
+ (As e.as (e.val':'(Var 'e' e.var))) 
+ ((e.patt)'='((Var 'c' s.id t.term e.1) e.data)) e.pairs =
+      ((e.patt)'='(<EmptyCVar e.1> e.data)) e.pairs
+      (As e.as (e.val (Var 'c' <New Var> t.term) ':' (Var 'e' e.var)));
+
+ (As e.as (e.val':'(Var 'e' e.var))) 
+ ((e.patt)'='(t.term e.data)) e.pairs =
+      ((e.patt)'='(e.data)) e.pairs
+      (As e.as (e.val t.term ':' (Var 'e' e.var)));
+
+ (As e.as (e.val':'(Var 'e' e.var))) 
+ ((e.patt)'='()) e.pairs = False;
+
+ (As e.as) e.pairs = False;
+}
+
+OpenPatts {
+ (As e.as (e.val':'(Var 'e' s.id e.var)) e.1) 
+ (((Var 'e' s.id e.var1) e.patt)'='(e.data)) e.pairs =
+  <RigitMatch (As e.as (e.val ':' (Var 'e' s.id e.var)) e.1)
+    <SubsToPairs (As (e.val ':' (Var 'e' s.id e.var))) 
+                 (((Var 'e' s.id e.var1) e.patt)'='(e.data)) e.pairs>
+  >;
+
+ (As e.as) 
+ (((Var 'e' e.var) e.patt)'='(e.data)) e.pairs =
+      <MatchOp ((e.patt)'='(e.data)) e.pairs
+               (As e.as ( ':' (Var 'e' e.var)))>;
+}
+
+MatchOp1 {
+          (As e.as) = (As e.as);
+ e.pairs1 (As e.as), <SubsToPairs (As e.as) e.pairs1>: 
+        { e.pairs1 = <OpenPatts (As e.as) e.pairs1>;
+          e.pairs2 = <MatchOp e.pairs2 (As e.as)>;
+        };  
+ e.trash  False = False;
+}
+
+SubsToPairs {
+ t.assign ((e.patt)'='(e.data)) e.pairs 
+         = ((<Subs t.assign e.patt>)'='(e.data)) <SubsToPairs t.assign e.pairs>;
+ t.assign = ;
+}
+
+* Temporary definition.
+* There are just contants on the right side.
+* We do not keep repeated variables at all but replace them with theirs values.
+RigitMatch {
+ t.As (((Var 'e' e.var1) e.patt (Var 'e' e.var2))'='(e.data)) e.pairs
+    = (((Var 'e' e.var1) e.patt (Var 'e' e.var2))'='(e.data)) 
+      <RigitMatch t.As e.pairs>;
+
+*************************** Left *******************************************
+ (As e.as) (((Var 's' e.var) e.patt)'='(s.1 e.data)) e.pairs =
+  <RigitMatch (As e.as (s.1 ':' (Var 's' e.var)))
+    <SubsToPairs (As (s.1 ':' (Var 's' e.var))) ((e.patt)'='(e.data)) e.pairs>
+  >;
+
+ (As e.as) (((Var 's' e.var) e.patt)'='((Var 'c' s.id s.1 e.2) e.data)) e.pairs,
+ <New Var>: s.id1 =
+  <RigitMatch (As e.as ((Var 'c' s.id1 s.1) ':' (Var 's' e.var)))
+    <SubsToPairs (As ((Var 'c' s.id1 s.1) ':' (Var 's' e.var))) 
+                 ((e.patt)'='(<EmptyCVar e.2> e.data)) e.pairs>
+  >;
+
+ (As e.as) (((Var 't' e.var) e.patt)'='((Var 'c' s.id t.1 e.2) e.data)) e.pairs,
+ <New Var>: s.id1 =
+  <RigitMatch (As e.as ((Var 'c' s.id1 t.1) ':' (Var 't' e.var)))
+    <SubsToPairs (As ((Var 'c' s.id1 t.1) ':' (Var 't' e.var)))
+                 ((e.patt)'='(<EmptyCVar e.2> e.data)) e.pairs>
+  >;
+
+ (As e.as) (((Var 't' e.var) e.patt)'='(t.1 e.data)) e.pairs =
+  <RigitMatch (As e.as (t.1 ':' (Var 't' e.var)))
+    <SubsToPairs (As (t.1 ':' (Var 't' e.var))) ((e.patt)'='(e.data)) e.pairs>
+  >;
+
+ t.As ((t.1 e.patt)'='(t.1 e.data)) e.pairs =
+  <RigitMatch t.As ((e.patt)'='(e.data)) e.pairs>;
+
+ t.As (((Var 'c' s.id s.1 e.2) e.patt)'='(s.1 e.data)) e.pairs =
+  <RigitMatch t.As ((<EmptyCVar e.2> e.patt)'='(e.data)) e.pairs>;
+
+ t.As (((Var 'c' s.id (e.11) e.2) e.patt)'='(('*' e.12) e.data)) e.pairs =
+  <RigitMatch t.As ((<EmptyCVar e.11 e.2> e.patt)'='(e.12 e.data)) e.pairs>;
+
+ t.As ((s.1 e.patt)'='((Var 'c' s.id s.1 e.2) e.data)) e.pairs =
+  <RigitMatch t.As ((e.patt)'='(<EmptyCVar e.2> e.data)) e.pairs>;
+
+ t.As ((('*' e.11) e.patt)'='((Var 'c' s.id (e.12) e.2) e.data)) e.pairs =
+  <RigitMatch t.As ((e.11 e.patt)'='(<EmptyCVar e.12 e.2> e.data)) e.pairs>;
+
+ t.As (((Var 'c' s.id2 t.1 e.2) e.patt)'='((Var 'c' s.id2 t.1 e.3) e.data))
+ e.pairs =
+  <RigitMatch t.As ((<EmptyCVar e.2> e.patt)'='(<EmptyCVar e.3> e.data)) e.pairs>;
+
+ t.As ((('*' e.p1) e.patt)'='(('*' e.1) e.data)) e.pairs =
+  <RigitMatch t.As ((e.p1)'='(e.1)) ((e.patt)'='(e.data)) e.pairs>;
+
+
+***********************Rigid************************************
+ (As e.as) ((e.patt (Var 's' e.var))'='(e.data s.1)) e.pairs =
+  <RigitMatch (As e.as (s.1 ':' (Var 's' e.var)))
+    <SubsToPairs (As (s.1 ':' (Var 's' e.var))) ((e.patt)'='(e.data)) e.pairs>
+  >;
+
+ (As e.as) ((e.patt (Var 's' e.var))
+            '='(e.data (Var 'c' s.id e.2 s.1))) e.pairs,
+ <New Var>: s.id1 =
+  <RigitMatch (As e.as ((Var 'c' s.id1 s.1) ':' (Var 's' e.var)))
+    <SubsToPairs (As ((Var 'c' s.id1 s.1) ':' (Var 's' e.var))) 
+               ((e.patt)'='(e.data <EmptyCVar e.2>)) e.pairs>
+  >;
+
+ (As e.as) ((e.patt (Var 't' e.var))'='(e.data (Var 'c' s.id e.2 t.1))) e.pairs,
+ <New Var>: s.id1 =
+  <RigitMatch (As e.as ((Var 'c' s.id1 t.1) ':' (Var 't' e.var)))
+    <SubsToPairs (As ((Var 'c' s.id1 t.1) ':' (Var 't' e.var))) 
+                 ((e.patt)'='(e.data <EmptyCVar e.2>)) e.pairs>
+  >;
+
+ (As e.as) ((e.patt (Var 't' e.var))'='(e.data t.1)) e.pairs =
+  <RigitMatch (As e.as (t.1 ':' (Var 't' e.var)))
+    <SubsToPairs (As (t.1 ':' (Var 't' e.var))) ((e.patt)'='(e.data)) e.pairs>
+  >;
+
+ t.As ((e.patt t.1)'='(e.data t.1)) e.pairs =
+  <RigitMatch t.As ((e.patt)'='(e.data)) e.pairs>;
+
+ t.As ((e.patt (Var 'c' s.id e.2 s.1))'='(e.data s.1)) e.pairs =
+  <RigitMatch t.As ((e.patt <EmptyCVar e.2>)'='(e.data)) e.pairs>;
+
+ t.As ((e.patt (Var 'c' s.id e.2 (e.11)))'='(e.data ('*' e.12))) e.pairs =
+  <RigitMatch t.As ((e.patt <EmptyCVar e.2 e.11>)'='(e.data e.12)) e.pairs>;
+
+ t.As ((e.patt s.1)'='(e.data (Var 'c' s.id e.2 s.1))) e.pairs =
+  <RigitMatch t.As ((e.patt)'='(e.data <EmptyCVar e.2>)) e.pairs>;
+
+ t.As ((e.patt ('*' e.11))'='(e.data (Var 'c' s.id e.2 (e.12)))) e.pairs =
+  <RigitMatch t.As ((e.patt e.11)'='(e.data <EmptyCVar e.2 e.12>)) e.pairs>;
+
+ t.As ((e.patt (Var 'c' s.id2 e.2 t.1))'='(e.data (Var 'c' s.id2 e.3 t.1)))
+ e.pairs =
+  <RigitMatch t.As ((e.patt <EmptyCVar e.2>)'='(e.data <EmptyCVar e.3>)) e.pairs>;
+
+ t.As ((e.patt ('*' e.p1))'='(e.data ('*' e.1))) e.pairs =
+  <RigitMatch t.As ((e.p1)'='(e.1)) ((e.patt)'='(e.data)) e.pairs>;
+
+ t.As (()'='()) e.pairs = <RigitMatch t.As e.pairs>;
+
+ (As e.as) (((Var 'e' e.var))'='(e.data)) e.pairs =
+  <RigitMatch (As e.as (e.data ':' (Var 'e' e.var)))
+    <SubsToPairs (As (e.data ':' (Var 'e' e.var))) e.pairs>
+  >;
+
+ t.As ((e.patt)'='(e.data)) e.pairs = False;
+ t.As = t.As;
+}
+
+
+* --------------- A variant of SIMPLIFICATION ORDERING ----------------------
+CompExpr_Op {
+   (e.pexpr) With (e.cexpr) 
+             = <Embedd_Op (Brack <RmCVarB1 e.cexpr>) (Brack e.pexpr)>;
+}
+
+* Decide whether the second case must be considered.
+Decide_Op {
+   e.X True  = True;
+   e.X False = <Embedd_Op e.X>;
+} 
+
+* <Embedd_Op (e.data)(e.Patt)>
+Embedd_Op {
+   (Var 's' e.C) (Var 's' e.P) = True;
+   (Var 'e' e.C) (Var 's' e.P) = True;
+   (Var 't' e.C) (Var 's' e.P) = True;
+   s.C           (Var 's' e.P) = True;
+   t.C           (Var 's' e.P) = False;
+
+   t.C (Var 't' e.P) = True;
+
+   (Var 's' e.C) s.P = True;
+   (Var 'e' e.C) s.P = True;
+   (Var 't' e.C) s.P = True;
+   s.P           s.P = True;
+   t.C           s.P = False;
+
+******  (t.1 e.1) >= (t.2 e.2) *******
+*   if not t.1 >= t.2 , then (e.1) >= (t.2 e.2) 
+*                       else (e.1) >= (e.2) or t.1 >= (t.2 e.2)
+
+   ('*' e.C) ('*' e.P) = <Embedd_Op (Brack e.C) (Brack e.P)>;
+   (Brack s.1 e.C) (Brack s.1 e.P) 
+                   = <Embedd_Op (Brack e.C) (Brack e.P)>;
+   (Brack s.1 e.C) (Brack s.2 e.P) 
+                   = <Embedd_Op (Brack e.C) (Brack s.2 e.P)>;
+
+   (e.C) (e.1 (Var 'e' e.pvar) e.P) = <Embedd_Op (e.C) (e.1 e.P)>;
+   (e.C) (Brack ) = True;
+   (Brack ) (e.P) = False;
+
+   (Brack s.1 e.C) (Brack ('*' e.2) e.P) 
+                  = <Embedd_Op (Brack e.C) (Brack ('*' e.2) e.P)>;
+   (Brack s.1 e.C) (Brack (e.2) e.P) = 
+             <Emb1_Op (Brack e.C) (Brack e.P)
+                 <Decide_Op (Brack e.C) (Brack (e.2) e.P) <Embedd_Op s.1 (e.2)>>
+             >;
+   (Brack ('*' e.1) e.C) (Brack s.2 e.P) 
+           = <Embedd_Op (Brack e.C) (Brack s.2 e.P)>;
+   (Brack e.2 (Var 'e' e.1) e.C) (Brack e.P) = True;
+   (Brack e.2 ('!' e.1) e.C) (Brack e.P) = True;
+   (Brack (e.1) e.C) (Brack s.2 e.P) = 
+             <Emb1_Op (Brack e.C) (Brack e.P)
+                 <Decide_Op (Brack e.C) (Brack s.2 e.P) <Embedd_Op (e.1) s.2>>
+             >;
+   (Brack (e.1) e.C) (Brack (e.2) e.P) = 
+             <Emb1_Op (Brack e.C) (Brack e.P)
+                 <Decide_Op (Brack e.C) (Brack (e.2) e.P) 
+                            <Embedd_Op <RmCVarB (e.1)> (e.2)>>
+             >;
+}
+
+* Auxiliaries for Embedd
+Emb1_Op {    True = True;
+       e.X True = <Embedd_Op e.X>;
+       e.X False = False;
+     }
+
+RmCVarB {
+ (Var e.var) = (Var e.var);
+ ('*' e.expr) = ('*' <RmCVarB1 e.expr>);
+}
+
+RmCVarB1 {
+ e.expr (Var 'c' s.id e.var) e.1 = e.expr <Dn0 e.var> <RmCVarB1 e.1>;
+ e.expr = e.expr;
+}
+
+* --------------- The End of the SIMPLIFICATION ORDERING----------------------
+
+*****************************************************************

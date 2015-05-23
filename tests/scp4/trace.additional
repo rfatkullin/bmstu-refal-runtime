@@ -1,0 +1,729 @@
+* TRACE.REF (scp4.ref)
+* version 22.06.2000, common version for the basic and unbasic cases., new
+
+* $ENTRY Go, ScpArg;
+* $ENTRY OutGraph, OutCont, Diskout, FOutput, CurrFile, TrName;
+* $ENTRY GetGraph, NameBas, Dpth, Prdout, DiskoutF;
+* $ENTRY Trace, Trace0, TraceRes, UserTrace, CommTrace, CommTraceRes;
+* $ENTRY Stop-tr, SetTr, CommTrace2, PrArgUser, ReForm;
+ 
+* $INTERIOR TopLoop, SetUp, SetTr, StartStep, ToNumb, ToNumb1, Trace1;
+* $INTERIOR PrintGr, PrGraph, PrBranch, PrCont, PrPatt, PrPatt1, PrAs1;
+* $INTERIOR PrAsV, PrArg, PrVar, PrElev, PrOutFmt, Print1, ConS;
+* $INTERIOR Cut-Put, ReForm, FunNames, ReName;
+
+* $TEMPORARY ;
+
+* scp4.ref:
+$EXTRN Scp4, Scp4s;
+
+* basic.ref:
+$EXTRN SubsAs, CompPatt, Subs;
+
+* access.ref:
+$EXTRN Prog, Config, ListVar, Infinit, GetOutFmt, SelfOut, OutDir, GetTopBasics;  
+
+* final.ref:
+$EXTRN Final, FinPrGraph;
+
+* key.ref
+$EXTERN OpSystem;
+
+*---------------------------------
+$ENTRY Go { = <SetUp> <TopLoop>; }
+
+SetUp { = <Open 'w' <TraceFile> 'trace'>
+          <Br Var '=' 101>  /* Set new variable's index */
+          <Br Call '=' 1>  /* Set new call's index */
+          <Br Node '=' 2>  /* Set new node's index */
+          <Br Graph '=' 1>  /* Set new graph's index */
+          <Br TopBasics '=' >  /* List of basics configurations on the top of a graph. */
+          <Br Depth_N '=' 1>  /* Set depth of the tree */
+          <Br OutList '='  >  /* List function which were outputed to SCPOUT */   
+          <SetTr <Arg 2>>
+* Temporary call.
+          <Br Program '=' <Prog>>  /* Set program to be transformed */
+ }
+
+TopLoop {  = <Prdout 'Start: '<Time>> <ClearOutDir Start>
+*+             <Scp4 <Config (<Arg 1>)>> <Final> <ClearOutDir> 
+             <OutGraphs <Scp4s <Config (<Arg 1>)>> (Ready (Basics))> 
+             <Final> <ClearOutDir> 
+             <Prdout 'Finish: '<Time>>; }
+
+$ENTRY Prdout { e.X = <Prout e.X> <Putout <TrName> e.X>; };
+$ENTRY TrName {  = <TraceFile> };
+
+
+* Stop tracing.
+* <Stop-tr> ==> e.empty
+$ENTRY Stop-tr { = <Br 'trace=no'> <StartStep '1'>;}
+
+* Start tracing with a level and start step.
+* <Set-tr e.level e.start-step> ==> e.empty
+$ENTRY SetTr {
+*0. See function UserTrace for comments what is traced.
+ 'usertr' e.start-step = <Set-tr ('usertr') e.start-step>;
+ 
+*1. See function UserTrace for comments what is traced.
+ 'trace' e.start-step = <Set-tr ('trace') e.start-step>;
+ 
+*2. See function Trace for comments what is traced.
+ 'debug' e.start-step = <Set-tr ('debug') e.start-step>;
+ 
+ e.xxx   = <Stop-tr>;
+}
+
+Set-tr {
+ (e.tr-level) e.start-step =  <Br 'trace=' e.tr-level>
+               <StartStep <ToNumb <ToNumb1 e.start-step>>>;
+}
+
+StartStep { e.numb = <Br 'start-step=' <Numb e.numb>>; };
+ToNumb {
+               = '1';
+ e.trash False = '1';
+ e.number = e.number; 
+}
+
+ToNumb1 {
+    = ;
+ s.1 e.str, <Type s.1>: 'D' e.xxx = s.1 <ToNumb1 e.str>;
+ e.str = False;
+}
+
+* User's srguments from cammand line to transfer to external functions.
+$ENTRY ScpArg { 
+ s.n, <Type s.n>: 'N' e.x = <ScpArg1 s.n <GetArguments 2>>; 
+ e.n = ;
+}
+
+* Get arguments of command line. The arguments starts with s.n position.
+GetArguments { s.n, <Arg s.n>: 
+  {       = ;
+    e.arg = (e.arg) <GetArguments <Add s.n 1>>;
+  };
+}
+
+ScpArg1 {
+ s.n e.0 ('user+' e.1) e.args = <ScpArg2 s.n '+user+' e.1>;
+ s.n e.args = ;
+}
+
+ScpArg2 {
+ 0   '+' e.arg1 '+' e.args = e.arg1;
+ 0   '+' e.arg1  = e.arg1;
+ s.n '+' e.arg1 '+' e.args = <ScpArg2 <Sub s.n 1> '+' e.args>;
+ s.n '+' e.args = ;
+}
+
+$ENTRY Dpth {  
+ Inc = <Br Depth_N '=' <Add (<Dg Depth_N>) 1>>; 
+ Init = <Br Depth_N '=' 1>;
+*+ Init = <Trace0 'Step: ' <Step> 'Depth: ' <Dg Depth_N>> <Br Depth_N '=' 1>;
+}
+
+* Output an expression into the trace-file and on the screen.
+* <Trace e.expr> == ;
+$ENTRY Trace { 
+ e.expr, <Cp 'trace'>:'debug' = <Trace1 e.expr>;
+ e.expr = ;
+}
+
+Trace1 { e.expr = <Trace3 With_Step e.expr>; }
+Trace2 { e.expr = <Trace3 Without_Step e.expr>; }
+
+Trace3 { 
+ s.how e.expr, <Sub (<Cp 'start-step'>) <Step>>: 
+      { '-' e.num, e.expr: { = <Prdout>;
+                             e.expr1 = <Prdout <GetStep s.how> e.expr1>;
+                           };
+            e.num = ;
+      };
+ s.how e.expr = ;
+}
+
+GetStep {
+ With_Step = <Step>;
+ Without_Step = ;
+}
+
+* User asked for output an expression into the trace-file and on
+* the screen.
+* <Trace e.expr> == ;
+$ENTRY UserTrace { 
+ e.expr, <Cp 'trace'>:
+   { 'trace' = <TraceTr With_Step ('trace') e.expr>; 
+     'usertr' = <TraceTr With_Step ('usertr') e.expr>; 
+      e.type  = ;
+   };
+}
+
+TraceTr { 
+ s.how (e.type) TryReduceStack t.curr-stack To t.prev-stack
+                 = <Trace2> <Trace1 'Try reducing stack:'> 
+                   <TraceUser (e.type) t.curr-stack>
+                   <Trace1 'To stack:'> <TraceUser (e.type) t.prev-stack>;
+ s.how (e.type) TryGenerStack t.curr-stack With t.prev-stack
+                 = <Trace2> <Trace1 'Try generalise stack:'> 
+                   <TraceUser (e.type) t.curr-stack>
+                   <Trace1 'With stack:'> <TraceUser (e.type) t.prev-stack>;
+ s.how ('usertr') (ToPrev (As e.assign) e.reduct) 
+                 = <Trace2 'To previous: { ' <PrAsUser e.assign> '}'>;
+ s.how ('usertr') (ToBasic (As e.assign) e.reduct) 
+                 = <Trace2 'To basic: { ' <PrAsUser e.assign> '}'>;
+ s.how ('usertr') (As e.assign)(Basic s.Name e.basic)(Ready e.ready) 
+                 = <Trace2 '{ ' <PrAsUser e.assign> '} <F' s.Name <PrAsVUser e.assign> '>' >;
+ s.how ('usertr') (GenNoSplit t.grestr (e.gprefix) (As e.prevass) (As e.curass)
+                        t.previous t.current) 
+                 = <Trace2 'Generalization without splitting of the stacks.'> 
+                   <TraceGener t.grestr (As e.prevass) (As e.curass)>;
+
+ s.how ('usertr') (Gen t.grestr (e.gprefix) (As e.prevass) (As e.curass)
+                        t.previous t.current) 
+                 = <Trace2 'Splitting of the stacks.'> 
+                   <TraceGener t.grestr (As e.prevass) (As e.curass)>;
+
+ s.how ('usertr') '^'(Subgraph e.subgrs t.basics) 
+                 = <Trace2 <TraceSubgrs e.subgrs>>; 
+ s.how ('usertr') (As e.assign) t.basic 
+                 = <Trace2 <TraceSubgrs (As e.assign) t.basic>>; 
+ With_Step (e.type) e.expr1 = <Trace1 e.expr1>;
+ Without_Step (e.type) e.expr1 = <Trace2 e.expr1>;
+}
+
+TraceGener {
+ t.grestr (As e.prevass) (As e.curass) =
+                   <Trace2 'Generalized restrictions: ' <TraceRestr t.grestr>> 
+                   <Trace2 'The reductions are: '> 
+                   <Trace2 'To previous: { ' <PrAsUser e.prevass> '}'>
+                   <Trace2 'To current: { ' <PrAsUser e.curass> '}'>;
+}
+
+TraceUser { 
+ ('trace') e.expr = <Trace1 e.expr>;
+ ('usertr') t.stack, 
+ <TraceUser1 t.stack>: (Formats e.fmts) (Configuration e.calls)
+           = <Trace2 'Formats: ' <PrFmt e.fmts>> 
+             <Trace2 'Configuration:'> <Trace2 <PrAsUser e.calls>>; 
+}
+
+TraceUser1 { 
+ (Stack e.stack) = <TraceUser1 (e.stack)>;
+ (e.stack) = <TraceStack (Neighbourhood) (Configuration) (Stack e.stack)>;
+}
+
+TraceStack { 
+ (Neighbourhood e.formats) (Configuration e.calls)
+ (Stack (Call s.id (s.Fun e.path ) t.call) e.stack) ,
+ <TraceCall (e.path) t.call>: t.format t.tr-call
+  = <TraceStack (Neighbourhood e.formats t.format) 
+                (Configuration e.calls t.tr-call) (Stack e.stack)>;
+
+ (Neighbourhood e.formats) (Configuration e.calls)
+ (Stack (Conf (e.conf ':' t.outvar)))
+  = <TraceStack (Neighbourhood e.formats (e.conf ':' t.outvar)) 
+                (Configuration e.calls (e.conf ':' t.outvar)) (Stack)>;
+
+ (Neighbourhood e.formats) (Configuration e.calls) (Stack )
+  = (Formats e.formats) (Configuration e.calls);
+}
+
+
+* <TraceCall (e.path) t.call> == (e.format) (e.tr-call)
+TraceCall { 
+ (e.1 s.2 e.path) t.call = <TraceCall (e.1 e.path) t.call>;
+ () (('!' (Fn s.f (e.expr':'t.var))':'t.var1)':'t.hvar)
+            = (('!' (Fn s.f (t.var':'t.var))':'t.var1)':'t.hvar)
+              (('!' (Fn s.f (e.expr':'t.var))':'t.var1)':'t.hvar);
+ (e.path) (('!' (Fn s.f e.args)':'t.var1)':' t.hvar), 
+ <FoldPatt () e.path>: e.inpfmt 
+ = (('!' (Fn s.f (e.inpfmt':'t.var1))':'t.var1)':' t.hvar)
+   (('!' (Fn s.f (<Subs (As e.args) e.inpfmt>':'t.var1))':'t.var1)':' t.hvar);
+ }
+
+FoldPatt {
+ (e.patts) t.cont e.contrs = <FoldPatt (<CompPatt (e.patts) t.cont>) e.contrs>;
+ ((Ct (Var 'e' e.var)':' e.patt) e.patts) = ('*' e.patt) <FoldPatt (e.patts)>;
+ ((Ct t.var':' e.patt) e.patts) = e.patt <FoldPatt (e.patts)>;
+ () = ;
+}
+
+TraceRestr {
+ (Rs (e.expr1 '#' e.expr2) e.restrs) 
+    = <PrArgUser e.expr1> ' != ' <PrArgUser e.expr2> <TraceRestr (Rs e.restrs)>;
+ (Rs ) = ;
+}
+
+TraceSubgrs {
+ (As e.assign) (Begin (Node e.node t.stack t.basic) ':' t.out End) e.subgrs,
+ <TraceUser1 t.stack>: (Formats e.fmts) (Configuration e.calls)
+       = '{ ' <PrAsUser e.assign> '} {Begin ' <PrAsUser e.calls> 'end}; ' 
+         <TraceSubgrs e.subgrs>;
+ (As e.assign) (Basic s.Name e.basic ':' t.outvar) e.subgrs  
+       = '{ ' <PrAsUser e.assign> '} <F' s.Name <PrAsVUser e.assign> '>'  
+         ' <-' <PrArgUser t.outvar> '; ' <TraceSubgrs e.subgrs>;
+    = ;
+}
+
+* Common trace for a user and debugger.
+$ENTRY CommTrace { e.expr = <CommTrace3 With_Step e.expr>; }
+$ENTRY CommTrace2 { e.expr = <CommTrace3 Without_Step e.expr>; }
+
+CommTrace3 { 
+ s.how e.expr, <Cp 'trace'>:
+   { 'trace'  = <Trace1 e.expr>;
+     'usertr' = <TraceTr s.how ('usertr') e.expr>;
+     'debug'  = <Trace1 e.expr>;
+      e.xxx   = ;
+   };
+ e.expr = ;
+}
+
+$ENTRY Trace0 { e.expr = <Prdout e.expr>; }
+
+* Return an expression and output it into the trace-file and on the screen.
+* <TraceRes (e.text) e.expr> == e.expr;
+$ENTRY TraceRes { 
+ (e.text) e.expr = e.expr <Trace e.text> <Trace e.expr>; }
+$ENTRY CommTraceRes { 
+ (e.text) e.expr = e.expr <CommTrace e.text> <CommTrace e.expr>; }
+
+
+* Output residual graphs. 
+OutGraphs {
+  (GRAPH s.name e.graph (Ready e.basics)) 
+  e.graphs (Ready e.ready (Basics e.basics1))
+         = <OutGraphs e.graphs 
+              (Ready e.ready (GRAPH s.name e.graph) (Basics e.basics))>;
+  (Ready e.ready (Basics e.basics)) 
+         = <Diskout (<Explode GRAPH>) e.ready>
+           <OutCont FinalGraph (Basics <GetTopBasics>)>;
+}
+
+* Output of a residual c-graph into the trace-file, screen
+* and the scpout directory.
+$ENTRY OutGraph {
+  MiddleGraph t.outfmt e.graph = <PrintGr t.outfmt e.graph>;
+  s.name t.outfmt e.graph = 
+         <PrintGr t.outfmt e.graph> <Diskout (<Explode s.name>) e.graph>;
+}
+
+$ENTRY OutCont {
+ s.Flag e.names (Basics (s.name e.basic) e.basics) = 
+            <OutCont s.Flag e.names <NameBas s.name> (Basics e.basics)>; 
+ MiddleGraph e.names (Basics) = <Trace0 'Content: ' e.names GRAPH>;
+ FinalGraph  e.names (Basics) = <Diskout ('content.int') e.names GRAPH>; 
+}
+
+
+* Output of a residual c-graph into the trace-file and the scpout directory.
+$ENTRY Diskout {
+  ('content.int') e.expr = 
+       <FOutput (<OutDir> 'content.int') 0 e.expr>;
+*       <DeSysfun <OutDir> 'content.int' (75 e.expr)>;
+*+       <Open 'w' <CurrFile> <OutDir> 'content.int'> <FOutput 0 e.expr>;
+  (e.name) e.expr = 
+       <FOutput (<OutDir> e.name) 1 e.expr>;
+*       <DeSysfun <OutDir> e.name (75 <ReForm e.expr>)>;
+/*+
+  (e.name) e.expr = 
+       <Open 'w' <CurrFile> <OutDir> e.name> <FOutput 1 e.expr>;
+*/
+ }
+ 
+
+$ENTRY DiskoutF {
+  (t.name e.fmts) e.expr ,<ReName t.name>: e.file, <Dg OutList>: e.outlist 
+       = <Br OutList '=' e.outlist <Implode e.file>>
+         <FOutput (<OutDir> e.file) 0 (Formats e.fmts) e.expr>;
+/*+
+  (t.name e.fmts) e.expr ,<ReName t.name>: e.file, <Dg OutList>: e.outlist 
+       = <Open 'w' <CurrFile> <OutDir> e.file> 
+         <Br OutList '=' e.outlist <Implode e.file>>
+         <FOutput 0 (Formats e.fmts) e.expr>;
+*/
+}
+
+ClearOutDir {  
+ Start = <RmFiles (<OpSystem>) (<OutDir>) 'F*'>;  
+   = <Open 'r' <CurrFile> <OutDir> 'content.int'> 
+     <ClearOutDir (<Sysfun 1 <OutDir> 'content.int'>) (<Dg OutList>)>;
+ (e.content s.name e.1) (e.2 s.name e.3) 
+   = <ClearOutDir (e.content s.name e.1) (e.2 e.3)>;
+ (e.content) (e.trash) = <RmFiles (<OpSystem>) (<OutDir>) e.trash>;         
+}
+
+RmFiles {
+ ('unix') (e.path) 'F*' = <HoleFile e.path> <System 'rm ' e.path 'F*'>;  
+ (e.Dos-Win-Mac) (e.path) 'F*' = <HoleFile e.path> <System 'del ' e.path 'F* > nul' >;  
+
+ ('unix') (e.path) s.file e.files 
+               = <System 'rm ' e.path <Implode s.file>> 
+                 <RmFiles ('unix') (e.path) e.files>;    
+ ('linux') (e.path) e.files = <RmFiles ('unix') (e.path) e.files>;
+ (e.Dos-Win-Mac) (e.path) s.file e.files 
+*               = <Prout 'del ' (e.path) s.file e.files>;
+               = <System 'del ' e.path <Implode s.file>> 
+                 <RmFiles (e.Dos-Win-Mac) (e.path) e.files>;    
+ (e.OpSystem) (e.path) = ;
+}
+
+HoleFile { e.path = /*<Open 'w' <CurrFile> e.path 'Fxxx'>*/ ; }
+
+$ENTRY ReName {
+  s.name , <Type s.name>:
+     {'N' e.xxx = 'F' <Symb s.name>;
+       e.xxx    = <Explode s.name>;
+     };  
+  (GRAPH s.id) = 'GRAPH' <Symb s.id>;
+}
+
+$ENTRY FOutput { 
+ (e.file) 1 e.X = <DeSysfun e.file (75 <ReForm e.X>)>;
+ (e.file) 0 e.X = <DeSysfun e.file (75 e.X)>;
+ };
+
+/*+
+$ENTRY FOutput { 
+ 1 e.X = <Cut-Put <ConS <ReForm e.X>>>; 
+ 0 e.X = <Cut-Put <ConS e.X>>; 
+ };
+*/
+
+* Get diskriptor of the current file.
+$ENTRY CurrFile {   =  13; };
+$ENTRY TraceFile {  =  12; };
+
+* Temporary definition.
+* C-function name.
+* <NameBas s.index e.stack> == s.name
+$ENTRY NameBas { s.index e.stack = <Implode 'F' <Symb s.index>>; }
+
+* Pretty print of a c-graph.
+PrintGr {t.out-format e.graph = <Print1 <PrGraph t.out-format e.graph>> }
+PrGraph { 
+* This case is just an imitation from normalization.
+ t.outfmt (Node s.id Recur t.restr (Stack e.calls t.conf) t.basics)(Dev  ) e.gr  
+     = <PrGraph t.outfmt 
+         (Node s.id Recur t.restr (Stack e.calls t.conf) t.basics)
+         (Dev '+'((Node s.id Passive t.restr (Stack t.conf) t.basics))) e.gr>; 
+
+ t.outfmt (Node s.N Recur e.X)(Dev  '+'(t.node(Dev e.dev))) = 
+                           <PrGraph t.outfmt (Node s.N Recur e.X)(Dev  e.dev)>; 
+
+* There is just one reccurent node inside c-graph.
+  t.outfmt 
+  (Node s.N Recur t.restr (Stack (Call s.id (s.Fun e.path ) e.call) e.stack) 
+   t.basics)(Dev  e.dev), 
+   <ListVar Of Situation (Call s.id (s.Fun e.path ) e.call) e.stack> : e.var-list
+,  <TraceUser1 ((Call s.id (s.Fun e.path ) e.call) e.stack)>: 
+   (Formats e.fmts) (Configuration e.calls)
+        =  NL <Step>
+           NL '* Function F's.N 'was built from a stack: '
+*               <FunNames (Call s.id (s.Fun e.path ) e.call) e.stack >'.'
+           NL '* ' <PrAsUser e.calls>
+           NL '* InputFormat: <F's.N  <PrArg e.var-list> '>'
+           NL '* OutputFormat: ' <PrOutFmt t.outfmt> 
+           NL 'F's.N '{ ' NL <PrBranch e.dev PrGraph> '} 'NL;
+
+  (Node s.N e.X)(Dev  e.N1) e.RestGr = 
+           NL ':{ ' NL <PrBranch e.N1 PrGraph> '}; 'NL <PrGraph e.RestGr>;
+
+  (Node s.N Passive t.Rs (Stack (Conf (':' t.out))) t.basics) e.RestGr = 
+                         '[] <- e.out ; ' <PrGraph e.RestGr>;
+  (Node s.N Passive t.Rs (Stack (Conf (e.1':' t.out))) t.basics)e.RestGr = 
+                          <PrArg e.1> '<- e.out ; ' <PrGraph e.RestGr>;
+* Print contracction itself.
+*+   (Ct e.C) e.X  = <PrCont e.C> <PrGraph e.X>;
+* Compose contractions into a pattern.
+   (Ct e.C) e.X  = <PrPatt (Ct e.C) e.X PrGraph>;
+   (As e.X) (Basic s.N e.1 t.outfmt ':' t.V) e.Y = 
+        '{'<PrAs1 e.X>'} <F's.N <PrAsV e.X> '>  <- ' <PrOutAs t.outfmt t.V> '; ' 
+         <PrGraph e.Y>;
+
+* The last passive subgraph can be cleared. It is seemes this case is worked
+* out with the global analysis of the graphs.
+  (As e.ass) 
+  (Begin (Node s.N Passive t.Rs (Stack (Conf (e.1 ':' t.var))) t.basics) ':' t.out1 End) 
+        = <PrGraph (Node s.N Passive t.Rs 
+                         (Stack (Conf <SubsAs (As e.ass) (e.1':' t.var)>)) t.basics)>;
+
+  (As e.ass)(Begin e.subgr ':' t.out End) s.flag 
+        = <PrGraph (As e.ass)(Begin e.subgr ':' t.out End)>; 
+
+  (As e.ass)(Begin e.subgr s.flag ':' t.out End) 
+         = <PrGraph (As e.ass)(Begin e.subgr ':' t.out End)>; 
+
+  (As e.assign) (Begin e.subgr ':' t.out End) e.gr = 
+        '{'<PrAs1 e.assign>'} ' <PrGraph (Begin e.subgr ':' t.out End) e.gr>;
+
+  (Begin e.Y ':' t.out End) e.gr, <ListVar Of Expr <SelfOut t.out>>: e.vars  
+             = '{' <PrGraph e.Y> '} <- {'<PrArg e.vars> '};'  
+                NL '* OutputFormat of the preceding block: ' <PrOutFmt t.out>
+                NL  <PrGraph e.gr>;
+  (As e.assign) e.gr = '{' <PrAs1 e.assign> '} ' <PrGraph e.gr>;
+  (Def (('!' (Fn s.name e.assign)':'t.var)':'t.out) ) e.gr 
+  = '{'<PrAs1 e.assign>'} <'s.name <PrAsV e.assign> '>  <- '<PrArg t.out> '; ' 
+                          <PrGraph e.gr>;
+  Zero          =  Zero;
+
+* A trash.
+  s.flag e.X     = <PrGraph e.X>;
+  (Output e.xxx)  e.X = <PrGraph e.X>;
+  (Ready  e.xxx)  e.X = <PrGraph e.X>;
+                  =; 
+               e.X = '?' e.X;
+ }
+
+$ENTRY PrBranch { 
+     '+'(e.1) e.M s.Fun = '    +  ' <Mu s.Fun e.1> NL <PrBranch e.M s.Fun>;
+                  s.Fun = ;
+ }
+
+PrCont { 
+   t.var ':'    = <PrArg t.var> '-> [];  ' ;
+   t.var ':' e.expr = <PrArg t.var> '-> '<PrArg e.expr> ';  ' ;
+ }
+
+$ENTRY PrPatt { (Ct e.cont) e.gr = <PrPatt1 ( (Ct e.cont) ) e.gr>; }
+
+PrPatt1  { 
+  ((Ct e.cont) e.contrs) (Ct e.cont1) e.gr = 
+           <PrPatt1 (<CompPatt ((Ct e.cont) e.contrs) (Ct e.cont1)>) e.gr>;
+  ((Ct e.cont) e.contrs) e.gr = <PrCont e.cont> <PrPatt1 (e.contrs) e.gr>;
+  () e.gr s.Fun = <Mu s.Fun e.gr>;
+ }
+
+$ENTRY PrAs1 {
+    ( ':' t.var) e.X = '[] <-'<PrArg t.var> '; ' <PrAs1  e.X>;
+    (e.expr ':' t.var) e.X = <PrArg e.expr> '<-'<PrArg t.var> '; ' <PrAs1  e.X>;
+                    = ;
+ } 
+
+PrAs {
+    ( ':' t.var) e.X = '[] <-'<PrArg t.var> ', ' <PrAs  e.X>;
+    (e.expr ':' t.var) e.X = <PrArg e.expr> '<-'<PrArg t.var> ', ' <PrAs  e.X>;
+                    = ;
+ } 
+
+PrAsUser {
+  ( ':' t.var) e.X = '[] <-'<PrArgUser t.var> '; ' <PrAsUser e.X>;
+  (e.expr ':' t.var) e.X = <PrArgUser e.expr> '<-'<PrArgUser t.var> '; ' <PrAsUser e.X>;
+                    = ;
+ } 
+
+PrFmt {
+  (e.expr ':' t.var) = <PrArgUser e.expr> ';' ;
+  (e.expr ':' t.var) e.X = <PrArgUser e.expr> ', ' <PrFmt e.X>;
+ } 
+
+$ENTRY PrAsV  {
+  (e.1 ':' t.var) t.as e.X = <PrArg t.var> ', ' <PrAsV  t.as e.X>;
+  (e.1 ':' t.var) = <PrArg t.var>;
+                  = ;
+ } 
+
+PrAsVUser  {
+  (e.1 ':' t.var) t.as e.X = <PrArgUser t.var> ', ' <PrAsVUser  t.as e.X>;
+  (e.1 ':' t.var) = <PrArgUser t.var>;
+                  = ;
+ } 
+
+$ENTRY PrArg {
+ (Var e.var) e.X =  <PrVar (Var e.var)> ' ' <PrArg e.X>;
+ ('*'e.1) e.X    = (<PrArg e.1>) <PrArg e.X>;
+ s.1      e.X    = s.1 <GetSpace <Type s.1>> <PrArg e.X>;
+                 = ;
+}
+
+GetSpace {
+ 'W' e.x = ;
+* 'F' e.x = ;
+ 'N' e.x = ;
+ s.t e.x = ' ';
+}
+
+$ENTRY PrArgUser {
+ (Var e.var) e.X =  <PrVar (Var e.var)> ' ' <PrArgUser e.X>;
+ ('*'e.1) e.X    = (<PrArgUser e.1>) <PrArgUser e.X>;
+* ('!' (Fn s.f e.args)':'t.var1) e.X = '<' s.f <PrArgUser e.args> '> ' <PrArgUser e.X>;
+ ('!' (Fn s.f (e.args':'t.var))':'t.var1) e.X = '<' s.f <PrArgUser e.args> '> ' <PrArgUser e.X>;
+ s.1      e.X    = <PrtSymb s.1> <GetSpace <Type s.1>> <PrArgUser e.X>;
+                 = ;
+}
+
+PrtSymb { s.1 , <Type s.1>:
+   {
+     'W' e.x = s.1;
+*     'F' e.x = s.1;
+     'N' s.x = s.1;
+     s.t e.x = <Quote> s.1 <Quote>; 
+   };
+}
+
+Quote { = ''; }
+
+PrVar {
+ (Var 'h' s.id e.elev) e.X =  'h.' <Symb s.id> <PrElev e.elev>;
+ (Var s.type 0 e.elev) e.X =  s.type '.out' <PrElev e.elev>;
+ (Var s.type s.id e.elev) e.X =  s.type '.' <Symb s.id> <PrElev e.elev>;
+}
+
+PrElev {
+    = ;
+ e.1, <Infinit>: e.1 = '.inf';
+ e.1 = '.' e.1;
+}
+
+* <PrOutFmt t.outfmt> 
+PrOutFmt {
+ (Output t.restr ((No)':'t.var)) = <PrOutFmt (Output (Rs) ((Var 'e' 0)':'(Var 'e' 0)))>;
+ (Output t.restr ((Expectant)':'t.var)) 
+             = <PrOutFmt (Output t.restr ((Var 'e' 0)':'(Var 'e' 0)))>;
+ (Output t.restr (e.expr':'t.var)) = <PrArg e.expr> '<- e.out';
+}
+
+*<PrOutAs t.outfmt t.var> 
+$ENTRY PrOutAs {
+ (Output t.restr ((No)':'t.var)) t.outvar = <PrArg t.outvar>;
+ (Output t.restr ((Expectant)':'t.var)) t.outvar = <PrArg t.outvar>;
+ (Output t.restr (e.expr':'t.var)) t.outvar = <PrOutLs <ListVar Of Expr e.expr>>;
+}
+
+PrOutLs {
+ (Var e.var) = <PrArg (Var e.var)>;
+ e.vars =  '{' <PrOutLs1 e.vars> '}';
+}
+
+PrOutLs1 {
+ (Var e.var) = <PrArg (Var e.var)>;
+ (Var e.var) e.vars = <PrArg (Var e.var)> ';' <PrOutLs1 e.vars>;
+   = ;
+}
+
+$ENTRY Print1 { e.X NL e.Y = <Trace0 e.X> <Print1 e.Y>;
+                e.X = <Trace0 e.X>; }
+* =============
+ 
+* CONvert to a String. New Syntax.
+ConS {
+  s.A e.1, <Type s.A>:
+       {
+        'W' e.A1 = <WORD <String (Word NoQuote) <Explode s.A>>> ' ' <ConS e.1>;
+        'N'  e.A1 = <Symb s.A> ' ' <ConS e.1>;
+        s.T  e.A1 = '\''<String (Chars NoQuote) s.A e.1>;
+       };
+  (e.1) e.2 = '(' <ConS e.1> ')' <ConS e.2>;
+            = ;
+     };
+
+WORD { 
+ e.word Quote = '\"' e.word '\"'; 
+ e.word NoQuote = e.word ; 
+}
+
+String {
+ (s.flag e.Quote) '\\' e.1 = '\\' '\\' <String (s.flag Quote) e.1>;
+ (s.flag e.Quote) '\'' e.1 = '\\' '\'' <String (s.flag Quote) e.1>;
+ (s.flag e.Quote) '\"' e.1 = '\\' '\"' <String (s.flag Quote) e.1>;
+ (s.flag e.Quote) '\t' e.1 = '\\' 't'  <String (s.flag Quote) e.1>;
+ (s.flag e.Quote) '\n' e.1 = '\\' 'n'  <String (s.flag Quote) e.1>;
+ (s.flag e.Quote) '\r' e.1 = '\\' 'r'  <String (s.flag Quote) e.1>;
+ t.flag s.A e.1, <Type s.A>:
+       {
+        'W' e.Word   = <String t.flag> 
+                       <WORD <String (Word NoQuote) <Explode s.A>>> ' ' <ConS e.1>;
+        'N' e.Number = <String t.flag> <Symb s.A> ' ' <ConS e.1>;
+        'L' e.Letter = s.A <String t.flag e.1>;
+        'D' e.Digit  = s.A <String t.flag e.1>;
+        'P' e.Printable = s.A <String t.flag e.1>;
+        s.T e.A1, t.flag: (s.flag e.Quote) 
+                        = '\\x' <ToHex <Ord s.A>> <String (s.flag Quote) e.1>;
+       };
+
+ t.flag (e.1) e.2 = <String t.flag> '(' <ConS e.1> ')' <ConS e.2>;
+ (Word  s.Quote) = s.Quote;
+ (Chars e.Quote) = '\'';
+}
+
+ToHex {
+ s.digit, <Divmod (s.digit) 16>: (s.q) s.r = <ToHexDig s.q> <ToHexDig s.r>;
+}
+
+ToHexDig {
+ 15 = 'F'; 14 = 'E';
+ 13 = 'D'; 12 = 'C';
+ 11 = 'B'; 10 = 'A'; s.d = <Symb s.d>;
+}
+ 
+/*
+* CONvert to a String. Old Syntax.
+ConS {
+  '#'e.1 = '##' <ConS e.1>;
+  '('e.1 = '#(' <ConS e.1>;
+  ')'e.1 = '#)' <ConS e.1>;
+  s.A e.1, <Type s.A>:
+       {'F's.A = '#' <Explode s.A> ' ' <ConS e.1>;
+        'N's.A = '#' <Symb s.A> ' ' <ConS e.1>;
+        s.T s.A = s.A <ConS e.1>;
+       };
+  (e.1)e.2 = '(' <ConS e.1> ')' <ConS e.2>;
+  = ;
+     };
+*/
+ 
+* CUT the arg. into 75-pieces and PUT in file
+Cut-Put{
+      = ;
+  e.X = <Cut-Put1 <First 75 e.X>>;
+}
+
+Cut-Put1 {
+ (e.1)   = <Putout <CurrFile> e.1>;
+ (e.1)e.2 = <Putout <CurrFile> e.1> <Cut-Put e.2>;
+}
+
+$ENTRY ReForm {
+* This case is just an imitation from normalization.
+  (Node s.id Recur t.restr (Stack e.calls t.conf) t.basics)(Dev  ) e.gr  
+          = <ReForm (Node s.id Passive t.restr (Stack t.conf) t.basics)e.gr>; 
+
+  (Node e.X)(Dev  e.dev) e.gr = (Fork <ReForm e.dev>) <ReForm e.gr>;
+
+  '+'(e.branch) e.brs = '+'(<ReForm e.branch>) <ReForm e.brs>;
+
+  (As e.ass)(Begin e.subgr ':' t.out End) s.flag 
+         = <ReForm (As e.ass)(Begin e.subgr ':' t.out End)>; 
+
+  (As e.ass)(Begin e.subgr s.flag ':' t.out End) 
+         = <ReForm (As e.ass)(Begin e.subgr ':' t.out End)>; 
+
+  (Begin e.subgr ':' t.out End) e.gr 
+         = (Begin <ReForm e.subgr> ':' t.out End) <ReForm e.gr>; 
+
+  (Basic s.name e.basic (Output e.outfmt) ':'t.var ) e.gr 
+         = (Basic s.name (Output e.outfmt) ':'t.var ) <ReForm e.gr>;
+
+  (Node s.N Passive t.Rs (Stack (Conf (e.1':' t.var))) t.Basics) e.gr 
+         = (Out (e.1':'t.var)) <ReForm e.gr>;
+
+  (Ct e.contr) e.gr = (Ct e.contr) <ReForm e.gr>;
+
+  (As e.ass) e.gr = (As e.ass) <ReForm e.gr>;
+
+  (Def (('!' (Fn s.name e.ass)':'t.var)':'t.out) ) e.gr 
+                 = (As e.ass) (Basic s.name ':' t.out) <ReForm e.gr>;
+
+  s.flag e.gr = <ReForm e.gr>;
+  (Ready e.ready) e.gr = <ReForm e.gr>;
+  (GRAPH s.id e.graph) e.grs 
+              = (GRAPH s.id <ReForm e.graph>) <ReForm e.grs>;
+              = ;
+ }
+
+FunNames {
+(Call s.id (s.Fun e.path ) e.call) e.stack = s.Fun <FunNames e.stack>;
+e.xxx = ;
+}
+
