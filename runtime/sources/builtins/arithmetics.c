@@ -554,6 +554,8 @@ int ConvertToInt(struct vint_t* numData)
     if (GET_INT_SIGN(numData))
         mpz_neg(num, num);
 
+
+
     int res = mpz_get_si(num);
 
     mpz_clear(num);

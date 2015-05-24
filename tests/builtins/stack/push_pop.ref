@@ -1,0 +1,4 @@
+$ENTRY Go
+{
+	= <Br 'MyValue=' 1><Br 'MyValue=' 2><Prout <Dg 'MyValue'>><Prout <Dg 'MyValue'>>;
+}

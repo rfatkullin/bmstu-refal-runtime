@@ -1,0 +1,9 @@
+$ENTRY Go
+{
+	= <Func 'T' Pasd 263 "Gena"><Prout <Dg 'Index'>>;
+}
+
+Func
+{
+	s.1 e.2 = <Br 'Index=' e.2 s.1>
+}

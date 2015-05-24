@@ -17,6 +17,8 @@
 
 static const char* modeStr[2] = {"r", "w"};
 
+mpz_t MaxCharCodePoint;
+
 struct file_info
 {
     FILE*   file;
@@ -82,6 +84,8 @@ struct func_result_t Mu(int entryStatus);
 
 /// Возвращает информацию о первом символе.
 struct func_result_t Type(int entryStatus);
+
+struct func_result_t Chr(int entryStatus);
 
 /* Вспомогательные функции.*/
 

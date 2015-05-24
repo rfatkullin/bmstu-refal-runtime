@@ -22,6 +22,10 @@ static void recApplyCaseMappingOp(uint64_t offset, uint64_t length, uint32_t op(
 void initBuiltins()
 {
     mpz_init_set_ui(_step, 0);
+
+    mpz_init_set_ui(MaxCharCodePoint, 2);
+
+    mpz_pow_ui(MaxCharCodePoint, MaxCharCodePoint, 32);
 }
 
 void gcInitBuiltinEnv()
@@ -352,6 +356,58 @@ static int getCharInfo(uint32_t ch, uint32_t* first, uint32_t* add)
         *add = 'l';
 
     return 1;
+}
+
+static void recApplyChr(uint64_t offset, uint64_t length);
+static uint32_t getCharFromInt(struct vint_t* numData);
+
+struct func_result_t Chr(int entryStatus)
+{
+    gcInitBuiltinEnv();
+
+    struct lterm_t* chainTerm = allocateBuiltinsResult(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);
+
+    recApplyChr(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm, .callChain = 0};
+}
+
+static void recApplyChr(uint64_t offset, uint64_t length)
+{
+    uint64_t i = 0;
+    for (i = 0; i < length; ++i)
+    {
+        if (_memMngr.vterms[offset + i].tag == V_INT_NUM_TAG)
+        {
+            _memMngr.vterms[offset + i].tag = V_CHAR_TAG;
+            _memMngr.vterms[offset + i].ch = getCharFromInt(_memMngr.vterms[offset + i].intNum);
+        }
+        else if (_memMngr.vterms[offset + i].tag == V_BRACKETS_TAG)
+        {
+            recApplyChr(_memMngr.vterms[offset + i].brackets->offset,
+                    _memMngr.vterms[offset + i].brackets->length);
+        }
+    }
+}
+
+static uint32_t getCharFromInt(struct vint_t* numData)
+{
+    mpz_t num;
+
+    mpz_init(num);
+
+    mpz_import(num, GET_INT_LENGTH(numData), 1, sizeof(uint8_t), 1, 0, numData->bytes);
+
+    if (GET_INT_SIGN(numData))
+        mpz_neg(num, num);
+
+    mpz_mod(num, num, MaxCharCodePoint);
+
+    uint32_t res = mpz_get_ui(num);
+
+    mpz_clear(num);
+
+    return res;
 }
 
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch))

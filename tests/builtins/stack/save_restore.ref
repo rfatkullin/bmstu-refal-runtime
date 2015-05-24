@@ -1,0 +1,4 @@
+$ENTRY Go
+{
+	= <Br 'MyValue=' 'Saved data ' 826783 SADsdsd><Prout <Dg 'MyValue'>>;
+}

@@ -1,0 +1,7 @@
+$ENTRY Go
+{
+	= 	<Br 'Msg=' 'Test message'>
+		<Prout <Cp 'Msg'>> 
+		<Prout <Dg 'Msg'>>
+		<Prout <Dg 'Msg'>>
+}

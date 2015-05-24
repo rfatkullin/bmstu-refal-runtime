@@ -1,0 +1,20 @@
+$ENTRY Go
+{
+	= 	<Br 'Index=' 0>
+		<IncCounter>
+		<Prout 'Fac 6 = '<Fac 6>>
+		<Prout 'Fac func called ' <Dg 'Index'> 'times'>;
+}
+
+Fac
+{
+	1 = 1;
+	s.1 = <IncCounter> <Mul s.1 <Fac <Sub s.1 1>>>;
+	  = 1;	
+}
+
+IncCounter
+{
+	= <Br 'Index=' <Add <Dg 'Index'> 1>>
+}
+

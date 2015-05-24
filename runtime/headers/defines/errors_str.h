@@ -42,6 +42,8 @@
 #define BAD_BINARY_OPERATION        "[Builtins][%s]: Unknown binary operation\n"
 #define MOD_TO_DOUBLE_ERROR         "[Builtins][%s]: Can't applay mod operation to double!\n"
 
+#define HASH_TABLE_BAD_ARG          "[Builtins] Key must contain only chars!\n"
+
 #define DEBUG_PRINT_BAD_CHAIN       "[Debug print]: Bad chain is passed!\n"
 
 #define BAD_BUFF  "[Helpers]: Bad buffer passed to char array converter!\n"
