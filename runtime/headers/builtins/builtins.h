@@ -86,6 +86,7 @@ struct func_result_t Mu(int entryStatus);
 struct func_result_t Type(int entryStatus);
 
 struct func_result_t Chr(int entryStatus);
+struct func_result_t Ord(int entryStatus);
 
 /* Вспомогательные функции.*/
 

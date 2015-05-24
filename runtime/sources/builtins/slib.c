@@ -14,8 +14,12 @@
 #include <builtins/case_mapping.h>
 #include <defines/data_struct_sizes.h>
 
-static int getCharInfo(uint32_t ch, uint32_t* first, uint32_t* add);
+static uint32_t getCharFromInt(struct vint_t* numData);
+static void recApplyChr(uint64_t offset, uint64_t length);
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch));
+static int getCharInfo(uint32_t ch, uint32_t* first, uint32_t* add);
+static struct vint_t* chGetNumFromChar(uint32_t ch, allocate_result* res);
+static void chRecApplyOrd(uint64_t offset, uint64_t length, allocate_result* res);
 static int getFragmentFirstVTermType(struct fragment_t* frag, uint32_t* first, uint32_t* add);
 static void recApplyCaseMappingOp(uint64_t offset, uint64_t length, uint32_t op(uint32_t ch));
 
@@ -358,9 +362,6 @@ static int getCharInfo(uint32_t ch, uint32_t* first, uint32_t* add)
     return 1;
 }
 
-static void recApplyChr(uint64_t offset, uint64_t length);
-static uint32_t getCharFromInt(struct vint_t* numData);
-
 struct func_result_t Chr(int entryStatus)
 {
     gcInitBuiltinEnv();
@@ -370,6 +371,61 @@ struct func_result_t Chr(int entryStatus)
     recApplyChr(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm, .callChain = 0};
+}
+
+struct func_result_t Ord(int entryStatus)
+{
+    gcInitBuiltinEnv();
+
+    struct lterm_t* chainTerm = allocateBuiltinsResult(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);
+
+    allocate_result res;
+
+    DOUBLE_TRY_VOID(chRecApplyOrd(BUILTIN_FRAG->offset, BUILTIN_FRAG->length, &res), res);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm, .callChain = 0};
+}
+
+static void chRecApplyOrd(uint64_t offset, uint64_t length, allocate_result* res)
+{
+    uint64_t i = 0;
+    for (i = 0; i < length; ++i)
+    {
+        if (_memMngr.vterms[offset + i].tag == V_CHAR_TAG)
+        {
+            _memMngr.vterms[offset + i].tag = V_INT_NUM_TAG;
+            _memMngr.vterms[offset + i].intNum = chGetNumFromChar(_memMngr.vterms[offset + i].ch, res);
+
+            if (*res == GC_NEED_CLEAN)
+                return;
+        }
+        else if (_memMngr.vterms[offset + i].tag == V_BRACKETS_TAG)
+        {
+            chRecApplyOrd(_memMngr.vterms[offset + i].brackets->offset,
+                _memMngr.vterms[offset + i].brackets->length,
+                res);
+
+            if (*res == GC_NEED_CLEAN)
+                return;
+        }
+    }
+}
+
+static struct vint_t* chGetNumFromChar(uint32_t ch, allocate_result* res)
+{
+    mpz_t num;
+
+    mpz_init_set_ui(num, ch);
+
+    uint32_t numb = 8 * sizeof(uint8_t);
+    uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
+    struct vint_t* intNum = 0;
+
+    CHECK_ALLOCATION_RETURN(intNum, chAllocateIntStruct(length, res), *res);
+
+    mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
+
+    return intNum;
 }
 
 static void recApplyChr(uint64_t offset, uint64_t length)

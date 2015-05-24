@@ -68,6 +68,13 @@ struct vclosure_t* chAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCou
     return allocateClosureStruct(funcPtr, paramsCount, ident, rollback);
 }
 
+struct vint_t* chAllocateIntStruct(uint64_t length, allocate_result* res)
+{
+    GC_DATA_HEAP_CHECK_RETURN(VINT_STRUCT_SIZE(length), *res);
+
+    return allocateIntStruct(length);
+}
+
 struct lterm_t* chCopyFieldOfView(struct lterm_t* chain, allocate_result* result)
 {
     struct lterm_t* newChain = 0;

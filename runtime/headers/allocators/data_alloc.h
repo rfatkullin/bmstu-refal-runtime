@@ -18,6 +18,7 @@ struct lterm_t*     chAllocateBuiltinsResult(uint64_t offset, uint64_t length, a
 struct lterm_t*     chCopyFieldOfView(struct lterm_t* fieldOfView, allocate_result* restrict);
 struct vclosure_t*  chAllocateClosureStruct(RefalFunc funcPtr, uint32_t paramsCount, struct vstring_t* ident, int rollback, allocate_result* res);
 struct vstring_t*   chAllocateVStringFromASCIIName(const char* name, allocate_result* res);
+struct vint_t*      chAllocateIntStruct(uint64_t length, allocate_result* res);
 
 /// Следующие функции создают объект и инициализируют его.
 /// При этом НЕ делают проверку на переполнение памяти.

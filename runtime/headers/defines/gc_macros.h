@@ -81,6 +81,19 @@ do{                                                 \
     }                                               \
 }while(0)
 
+#define DOUBLE_TRY_VOID(expr, statusVar)            \
+do{                                                 \
+    expr;                                           \
+    if (statusVar == GC_NEED_CLEAN)                 \
+    {                                               \
+        statusVar = GC_OK;                          \
+        collectGarbage();                           \
+        expr;                                       \
+        if (statusVar == GC_NEED_CLEAN)             \
+            PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG); \
+    }                                               \
+}while(0)
+
 #define CHECK_ON_ZERO_VTERM_OFFSET_EXIT(vtermOffset)    \
 do{                                                     \
     if (vtermOffset == 0)                               \
