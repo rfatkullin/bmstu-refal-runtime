@@ -1,0 +1,2241 @@
+* version 6.03.2000
+* Alalyze of c-grpaphs. ,new
+
+* $ENTRY AnlzGr, UnBr, SubsGrs, UpdSubgr, VarLess;
+
+* $INTERIOR AnlzGr1, AnlzGr2, UpdateGr, UpdRecG, UpdSubg1, ExamCS ;
+* $INTERIOR AnRes, AnResTr, AnResGr, FmtConst, Analyze, InitInf, Normalz;
+* $INTERIOR ResSubC, NormaBr, Nrmlz, NrmBron, Normaon, Backtr, RmPtr; 
+* $INTERIOR EndBrs, ShFactor, NewBrs, TakeFct, TstFct, RetnFct, SubCase;
+* $INTERIOR RuleCC, RuleBC, RuleBB, NormaA, RuleCS, RuleCS1 ;
+* $INTERIOR MultTrR, DistrR, DistrR1, To-pFmt, FctNb;
+* $INTERIOR NewRefer, NewPass, InnerOut, JoinInf, GenOut;
+* $INTERIOR DrvCWalk, DrvC, DrvCTree, RecInf, UnBr, OutSubgr ;
+* $INTERIOR And, Or, IsAsId, IsAsRn, ClearSbs ;
+
+* $TEMPORARY ShFactor, SubCase, UpdSubg1, MultTrR, DistrR, NewRefer ;
+* $TEMPORARY DrvCWalk, DrvCTree, UnBr, OutSubgr ;
+
+* access.ref:
+$EXTRN ListVar, ClearR, Restr, Equal, Equals, Subset, IsConst, IsFlat, Self;
+$EXTRN New, NewNode, Belong, ListVar1, ElevExp, GetOutVar, SelfOut;
+$EXTRN Redef, RedefOutVar, GetOutFmt, GetOutFmt1, SelfOutNew, Redefs, ZeroElev;
+$EXTRN IntSect, ClearVar, GetExecutable, ClearTerms, IdAss;
+
+* basic.ref:
+$EXTRN ConjAs, RuleRR, SubsSt, Subs, SubsAs, CombAss, ValueV, RuleAR;
+$EXTRN DisAs1, RuleAA, CompPatt0, RemElev;
+
+* scp4.ref:
+$EXTRN Result;
+
+* global.ref:
+$EXTRN Folding;
+
+* compare.ref:
+$EXTRN Reduce, GenRstr, GnExUnc ;
+
+* drive.ref:
+$EXTRN Drv, Mu-Comp1;
+
+* trace.ref:
+$EXTRN Trace, TraceRes, ReForm, NameBas, OutGraph;
+
+* final.ref:
+$EXTRN ExpectOut, OutDrive, GetSaveOut;
+
+/* The function AnlzGr analyzes global properties of a c-graph and 
+   transformes it in a fashion according to the properties. 
+   The function is called whenever a c-graph with a recurrent top 
+   or a subgraph had been just created. These properties are used 
+   by the SCP to transform the rest of the full input p-graph.  
+   A number of the properties to be found: 
+    - an output format;
+    - shared factors of the c-branching;
+    - to be without any output;
+    - to be a constant;
+    - to be a tree;
+   Also some normalization of the c-graph is doing. See comments to 
+   the subfunctions for detailes.
+*/
+* t.context ::= (Recur t.basic) | (Subgraph e.cp-subgrs t.basics) 
+* <AnlzGr t.context e.c-graph> ==> e.cp-graph
+$ENTRY AnlzGr { 
+* Remove screened branches.
+ t.context e.c-graph = <AnlzGr0 t.context <ScrnDrv ((Path)(As)) e.c-graph>>;
+} /* End of AnlzGr */
+
+AnlzGr0 { 
+* Take the name's list of the recurrent nodes from the graph. 
+ t.context e.c-graph = 
+      <AnlzGr1 t.context (Diction <RecInf e.c-graph>) (e.c-graph)>;
+} /* End of AnlzGr0 */
+
+* An auxiliary function for the function AnlzGr. 
+* The function just checks trivial cases. It can be removed and the cases
+* can be consedered by the general algorithm. 
+AnlzGr1 { 
+*1-4. Just a number of trivial cases to do nothing; 
+*2.
+ (Subgraph /* empty */ t.basics) t.dict 
+                        (t.assign (Begin (Node e.passive) ':'t.out End)) =  
+    t.assign (Begin (Node e.passive) (Ready t.dict (Refrs)) ':'t.out End)
+    '^' (Subgraph t.basics) ;  
+*3.
+ (Recur t.basics t.finish) t.dict (t.reduct (Basic e.basic)) =  
+                <Result GRAPH t.finish t.basics t.reduct (Basic e.basic)>; 
+*4.
+ (Recur t.basics t.finish) t.dict ((Node e.passive)) =  
+                <Result GRAPH t.finish t.basics (Node e.passive)>; 
+
+*5.
+ (Recur t.basics (Finish Middle)) t.dict (e.subgr) =  
+                <Result GRAPH (Finish Middle) t.basics e.subgr>; 
+
+*6. General case.
+ t.cntxt t.dict t.subgr =  <AnlzGr2 t.cntxt t.dict t.subgr>; 
+} /* End of AnlzGr1 */
+
+* An auxiliary function for the function AnlzGr. 
+AnlzGr2 { 
+*0???.
+ (Subgraph e.cntx) t.dict 
+                   (t.assign (Begin e.subgr (Ready e.ready) ':'t.out End)) =  
+   <AnlzGr2 (Subgraph e.cntx) t.dict (t.assign (Begin e.subgr ':'t.out End))>;
+
+*1. A subgraph. Analyze it and update according to the information. 
+ (Subgraph e.cntxt) t.dict (t.assign (Begin e.subgraph':'t.out End)) =
+           <UpdateGr (Subgraph e.cntxt) <GetOutVar t.out> t.assign 
+                              <Analyze Of Output GRAPH t.dict e.subgraph>>;
+
+*2. A recurrent top. Analyze it and update according to the information. 
+ t.cntxt t.dict (e.subgraph) = 
+           <UpdateGr t.cntxt <Analyze Of Output GRAPH t.dict e.subgraph>>;
+} /* End of AnlzGr2 */
+
+*****************************************************************************
+*                  Trasformation of a normalized graph.                     *
+*****************************************************************************
+/* The function UpdateGr transformes a graph in a fashion according 
+   to its global properties. 
+*/
+* e.info ::= t.outvar t.assignment | []
+* <UpdateGr t.cntx e.info t.dict s.global (s.type e.n-graph) t.output-format> 
+*                                        ==> e.cp-graph
+UpdateGr { 
+*1. The c-graph is reduced to Zero.
+  t.cntx e.xxx (Zero e.n-graph) t.outfmt = Zero;
+
+*2. A graph with the recurrent top.
+ (Recur t.basics) t.dict s.global (s.type e.n-graph) t.outfmt = 
+                     <UpdRecG t.basics t.dict s.global (s.type e.n-graph) t.outfmt>; 
+
+*2a. A final graph.
+ (Recur t.basics t.finish) t.dict s.global (s.type e.n-graph) t.outfmt = 
+            <UpdFinG t.basics t.finish t.dict s.global (s.type e.n-graph) t.outfmt>; 
+
+*4. A context is empty. A recursive subgraph was normalized. 
+*   The function is constantant. 
+ (Subgraph /* empty */ (Basics e.basics)) t.outvar t.assign t.dict s.global
+ (Const e.n-graph) (Output t.restr (e.const':'t.var)) = 
+     <NewNode t.restr (Basics) (Conf (e.const':'t.outvar))> (Ready e.basics);
+
+*4b.  The function is a projection. Temporary definition.
+ (Subgraph /* empty */ (Basics e.basics)) t.outvar t.assign t.dict s.global
+ (Project e.n-graph) (Output t.restr (e.proj':'t.var)) = 
+     <NewNode (Rs) (Basics) (Conf <SubsAs t.assign (e.proj':'t.outvar)>)> 
+     (Ready e.basics);
+
+*3. General case. There are a context. 
+ (Subgraph e.cntx) e.info s.global (s.type e.n-graph) t.outfmt = 
+     <Folding (Subgraph e.cntx) e.info s.global (s.type e.n-graph) t.outfmt>;
+*+             <UpdSubgr (Subgraph e.cntx) e.info (s.type e.n-graph) t.outfmt>; 
+
+} /* End of UpdateGr */
+
+/* The function UpdRecG transformes a recurrent graph in a fashion according 
+   to its global properties. 
+*/
+* <UpdRecG t.basics t.dict s.global (s.type e.n-graph) t.output-format> 
+*                                   ==> e.cp-graph
+UpdRecG { 
+*1. A recursive function was normalized. The function is constantant. 
+* It seems that case is redundant.
+* (Basics e.basics) (Const e.n-graph) (Output t.restr (e.const':'t.var)) = 
+*     <NewNode t.restr (Basics) (Conf (e.const':'t.var))> (Ready e.basics);
+ (Basics e.basics) t.dict s.global
+ (Const (Node s.id e.node (Stack e.calls t.conf) t.basics1)(Dev e.n-dev)) 
+ (Output t.restr (e.expr':'t.var)) = 
+  <Result Const (Output t.restr (e.expr':'t.var)) (Basics e.basics) 
+*  Here we imitate an empty development just for output functions! 
+       (Node s.id Recur t.restr (Stack e.calls (Conf (e.expr':'t.var))) 
+             t.basics1)(Dev /* empty */) >;
+
+ (Basics e.basics) t.dict s.global
+ (Project (Node s.id e.node (Stack e.calls t.conf) t.basics1)(Dev e.n-dev)) 
+ (Output t.restr (e.proj':'t.var)) = 
+  <Result Project (Output t.restr (e.proj':'t.var)) (Basics e.basics) 
+*  Here we imitate an empty development just for output functions! 
+       (Node s.id Recur (Rs) (Stack e.calls (Conf (e.proj':'t.var))) 
+             t.basics1)(Dev /* empty */) >;
+
+*2. The c-graph is a tree. There is a reference to the graph. 
+*   But this graph still can be a constant.
+ (Basics e.basics) t.dict s.global (Tree e.n-graph) t.outfmt,
+ <FmtConst t.outfmt>: True =
+       <UpdRecG (Basics e.basics) t.dict (Const e.n-graph) t.outfmt>;
+
+*3. General case. The c-graph is ready at all.
+ (Basics e.basics) t.dict s.global (Tree e.n-graph) t.outfmt = 
+       <Folding (Basics e.basics) t.dict s.global (Tree e.n-graph) t.outfmt>; 
+
+ (Basics e.basics) t.dict s.global (s.type e.n-graph) t.outfmt = 
+       <Folding (Basics e.basics) t.dict s.global (s.type e.n-graph) <FinFmt1 t.outfmt>>; 
+*+                          <Result GRAPH t.outfmt (Basics e.basics) e.n-graph>; 
+} /* End of UpdRecG */
+
+/* The function UpdFinG transformes a final graph in a fashion accorting 
+   to its global properties. 
+*/
+* <UpdFinG t.basics t.finish t.dict s.global (s.type e.n-graph) t.output-format> 
+*                             ==> e.cp-graph
+UpdFinG { 
+ (Basics e.basics) t.finish t.dict s.global (Tree e.n-graph) t.outfmt = 
+       <Folding (Basics e.basics) t.finish t.dict s.global (Tree e.n-graph) 
+                                                            t.outfmt>; 
+
+ (Basics e.basics) t.finish t.dict s.global (s.type e.n-graph) t.outfmt = 
+       <Folding (Basics e.basics) t.finish t.dict s.global (s.type e.n-graph) 
+                                                            <FinFmt1 t.outfmt>>; 
+*+                         <Result GRAPH t.finish (Basics e.basics) e.n-graph>; 
+} /* End of UpdFinG */
+
+/* The function UpdSubgr transformes a subgraph in a fashion according 
+   to its global properties. There are a nontrivial context.
+*/
+* <UpdSubgr t.cntx t.outvar t.assign t.dict (s.type e.n-graph) 
+*           t.output-format>  ==> e.cp-graph
+$ENTRY UpdSubgr { 
+/* These tree cases must be done just after a flag. Temporary definition. */
+/*
+*0. A recursive subgraph was normalized. The function is constantant. 
+ (Subgraph e.cp-subgrs t.basics) t.outvar t.assign t.dict 
+ (Const e.n-graph) (Output t.restr (e.const':'t.var)) = 
+       '^'(Subgraph <SubsGrs (As (e.const':'t.outvar)) e.cp-subgrs> t.basics); 
+
+*01. A recursive subgraph was normalized. The function is a projection. 
+ (Subgraph e.cp-subgrs t.basics) t.outvar t.assign t.dict 
+ (Project e.n-graph) (Output t.restr (e.proj':'t.var)) = 
+    '^'(Subgraph <SubsGrs (As <SubsAs t.assign (e.proj':'t.outvar)>) 
+                                     e.cp-subgrs> t.basics); 
+
+*02. A recursive subgraph was normalized. Identety. 
+ (Subgraph e.cp-subgrs (Basics e.basics)) t.outvar t.assign t.dict 
+ (Identety e.n-graph) (Output t.restr (e.expr':'t.var)), e.cp-subgrs:
+     {              =  <NewNode (Rs) (Basics) (Conf (e.expr':'t.outvar))> 
+                      (Ready e.basics);
+       e.cp-subgrs1 = '^'(Subgraph <SubsGrs (As (e.expr':'t.outvar)) e.cp-subgrs>
+                                   (Basics e.basics)); 
+     };
+*/
+
+*1. A contraction an the top of the subgraph. Check is the assignment 
+*   transitive w.r.t. the contraction ? We bring out the transitive 
+*   contraction even if the subgraph is constant. This contraction
+*   still can be meaningful inside the context.
+ (Subgraph e.cntx) t.outvar t.assign t.dict 
+                                 (s.type (Ct e.contr) e.n-graph) t.outfmt =
+    <ExamCS (Subgraph e.cntx) t.outvar t.assign t.dict 
+                                 (s.type (Ct e.contr) e.n-graph) t.outfmt
+            (<RuleCS t.assign (Rs) (Ct e.contr)>)>;
+
+*2. No contraction on the top. The subgraph is removed. There is no factor.
+ (Subgraph e.cntx) e.info (s.type e.n-graph) t.outfmt, <RemoveLoop s.type>: True=
+    <UpdSubg1 (Subgraph e.cntx) e.info (s.type e.n-graph) t.outfmt>;
+
+*3. A definition an the top of the subgraph.  
+ (Subgraph e.cntx) e.info (s.type (Def e.def) e.n-graph) t.outfmt =
+    <UpdDef (Subgraph e.cntx) e.info 
+            (s.type <Mu-Comp1 (Def e.def)> e.n-graph) t.outfmt>;
+
+*4a. A reference on the top of the subgraph. The reference is last. 
+ (Subgraph e.cntx) t.outvar t.assign t.dict 
+ (s.type (As e.assign1) (Basic e.basic ':' t.out) ) t.outfmt =
+    (As <SubsAs t.assign e.assign1>) (Basic e.basic ':' t.outvar) 
+           <UpdSubgr (Subgraph e.cntx) t.outvar 
+*+              <Redef (<Self t.outvar>':'t.outvar) t.assign> t.dict
+*+            <Redef (<SelfOutNew t.outfmt t.outvar>':'t.outvar) t.assign> t.dict
+            <Redefs (As <SelfOutNew t.outfmt t.outvar>) t.assign> t.dict
+            (s.type ) t.outfmt>;
+*4b. A reference on the top of the subgraph. The reference is not last. 
+ (Subgraph e.cntx) t.outvar t.assign t.dict 
+ (s.type (As e.assign1) (Basic e.basic ':' t.out) e.n-graph) t.outfmt,
+  <SelfOutNew (Basic e.basic ':' t.out)>: e.out-assign  t.basic1 =
+*+    (As <SubsAs t.assign e.assign1>) (Basic e.basic ':' t.out) 
+    (As <SubsAs t.assign e.assign1>) t.basic1 
+           <UpdSubgr (Subgraph e.cntx) t.outvar 
+*+              <Redef (<Self t.out>':'t.out) t.assign> t.dict
+*+             <Redef (<SelfOutNew (Basic e.basic ':' t.out)>':'t.out) t.assign> t.dict
+*+             <Redefs (As <SelfOutNew (Basic e.basic ':' t.out)>) t.assign> t.dict
+             <Redefs (As e.out-assign) t.assign> t.dict
+             (s.type e.n-graph) t.outfmt>;
+
+*5a. A block on the top of the subgraph. The block is last. 
+ (Subgraph e.cntx) t.outvar t.assign t.dict 
+ (s.type (As e.assign1) (Begin e.n-subgr ':' t.out End) ) t.outfmt
+   =
+    (As <SubsAs t.assign e.assign1>) 
+    (Begin e.n-subgr ':' <RedefOutVar t.outvar t.out> End)
+           <UpdSubgr (Subgraph e.cntx) t.outvar 
+            <Redef (<SelfOut t.outfmt t.outvar>':'t.outvar) t.assign> t.dict
+              (s.type ) t.outfmt>;
+
+*5b. A block on the top of the subgraph.  The block is not last.
+ (Subgraph e.cntx) t.outvar t.assign t.dict 
+ (s.type (As e.assign1) (Begin e.n-subgr ':' t.out End) e.1 (Node e.node) e.n-graph) 
+ t.outfmt, <TstDistrR1 (Node e.node)>:True  /* Repeat passage over the subgraph. */
+   =
+    (As <SubsAs t.assign e.assign1>) (Begin e.n-subgr ':' t.out End)
+           <UpdSubgr (Subgraph e.cntx) t.outvar 
+               t.assign t.dict
+               (s.type e.1 (Node e.node) e.n-graph) t.outfmt>;
+*5bb.
+ (Subgraph e.cntx) t.outvar t.assign t.dict 
+ (s.type (As e.assign1) (Begin e.n-subgr ':' t.out End) e.n-graph) t.outfmt =
+    (As <SubsAs t.assign e.assign1>) (Begin e.n-subgr ':' t.out End)
+           <UpdSubgr (Subgraph e.cntx) t.outvar 
+*+              <Redef (<Self t.out>':'t.out) t.assign> t.dict
+*-----
+            <Redef (<SelfOut t.out>':'<Self t.out>) t.assign> t.dict
+              (s.type e.n-graph) t.outfmt>;
+
+*6. A passive node on the top of the subgraph.  
+*   The context is empty. There are not subgraphs after it.
+ (Subgraph /* empty */ (Basics e.basics)) t.outvar t.assign t.dict 
+ (s.type (Node e.Passive (Stack (Conf (e.expr':'t.var))) t.basic) e.n-graph) 
+ t.outfmt  = (Node e.Passive 
+               (Stack (Conf <SubsAs t.assign (e.expr':'t.outvar)>)) t.basic) 
+             (Ready e.basics); 
+
+*7. A passive node on the top of the subgraph. There is a context.  
+ (Subgraph e.cp-subgrs t.basics) t.outvar t.assign t.dict
+  (s.type (Node s.name Passive t.restr (Stack (Conf (e.expr':'t.var))) t.basic)
+            e.n-graph) t.outfmt =
+       '^'(Subgraph 
+            <SubsGrs (As <SubsAs t.assign (e.expr':'t.outvar)>) e.cp-subgrs> 
+           t.basics); 
+
+*8. There is no factor on the top. The whole subgraph was brought out.
+ (Subgraph e.cp-subgrs t.basics) t.outvar t.assign t.dict (s.type /* empty */ ) t.outfmt =
+*+       '^' (Subgraph e.cp-subgrs t.basics);
+          '^' (Subgraph <SubsGrs (As <AsFmt t.outfmt t.outvar>) e.cp-subgrs> 
+                        t.basics);
+
+*8. There is no factor on the top. General case.
+ (Subgraph e.cntx) e.info (s.type e.n-graph) t.outfmt =
+    <UpdSubg1 (Subgraph e.cntx) e.info (s.type e.n-graph) t.outfmt>;
+} /* End of UpdSubgr */
+
+RemoveLoop {
+ Const  = True;
+ Project = True;
+ Identety = True;
+ s.type = False;
+}
+
+/* The function UpdSubg1 transformes a subgraph in a fashion according 
+   to its global properties. There is a nontrivial context.
+   No prefix that can be brought out.
+*/
+* <UpdSubg1 t.cntx t.outvar t.assign t.dict (s.type e.n-graph) 
+*           t.output-format>  ==> e.cp-graph
+UpdSubg1 { 
+*1. The n-graph is a tree. Use the disribute rule for multiplication 
+*   the tree by the cp-graphs. See comments to the function AnResTr.
+ (Subgraph e.cp-subgrs t.basics) t.outvar t.assign t.dict 
+ (Tree e.n-graph) t.outfmt 
+     = 
+      <MultTrR t.dict t.assign (e.n-graph) 
+          (t.outvar <RedefOutVar t.outvar t.outfmt> '^'(Subgraph e.cp-subgrs t.basics))>; 
+*-        ( <RedefOutVar t.outvar t.outfmt> '^'(Subgraph e.cp-subgrs t.basics))>; 
+
+*2. A recursive subgraph was normalized. The function is constantant. 
+ (Subgraph e.cp-subgrs t.basics) t.outvar t.assign t.dict 
+ (Const e.n-graph) (Output t.restr (e.const':'t.var)) = 
+       '^'(Subgraph <SubsGrs (As (e.const':'t.outvar)) e.cp-subgrs> t.basics); 
+
+*2a. A recursive subgraph was normalized. The function is a projection. 
+ (Subgraph e.cp-subgrs t.basics) t.outvar t.assign t.dict 
+ (Project e.n-graph) (Output t.restr (e.proj':'t.var)) = 
+    '^'(Subgraph <SubsGrs (As <SubsAs t.assign (e.proj':'t.outvar)>) 
+                                     e.cp-subgrs> t.basics); 
+
+*2b. A recursive subgraph was normalized. Identety. 
+ (Subgraph e.cp-subgrs (Basics e.basics)) t.outvar t.assign t.dict 
+ (Identety e.n-graph) (Output t.restr (e.expr':'t.var)), e.cp-subgrs:
+     { /* empty */ =  <NewNode (Rs) (Basics) (Conf (e.expr':'t.outvar))> 
+                      (Ready e.basics);
+       e.cp-subgrs1 = '^'(Subgraph <SubsGrs (As (e.expr':'t.outvar)) e.cp-subgrs>
+                                   (Basics e.basics)); 
+     };
+
+*3. General case. 
+*   Temporary definition. Here we has to use the full output format.
+ (Subgraph e.cp-subgrs t.basics) t.outvar t.assign t.dict 
+ (GRAPH e.n-graph) t.outfmt = 
+/*     <OutSubgr t.outfmt t.assign 
+               (Begin e.n-graph t.dict ':'t.outvar End) 
+                                        '^'(Subgraph e.cp-subgrs t.basics)>; 
+*/
+     <OutSubgr <RedefOutVar t.outvar t.outfmt> t.assign 
+               (GRAPH e.n-graph) t.dict
+                                        '^'(Subgraph e.cp-subgrs t.basics)>; 
+} /* End of UpdSubg1 */
+
+/* An auxiliary function for the function UpdSubgr. 
+   It just exams a result of the RuleCS and goes on the transformation.
+*/
+ExamCS { 
+*1. The t.assignment is transitive w.r.t. a contraction. 
+*   Bring the normalized contractions out and update the context.
+ (Subgraph e.cp-subgrs t.basics) t.var t.assign t.dict 
+ (s.type t.contr e.n-graph) (Output t.restr (e.expr':'t.outvar))
+ (e.contrs t.restr1 (As e.assign1)),
+ <ConjAsL e.contrs>: e.assign2, s.type:
+   {Identety = e.contrs 
+* Substitution will be done with output format in this case.
+      <UpdSubgr (Subgraph e.cp-subgrs t.basics) 
+                 t.var (As e.assign1) 
+* Temporary definition.
+                 t.dict (s.type e.n-graph) 
+                 (Output (Rs) <SubsAs (As e.assign2) (e.expr':'t.var)>)>;
+    s.type1 = e.contrs 
+      <UpdSubgr (Subgraph <SubsGrs (As e.assign2) e.cp-subgrs> t.basics) 
+                 t.var (As e.assign1) 
+                 t.dict (s.type e.n-graph) (Output t.restr (e.expr':'t.outvar))>;
+   };
+
+*2. The t.assignment is not transitive w.r.t. a contraction. General case.
+ (Subgraph e.cntx) e.info (s.type e.n-graph) t.outfmt (False) 
+    = <UpdSubg1 (Subgraph e.cntx) e.info (s.type e.n-graph) t.outfmt>;
+
+*3. Zero is encountered.
+ (Subgraph e.cntx) e.info (s.type e.n-graph) t.outfmt (Zero) = Zero;
+ } /* End of ExamCS */
+
+
+UpdDef { 
+*1. A definition is not executable.  
+ (Subgraph e.cntx) t.outvar t.assign t.dict 
+ (s.type (Def (('!' (Fn s.name e.args)':'t.var)':'t.out)) e.n-graph) t.outfmt
+     = (Def (('!' (Fn s.name <SubsAs t.assign e.args>)':'t.var)':'t.out)) 
+       <UpdSubgr (Subgraph e.cntx) t.outvar 
+                <Redef (<Self t.out>':'t.out) t.assign> t.dict 
+                 (s.type e.n-graph) t.outfmt>;
+
+*2. A definition was executed.  
+ (Subgraph e.cntx) t.outvar t.assign t.dict 
+ (s.type (As (e.expr':'t.out)) e.n-graph) t.outfmt 
+     = <UpdSubgr (Subgraph e.cntx) t.outvar 
+                 <Redef (e.expr':'t.out) t.assign> t.dict 
+                 (s.type e.n-graph) t.outfmt>;
+
+}
+****************   The end of trasformation of a normalized graph. **********
+
+/* Function AnRes analyzes the picked information of a c-graph
+   to say its propery:
+*/
+* <AnRes  e.n-graph t.info> ==>  t.ready e.mark-graph
+*  e.mark-graph ::=   Zero                       ;the graph is Zero.
+*             | (GRAPH e.n-graph) t.out-format   ;general case.
+*             | (Tree  e.n-graph) t.out-format   ;no recursion.
+*             | (Const  e.n-graph) t.out-format  ;a recursion is present,
+*                                                ;every output is the same  
+*                                                ;object expression.  
+*             | (Project e.n-graph) t.out-format ;a recursion is present,
+*                                                ;every output is the same  
+*                                                ;expression.The expression is 
+*                                                ;constructed from external variables.  
+*  t.ready ::= (Ready t.internal-dictioanry t.references)  
+AnRes {  
+*1. The graph is a tree.
+ e.n-graph (Info (Inner e.inner t.dict) (Outs Tree e.outs) 
+                                        (Refrs e.refs) e.info) =
+                      (Ready t.dict (Refrs <ClearSbs e.refs>)) 
+                      <AnResTr e.n-graph (Info (Inner e.inner t.dict) 
+                                               (Outs Tree e.outs) (Refrs e.refs) e.info)>;
+
+*2. A real graph. 
+ e.n-graph (Info (Inner e.inner t.dict) (Outs GRAPH e.outs) 
+                                        (Refrs e.refs) e.info) =
+       (Ready t.dict (Refrs <ClearSbs e.refs>)) 
+       <AnResGr e.n-graph (Info (Inner e.inner t.dict) 
+                                (Outs GRAPH e.outs) (Refrs e.refs) e.info)>;
+ } /* End of AnRes */
+
+* The graph is a tree. Later we use the tree is a full manner. 
+* It is a kind of a positive restriction. And we will lose the information
+* if we take into account just the output format of the tree.
+* So the fist two cases are temperary. They must be done under a flag.
+AnResTr  {  
+*+/*
+*01. The output format is an object expression. 
+*   We still keep the graph because there can exist a shared factor. 
+*   The factor we use later to narrow parametrs.
+  e.tree (Info (Inner e.inner True t.dict)
+                  (Outs s.graph (e.outvars t.outfmt)) e.info),
+  <FmtConst t.outfmt>: True
+                 = True (Const e.tree) t.outfmt;
+*02. Projection.
+  e.tree (Info (Inner True e.inner) 
+                  (Outs s.graph (e.outvars (Output t.restr (e.expr1':'t.var))) )
+                  t.Refrs 
+                  (Vars  t.Redef (Project True (e.expr)) e.vars) e.info)
+                = True (Project e.tree) (Output (Rs) (e.expr':'t.var));
+*/
+  e.tree (Info (Inner s.global e.inner) (Outs s.graph (e.outvars t.outfmt)) e.info)
+                                                  = True (Tree e.tree) t.outfmt;
+*+ e.tree (Outs Tree (e.outvars t.outfmt)) e.info = True (Tree e.tree) t.outfmt;
+ } /* End of AnResTr */
+
+* <AnResGr  e.n-graph t.info> ==> s.global (Zero) ()
+*                             ==> s.global (GRAPH e.n-graph) t.outfmt  
+*                             ==> s.global (Const e.n-graph) t.outfmt  
+*                             ==> s.global (Project e.n-graph) t.outfmt  
+AnResGr  {  
+*1. Every branch has at least one internal reference befor external. 
+*  The graph has not real outputs at all. The graph is Zero.
+  e.n-graph (Info (Inner s.global s.exist True s.final t.dict) e.info) = True (Zero) ();
+ 
+*2. The output format is an object expression. 
+*   We still keep the graph because there can exist a shared factor. 
+*   The factor we use later to narrow parametrs.
+*+  e.n-graph (Info (Inner True e.inner t.dict)
+  e.n-graph (Info (Inner e.inner True t.dict)
+                  (Outs s.graph (e.outvars t.outfmt)) e.info),
+  <FmtConst t.outfmt>: True
+                                  = True (Const e.n-graph) t.outfmt;
+*3. Projection.
+  e.n-graph (Info (Inner True e.inner) 
+                  (Outs s.graph (e.outvars (Output t.restr (e.expr1':'t.var))) )
+                  t.Refrs 
+                  (Vars  t.Redef (Project True (e.expr)) e.vars) e.info)
+                = True (Project e.n-graph) (Output (Rs) (e.expr':'t.var));
+
+*4. General case. 
+  e.n-graph (Info (Inner s.global e.inner) (Outs s.graph (e.outvars t.outfmt)) e.info)
+                = s.global (GRAPH e.n-graph) <FinFmt t.outfmt>;
+ } /* End of AnResGr */
+
+FinFmt {
+* Temparary definition.
+ (Expectant) = (Output (Rs ) ((Var 'e' <New Var>)':'(Var 'e' 0)));
+
+ t.outfmt = t.outfmt;
+}
+
+FinFmt1 {
+* Temparary definition.
+ (Expectant) = (Output (Rs ) ((Var 'e' <New Var>)':'(Var 'e' 0)));
+
+ (Output t.restr ((No)':'t.var)) = (Output t.restr ((No)':'t.var));
+ (Output t.Rs (e.expr':'t.var)) = (Output (Rs) (<Refresh e.expr> ':'t.var));
+ t.outfmt = t.outfmt;
+}
+
+Refresh {
+ (Var s.t s.id e.var) e.expr = (Var s.t <New Var> e.var) <Refresh e.expr>;
+ ('*' e.expr1) e.expr = ('*' <Refresh e.expr1>) <Refresh e.expr>;
+ s.1 e.expr = s.1 <Refresh e.expr>;
+            = ;
+}
+
+AsFmt {
+ (Output t.restr ((Expectant) ':' t.var)) t.outvar = (t.outvar':'t.outvar);
+ (Output t.restr ((No)':'t.var)) t.outvar = (t.outvar':'t.outvar);
+ (Output t.restr (e.expr ':' t.var)) t.outvar = (e.expr':'t.outvar);
+}
+
+*  Is the output format an object expression ? 
+* <FmtConst t.outfmt> ==> True | False
+FmtConst {
+ (Output t.restr (e.expr':'t.outvar)) = <IsConst e.expr>; 
+ t.outfmt = False;
+}
+
+/* Analyze:
+  This analyze can be done just when we finished a recurrent branching 
+  or a subgraph if we do not want the repeated passages ! 
+*/
+* <Analyze  Of Output GRAPH t.dictionary e.c-graph> 
+*                          ==>  t.ready (s.type e.n-graph) t.out-format
+Analyze { 
+ Of Output GRAPH t.internal-dict e.c-graph = 
+*           <TraceRes ('Result of the analyzing') 
+                   <AnRes <Normalz <InitInf t.internal-dict> e.c-graph>> 
+*           >;
+                 ;
+}
+
+* Initialization of a basket for information. 
+* See the comments to the function NormBr.
+* <InitInf ... > ==> t.info
+InitInf { 
+*1. Pick up the dictionary.
+  (Info (Inner e.inner t.diction) t.Outs t.Refrs t.Vars e.info) 
+                        = <InitInf t.diction t.Vars>;
+
+*2. Create a new basket. 
+ (Diction e.intrn-dict) = 
+  (Info (Inner True True Unknown True (Diction e.intrn-dict)) 
+        (Outs  Tree ((Expectant))) (Refrs) (Vars (Redef) (Project True)));
+
+ (Diction e.intrn-dict) e.info = 
+  (Info (Inner True True Unknown True (Diction e.intrn-dict)) 
+        (Outs  Tree ((Expectant))) (Refrs) e.info);
+ } /* End of InitInf */
+
+*****************************************************************************
+*                        Normalization                                      *
+*****************************************************************************
+/*
+  Normalization of a c-graph: (driving without driving) 
+  1. To unite the contractions in an indepndent list's. 
+  2. To unite the assignments in an indepndent list's. 
+  3. Move all contractions to the left side as far as it is possible.
+  4. Move all assignments to right side as far as it is possible.
+  5. Ordering the lists of contractions by the number-name of the leader
+     variables in the independent list's.
+  6. Splitting of shared factors of the branches and creation of a normalized
+     graph without backtracking.
+  7. Something else.
+  The 3-4 cases can happend because of there can be a number of Refal steps
+  inside one branch of an output graph. The splitting of stacks by 
+  generalization causes that. See comments to the function SubCase.
+*/
+* <Normalz t.info e.c-graph> ==> e.n-graph t.info' 
+Normalz {
+*1. A c-branching is encountered.
+   t.info t.node(Dev e.dev) = 
+*    <TraceRes ('Graph has just been normalized. Result:  ') 
+       <EndBrs t.info t.node (Dev () <Nrmlz <InitInf t.info> e.dev>) >
+*    >;
+     ;
+*2. Single branch. 
+   t.info e.c-branch = <RmPl <Nrmlz t.info '+'(e.c-branch)>>;
+} /* End of Normalz */
+
+RmPl {  '+'(e.br) e.info = e.br e.info; }
+
+* Normalization of a list of branches.
+* <Nrmlz t.info e.c-branches> ==> e.n-branches t.info'    
+Nrmlz {    
+   t.info '+'(e.c-branch) e.c-branches =
+       <Normaon <NrmBron <NormaBr t.info () '^' e.c-branch>> 
+                (e.c-branches)>; 
+} /* End of Nrmlz */
+
+/*****************************************************************************
+** Normalization works by this principle: the pointer ^ separates           **
+** the members of the pair to be combined or commuted.                      **
+** Contractions are combined and odered in according to the numbers-names   ** 
+** of the leader variables from each group.                                 **
+******************************************************************************/
+/*
+ Function NormaBr normalizes a linear segment of a c-branch       
+ using some rules like the Turchin's CRA rules. These transformations are 
+ performed by a "big" step of the normalization. In fact there exist 
+ a number of "small" steps which run under the "big" step. The rules informs 
+ the normalization about a next "small" step by means of the following 
+ interface:
+                         ==> ^ (Norma e.n-walk)   *-- t.norma --*
+                     /* e.n-walk is ready to put befor the pointer '^' *
+                         ==> ^ t.something_else   
+                     /* It is not still ready to put befor the pointer '^' *
+
+ t.info ::= (Info t.InnerStatus t.OutStatus t.References)
+ t.InnerStatus ::= (Inner s.global s.exist s.curr s.final 
+                          t.dictionary)
+ t.OutStatus   ::= (Outs s.tree (e.out-vars t.final-out) ... )
+ t.References  ::= (Refrs e.references)
+ s.global ::= True | False  *** All references are/(are not) internal.
+ s.exist ::= True | False   *** Every branch has not /( has ) an external 
+                            *** reference. Or it is not reachable.
+ s.curr ::= True | False    *** A current branch has /( has not) an internal 
+             | Unknown      *** reference befor external ones.
+ s.final ::= True | False   *** Every branch is (is not) finished with a flat
+                            *** internal reference or a passive expression.
+ t.dictionary ::= (Diction e.internal_dictionary_of_the_recurrent_nodes)  
+ s.tree ::= Tree | GRAPH    *** Every branch has not / has a reference 
+ e.out-vars --- the list output variables from a branch.
+ e.out-vars ::= (s.intern t.out-var) ...
+ s.intern   ::= True | False  *** An output is (is not) internal.
+ (e.final-out) -- the last output of a branch.
+*/
+* <NormaBr t.info (e.n-walk) '^' e.c-graph> 
+*                           ==> t.info (e.n-walk) '^' t.c-node(Dev e.dev)
+*                           ==> t.info (e.n-walk) '^' 
+NormaBr {
+*01. X ^ (Norma e.basic) ==> X e.basic ^
+   t.info (e.n-walk) '^' (Norma (As e.asign) t.basic) e.c-graph = 
+     <NormaBr <NewRefer t.info (As e.asign) t.basic>  
+              (e.n-walk <NormaA (As e.asign)> t.basic) '^' e.c-graph>;
+
+*01. X ^ (Norma e.contrs) ==> X e.contrs ^
+   t.info (e.n-walk) '^' (Norma (Ct e.contr1) t.contr2) e.c-graph = 
+     <NormaBr <NewContr t.info (Ct e.contr1) t.contr2>  
+              (e.n-walk (Ct e.contr1) t.contr2) '^' e.c-graph>;
+
+*03. A call of an external function. X ^ (Norma Def) ==> X Def ^
+   t.info (e.n-walk) '^' (Norma (Def e.def)) e.c-graph =
+        <NormaBr <NewRefer t.info (Def e.def)> (e.n-walk (Def e.def)) '^' 
+                                                                 e.c-graph>;
+*04. Normalization was happened. Just move the pointer. 
+*   X ^ Norma ==> X Norma ^
+  t.info (e.n-walk)'^' (Norma e.n-segment) e.c-graph = 
+        <NormaBr t.info (e.n-walk e.n-segment) '^' e.c-graph>;
+
+*1. Rule CC: '^' C' C''  ==>  ^  C'' C' | (Norma C' C'')
+  t.info (e.n-walk (Ct e.contr1)) '^' (Ct e.contr2) e.c-graph   = 
+       <NormaBr t.info (e.n-walk) '^' 
+                       <RuleCC (Ct e.contr1)(Ct e.contr2)> e.c-graph>;
+
+*2. Two assignments are encountered.  ^ AA ==> ^ A.  
+*   This case can happened when generalization of a generalized configuration
+*   was done.
+  t.info (e.n-walk) '^' (As e.assign1) (As e.assign2) e.c-graph = 
+        <NormaBr t.info (e.n-walk) '^' 
+                        (As <SubsAs (As e.assign1) e.assign2>) e.c-graph>;
+
+*3. Here t.basic := (Basic e.basic) | (Begin e.subgr End)
+*.  Rule BC: '^' Basic C ==> '^' C Basic | '^' (Norma Basic) C
+  t.info (e.n-walk) '^' (As e.assign) t.basic (Ct e.contr) e.c-graph = 
+        <NormaBr t.info (e.n-walk) '^' 
+                      <RuleBC (As e.assign) t.basic (Ct e.contr)> e.c-graph>;
+
+*4. A reference is encountered. X ^ e.basic ==> X '^' (Norma e.basic).  
+   t.info (e.n-walk) '^' (As e.assign) t.basic e.c-graph = 
+     <NormaBr t.info (e.n-walk) '^' (Norma (As e.assign) t.basic) e.c-graph>; 
+
+*5. A contraction is encountered. X ^ C ==> X C '^'. X is not C. 
+   t.info (e.n-walk) '^' (Ct e.contr) e.c-graph = 
+                           <NormaBr <NewContr t.info (Ct e.contr)> 
+                                    (e.n-walk (Ct e.contr)) '^' e.c-graph>; 
+
+*6a. A call of an external function. X ^ Def C ==> X Def ^ C | X ^ C Def
+   t.info (e.n-walk) '^' (Def e.def) (Ct e.contr) e.c-graph =
+        <NormaBr t.info (e.n-walk) '^' <RuleBC (Def e.def) (Ct e.contr)> e.c-graph>;
+
+*6. A call of an external function. X ^ Def ==> X Def ^
+   t.info (e.n-walk) '^' (Def e.def) e.c-graph =
+        <NormaBr t.info (e.n-walk) '^' (Norma (Def e.def)) e.c-graph>;
+
+*7. The passive end. X ^ Out ==> X Out ^
+   t.info (e.n-walk) '^' (Node e.node) =
+        <NormaBr <NewPass t.info (Node e.node)> (e.n-walk (Node e.node)) '^'>;
+
+*8. Just a trash.
+   t.info (e.n-walk) '^' e.c-graph s.trash = 
+        <NormaBr t.info (e.n-walk) '^' e.c-graph>; 
+
+*9. The liner segment has been finished. 
+   t.info (e.n-walk) '^' =  (e.n-walk t.info) '^'; 
+
+*10. A problem is encountered. End in the linear segment of the walk.
+   t.info (e.n-walk) '^' t.nc-interface e.c-graph = 
+                    (e.n-walk t.info) '^' t.nc-interface e.c-graph;
+} /* End of NormaBr */
+
+
+*  To test the result of normalization of a linear segment.
+*  <NrmBron t.n-walk '^' e.c-graph> ==> t.n-walk1 '^' 
+NrmBron {
+*1. C-fork. Process this C-fork and go on to normalize.
+*   A normalization still can be done whenever a shared factor was found.
+  (e.n-walk t.info) '^' t.c-node(Dev e.dev) =
+    <Backtr e.n-walk 
+       (<EndBrs <BrsInfo t.info> t.c-node (Dev () <Nrmlz <InitInf t.info> e.dev>)>)> ;
+
+*2. The linear segment is finished. 
+  (e.c-walk) '^' = (e.c-walk) '^' ; 
+} /* End of NrmBron */
+
+*  The function Normaon takes care of normalization branches: 
+*  branch by branch. 
+*  <Normaon t.info t.n-walk '^' (e.c-branches)> ==> e.n-branches t.info
+Normaon {
+*1. A liner segment is finished. Process the next branch.
+*   Go on normalizing.
+    (e.n-walk t.info) '^' ('+' e.c-branches) =  
+*        <Trace 'Branch was normalized. ' >
+*        <Trace 'Result: ' e.n-walk>
+        '+' (e.n-walk) <Nrmlz <NewBrInf t.info> '+' e.c-branches>;
+
+*2. The linear segment is finished. The last branch. 
+   (e.n-walk t.info) '^' () = 
+*        <Trace 'The last branch was normalized.'>
+*        <Trace 'Result: ' e.n-walk>
+        '+'(e.n-walk) t.info;
+} /* End of Normaon */
+
+/* 
+  Exit from a branching inside the normalizing. The function has to
+  split a shared factors of the branches and to reconstruct  the 
+  branching. Keep in mind that every branching must be without
+  any backtracking. Here we also throw out the branches wich are screened
+  by the clousest next branches. See comments to the function SubCase.
+  This function is good for a global analysis of the branches:
+  - Identety, semi-Flat, an output format, semi-Const
+
+  Const: We can change the last n branches with just one branch if 
+         - these branches have not references;
+         - each output from them is a constant;
+         - these constants equal one to another;
+         The new branch is just the constant <- e.out;
+         The reason why we can do that is unbacktracking of the branchings.
+         That is why we scan the branches from down to up.
+   How I see now there are no reason to prune the branches in the middle
+   of supercompilation for graphs wich are trees. Because we can just 
+   lose an effectivity with the prunning. Any graph-tree is a kind 
+   of positive restriction to the shared parametres. We can do that if 
+   there are not the parametrs wich are shared by the current subgraph and 
+   the rest of the current branch to be transformed.
+   Anyway this transformation has been done by a postprocessor when
+   the supercompiler has just finished at all.
+*/
+* <EndBrs t.old-info t.node (Dev () e.c-dev t.new-info)> 
+*                                       ==> t.node (Dev e.n-dev) t.info 
+EndBrs {
+*1. Single branch. Recurrent node. We keep the node. 
+*   There can be a reference to the node.
+  t.info (Node s.name Recur e.node) (Dev ('+'(e.branch)) t.info1) = 
+                                (Node s.name Recur e.node)(Dev '+'(e.branch)) 
+                                 <JoinInf t.info t.info1>; 
+
+*2. Single branch. Unrecurrent node. Just remove the branching .
+  t.info (Node s.name s.type e.node) (Dev ('+'(e.branch)) t.info1) = 
+                                 e.branch <JoinInf t.info t.info1>;
+
+*3. A n-branching is encountered. No n-development.
+  t.info t.node (Dev () '+'(e.br1) e.brs  t.info1) = 
+                    <EndBrs  t.info t.node (Dev ('+'(e.br1)) e.brs t.info1)>; 
+
+*4. A real branching is encountered. A n-development is present.
+  t.info t.node (Dev ('+' (e.br1) e.n-dev) e.brs '+'(e.br2)  t.info1) = 
+        <EndBrs t.info t.node <ResSubC (Dev e.n-dev) 
+                (<SubCase t.info1 '+'(e.br1) '+'(e.br2)>) e.brs t.info1>>; 
+
+*5. A real branching is encountered. Every branch is passed.
+*   To splitt the shared factors of the branches.
+  t.info t.node (Dev ('+'(e.br1) '+'(e.br2) e.n-dev) t.info1) = 
+        <ShFactor t.info t.info1 t.node (Dev '+'(e.br1) '+'(e.br2) e.n-dev)>; 
+
+} /* End of EndBrs */
+
+* Temporary definition. We just take a full shared factor.
+ShFactor {
+ t.info t.info1 t.node (Dev '+'((As e.asssign) t.basic e.br) e.dev) = 
+      <NewBrs t.info t.info1 t.node <TakeFct ((As e.asssign) t.basic) (Dev '+'(e.br)) (e.dev)>>;
+
+ t.info t.info1 t.node (Dev '+'(t.1 e.br) e.dev) = 
+      <NewBrs t.info t.info1 t.node <TakeFct (t.1) (Dev '+'(e.br)) (e.dev)>>;
+ }
+
+NewBrs {
+*1. No shared factor.
+ t.info t.info1 t.node () (Dev e.dev) = 
+                                t.node (Dev e.dev) <JoinInf t.info t.info1>;
+*2. There exist a untrivial shared factor.
+ t.info t.info1 (Node s.name s.type e.node) (e.factor) (Dev e.dev) = 
+* Here the second copy of the node must be changed, but it seems we
+* will not use the copy at all. The function EndBrs just takes care of
+* the type of the node.
+     <EndBrs t.info (Node s.name s.type e.node) 
+         (Dev ('+'(e.factor (Node s.name Sec e.node) (Dev e.dev))) t.info1)>;
+ }
+
+* Look for a shared factor of the branching.
+TakeFct {
+*1a.
+ (e.factor (As e.assign1) t.basic1) (Dev e.dev) ('+'((As e.assign2) t.basic2 e.br) e.brs) = 
+   <TstFct (<Equal ((As e.assign1) t.basic1) ((As e.assign2) t.basic2)>) 
+           (e.factor (As e.assign1) t.basic1) (Dev e.dev) ('+'((As e.assign2) t.basic2 e.br) e.brs)>;
+*1b.
+ (e.factor t.1) (Dev e.dev) ('+'(t.2 e.br) e.brs) = 
+   <TstFct (<Equal t.1 t.2>) (e.factor t.1) (Dev e.dev) ('+'(t.2 e.br) e.brs)>;
+
+*2. A new term from factor has just found. 
+ (e.factor) (Dev '+'(t.1 e.br) e.dev) () = 
+                    <TakeFct (e.factor t.1) (Dev '+'(e.br)) (e.dev)>;
+ }
+
+* Test whether a term belongs to the list of branches. 
+TstFct {
+*1. The last term from the factor is equal to the first from the current 
+*   branch. Just remove it from the branch and go on to test.
+ (True) (e.factor) (Dev e.dev) ('+'((As e.assign1) t.basic1 e.br) e.brs) = 
+                         <TakeFct (e.factor) (Dev e.dev '+'(e.br)) (e.brs)>;
+
+ (True) (e.factor) (Dev e.dev) ('+'(t.1 e.br) e.brs) = 
+                         <TakeFct (e.factor) (Dev e.dev '+'(e.br)) (e.brs)>;
+
+*2. A full factor is found. Give the factor and a new development. To construct
+*   a new branching. We have to return the last term from the factor 
+*   to the branches.
+ (False) (e.factor (As e.assign1) t.basic1) (Dev e.dev) (e.brs) = 
+                (e.factor) (Dev <RetnFct ((As e.assign1) t.basic1) To e.dev> e.brs);
+ (False) (e.factor t.1) (Dev e.dev) (e.brs) = 
+                (e.factor) (Dev <RetnFct (t.1) To e.dev> e.brs);
+ }
+
+* The function just returns a term to the branches.
+RetnFct {
+ (e.term) To '+'(e.br) e.brs = '+'(e.term e.br) <RetnFct (e.term) To e.brs>;
+ (e.term) To /* empty */     = ;
+} /* End of RetnFct */
+
+/*
+  The function SubCase removes the current branch from a branching whenever
+  this branch is a subcase of the next one. Informaly the meaning of "subcase"
+  is explaned below:
+  Every c-branch consists of walks like the next:
+  e.c-walk ::= e.c-segment e.c-walk 
+  e.c-segment ::= e.c-contractions e.c-actions
+  e.c-contraction ::= [] | t.c-contraction e.c-contractions
+  e.c-actions ::= t.assignment t.basic | t.assignment (Begin e.subgraph End)
+                  | t.node
+
+  Definition: A branch is a subcase of another branch iff every e.c-segment
+  from the first is a subcase of the correspond e.c-segment of the second
+  branch. An e.c-segment1 = e.c-contractions1 e.c-actions1 is a subcase of
+  an e.c-segment2 = e.c-contractions2 e.c-actions2 iff the predicate
+  e.c-contractions1 can be reduced to the e.c-contractions2 ( as patterns ) 
+  as well as the e.c-actions1 can be reduced to  the e.c-actions2 
+  ( as expressions ) by the aid of the same substituition as the patterns.
+
+*/
+* Temporary definition. At present do nothing.
+* <SubCase t.info '+' t.br1 '+' t.br2> ==>  '+' t.br2  
+*                                      ==>  '+' t.br1 '+' t.br2
+SubCase {
+ t.info '+' t.br1 '+' t.br2 = '+' t.br1 '+' t.br2; 
+} /* End of SubCase */
+ 
+* Just reconstruction of structures.
+ResSubC { (Dev e.n-dev) (e.brs1) e.brs = (Dev (e.brs1 e.n-dev) e.brs); }
+
+/* 
+   In the case when a shared factor was found the new concatenated walk
+   can be still normalized. The function Backtr does that. 
+*/
+* <Backtr e.nc-walk (e.nc-branch t.info)> ==> t.info (e.n-garph)'^';
+Backtr {
+*1. No shared factor of the branches.
+ e.nc-walk (t.node (Dev e.dev) t.info) 
+                                = (e.nc-walk t.node (Dev e.dev) t.info)'^';
+*2. There is a shared factor of the branches.
+*   A normalization of the factor still is possible.  
+ e.nc-walk (e.factor t.node (Dev e.dev) t.info) = 
+          (<RmPtr <NormaBr <InitInf t.info> (e.nc-walk) '^' e.factor>> 
+                   t.node (Dev e.dev) t.info) '^' ;
+} /* End of Backtr */
+ 
+* An auxiliary function for the function Backtr. Just reformation.
+* The t.info was created twice.  
+RmPtr {  (e.n-walk t.info)'^' = e.n-walk; }
+
+*********** The combine-commute rules for the normalization. ***************
+/* Thje function RuleCC just sorts two contractions. */
+* <RuleCC t.contr1 t.contr2> ==> t.contr2 t.contr1 
+*                            ==> (Norma t.contr1) t.contr2
+RuleCC {
+ (Ct t.var1 ':'e.pattern1) (Ct t.var2':'e.pattern2), 
+  <Belong t.var2 To <ListVar Of Expr e.pattern1> t.var1>: 
+   { True = (Norma (Ct t.var1 ':' e.pattern1) (Ct t.var2 ':' e.pattern2));
+     False, <VarLess t.var1 t.var2>: 
+        {True = (Norma (Ct t.var1 ':' e.pattern1) (Ct t.var2 ':' e.pattern2));
+         False = (Ct t.var2 ':' e.pattern2) (Ct t.var1 ':' e.pattern1);
+        };
+   };
+} /* End of RuleCC */
+
+* A predicate "Is the first variable less than the second. 
+* Our natural odering is the odering by number-names.
+* <VarLess t.var1 t.var2> ==> True | False
+$ENTRY VarLess {
+ (Var s.type1 s.name1 e.var1) (Var s.type2 s.name2 e.var2),
+       <Sub s.name1 s.name2>: { '-' e.sub = True;
+                                    e.sub = False;
+                              };
+} /* End of VarLess */
+
+/* The function RuleBC tries to move a contraction in the front  
+   next reference. 
+*/
+* Here e.begin-basic ::= t.assign t.begin-end | t.assign t.basic
+* <RuleBC e.begin-basic t.contr> ==> t.contr e.begin-basic'  
+*                                ==> (Norma e.begin-basic) t.contr
+RuleBC {
+*1. A reference. The contraction to an output variable. Do nothing.
+ t.assign (Basic e.basic t.outfmt ':' t.outvar) (Ct t.var ':' e.pattern),
+ <Belong t.var To t.outvar <ListVar Of Expr <GetOutFmt1 t.outfmt>>>: True   
+           =  (Norma t.assign (Basic e.basic t.outfmt ':' t.outvar) )
+                              (Ct t.var ':' e.pattern);
+
+*2. A subgraph. The contraction to an output variable. Do nothing.
+ t.assign (Begin e.basic':' (Output t.restr (e.expr ':' t.outvar)) End) 
+                             (Ct t.var ':' e.pattern),   
+ <Belong t.var To t.outvar <ListVar Of Expr e.expr>>: True   
+     = (Norma  t.assign 
+               (Begin e.basic':' (Output t.restr (e.expr ':' t.outvar)) End) ) 
+                             (Ct t.var ':' e.pattern);
+
+*3. The contraction to another variable. Move the contraction to left
+*   und udate the assignment. There can be still possibly to improve
+*   the subgrah after the action. That needs to think about.
+ (As e.assign) t.begin-basic t.contr 
+       = t.contr (As <SubsAs (As <ConjAs t.contr>) e.assign>) t.begin-basic;
+
+*4. An external reference. The contraction to an input/output variables. Do nothing.
+ (Def (('!' (Fn s.name (e.expr':'t.var0))':'t.var1)':'t.outvar))
+ (Ct t.var ':' e.pattern),
+* <Belong t.var To t.outvar <ListVar Of Expr e.expr>>: True   
+ <Belong t.var To t.outvar>: True   
+           =  (Norma (Def (('!' (Fn s.name (e.expr':'t.var0))':'t.var1)':'t.outvar)) )
+              (Ct t.var ':' e.pattern);
+
+*3. The contraction to another variable. Move the contraction to left
+*   und udate the assignment. 
+ (Def (('!' (Fn s.name e.args)':'t.var)':'t.outvar)) t.contr 
+       = t.contr 
+         (Def (('!' (Fn s.name <SubsAs (As <ConjAs t.contr>) e.args>)':'t.var)':'t.outvar));
+
+} /* End of RuleBC */
+
+* It seemes the references always stand in a right order.
+* <RuleBB e.begin-basic1 e.begin-basic2> 
+*                         ==> (Norma e.begin-basic1' e.begin-basic2')
+RuleBB {
+ t.assign1 t.begin-basic1 t.assign2 t.begin-basic2 = 
+  (Norma <NormaA t.assign1> t.begin-basic1 <NormaA t.assign2> t.begin-basic2); 
+} /* End of RuleBB */
+
+/* The function NormaA: Odering of an assignment with the variable's names .
+*/
+* <NormaA t.assignment> ==> t.assignment'
+NormaA {
+*1.
+ e.n-assign (e.value1':' t.var1)  (As (e.value2':' t.var2) e.c-assign),
+ <VarLess t.var1 t.var2>:
+ {True = 
+  <NormaA e.n-assign (e.value1':'t.var1) (e.value2':'t.var2) (As e.c-assign)>;
+  False = 
+  <NormaA e.n-assign (As (e.value2':'t.var2) (e.value1':'t.var1) e.c-assign)>;
+ };
+
+*2.
+ (As t.assign1 e.c-assign) = <NormaA t.assign1 (As e.c-assign)>;
+
+*3.
+ e.n-assign (As ) = (As e.n-assign);
+} /* End of NormaA */
+
+/* The function RuleCS tries to bring the contraction out the subgraph. 
+   It can do that iff the assignment is "transient" w.r.t. the contraction.
+*/
+* <RuleCS t.assign t.restr t.contr> 
+*                                 ==> e.contrs t.restr1 t.assign1 | (False)
+RuleCS {
+ t.assign t.restr t.contr = <RuleCS1 <DrvCWalk t.assign t.restr t.contr>>;
+}
+
+/* An auxiliary function for the function RuleCS. It just  exams a result
+   of the driving.
+*/
+* <RuleCS1 e.c-branches> ==> e.contrs t.restr1 t.assign1 | Zero | False
+RuleCS1 {
+*1. A single linear sigment. The contraction is transient. No fork. 
+  '+' (e.contrs t.restr (As e.assign) s.trash1) s.thrash2 
+                               = e.contrs t.restr (As e.assign);
+*2. Zero is encountered. 
+   Zero e.xxx =  Zero;
+ 
+*3. At least two branches or hindrance. The contraction is not transient.
+   e.brs  s.trash = False;
+*-   e.brs = False;
+ } /* End of RuleCS1 */
+
+/* The function MultTrR is a right distributive rule: 
+   multiply a tree by a graph. It hangs the graph instead of leveas
+   of the tree. There can be a nontrivial assignment before 
+   the tree so it is the reason why we have to drive the situation
+   along the tree. At present, in fact we do not that. 
+   ( Temporary definition ).
+*/
+*<MultTrR t.dictionary t.assignment (e.n-tree) 
+*         ( t.out '^' (Subgraph e.context))> ==>  e.cp-subgr
+MultTrR {
+ t.dict t.assign (e.n-tree) t.subgr 
+           = <DistrR <DrvCTree t.assign e.n-tree> t.subgr t.dict>;
+ } /* End of MultTrR */
+
+* An auxiliary function for the function MultTrR. 
+DistrR {
+*0. Temporary definition. See the comments to the function DrvCTree. 
+*.  The distribution is forbidden. Do nothing. 
+ (False) t.assign e.graph 
+ ( t.outvar (Output t.Rs t.assign1) '^'(Subgraph e.cp-subgrs t.basics) ) t.dict
+       = t.assign (Begin  e.graph t.dict ':' (Output t.Rs t.assign1) End) 
+        '^'(Subgraph <SubsGrs (As t.assign1) e.cp-subgrs> t.basics); 
+
+*1. Empty context. Do nothing. 
+ t.true t.assign e.graph ( t.outvar t.outfmt '^'(Subgraph /* empty */ t.basics) ) 
+ t.dict = t.assign (Begin  e.graph t.dict ':' t.outfmt End) 
+         '^'(Subgraph t.basics); 
+
+*/* 06.05.00 
+*2. Really distribution.
+ (True ) t.assign e.c-tree ( e.out '^'(Subgraph e.cp-subgrs t.basics) ) t.dict =  
+                 <DistrR0 <ExtendFmt t.assign (e.out '^'(Subgraph e.cp-subgrs))> e.c-tree 
+                          ( e.out '^'(Subgraph e.cp-subgrs t.basics) ) t.dict>; 
+*/
+*3. Temporary definition.
+ (True e.rens) t.assign e.c-tree t.subgr t.dict = 
+                 <DistrR (False) t.assign e.c-tree t.subgr t.dict>; 
+ } /* End of DistrR */
+
+DistrR0 {
+*1. Really distribution.
+ (True ) t.assign e.c-tree t.subgr t.dict = 
+                 <DistrR1 t.assign e.c-tree t.subgr>; 
+
+*2. Temporary definition.
+ (False ) t.assign e.c-tree t.subgr t.dict = 
+                 <DistrR (False) t.assign e.c-tree t.subgr t.dict>; 
+ } /* End of DistrR */
+
+* An auxiliary function for the function MultTrR. 
+* <DistrR1 t.assign e.c-tree ( t.outold t.outfmt '^' (Subgraph e.context))> ==> e.cp-graph.
+* In fact here we redefine a p-graph. 
+* So we have to mark stacks in the tree with an uniqucal identifier to
+* forbid any reducing/generalization to/with nodes from the tree.
+* We do that with an uniqual number and protect it from generalization.
+* The tree iself is not recurrent so no reason for an infinit loop. 
+DistrR1 {
+*1. A c-tree. We create the empty bag to immitate this branching as
+*   full unready for examination of an history.  
+ t.rename e.c-br t.node(Dev e.c-dev) t.subgr,  
+ <RenVrs t.rename e.c-br <RmBasics t.node>>: e.c-br1 t.assign
+             = e.c-br1 (Dev () <DistrR1 t.assign e.c-dev t.subgr>);
+
+*2. A c-branch of the tree. There is a subtree. 
+*   Ignore anything along branch. No references.
+*   We refresh the list of basics configuration to exclude repeatiton on
+*   the next branches. The first branch has the full list.
+  t.rename '+' (e.c-br t.node(Dev e.c-dev)) e.c-brs 
+ ( e.out '^'(Subgraph e.cp-subgrs t.basics) ) = 
+      '+' (<DistrR1 t.rename e.c-br t.node(Dev e.c-dev) 
+                          ( e.out '^'(Subgraph e.cp-subgrs t.basics) )> Active) 
+           <DistrR1 t.rename e.c-brs 
+                          ( e.out '^'(Subgraph e.cp-subgrs (Basics)) )>;
+
+*3. A leaf of the tree. Ignore anything along branch. No references.
+*   We refresh the list of basics configuration to exclude repeatiton on
+*   the next branches. The first branch has the full list.
+/*??
+*a) Just cleaning.
+  t.rename 
+  '+' (e.c-br (Node e.passive (Stack (Conf (e.expr':'t.var))) t.basic)) 
+   e.c-brs 
+  ( t.out t.outfmt '^'(Subgraph (As e.assign0) 
+                          (Begin (Node s.id Passive t.restr (Stack (Conf (e.expr0':'t.var0))) 
+                                       t.basic0) ':' t.out0 End) t.basics) ), 
+   <RenVrs t.rename e.c-br>: e.c-br1 (As e.assign), <GetOutVar t.outfmt>: t.var2,
+   <SubsAs (As (e.expr':'t.var2) e.assign)>: e.assign1,
+   <SubsAs (As e.assign1) e.assign0>: e.assign2 =
+       '+' (e.c-br1
+              (Node <New Node> Passive (Rs) (Stack (Conf <SubsAs (As e.assign2) (e.expr0':'t.var2)>)) 
+                   t.basics) Passive) 
+            <DistrR1 t.rename e.c-brs 
+                     ( t.out t.outfmt 
+                       '^'(Subgraph (As e.assign0) 
+                            (Begin (Node s.id Passive t.restr (Stack (Conf (e.expr0':'t.var0))) 
+                                         t.basic0) ':' t.out0 End) (Basics)))>;
+*/
+*b) General case.
+  t.rename 
+  '+' (e.c-br (Node e.passive (Stack (Conf (e.expr':'t.var))) t.basic)) 
+   e.c-brs ( t.out t.outfmt '^'(Subgraph e.cp-subgrs t.basics) ), 
+   <RenVrs t.rename e.c-br>: e.c-br1 (As e.assign) =
+       '+' (e.c-br1
+             '^'(Subgraph 
+            <SubsGrs (As (e.expr':'<GetOutVar t.outfmt>) e.assign) <RenGrs e.cp-subgrs>> 
+                      t.basics) Active) 
+            <DistrR1 t.rename e.c-brs 
+                     ( t.out t.outfmt '^'(Subgraph e.cp-subgrs (Basics)))>;
+
+*4. A service information from the driving.  
+*  s.flag t.subgr = ; 
+  t.rename t.subgr = ;
+
+ } /* End of DistrR1 */
+
+
+* This function is used only by the function UnBr. 
+* Distribute a trivial passive node over a graph. 
+* <DistrR2 t.rename e.c-tree (t.passive)> ==> e.cp-graph.
+DistrR2 {
+*1. A c-tree.
+ t.rename e.c-br t.node(Dev e.c-dev) t.subgr  
+    = e.c-br (Dev <DistrR2 t.rename e.c-dev t.subgr>);
+
+*2. A c-branch of the tree. There is a subtree. 
+*   Ignore anything along the branch. No references.
+*   We refresh the list of basics configuration to exclude repeatiton on
+*   the next branches. The first branch has the full list.
+   t.rename '+' (e.c-br t.node(Dev e.c-dev)) e.c-brs 
+  ( (Passive t.restr t.outvar t.basics) ) =
+       '+' (e.c-br <DistrR2 t.rename t.node(Dev e.c-dev) 
+                                    ((Passive t.restr t.outvar t.basics))>) 
+            <DistrR2  t.rename e.c-brs ((Passive t.restr t.outvar (Basics)))>;
+
+*3. A leaf of the tree. Ignore anything along the branch. 
+*   Just change the output variable.
+ t.rename '+' (e.c-br (Node e.passive (Stack (Conf (e.expr':'t.var))) t.basic)) e.c-brs 
+   ( (Passive t.restr t.outvar t.basics) )
+   = '+' (e.c-br (Node e.passive (Stack (Conf (e.expr':'t.outvar))) t.basic)) 
+      <DistrR2 t.rename e.c-brs ((Passive t.restr t.outvar (Basics)))>;
+
+*3. A reference on the end. Just change the output variable.
+ t.rename '+' (e.c-br (Basic e.basic':'t.var1)) e.c-brs 
+     ((Passive t.restr t.outvar t.basics)) =
+           '+' (e.c-br (Basic e.basic':'t.outvar)) 
+           <DistrR2 t.rename e.c-brs ((Passive t.restr t.outvar t.basics))>;
+
+*5. A subgraph on the end. Just change the output variable.
+  t.rename '+' (e.c-br (Begin e.graph':' (Output t.restr1 (e.expr':'t.var1)) End)) e.c-brs  
+     ((Passive t.restr t.outvar t.basics)) =
+       '+' (e.c-br 
+              (Begin e.graph ':' (Output t.restr1 (e.expr':'t.outvar)) End))
+           <DistrR2 t.rename e.c-brs ((Passive t.restr t.outvar t.basics))>;
+
+*6. A service information from the driving.  
+  t.rename s.flag t.subgr = ; 
+  t.rename        t.subgr = ;
+
+ } /* End of DistrR2 */
+
+* Rename variables inside a linear segment of a branch. 
+* <RenVrs t.assignment e.segment> ==> e.segment' 
+RenVrs {
+ (As ) e.n-branch = e.n-branch (As );
+
+ t.rename (Ct t.var':'e.patt) e.n-branch = (Ct t.var':'e.patt) 
+      <RenVrs <RuleAA (As (e.patt':'t.var)) t.rename> e.n-branch>;
+* t.rename (Ct e.contr) e.n-branch 
+*             = (Ct <Subs t.rename e.contr>) <RenVrs t.rename e.n-branch>;
+
+ t.rename (As e.assign) (Basic e.basic) e.n-branch  
+       = (As e.assign) (Basic e.basic) <RenVrs t.rename e.n-branch>;
+*       = (As <SubsAs t.rename e.assign>) (Basic e.basic) 
+*         <RenVrs t.rename e.n-branch>;
+
+ t.rename (As e.assign) (Begin e.subgr) e.n-branch  
+       = (As e.assign) (Begin e.subgr) <RenVrs t.rename e.n-branch>;
+*       = (As <SubsAs t.rename e.assign>) (Begin e.subgr) 
+*         <RenVrs t.rename e.n-branch>;
+
+ t.rename (Def (('!' (Fn s.name e.args)':'t.var)':'t.out)) e.n-branch  
+     = (Def (('!' (Fn s.name e.args)':'t.var)':'t.out)) 
+       <RenVrs t.rename e.n-branch>;
+*     = (Def (('!' (Fn s.name <SubsAs t.rename e.args>)':'t.var)':'t.out)) 
+*       <RenVrs t.rename e.n-branch>;
+
+/*
+ t.rename (Node e.id-node t.restr (Stack e.stack) t.basics) e.n-branch,
+ <RuleAR t.rename t.restr>: t.restr1 t.ren 
+     = (Node e.id-node t.restr1 
+             (Stack <SubsSt t.rename e.stack>) t.basics
+       ) <RenVrs t.rename e.n-branch>;
+*/
+
+ t.rename (Node e.id-node t.restr (Stack e.stack) t.basics) e.n-branch
+     = (Node e.id-node t.restr (Stack e.stack) t.basics
+       ) <RenVrs t.rename e.n-branch>;
+
+ t.rename = t.rename;
+}
+
+* The function To-pFmt reformats a c-graph into the p-form.
+* <To-pFmt e.c-graph> ==> e.p-graph
+To-pFmt {
+*1.A branching.
+ t.node(Dev e.n-dev) = (Fork <To-pFmt e.n-dev>);
+
+*2. A branch. Mark the branch with a fictive name.
+ '+' (e.br t.node(Dev e.dev)) e.brs = 
+             '+' (<FctNb> e.br <To-pFmt t.node(Dev e.dev)>) <To-pFmt e.brs>;
+*3. A leaf.
+ '+' (e.br (Node e.node (Stack (Conf e.conf)) t.basic)) e.brs = 
+             '+' (<FctNb> e.br (Conf e.conf)) <To-pFmt e.brs>;
+*4. Exit.
+    = ;
+ } /* End of To-pFmt */
+
+* Just a fictive number for a n-branch.
+FctNb { = 0; }
+
+* <ExtendFmt t.assign t.subgr> ==> (True) t.assign | (False) t.assign
+ExtendFmt {
+ t.assign (t.out t.outfmt '^'t.subgr) 
+     = <ExtendFmt1 (Vars) (Outs <GetOutVar t.outfmt>) t.assign t.subgr>; 
+}
+
+* <ExtendFmt t.assign t.subgr> ==> (True) t.assign | (False) t.assign
+ExtendFmt1 {
+ (Vars e.vs) t.Outs (As e.1 (e.expr1':' (Var s.t s.id e.var0)) e.assign) 
+ (Subgraph (As (e.expr':'t.var) e.assign1) t.basic e.subgrs),
+ <ListVar Of Expr e.expr>: 
+  { e.2 (Var s.t s.id e.var1) e.vars 
+           = (False) (As e.1 (e.expr1':' (Var s.t s.id e.var0)) e.assign);
+    e.vars = <ExtendFmt1 (Vars e.vs <DelOuts t.Outs e.vars>) t.Outs
+                        (As e.1 (e.expr1 ':' (Var s.t s.id e.var0)) e.assign)
+                        (Subgraph (As e.assign1) t.basic e.subgrs)>;
+  };
+
+ (Vars e.vs) (Outs e.outs) (As e.1 (e.expr1':' (Var s.t s.id e.var0)) e.assign) 
+ (Subgraph  (Def (('!' (Fn s.name (e.expr':'t.var))':'t.var1)':'t.out)) e.subgrs),
+ <ListVar Of Expr e.expr>:
+  { e.2 (Var s.t s.id e.var1) e.vars 
+           = (False) (As e.1 (e.expr1':' (Var s.t s.id e.var0)) e.assign);
+    e.vars = <ExtendFmt1 (Vars e.vs <DelOuts (Outs e.outs) e.vars>) (Outs e.outs t.out)
+                        (As e.1 (e.expr1 ':' (Var s.t s.id e.var0)) e.assign)
+                        (Subgraph  e.subgrs)>;
+  };
+
+ t.Vars t.outs t.assign (Subgraph (As ) t.basic e.subgrs) 
+           = <ExtendFmt1 t.Vars <PutOuts t.outs t.basic> t.assign (Subgraph e.subgrs)>;
+ (Vars e.vars) t.Outs (As e.assign) e.info 
+           = (True) (As <ClearTerms e.assign <IdAss From Vars1 e.vars>>);
+}
+
+DelOuts {
+ (Outs e.1 t.var e.outs) e.2 t.var e.vars = e.2 <DelOuts (Outs e.1 t.var e.outs) e.vars>;
+ t.Outs e.vars = e.vars;
+}
+
+PutOuts {
+ (Outs e.outs) (Basic e.basic t.outfmt ':' t.outvar) = (Outs e.outs t.outvar);
+ (Outs e.outs) (Begin e.subgr ':' t.outfmt End) 
+              = (Outs e.outs <GetOutVar t.outfmt>);
+}
+
+*********** The End of the combine-commute rules. **************************
+
+
+*********** Picking up of information about c-graph. ***********************
+/* The function NewRefer checks "Do the reference belongs to the inner world
+   of the graph ? " It keep just the last output format of the branch. 
+   Other functions take care of a deeper analysis of the n-branch. 
+   We set the output format as Expectant whenever the reference belongs
+   to the internal dictionary of the graph. 
+   !!! We have to calculate evaluation of the output more carefull.
+       The output's variable must be marked as expectant and external.
+       That will allow to calculate a correct evaluation of unflat
+       functions.
+*/
+* <NewRefer t.info t.basic> ==> t.info' 
+NewRefer { 
+*1. A real reference. Check whether the reference belongs to 
+*   the inner dictionary ?. If not then set the output format as expectant.
+ (Info (Inner s.global s.exist s.curr s.final (Diction e.dict)) 
+       (Outs s.tree e.outvs (e.outvars t.prev-fmt)) (Refrs e.refs) 
+       (Vars (Redef e.redef) e.vars) e.info)  
+ t.assign (Basic s.name e.type t.out-format ':' t.var),      
+  <Belong s.name To e.dict>: s.bool =
+  (Info (Inner <And s.global s.bool> 
+               <IsUnkn s.exist s.curr s.bool> <And s.final s.bool> (Diction e.dict)) 
+     (Outs GRAPH e.outvs (e.outvars (s.bool t.var) <InnerOut s.bool t.out-format>) )
+   (Refrs e.refs s.name) (Vars (Redef e.redef t.var <NewAssign t.assign>) e.vars) e.info);
+
+*2-3. The definitions are temporary. We have to use output formats of
+*     external references whenever they was created to the moment.
+*2. A subgraph. Here an output format of the subgraph can be still calculated. 
+ (Info (Inner s.global s.exist s.curr s.final (Diction e.dict)) 
+       (Outs s.tree e.outvs (e.outvars t.prev-fmt)) t.Refrs
+       (Vars (Redef e.redef) (Project s.True e.proj) e.vars) e.info)  
+ t.assign (Begin e.subgraph (Ready t.dict1 (Refrs e.refers) e.ready) ':' t.out End),      
+  <Subset e.refers (e.dict)>: s.bool, <GetOutVar t.out>: t.outvar  =
+  (Info (Inner <And s.global s.bool> 
+                False False <And s.final s.bool> (Diction e.dict)) 
+    (Outs GRAPH e.outvs (e.outvars (s.bool t.outvar) <RfmOut t.out>)) t.Refrs
+    (Vars (Redef e.redef <NewOutSubgr Ready t.out> <NewAssign t.assign>) 
+          (Project False) e.vars) e.info);
+
+*3. An external reference.
+ (Info (Inner s.global s.exist s.curr s.final t.dict) 
+       (Outs s.tree e.outvs (e.outvars t.prev-fmt)) t.Refrs
+       (Vars (Redef e.redef) e.vars) e.info) 
+*/* Here more subtle analyze has to be done, when there is an external function. 
+*   We have to be sure that last call is internal. 
+
+ (Def (('!' (Fn s.name e.args)':'t.var0)':'t.var))
+ ,<IsExecutable s.name>: s.bool
+  =
+  (Info (Inner False
+               <IsUnkn s.exist s.curr False> <And s.final s.bool> t.dict) 
+        (Outs GRAPH e.outvs (e.outvars (s.bool t.var) (Output (Rs) ((No)':'(Var 'e' 0)) )))
+        t.Refrs (Vars (Redef e.redef t.var) e.vars) e.info);
+*/
+/*+
+ (Def (e.def ':' t.var)) =
+  (Info (Inner False 
+               <IsUnkn s.exist s.curr False> s.final t.dict) 
+        (Outs GRAPH e.outvs (e.outvars t.var (Output (Rs) ((No)':'(Var 'e' 0)) )))
+        t.Refrs (Vars (Redef e.redef t.var) e.vars) e.info);
+*/
+} /* End of NewRefer */
+
+IsExecutable {
+ s.name , <GetExecutable>: { e.1 s.name e.2 = True;
+                             e.1 = False; };
+}
+
+RfmOut {
+ (Output t.restr ((Expectant)':'t.var)) = (Output (Rs) ((No)':'t.var));
+ (Output t.restr (e.expr':'t.var)) = (Output t.restr (e.expr':'t.var));
+}
+
+NewOutSubgr {
+ Ready (Output t.restr ((Expectant)':'t.var)) = t.var;
+ Ready (Output t.restr ((No)':'t.var)) = t.var;
+ Ready (Output t.restr (e.expr':'t.var)) = <ListVar Of Expr e.expr t.var>;
+}
+
+/* The function NewPass takes a leaf of the graph to use it as 
+   an output format.
+*/   
+* <NewPass t.info t.node>  ==> t.info'
+NewPass { 
+ (Info (Inner s.global s.exist s.curr s.final t.dict)
+       (Outs e.outvs (e.outvars t.prev-fmt)) t.Refrs (Vars e.vars) e.info) 
+ (Node s.name Passive t.restr (Stack (Conf (e.expr':'t.outvar))) e.node) 
+        = (Info (Inner s.global <IsUnkn s.exist s.curr False> 
+                                <IntPass s.final (Vars e.outvars) e.expr> t.dict) 
+             (Outs e.outvs (e.outvars (Output t.restr (e.expr':'t.outvar))) ) 
+             t.Refrs <Proj (Vars e.vars) e.expr> e.info);
+} /* End of NewPass */
+
+/* A predicate: is a final output internal. 
+   Temporary definition.
+*/
+IntPass {
+ s.bool t.outvars e.expr = s.bool;
+/*
+ False t.outvars e.expr = False;
+ True  t.outvars e.expr = <IntPass1 t.outvars <ListVar Of Expr e.expr>>;
+*/
+}
+
+IntPass1 {
+*1. There is external out-variable inside the output.
+ (Vars e.1 (False (Var s.t s.id e.elev)) e.2) 
+       e.11 (Var s.t s.id e.elev1) e.22 = False;
+ t.outvars e.vars = True;
+}
+
+/* The Proj-function checks: 
+   Is an output constructed just from external variables or constants.
+   A varaible is called external if 
+      -- it belongs to the input-format of the function;
+      -- it is not narrowed in a pattern;
+      -- it is not an output of a function call from a brach;
+*/
+* <Proj (Vars e.info) e.out-expr> ==> (Vars e.info')
+Proj { 
+* e.redef are variables which can be redefined along a branch.
+ (Vars (Redef e.redef) (Project True e.proj) e.vars) e.out-expr,
+ <ClearVar e.redef>: e.redef1, <IntSect (e.redef1) (<ListVar Of Expr e.out-expr>)>:
+    {       = (Vars (Redef e.redef1) (Project True e.proj (e.out-expr)) e.vars);
+      e.set = (Vars (Redef e.redef1) (Project False) e.vars); 
+    };
+ (Vars e.vars) e.expr = (Vars e.vars);
+} /* End of Proj */
+
+* Pick up variables from contractions.
+*<NewContr t.info e.contrs> ==> t.info'
+NewContr {
+ (Info t.Inner t.Outs t.Refers (Vars (Redef e.redef) e.vars) e.info) 
+ (Ct e.contr) e.contrs =
+     <NewContr (Info t.Inner t.Outs t.Refers
+                     (Vars (Redef e.redef <ListVar Of Expr e.contr>) e.vars) e.info) 
+       e.contrs
+     >;
+ t.info = t.info;
+}
+
+* Pick up variables with a untrivial substitution from an assignment.
+*<NewAssign t.assign> ==> e.vars
+NewAssign {
+ (As ((Var s.t s.id e.var)':'(Var s.t s.id e.var1)) e.assign)
+                                 = <NewAssign (As e.assign)>;
+ (As (e.expr':'t.var2) e.assign) = t.var2 <NewAssign (As e.assign)>;
+ (As ) = ;
+}
+
+/* The function InnerOut set the output format of a reference as Expectant
+   whenever the reference is said to be from our internal dictionary.
+   We are still creating the output format.
+*/
+* <InnerOut s.inner-reference t.out-format> ==> t.out-format | (Expectant)
+InnerOut {
+ True t.out-format = (Expectant);
+ False t.out-format = t.out-format;
+} 
+
+/* The function JoinInf joins an information about each branch from
+   a branching and an information from the shaft to form a shared 
+   information about the branching.
+*/
+* <JoinInf t.old-info t.brs-info> ==>
+JoinInf { t.old-inf t.new-inf = <JoinInf1 <RmExpect t.old-inf> t.new-inf>; }
+JoinInf1 {
+*1. e.vars are the list of the output variables from the branches.
+*   At present we do not use them but a more subtle analysis can use them.
+*   Generalize two outputs.
+ t.old-inf 
+ (Info t.Inner (Outs s.tree (e.vars1 t.out1) (e.vars2 t.out2) e.outs) e.info),
+  <GenOut t.out1 With t.out2>: t.gout =
+      <JoinInf1 t.old-inf (Info t.Inner (Outs s.tree (t.gout) e.outs) e.info)>;
+
+*2. A single output. 
+ (Info (Inner s.gl1 s.ex1 s.curr1 s.fin1 t.rec1) (Outs s.tr1 (e.vs1 t.out1)) 
+                                                 t.Refs1 t.Vars1 e.old-info)
+ (Info (Inner s.gl2 s.ex2 s.curr2 s.fin2 t.rec2) (Outs s.tr2 (e.vs2 t.out2)) 
+                                                 t.Refs2 t.Vars2 e.new-info),
+  <GenOut t.out1 With t.out2>: t.gout, <GenType s.tr1 With s.tr2>: s.gtr,
+  <GenRefs t.Refs1 With t.Refs2>: t.grefs, <GenProj t.Vars1 With t.Vars2>: t.gvars
+  =
+ (Info (Inner <And s.gl1 s.gl2> <And s.ex1 s.ex2> <And s.ex2 s.curr2> 
+              <And s.fin1 s.fin2> t.rec1) 
+       (Outs s.gtr (t.gout)) t.grefs t.gvars e.new-info);
+} /* End of JoinInf */ 
+
+* Temporary definition.
+BrsInfo {
+ (Info t.Inner (Outs s.tree (e.vars1 t.out1) (e.vars2 t.out2) e.outs) e.info),
+  <GenOut t.out1 With t.out2>: t.gout =
+      <BrsInfo (Info t.Inner (Outs s.tree (t.gout) e.outs) e.info)>;
+ t.info = t.info;
+}
+
+RmExpect {
+ (Info t.Inner (Outs s.tree t.out) e.info)
+                       = (Info t.Inner (Outs s.tree t.out) e.info);
+ (Info t.Inner (Outs s.tree e.1 ((Expectant)) e.outs) e.info)
+                 = (Info t.Inner (Outs s.tree e.1 e.outs) e.info);
+}
+
+* Generalization of two 'projections'.
+* <GenProj s.old-vars With s.new-vars> ==> s.gen-vars
+GenProj {
+ (Vars e.vars) With    
+ (Vars (Redef e.Redef2) (Project True t.out1 t.out2 e.proj2) e.vars2),
+ <Equal t.out1 t.out2>: 
+   { True = <GenProj (Vars e.vars) With    
+                     (Vars (Redef e.Redef2)
+                           (Project True t.out2 e.proj2) e.vars2)>;
+     False = (Vars (Redef <ClearVar e.Redef2>) (Project False) e.vars2);
+   };
+    
+ (Vars e.vars1) With (Vars t.Redef2 (Project True (e.out1)) e.vars2) 
+           = <Proj (Vars t.Redef2 (Project True) e.vars2) e.out1>;
+
+ (Vars e.vars1) With (Vars (Redef e.Redef2) e.vars2) 
+           = (Vars (Redef <ClearVar e.Redef2>) e.vars2);
+}
+
+* Generalization of two graph's types.
+* <GenType s.old-type With s.new-type> ==> s.gen-type
+GenType {
+ Tree    With Tree = Tree;   
+ s.type1 With s.type2 = GRAPH;
+}
+
+* Join references.
+* <GenRefs t.old-refs With t.new-refs> ==> t.gen-refs
+GenRefs {
+ (Refrs e.refs1) With (Refrs e.refs2) = (Refrs e.refs1 e.refs2); 
+}
+
+* Generalization of two output formats.
+* <GenOut t.out1 t.out2> ==> t.gout
+GenOut {
+*00. ???
+ (Output e.xxx ((Expectant)':'t.outvar)) With t.outfmt = t.outfmt;
+ t.outfmt With (Output e.xxx ((Expectant)':'t.outvar)) = t.outfmt;
+*4-5
+ (Output t.restr ((No)':'t.var)) With t.outfmt = (Output t.restr ((No)':'t.var));
+ t.outfmt With (Output t.restr ((No)':'t.var)) = (Output t.restr ((No)':'t.var)) ;
+
+*1. There are real output formats. Here t.outvar1 is equal to t.outvar2.
+ (Output t.restr1 (e.fmt1':'t.outvar1)) With 
+ (Output t.restr2 (e.fmt2':'t.outvar2)), 
+ <GnExUnc (e.fmt1) With (e.fmt2)>: t.assign1 t.assign2 (e.gen),
+ <GenRstr t.restr1 t.assign1 With t.restr2 t.assign2>: (Rs e.grestr)  
+                       = (Output (Rs e.grestr) (e.gen':'t.outvar1));
+
+*2-3. An output format has just expected. Give the other.
+ (Expectant) With t.outfmt = t.outfmt;
+ t.outfmt With (Expectant) = t.outfmt;
+}
+
+*  Correction of an information whenever a new branch starts. 
+* <NewBrInf t.info > ==> t.info'
+NewBrInf { 
+* Set the curr-flag as Unknown.
+  (Info (Inner e.inner s.curr s.final t.diction) 
+       (Outs e.outvs) 
+       e.info) =
+     (Info (Inner e.inner Unknown s.final t.diction) 
+          (Outs e.outvs ((Expectant))) e.info); 
+ } 
+*********** The end picking up of information about c-graph. ****************
+********************** The End of Normalization.   **************************
+
+********************** Driving over c-graphs.   **************************
+/* The function DrvCWalk drives a situation (assignment+restriction) over
+   a linear c-walk. It keeps the driven situations on the leaves of the
+   branches. 
+   Temporary definition: There is a problem to drive a situation over
+   a c-graph. The elevated variables cause the problem. 
+   <Scp ........ >   ==>  ............... 
+       <F  e.x  >            <F1  e.x  > 
+          ..!..                 ...!..
+  ------------------------------------------
+   <Scp ........ >   ==>  ............... 
+       <F1 e.x  >            <F2  e.x  > 
+          ..!..                 ...!..
+  -------------------------------------------
+  F2 is not equal to F1 in the functional aspect ( not only in the program's )
+  The elevation from F was encoded with a number of contractions inside F1.
+  The next driving will do the repeate ecodinig. 
+*/        
+* <DrvWalk t.assign t.restr e.c-walk> ==> e.c-branches | Zero
+DrvCWalk {
+ t.assign t.restr (Ct t.vari':'('*' t.varj) t.varii) = 
+              <DrvC (<ElevExp <ValueV t.vari t.assign>>) 
+                    t.assign t.restr (Ct t.vari':'('*' t.varj) t.varii)>;
+ t.assign t.restr (Ct t.vari':'t.varii ('*' t.varj)) = 
+              <DrvC (<ElevExp <ValueV t.vari t.assign>>) 
+                    t.assign t.restr (Ct t.vari':'t.varii ('*' t.varj))>; 
+
+ t.assign t.restr (Ct e.contr) = 
+                  <Drv () (t.restr (Stack) t.assign) 
+                          (Fork '+' (<FctNb> (Ct e.contr) (Conf)))>; 
+
+/*
+ t.assign t.restr e.walk = 
+* This is just markers. Put them as a stack for the driving if you want 
+* to save the residual substitution after the driving a linear c-walk which
+* has just contractions ( no assignment ).
+      <Drv () (t.restr (Stack) t.assign) (Fork '+' (<FctNb> e.walk (Conf)))>; 
+*/
+ } /* End of DrvCWalk */
+
+* Temorary definition. See the comments to the function DrvCWalk. 
+DrvC {
+*1. The elevation is zero. 
+ () t.assign t.restr t.contr = 
+    <Drv () (t.restr (Stack) t.assign) (Fork '+' (<FctNb> t.contr (Conf)))>; 
+
+*2. The elevation is not zero. Temorary definition.
+ (e.elev) t.assign t.restr t.contr = False;
+ } /* End of DrvC */
+
+/*
+   Temporary definition: There is a problem to drive a situation over
+   a c-graph. The elevated variables cause the problem. 
+   <Scp ........ >   ==>  ............... 
+       <F  e.x  >            <F1  e.x  > 
+          ..!..                 ...!..
+  ------------------------------------------
+   <Scp ........ >   ==>  ............... 
+       <F1 e.x  >            <F2  e.x  > 
+          ..!..                 ...!..
+  -------------------------------------------
+  F2 is not equal to F1 in the functional aspect ( not only in the program's )
+  The elevation from F was encoded with a number of contractions inside F1.
+  The next driving will do the repeate encodinig. 
+*/
+* Temporary definition.
+DrvCTree {
+*1. The assignment is identety. <Drive e.n-tree> == e.n-tree 
+ (As e.assign) e.c-tree, <IsAsRn (As e.assign)>: (True e.true) 
+                   = (True e.true) (As e.assign) e.c-tree;
+
+*2. The assignment is not identety. Drive it over the e.n-tree.  
+*   Temporary definition.
+ t.assign e.c-tree =  (False) t.assign e.c-tree; 
+
+/*
+*2. The assignment is not identety. Drive it over the e.n-tree.  
+ t.assign e.c-br t.node(Dev e.c-dev) = 
+               <Drive () t.node1 <To-pFmt e.c-br t.node(Dev e.dev)>>;
+*/
+ } /* End of DrvCTree */
+
+********************** The End of driving over c-graphs. *******************
+
+
+************************ Auxiliary functions. ******************************
+
+* Substitution of an assignment to the list of subgraphs.
+* <SubsGrs t.assign e.subgraphs> ==> e.subgraphs
+$ENTRY SubsGrs { 
+* 1. An assignment as a result of generalization.
+* We have to distribute the new information over the subgraphs.
+ t.assign (As e.assigns) t.subgr e.subgraphs = 
+      <DisAs1 (As <SubsAs t.assign e.assigns>) t.subgr> 
+      <SubsGrs t.assign e.subgraphs>;
+ t.assign  = ;
+
+* 2. An external function.
+ t.assign  
+ (Def (('!' (Fn s.name e.args)':'t.var)':'t.out)) e.subgraphs  
+*+     = (Def (('!' (Fn s.name <SubsAs t.assign e.args>)':'t.var)':'t.out)) 
+*+       <SubsGrs t.assign e.subgraphs>;
+     = <SubsGrs1
+          <Mu-Comp1 (Def (('!' (Fn s.name <SubsAs t.assign e.args>)':'t.var)':'t.out))> 
+          t.assign e.subgraphs>;
+
+ t.assign e.info = ;
+} /* End of SubsGrs */
+
+SubsGrs1 { 
+*1. A definition is not executable.  
+ (Def (('!' (Fn s.name e.args)':'t.var)':'t.out)) t.assign e.subgraphs
+     = (Def (('!' (Fn s.name e.args)':'t.var)':'t.out)) 
+       <SubsGrs t.assign e.subgraphs>;
+
+*2. A definition was executed.  
+ (As (e.expr':'t.out)) t.assign e.subgraphs
+     = <SubsGrs <Redef (e.expr':'t.out) t.assign> e.subgraphs>;
+}
+
+* Pick up a list of recurrent names from a subgraph.
+* <RecInf e.c-graph> ==> e.numbers  
+RecInf { 
+*1. A recurrent node.
+  (Node s.name Recur e.node)(Dev e.brs) = s.name <RecInf e.brs>;
+*2. A unrecurrent node.
+  (Node e.node)(Dev e.brs) = <RecInf e.brs>;
+*3. A branch.
+  '+'(e.br) e.brs = <RecInf e.br> <RecInf e.brs>;
+*4. A subgraph. Just take the dictionary that was collected the previous
+*   analysis.
+  (Begin e.subgraph (Ready (Diction e.dict) e.info) ':' t.var End) e.graph 
+                  = e.dict <RecInf e.graph>;
+*5-6. Anithing else.
+*+  s.symbol e.graph = <RecInf e.graph>;
+  t.term e.graph = <RecInf e.graph>;
+*7. The exit.
+    = ;
+} /* End of RecInf */
+
+/* The function UnBr cleans redundant subgraph's brackets.
+   The function can be called on a whole branch. No reducing on the end
+   of the branch is allowed. At present we do not use restriction to
+   output formats.
+   It seems no reason to substitute the block's output information here 
+   because of this function is used just befor the global analysis that 
+   means any output format is trivial. In opposite of that references to
+   basics configurations can have untrivial output formats.
+*/
+* Temporary definition. There are open variables.
+* <UnBr e.c-branch> ==> e.c-branch   
+$ENTRY UnBr { 
+*1. {Begin {Begin ... End} End} ===> {Begin ... End}
+  e.c-graph 
+ (Begin t.assign (Begin e.graph ':' t.out End)':' t.out1 End) e.c-graph1 =  
+    <UnBr <CombAss e.c-graph t.assign (Begin e.graph ':' t.out1 End)> e.c-graph1>;  
+
+*2. {Begin  End} <- t.var; t.var <- t.var2; 
+*   {Begin (Node Passive t.var2 <- t.var5) End} <- t.var6; 
+*                                       ===> {Begin  End} <- t.var6; 
+  e.c-graph 
+ (Begin  e.subgr ':' t.out1 End) (As (t.var3':'t.var4))
+ (Begin (Node s.name Passive t.restr (Stack (Conf (t.var2':'t.var))) t.basics) ':' t.out6 End),
+ <Equal (<GetOutVar t.out1>) (t.var3)>: True, 
+ <Equal (t.var4) (t.var2)>: True =  
+                           <UnBr e.c-graph (Begin  e.subgr ':' t.out6 End)>;  
+
+*3. {Begin End} <- t.var1; (Node Passive t.var1 <- t.var);
+*                                       ===> {Begin End} <- t.var; 
+  e.c-graph 
+ (Begin  e.subgr ':' (Output t.restr1 (e.expr':'t.var1)) End)  
+ (Node s.name Passive t.restr (Stack (Conf (t.var2':'t.var))) t.basics),
+ <Equal (t.var1) (t.var2)>: True =  
+     <UnBr e.c-graph (Begin  e.subgr ':' (Output t.restr1 (e.expr':'t.var)) End)>;  
+
+*4. {Begin (Node Passive e.expr <- t.var) End} <- t.var1;
+*   <Func e.args> <- t.var3; 
+*   ===> <Func (e.expr <- t.var1) To e.args> > <- t.var3; 
+/* e.c-graph t.assign
+ (Begin (Node s.name Passive t.restr 
+                     (Stack (Conf (e.expr':'t.var))) t.basics) 
+                     t.ready ':' t.var1 End)
+ (Def (('!'(Fn s.fun-name t.assign)':'t.var2)':'t.var3)),
+  <SubsAs (As <SubsAs t.assign (e.expr':'t.var1)>) t.assign>: t.assign1 =
+      <UnBr e.c-graph 
+          (Def (('!'(Fn s.fun-name t.assign1)':'t.var2)':'t.var3)) e.c-graph1>;
+*/
+
+*4. t.assign {Begin (Node Passive e.expr <- t.var) End} <- t.var1;
+*            (As e.assign1);   ===> (As e.assign3)
+ e.c-graph t.assign
+ (Begin (Node s.name Passive t.restr (Stack (Conf (e.expr':'t.var))) t.basics) 
+              t.ready ':' t.out1 End)
+ (As e.assign1) t.begin-end,
+ <SubsAs (As <SubsAs t.assign (e.expr':' <GetOutVar t.out1>)>) e.assign1>: e.assign2 
+        = <UnBr e.c-graph (As e.assign2) t.begin-end>;
+
+*4a. t.assign {Begin t.node-passive End} ===> t.node-passive1
+ e.c-graph t.assign
+ (Begin (Node s.name Passive t.restr (Stack (Conf (e.expr':'t.var))) t.basics) 
+              t.ready ':' t.out1 End),
+     <SubsAs t.assign (e.expr':'<GetOutVar t.out1>)> : t.assign1  
+        = <UnBr e.c-graph 
+              (Node s.name Passive t.restr (Stack (Conf t.assign1)) t.basics) 
+          >;
+
+*5. (Basic ... ) <- t.var1; (Node Passive t.var1 <- t.var);
+*                              ===> (Basic ...) <- t.var; 
+  e.c-graph (Basic e.basic ':' t.var1) 
+ (Node s.name Passive t.restr (Stack (Conf (t.var2':'t.var))) t.basics),
+ <Equal (t.var1) (t.var2)>: True =  
+       <CombAss e.c-graph  (Basic e.basic':'t.var)>;  
+
+*6. {Begin (Basic ... ) <- t.var1} <- t.var; ===> (Basic ...) <- t.var; 
+  e.c-graph 
+ (Begin  t.reduct (Basic e.basic':'t.var1) (Ready e.ready) ':' t.out End) e.c-graph1 =
+*+? (Begin  t.reduct (Basic e.basic':'t.var1) t.ready ':' t.out End) e.c-graph1 =
+       <UnBr <CombAss e.c-graph 
+                      t.reduct (Basic e.basic':'<GetOutVar t.out>)> e.c-graph1>;  
+
+*7. On the end of a branch: 
+*  t.assign {Begin e.subgraph} <- t.var1; (Node Passive t.var1 <- t.var); 
+*  Distribute the passive end over the subgraph.
+*  !!?? There can be a distributive rule for general passive end ?!!
+ e.c-graph t.assign (Begin  e.subgraph (Ready e.ready) ':' t.out End) 
+ (Node s.name Passive t.restr (Stack (Conf (t.var1':'t.var2))) t.basics),
+ <Equal (<GetOutVar t.out>) (t.var1)>: True, 
+*  <IsAsRn t.assign>: (True e.rens) =
+  <IsAsRn t.assign>: (True) =
+     <UnBr  e.c-graph 
+      <DistrR2 (As ) e.subgraph ((Passive t.restr t.var2 t.basics))>>;  
+*      <DistrR2 (As e.rens) e.subgraph ((Passive t.restr t.var2 t.basics))>>;  
+
+*8. On the end of a branch: The assignment is identety.
+*  t.assign {Begin e.subgraph} <- t.var1; 
+ e.c-graph t.assign (Begin  e.subgraph (Ready e.ready) ':' t.out End), 
+  <IsAsRn t.assign>: (True) = <UnBr e.c-graph e.subgraph>; 
+*                   };
+
+*9. A single empty branch. Remove the node. 
+ t.node(Dev '+' t.node1(Dev e.dev)) = <UnBr t.node(Dev e.dev)>;
+
+*10. Exit from UnBr.
+ e.c-graph = e.c-graph;
+} /* End of UnBr */
+
+* Temporary definition.
+* <OutSubgr t.outfmt t.assign t.Begin-End '^'(Subgraph e.cp-subgrs t.basics) 
+*              ==>
+OutSubgr {
+/*1. The output format is a variable. Take into account it's type and elevation. 
+  (Output t.restr ((Var e.var1) ':'t.var))
+  t.assign (Begin e.n-graph ':' t.outvar End) 
+                    '^'(Subgraph e.cp-subgrs t.basics) = 
+        t.assign (Begin e.n-graph ':' (Var e.var1) End) 
+        '^'(Subgraph <SubsGrs (As ((Var e.var1) ':'t.outvar)) e.cp-subgrs> 
+                     t.basics); 
+
+*2. The output format is a expression. Take into account it's elevation.
+  (Output t.restr (e.expr':'t.var))
+  t.assign (Begin e.n-graph ':' (Var s.type s.id e.elev) End) 
+                '^'(Subgraph e.cp-subgrs t.basics), <ElevExp e.expr>: e.elev1 = 
+         t.assign (Begin e.n-graph ':' (Var s.type s.id e.elev1) End) 
+         '^'(Subgraph <SubsGrs (As ((Var s.type s.id e.elev1) 
+                                   ':'(Var s.type s.id e.elev))) 
+                      e.cp-subgrs> t.basics); 
+
+*3. No output format. Do nothing.
+  (Output No)
+*/
+* At present do nothing. See a problem in the test.
+/*
+Spas {  e.prog = <Exprog <Parse <Lex () e.prog>>>; };
+LEX {  (e.1) 'a' e.2 = <LEX (e.1 'a') e.2>;  (e.1) = e.1; };
+PARSE {  '?' = '?';  e.1 = <PROGRAM1 e.1>; };
+PROGRAM1 {  s.1 e.2  = <PROGRAM1 e.2>;  e.1 = e.1; };
+Exprog {  e.2 =  (e.2);  };
+*/ 
+*1. 
+  t.outfmt t.assign (GRAPH e.n-graph) t.dict '^'(Subgraph e.cp-subgrs t.basics)
+  , <ExpectOut t.outfmt>: True
+   = t.assign (Begin e.n-graph t.dict ':' t.outfmt End) 
+        '^'(Subgraph  e.cp-subgrs t.basics); 
+*2. Really there exist an output format. 
+  t.outfmt
+  t.assign (GRAPH e.n-graph) t.dict '^'(Subgraph e.cp-subgrs t.basics),
+  <FinFmt1 t.outfmt>:(Output t.restr t.out-assign) =
+        t.assign (Begin e.n-graph t.dict ':' (Output t.restr t.out-assign) End) 
+        '^'(Subgraph <SubsGrs (As t.out-assign) e.cp-subgrs> 
+                     t.basics); 
+ } /* End of OutSubgr */
+
+
+* The predicate "AND".
+* <And s.bool' s.bool''> ==> s.bool 
+And { 
+ False  s.bool = False;
+ True   s.bool = s.bool;
+}
+
+* The predicate "OR".
+* <Or s.bool' s.bool''> ==> s.bool 
+Or { 
+ True   s.bool = True;
+ False  s.bool = s.bool;
+}
+
+* The function IsUnkn corrects a information about internal status a first
+*  reference on a branch.
+* <IsUnkn s.exist s.curr s.bool> ==> s.exist' s.curr'
+IsUnkn {
+*1. A first reference on a branch is internal.
+ s.exist Unknown True   = s.exist True;
+
+*2. A first reference on a branch is external.
+ s.exist Unknown False  = False   False;
+
+*3. A reference is not first. Do nothing.
+ s.exist s.curr  s.bool = s.exist s.curr;
+} 
+
+* The predicate "Is the assignment identety (True ) 
+* or a renameing (True e.renameing) ?
+* <IsAsRn t.assign> ==> (True e.assignmets) | (False)
+IsAsRn {
+ t.assign = <Renames <IsAsId t.assign>>;
+}
+
+* The predicate "Is the assignment identety" ?
+* <IsAsId t.assign> ==> e.assignmets | False
+IsAsId {
+  (As ((Var s.type s.name1 e.elev1)':'(Var s.type s.name1 e.elev2)) e.assigns)  
+      = <IsAsId (As e.assigns)>;
+
+  (As ((Var s.type s.name1 e.elev1)':'(Var s.type s.name2 e.elev2)) e.assigns)  
+     = ((Var s.type s.name1 e.elev1)':'(Var s.type s.name2 e.elev2)) 
+       <IsAsId (As e.assigns)>;
+
+ (As ) = ;
+ (As e.assign) = False;
+}
+
+* Temporary definition.
+* <Renames e.assign> ==> (True e.assignmets) | (False)
+Renames {
+ e.1 ((Var e.var)':'t.var1) e.2  ((Var e.var)':'t.var2) e.3 = (False);
+ e.1 False = (False);
+ e.renames = (True e.renames);
+}
+
+/* The predicate "Is the assignment identety ?
+* <IsAsId t.assign> ==> True | False
+IsAsId {
+ (As ((Var s.type s.name e.elev1)':'(Var s.type s.name e.elev2)) 
+     e.assigns) = <IsAsId (As e.assigns)>;
+ (As ) = True;
+ (As e.assign) = False;
+}
+*/
+
+* Clean a list of symbols.
+* Temporary definition.
+ClearSbs { 
+ e.1 s.symbol e.2 s.symbol e.3 = <ClearSbs e.1 s.symbol e.2 e.3 >;
+ e.1 = e.1;
+}
+
+ConjAsL { 
+ t.contr = <ConjAs t.contr>;
+         = ;
+}
+* Rename the list of subgraphs.
+* <RenGrs e.subgraphs> ==> e.subgraphs'
+RenGrs { 
+* 1. An assignment as a result of generalization.
+ (As e.assigns) t.subgr e.subgraphs 
+           = (As e.assigns) <RenGr1 t.subgr> <RenGrs e.subgraphs>;
+           = ;
+* 2. An external function.
+ (Def e.def) e.subgraphs  = (Def e.def) <RenGrs e.subgraphs>;
+} /* End of RenGrs */
+
+RenGr1 { 
+  (Node s.id e.node) = (Node <New Node> e.node); 
+  (Begin (Node s.id e.node)':'t.out End) 
+          = (Begin (Node <New Node> e.node)':'t.out End);
+  e.basic = e.basic;
+} /* End of RenGr1 */
+
+* See comments to the DistrR1-function. 
+RmBasics {
+(Node s.id s.type t.restr 
+  (Stack (Call s.id-call t.path (('!' (Fn s.f (e.expr ':' t.var0) e.arg)
+                                  ':'t.var)':'t.hvar)) e.stack) (Basics e.basics))
+, <New Call>: s.new-id = 
+(Node <New Node> s.type t.restr 
+  (Stack (Call s.new-id t.path 
+          (('!' (Fn s.f ((Var 'c' <New Var> s.new-id DistrR1) e.expr ':' t.var0) 
+                         e.arg) ':'t.var)':'t.hvar)) e.stack) (Basics)); 
+}
+
+TstDistrR1 {
+(Node e.node
+  (Stack (Call s.new-id t.path 
+          (('!' (Fn s.f ((Var 'c' s.id s.new-id DistrR1) e.expr ':' t.var0) 
+                         e.arg) ':'t.var)':'t.hvar)) e.stack) t.Basics) = True;
+(Node e.node) = False; 
+}
+
+************************* Screening ******************************
+* This function prunes sreneed branches in a c-graph. 
+* Temporary definition.
+* <ScrnDrv t.situation e.c-graph> ==> e.c-graph 
+ScrnDrv {
+*1. A c-branching is encountered.
+ t.situation t.node(Dev e.dev) = <FinBrs t.node(Dev <Scrn t.situation  e.dev>)>;
+*2. Single branch. 
+ t.situation  e.branch = <RmPl <Scrn t.situation  '+'(e.branch)>>;
+} /* End of ScrnDrv */
+
+Scrn {
+ t.situation '+'(e.c-branch) e.c-branches =
+       <ScreenOn t.situation 
+                 <ScrnBrOn <ScreenBr t.situation () '^' <UnBr e.c-branch>>> 
+                 (e.c-branches)>; 
+} /* End of Scrn */
+
+ScreenBr {
+*1.
+  (e.p-brs (Path e.path)(As e.as)) (e.walk) '^' (Ct e.contr2) e.c-graph = 
+     <ScreenBr (e.p-brs (Path e.path (Ct <DelElev e.contr2>)) (As e.as)) 
+               (e.walk (Ct e.contr2)) '^' e.c-graph>;
+
+*2. Test on screening. 
+  t.situation (e.walk) '^' t.assign (Basic e.basic) e.c-graph = 
+        <ScreenBr t.situation  (e.walk t.assign (Basic e.basic) e.c-graph) 
+                 '^' <Screen t.situation>>;
+
+*3. A call of an external function. X ^ Def ==> X Def ^
+   t.situation (e.walk) '^' (Def e.def) e.c-graph =
+        <ScreenBr t.situation (e.walk (Def e.def)) '^' e.c-graph>;
+
+*4. The passive end. X ^ Out ==> X Out ^. Test on screening.
+  t.situation (e.walk) '^' (Node e.node) =
+        <ScreenBr t.situation (e.walk (Node e.node)) '^'<Screen t.situation>>;
+
+*5. Zero is encountered.
+   t.situation (e.walk) '^' Zero = (e.walk t.situation) '^' Zero;
+
+*5. Just a trash.
+   t.situation (e.walk) '^' e.c-graph s.trash = 
+        <ScreenBr t.situation (e.walk) '^' e.c-graph>; 
+
+*6. The liner segment has been finished or a problem is encounered.
+   t.situation (e.walk) '^' e.c-graph = (e.walk t.situation) '^' e.c-graph; 
+} /* End of ScreenBr  */
+
+
+*  To test the result of normalization of a linear segment.
+*  <ScrnBrOn t.walk '^' e.c-graph> ==> t.walk1 '^' 
+ScrnBrOn {
+*1a. C-fork. Process this C-fork and go on to screen.
+  (e.walk t.situation) '^' t.c-node(Dev e.dev) = 
+     (e.walk <FinBrs t.c-node (Dev <Scrn t.situation e.dev>)>) '^' ;
+
+*1b.
+  (e.walk t.situation) '^' t.assign (Begin e.subgr (Ready e.ready) ':' t.out End) e.gr =
+       <FinSubgr (e.walk t.situation) '^' 
+          t.assign (Begin e.subgr (Ready e.ready) ':' t.out End) e.gr>;
+
+*1c.
+  (e.walk t.situation) '^' t.assign (Begin e.subgr ':' t.out End) e.gr =
+       <FinSubgr (e.walk t.situation) '^' 
+          t.assign (Begin <ScrnDrv0 <ConjAsBr t.situation t.assign> 
+                                    e.subgr> ':' t.out End) e.gr>;
+
+*2. The linear segment is finished. 
+  (e.walk t.situation) '^' = (e.walk) '^'; 
+
+*3. The branch is screened. 
+  (e.walk t.situation) '^' Zero = (e.walk Zero) '^'; 
+} /* End of ScrnBrOn */
+
+ScrnDrv0 {
+ t.situation e.subgr (Ready e.ready) =
+       <ScrnDrv10 <ScrnDrv t.situation e.subgr> (Ready e.ready)>; 
+ t.situation e.subgr = <ScrnDrv t.situation e.subgr>;
+}
+
+ScrnDrv10 {
+  Zero (Ready e.ready) = Zero;
+  e.branch = e.branch;
+}
+
+*  The function Normaon takes care of normalization branches: 
+*  branch by branch. 
+*  <ScreenOn t.situation  t.walk '^' (e.c-branches)> ==> e.n-branches
+ScreenOn {
+*0a. The last branch is screened. Prune it.
+   t.situation (e.walk Zero) '^' () =  ; 
+
+*0b. The branch is screened. The branch is not last. Prune it.
+   t.situation (e.walk Zero) '^' ('+' e.c-branches) =   
+         <Scrn t.situation  '+' e.c-branches>;
+
+*1. A liner segment is finished. Process the next branch.
+*   Go on normalizing.
+/*+
+   (e.prev-brs t.path t.assign) (e.walk) '^' ('+' e.c-branches) = '+'(e.walk) 
+         <Scrn (e.prev-brs '+'(<GetFactor e.walk>) t.path t.assign) 
+               '+' e.c-branches>;
+*/
+   (e.prev-brs (Path e.path) t.assign) (e.walk) '^' ('+' e.c-branches) = '+'(e.walk) 
+         <Scrn (e.prev-brs '+'(e.path <GetFactor e.walk>) (Path e.path) t.assign) 
+               '+' e.c-branches>;
+
+*2. The linear segment is finished. The last branch. 
+   t.situation (e.walk) '^' () =  '+'(e.walk);
+} /* End of ScreenOn  */
+
+FinBrs {
+*0. Not branch. There can be a reference to the node.
+  t.node(Dev ) = <SpecResult t.node Zero> Zero;
+
+*1. Single branch. Recurrent node. We keep the node. 
+*   There can be a reference to the node.
+  (Node s.name Recur e.node) (Dev '+'(e.branch)) 
+           = (Node s.name Recur e.node) (Dev '+'(e.branch));
+
+*2. Single branch. Unrecurrent node. Just remove the branching .
+  t.node(Dev '+'(e.branch)) = e.branch;
+
+*3. A real branching is encountered. A n-development is present.
+  t.node(Dev e.dev) = t.node(Dev e.dev); 
+} /* End of FinBrs */
+
+FinSubgr {
+*1. Zero is encountered.
+  (e.walk t.situation) '^' t.assign (Begin Zero e.1 ':' t.out End) e.gr = Zero;
+
+*2. A real branching is encountered. A development is present.
+* Temporary definition. One branch case must be consedered.
+  (e.walk t.situation) '^' t.assign (Begin e.subgr ':' t.out End) e.gr 
+    = <ScrnBrOn <ScreenBr t.situation 
+                       (e.walk t.assign (Begin e.subgr ':' t.out End) e.gr) 
+                 '^' <Screen t.situation>>>;
+} /* End of FinSubgr */
+
+* Conjugate a path and test it on screening.
+Screen {
+ (e.prev-brs (Path e.path) t.assign) 
+          = <Screen1 ((Rs) <RuleAA t.assign <ConjBr e.path>>) e.prev-brs>;
+}
+
+* Screening test. Branch by branch.
+Screen1 {
+ t.situation '+'(e.br1) e.p-brs 
+          = <Screen2 t.situation (e.p-brs) <ScrnBranch t.situation e.br1>>;
+* No screening. Just put nothing to save the current branch.
+ t.situation = ;
+}
+
+Screen2 {
+*1-5. The previous branch is not transient. No screening. Test next branch.
+t.situation (e.p-brs) e.br (Ct e.contr) e.1 = <Screen1 t.situation e.p-brs>;
+t.situation (e.p-brs) e.br (Fork '+'(e.br1)'+'(e.br2) e.fork) 
+                = <Screen1 t.situation e.p-brs>;
+t.situation (e.p-brs) e.br Zero = <Screen1 t.situation e.p-brs>;
+
+/* Meta-contractions.
+t.situation (e.p-brs) e.br (Def (('!' (Fn Open___ e.arg)':'t.var)':'t.outvar)) e.1 
+                = <Screen1 t.situation e.p-brs>;
+t.situation (e.p-brs) e.br (Def (('!' (Fn Equal___ e.arg)':'t.var)':'t.outvar)) e.1 
+                = <Screen1 t.situation e.p-brs>;
+*/
+
+t.situation (e.p-brs) e.br (Fork '+'(e.br1)) 
+                = <Screen2 t.situation (e.p-brs) e.br1>;
+* The previous branch is transient. Screening. 
+* Put Zero to prune the screened branch.
+t.situation (e.p-brs) e.br = Zero; 
+}
+
+ScrnBranch {
+ t.situation e.branch 
+    = <OutDrive (999 <GetSaveOut GRAPH>) t.situation <ReForm e.branch>>; 
+} /* End of ScrnBranch */
+
+* Delete elevation.
+DelElev { e.expr = <RemElev e.expr (<ZeroElev>)>; }
+DelElevAs {
+ (e.expr':'t.var) e.assign = (<DelElev e.expr':'t.var>) <DelElevAs e.assign>;
+   = ;
+}
+
+* Pick up the previous path and substitute to the assignment.
+ConjAsBr {
+(e.p-brs (Path e.path) t.assign1) t.assign 
+   = (e.p-brs (Path) <RuleAA <RuleAA t.assign1 <ConjBr e.path>> t.assign>);
+}
+
+* Conjugate a path.
+ConjBr {
+ t.contr1 t.contr2 e.contrs 
+           = (As <ConjBr1 (<CompPatt0 (t.contr1) t.contr2>) e.contrs>);
+ t.contr1  = (As <ConjAs t.contr1>);
+           = (As );
+}
+
+ConjBr1 {
+ (e.patts) t.contr1 e.contrs 
+                   = <ConjBr1 (<CompPatt0 (e.patts) t.contr1>) e.contrs>;
+ (t.patt1 e.patts) = <ConjAs t.patt1> <ConjBr1 (e.patts)>;
+ () = ;
+}
+
+* We drive just over factor because functionality of branchings.
+GetFactor {
+* Branching. Here just a trick.
+ e.factor (Node s.id s.type t.Rs t.stack t.Basics)(Dev e.div) e.trash 
+     = e.factor
+    (Node 0 Passive t.Rs (Stack (Conf (':' (Var 'e'0)))) (Basics)); 
+ e.branch = e.branch;
+}
+
+SpecResult {
+ (Node s.id Recur e.node) Zero, <NameBas s.id>: s.name  = 
+    <Trace 'New graph was built:' > <Trace 'From the next node:' >
+    <Trace (Node s.id Recur e.node)> 
+    <OutGraph s.name (Output Zero) (Node s.id Recur e.node)(Dev)>;
+
+ (Node e.node) Zero = ;
+} 
+
+

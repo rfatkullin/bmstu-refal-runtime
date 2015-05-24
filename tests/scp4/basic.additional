@@ -1,0 +1,1578 @@
+* BASIC.REF (scp4.ref)
+* version 27.05.99 , new
+
+* $ENTRY RuleAC, RuleRC, ,RuleAA, ConjAs, RedElev, SubsAs, Throw, Subtract;
+* $ENTRY SubsSt, Subs, CombAss, IntSctRR, DelRepR, RuleAR,  DistrAs, CompPatt ; 
+* $ENTRY Nil;
+
+* $INTERIOR  Clash, S-Clash, IntClash, E-Clash;
+* $INTERIOR  EClash, E-Empty, E-sVarL, E-sVarR, E-SymL, E-SymR, E-BrL, E-BrR;
+* $INTERIOR  DelAss, Times, RemElev, ElevCon, Throw, Subtr;
+* $INTERIOR  BelongR, RemRt, MakeRst, Rest1, ValuesR, Rule-AR;
+
+* $TEMPORARY Subtract, Throw, Subtr, CombAss; 
+
+* access.ref:
+$EXTRN Fst, Second, ValueVar, ValueV, Elev, Equal, New, ZeroElev, Infinit,
+       ListVar, IdAss, IsConst;
+
+* trace.ref:
+$EXTRN Trace;
+
+* drive.ref:
+$EXTRN Dn0;
+
+*--                            --  Clash --                                --*
+/*****************************************************************************
+******************************************************************************
+** Clash works by this principle:                                           **
+** It tried to resolve an equation: c-configuration = p-pattern,            **
+** where the c-configuration can contain parametrs ( meta-variables )  but  **
+** no variables ( p-variables ), while the p-pattern can contain variables  **
+** but no parametrs. The goal is to find those narrowings of the parametrs  **
+** after wich this equation has solutions; the second goal is to find       **
+** these solutions. In fact, the call to Clash stops whenever Clash         **
+** sees that it has to narrow the parametrs; the narrowings                 **
+** ( t.cc-cotraction, t.cc-fork ) are the result                            **
+** of the call as well as the p-pattern. Later Drive calls Clash again      **
+** and the second call looks for variable's values. The latter call         **
+** gives also a p-path that is a form of the p-pattern.                     **
+** Every time whenever Clash has to narrow a call it constructs t.hinder    **
+** and gives out the p-pattern to allow Drive calls it again.               **
+** The Clash's result is Zero if the equation has no solutions.             **
+** Generaly the cc-contractions are not belongs to the list of elementary   **
+** contractions, so Drive has to decompose them into the last ones.         **
+******************************************************************************
+******************************************************************************/
+
+/* RuleAC resolves an equation: value-of-vari = p-pattern , where
+   vari and p-pattern from a contraction vari -> p-pattern.
+   t.cc-contraction ::= (Split t.contraction)
+   t.cc-fork        ::= (Fork Split t.cc-contraction '+' t.cc-contraction) 
+   e.definitions    ::= (Def e.assignment) ...
+   t.deletion       ::= (Del t.var)
+   t.hinder         ::= (Hindrance e.hinder) 
+   e.hinder         ::= Left e.assignment | Right e.assignment
+   t.path           ::= (Path t.p-contraction)
+ */
+
+* <RuleAC t.assignment t.p-contraction)> 
+*                                 == t.cc-contraction t.p-contraction
+*                                 == t.cc-fork  t.p-contraction
+*                                 == e.definitions t.path  
+*                                 == e.definitions t.deletion t.path  
+*                                 == t.hinder t.p-contraction  
+*                                 == Zero  
+$ENTRY RuleAC { 
+* t.var -> e.pattern. 
+* Look for value of the variables. 
+ t.assignment (Ct t.var ':'e.pattern) =
+          <Clash <ValueVar t.var t.assignment> (Ct t.var ':' e.pattern) 
+                 t.assignment>;
+} /* End of RuleAC */
+
+
+/* Clash splits the situation on two cases:  
+   a) a contaraction of a s-variable; b) contaraction of an e-variable.
+*/
+
+* <Clash e.variable's-value-to-contract t.p-contraction t.assignment> 
+*                         == See the output format in the comment to RuleAC
+Clash { 
+*1. Narrowing of a s-variable.
+ e.var-value (Ct (Var 's' e.var) ':'e.pattern) t.assignment = 
+        <S-Clash e.var-value (Ct (Var 's' e.var) ':'e.pattern) t.assignment>; 
+
+*2. Narrowing of a e-variable.
+ e.var-value (Ct (Var 'e' e.var) ':'e.pattern) t.assignment = 
+        <E-Clash e.var-value (Ct (Var 'e' e.var) ':'e.pattern)>; 
+
+*3. Narrowing of a t-variable.
+ e.var-value (Ct (Var 't' e.var) ':'e.pattern) t.assignment = 
+        <T-Clash e.var-value (Ct (Var 't' e.var) ':'e.pattern)>; 
+} /* End of Clash */
+
+
+/* S-Clash over a s-variable. In the case when it contracts a new s-variable
+   to an old one, we have an exception to the general rule: what has 
+   to be resolved is an equation: c-valuei = c-valuej.
+*/
+
+* <S-Clash t.variable's-value-to-contract t.p-contraction t.assinment> 
+*                         == See the output format in the comment to RuleAC
+S-Clash { 
+*1. Symbol variable is: s.i -> SYMBOL
+  ((e.defi) e.valuei) (Ct t.vari ':'s.SYMBOL) t.assignment,
+    <IntClash (e.valuei)':'(s.SYMBOL) (Ct t.vari ':'s.SYMBOL)>:
+        { /* the clash succes unconditionaly */
+          (Path e.path) = e.defi (Del t.vari) (Path e.path);
+          e.condition   = e.defi e.condition;
+        };
+
+*2. Old symbol variable: s.i -> s.j
+  ((e.defi) e.valuei) (Ct t.vari ':'t.varj) t.assignment,
+      <ValueVar t.varj t.assignment>:((e.defj) e.valuej),
+      <IntClash (e.valuei)':'(e.valuej) (Ct t.vari ':' t.varj)>:
+        { /* the clash succes unconditionaly */
+          (Path e.path) = e.defi e.defj (Del t.vari) (Path e.path);
+          e.condition   = e.defi e.defj e.condition;
+        };
+} /* End of S-Clash */
+
+/* 
+   IntClash: Internal (between defined s-variables) clash.
+*/
+
+* <IntClash t.valuei':'t.valuej t.p-contraction> 
+*                         == See the output format in the comment to RuleAC
+IntClash {
+*1. Here e.elevi == e.elevj. Variables with the same name cannot be different. 
+   ((Var 's' s.i e.elevi))':'((Var 's' s.i e.elevj)) t.contr = (Path t.contr);
+
+*2. The meta-code of any symbol is equal to itself.
+*   So here the elevetion do not matter.
+   ((Var 's' s.i e.elevi))':'((Var 's' s.j e.elevj)) t.contr =
+         (Split (Ct (Var 's' s.i e.elevi)':'(Var 's' s.j e.elevj))) 
+         t.contr;
+
+*3. Our meta-code transformation does not feel difference between two identical
+* symbols which were encoded different number times. So this sentence is not
+* perfect: it is still quite possible that the branch could be pruned.
+* ( See comments to the previous Case. )   
+   ((Var 's' e.var))':'(s.SYMBOL) t.contr = 
+                 (Split (Ct (Var 's' e.var)':'s.SYMBOL)) t.contr;
+*c.3
+   ((Var 's' e.var))':'((Var 'c' s.id s.SYMBOL)) t.contr = 
+                 (Split (Ct (Var 's' e.var)':'s.SYMBOL)) t.contr;
+
+*4.Both the s-variables have the same values - calls.
+   (('!' t.calli ':'t.s-vari))':'(('!' t.callj ':'t.s-varj)) t.contr,  
+                 <Equal t.calli t.callj>:True = (Path t.contr);
+
+*5. See comments to Case #2. Both the s-variables have a call as values.
+*  Declare as Hindrance the old s-variable.  
+   (('!' t.calli ':'(Var 's' s.i e.elevi)))':'
+   (('!' t.callj ':'(Var 's' s.j e.elevj))) t.contr =  
+               (Hindrance Left (('!' t.callj':'(Var 's' s.j e.elevj))':'
+                                 <Fst Term From Pattern t.contr>)
+               ) t.contr;
+
+*6. Value of the new s-variable is a call. Value of the old s-variable
+*   is not still defined. Hindrance.
+   (('!' t.call':'(Var 's' s.i e.elevi)))':'((Var 's' s.j e.elevj))
+          t.contr = 
+               (Hindrance Left (('!' t.call':'(Var 's' s.i e.elevi))':'
+                                 <Fst Term From Contraction t.contr>)
+               ) t.contr;
+
+*7. Value of the new s-variable is a call. Value of the old s-variable
+*   is defined. Hindrance.
+   (('!' t.call':'t.s-var))':'(s.SYMBOL) t.contr = 
+                   (Hindrance Left (('!' t.call':'t.s-var)':'
+                                    <Fst Term From Contraction t.contr>)
+                   ) t.contr;
+*c.7. 
+   (('!' t.call':'t.s-var))':'((Var 'c' s.id s.SYMBOL)) t.contr = 
+                   (Hindrance Left (('!' t.call':'t.s-var)':'
+                                    <Fst Term From Contraction t.contr>)
+                   ) t.contr;
+
+*8. See comments to Case #3. 
+   (s.SYMBOL)':'((Var 's' e.var)) t.contr = 
+                 (Split (Ct (Var 's' e.var)':'s.SYMBOL)) t.contr;
+*c.8. 
+   ((Var 'c' s.id s.SYMBOL))':'((Var 's' e.var)) t.contr = 
+                 (Split (Ct (Var 's' e.var)':'s.SYMBOL)) t.contr;
+
+*9. Value of the old s-variable is a call. Value of the new s-variable
+*   is not still defined. Hindrance.
+   ((Var 's' s.i e.elevi))':'(('!' t.call':'(Var 's' s.j e.elevj)))
+          t.contr = 
+          (Hindrance Left (('!' t.call':'(Var 's' s.j e.elevj))':'
+                            <Fst Term From Pattern t.contr>)
+          ) t.contr;
+
+*10. Value of the old s-variable is a call. Value of the new s-variable
+*   is defined. Hindrance.
+   (s.SYMBOL)':'(('!' t.call':'t.s-var)) t.contr = 
+                (Hindrance Left (('!' t.call':'t.s-var)':'
+                                 <Second Term From Pattern t.contr>)
+                ) t.contr;
+*c.10.
+   ((Var 'c' s.id s.SYMBOL))':'(('!' t.call':'t.s-var)) t.contr = 
+                (Hindrance Left (('!' t.call':'t.s-var)':'
+                                 <Second Term From Pattern t.contr>)
+                ) t.contr;
+
+*11. Values of the s-variables are  defined and equal one to other.
+   (s.SYMBOL)':'(s.SYMBOL) t.contr = (Path t.contr);
+*c.11.
+   ((Var 'c' s.id s.SYMBOL))':'(s.SYMBOL) t.contr = (Path t.contr);
+*c.12.
+   (s.SYMBOL)':'((Var 'c' s.id s.SYMBOL)) t.contr = (Path t.contr);
+*c.13.
+   ((Var 'c' s.id s.SYMBOL))':'((Var 'c' s.id1 s.SYMBOL)) t.contr 
+                                                  = (Path t.contr);
+
+*12. 
+   (e.valuei)':'(e.valuej) t.contr = Zero;
+} /* End of IntClash */
+
+
+/* E-Clash over an e-variable. Just put out a definition, whenever it there
+   exist. The definition assigns a variable to itself if this variable was
+   not defined in the assignment.
+*/
+
+* <E-Clash t.variable's-value-to-contract t.p-contraction> 
+*                         == See the output format in the comment to RuleAC
+E-Clash { 
+ ((e.def) e.value) t.contr = e.def <EClash (e.value) t.contr>;
+} /* End of E-Clash */
+
+
+/* EClash over an e-variable. There are 9 contractions to e-variables.
+   This function splits our general situation on these 9 cases.
+*/
+
+* <EClash t.variable's-value-to-contract t.p-contraction> 
+*                         == See the output format in the comment to RuleAC
+EClash {
+*1. Empty expression: e-vari -> []                       
+  t.valuei (Ct t.e-vari ':' /* empty */ ) = 
+        <E-Empty t.valuei (Ct t.e-vari ':' /* empty */ )>; 
+
+*2. Term variable on the left: e-vari -> t-varj e-vari           
+  t.valuei (Ct t.e-vari ':' (Var 't' s.j e.elevj) t.e-varii) =  
+        <E-tVarL t.valuei (Ct t.e-vari ':' (Var 't' s.j e.elevj) t.e-varii)>;
+
+*3. Symbol variable on the left: e-vari -> s-varj e-vari           
+  t.valuei (Ct t.e-vari ':' (Var 's' s.j e.elevj) t.e-varii) =  
+        <E-sVarL t.valuei (Ct t.e-vari ':' (Var 's' s.j e.elevj) t.e-varii)>;
+
+*4. Specific symbol on the left: e-vari -> ...... e-vari
+*                                          SYMBOL 
+  t.valuei (Ct t.e-vari ':' s.SYMBOL t.e-varii) =  
+        <E-SymL t.valuei (Ct t.e-vari ':' s.SYMBOL t.e-varii)>;
+
+*5. Parentheses on the left: e-vari ->  . e-varj . e-vari
+*                                       (        )
+   t.valuei (Ct t.e-vari ':' ('*' t.e-varj) t.e-varii) =  
+          <E-BrL t.valuei (Ct t.e-vari ':' ('*' t.e-varj) t.e-varii)>;  
+
+*6. Term variable on the left: e-vari -> e-vari t-varj            
+  t.valuei (Ct t.e-vari ':' t.e-varii (Var 't' s.j e.elevj)) =  
+        <E-tVarR t.valuei (Ct t.e-vari ':' t.e-varii (Var 't' s.j e.elevj))>;
+
+*7. Symbol variable on the left: e-vari -> e-vari s-varj            
+  t.valuei (Ct t.e-vari ':' t.e-varii (Var 's' s.j e.elevj)) =  
+        <E-sVarR t.valuei (Ct t.e-vari ':' t.e-varii (Var 's' s.j e.elevj))>;
+
+*8. Specific symbol on the left: e-vari -> e-vari ......
+*                                                 SYMBOL 
+  t.valuei (Ct t.e-vari ':' t.e-varii s.SYMBOL) =  
+        <E-SymR t.valuei (Ct t.e-vari ':' t.e-varii s.SYMBOL)>;
+
+*9. Parentheses on the right: e-vari -> e-vari . e-varj . 
+*                                              (        )
+  t.valuei (Ct t.e-vari ':' t.e-varii ('*' t.e-varj)) =  
+          <E-BrR t.valuei (Ct t.e-vari ':' t.e-varii ('*' t.e-varj))>;  
+} /* End of EClash */
+
+/* Empty expression: e-vari -> []   */                    
+*  <E-Empty t.valuei t.contraction > 
+*                         == See the output format in the comment to RuleAC
+E-Empty {
+*1. Empty. Recognition.
+  () (Ct t.e-vari ':') = (Del t.e-vari) (Path (Ct t.e-vari ':' )); 
+
+*2. An e-variable on the left hand side. Narrowing of the e-variable.
+  ((Var 'e' e.var) e.valuei) t.contr = 
+                         (Split (Ct (Var 'e' e.var)':')) t.contr;
+
+*3. A call on the left hand side. Hindrance on the left.
+  (('!' t.call':'(Var 'e' e.varj)) e.valuei) t.contr =
+                (Hindrance Left (('!' t.call':'(Var 'e' e.varj)) e.valuei':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*4. Anything else. Recognition impossible.
+  (e.valuei) t.contr = Zero;
+} /* End of E-Empty */
+
+/* Term variable on the left: e-vari -> t-varj e-vari           */
+* <E-tVarL t.valuei t.contraction> = ...
+*                         == See the output format in the comment to RuleAC
+E-tVarL {
+*1. An e-variable on the left hand side. 
+*   Splitting of the e-variable ( e-parametr ): 
+*           e-vari -> t-varNew e-vari
+*       '+' e-vari -> [] /* empty */
+  ((Var 'e' s.k e.elevk) e.valuei) t.contr , <New Var>: s.new =
+       (Fork Split 
+             (Split (Ct (Var 'e' s.k e.elevk)':'
+                        (Var 't' s.new e.elevk) (Var 'e' s.k e.elevk)
+                    ))
+        '+'  (Split (Ct (Var 'e' s.k e.elevk)':' ))
+       ) /* End of Fork. */ 
+       t.contr;
+
+*2. An e-call on the left hand side. Hindrance on the left.
+  (('!' t.call':'(Var 'e' e.vark)) e.valuei) t.contr =
+                (Hindrance Left (('!' t.call':'(Var 'e' e.vark)) e.valuei':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*3. A t-variable on the left hand side. Recognition.                                                                      
+  ((Var 't' e.vark) e.valuei) t.contr =
+                   (Def ((Var 't' e.vark)':' <Fst Term From Pattern t.contr>)) 
+                   (Def (e.valuei':'<Second Term From Pattern t.contr>)) 
+                   (Path t.contr);
+
+*4. A s-variable on the left hand side. Recognition.                                                                      
+  ((Var 's' e.vark) e.valuei) t.contr =
+                   (Def ((Var 's' e.vark)':' <Fst Term From Pattern t.contr>)) 
+                   (Def (e.valuei':'<Second Term From Pattern t.contr>)) 
+                   (Path t.contr);
+
+*5. An s-call on the left hand side. Recognition.
+  (('!' t.call':'(Var 't' e.vark)) e.valuei) t.contr =
+       (Def (('!' t.call':'(Var 't' e.vark))
+                                   ':'<Fst Term From Pattern t.contr>)) 
+       (Def (e.valuei':'<Second Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*6. An s-call on the left hand side. Recognition.
+  (('!' t.call':'(Var 's' e.vark)) e.valuei) t.contr =
+       (Def (('!' t.call':'(Var 's' e.vark))
+                                   ':'<Fst Term From Pattern t.contr>)) 
+       (Def (e.valuei':'<Second Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*7. A symbol on the left hand side. Recognition.                                                                      
+   (s.SYMBOL e.valuei) t.contr = 
+       (Def (s.SYMBOL':'<Fst Term From Pattern t.contr>)) 
+       (Def (e.valuei':'<Second Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*8. A parenthesis on the left hand side. Recognition.                                                                      
+   (('*' e.1) e.valuei) t.contr = 
+       (Def (('*' e.1)':'<Fst Term From Pattern t.contr>)) 
+       (Def (e.valuei':'<Second Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*/*c.i Treatment of constant parametrs. 
+*c.1. A term on the left hand side. Recognition.                                                                      
+   ((Var 'c' s.id t.TERM e.const) e.valuei) t.contr = 
+       (Def (<NewCVar t.TERM> ':'<Fst Term From Pattern t.contr>)) 
+       (Def (<NewCVar e.const> e.valuei':'<Second Term From Pattern t.contr>)) 
+       (Path t.contr);
+*/
+*9. Anything else. Recognition impossible.
+  (e.valuei) t.contr = Zero;
+} /* End of E-tVarL */
+
+/* Symbol variable on the right: e-vari -> e-vari t-varj          */
+* <E-tVarR t.valuei t.contraction> = ...
+*                         == See the output format in the comment to RuleAC
+E-tVarR {
+*1. An e-variable on the right hand side. 
+*   Splitting of the e-variable ( e-parametr ): 
+*           e-vari -> e-vari t-varNew 
+*       '+' e-vari -> [] /* empty */
+  ( e.valuei (Var 'e' s.k e.elevk)) t.contr , <New Var>: s.new =
+       (Fork Split 
+             (Split (Ct (Var 'e' s.k e.elevk)':'
+                        (Var 'e' s.k e.elevk) (Var 't' s.new e.elevk) 
+                    ))
+        '+'  (Split (Ct (Var 'e' s.k e.elevk)':' ))
+       ) /* End of Fork. */ 
+       t.contr;
+
+*2. An e-call on the right hand side. Hindrance on the right.
+  ( e.valuei ('!' t.call':'(Var 'e' e.vark))) t.contr =
+                (Hindrance Right (e.valuei ('!' t.call':'(Var 'e' e.vark))':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*3. A s-variable on the right hand side. Recognition.                                                                      
+  ( e.valuei (Var 't' e.vark)) t.contr = 
+          (Def ((Var 't' e.vark)':'<Second Term From Pattern t.contr>)) 
+          (Def (e.valuei':'<Fst Term From Pattern t.contr>)) 
+          (Path t.contr);
+
+*4. A s-variable on the right hand side. Recognition.                                                                      
+  ( e.valuei (Var 's' e.vark)) t.contr = 
+          (Def ((Var 's' e.vark)':'<Second Term From Pattern t.contr>)) 
+          (Def (e.valuei':'<Fst Term From Pattern t.contr>)) 
+          (Path t.contr);
+
+*5. An s-call on the right hand side. Recognition.
+  ( e.valuei ('!' t.call':'(Var 't' e.vark))) t.contr =
+       (Def (('!' t.call':'(Var 't' e.vark))
+                                   ':'<Second Term From Pattern t.contr>)) 
+       (Def (e.valuei':'<Fst Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*6. An s-call on the right hand side. Recognition.
+  ( e.valuei ('!' t.call':'(Var 's' e.vark))) t.contr =
+       (Def (('!' t.call':'(Var 's' e.vark))
+                                   ':'<Second Term From Pattern t.contr>)) 
+       (Def (e.valuei':'<Fst Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*7. A symbol on the right hand side. Recognition.                                                                      
+   ( e.valuei s.SYMBOL) t.contr = 
+       (Def (s.SYMBOL':'<Second Term From Pattern t.contr>)) 
+       (Def (e.valuei':'<Fst Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*8. A parenthesis on the right hand side. Recognition.                                                                      
+   ( e.valuei ('*' e.1)) t.contr = 
+       (Def (('*' e.1)':'<Second Term From Pattern t.contr>)) 
+       (Def (e.valuei':'<Fst Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*/*c.i Treatment of constant parametrs. 
+*c.1. A term on the right hand side. Recognition.                                                                      
+   (e.valuei (Var 'c' s.id e.const t.TERM)) t.contr = 
+       (Def (<NewCVar t.TERM>':'<Second Term From Pattern t.contr>)) 
+       (Def (e.valuei <NewCVar e.const>':'<Fst Term From Pattern t.contr>)) 
+       (Path t.contr);
+*/
+
+*9. Anything else. Recognition impossible.
+  (e.valuei) t.contr = Zero;
+} /* End of E-tVarR */
+
+/* Symbol variable on the left: e-vari -> s-varj e-vari           */
+* <E-sVarL t.valuei t.contraction> = ...
+*                         == See the output format in the comment to RuleAC
+E-sVarL {
+*1. An e-variable on the left hand side. 
+*   Splitting of the e-variable ( e-parametr ): 
+*           e-vari -> s-varNew e-vari
+*       '+' e-vari -> [] /* empty */
+  ((Var 'e' s.k e.elevk) e.valuei) t.contr , <New Var>: s.new =
+       (Fork Split 
+             (Split (Ct (Var 'e' s.k e.elevk)':'
+                        (Var 's' s.new e.elevk) (Var 'e' s.k e.elevk)
+                    ))
+        '+'  (Split (Ct (Var 'e' s.k e.elevk)':' ))
+       ) /* End of Fork. */ 
+       t.contr;
+
+*2. A t-variable on the left hand side. Narrowing.
+  ((Var 't' s.k e.elevk) e.valuei) t.contr, <New Var>: s.new 
+     = (Split (Ct (Var 't' s.k e.elevk)':' (Var 's' s.new e.elevk) )) t.contr;
+
+*3. An e-call on the left hand side. Hindrance on the left.
+  (('!' t.call':'(Var 'e' e.vark)) e.valuei) t.contr =
+                (Hindrance Left (('!' t.call':'(Var 'e' e.vark)) e.valuei':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*4. An t-call on the left hand side. Hindrance on the left.
+  (('!' t.call':'(Var 't' e.vark)) e.valuei) t.contr =
+                (Hindrance Left (('!' t.call':'(Var 't' e.vark)) e.valuei':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*5. A s-variable on the left hand side. Recognition.                                                                      
+  ((Var 's' e.vark) e.valuei) t.contr =
+                   (Def ((Var 's' e.vark)':' <Fst Term From Pattern t.contr>)) 
+                   (Def (e.valuei':'<Second Term From Pattern t.contr>)) 
+                   (Path t.contr);
+
+*6. An s-call on the left hand side. Recognition.
+  (('!' t.call':'(Var 's' e.vark)) e.valuei) t.contr =
+       (Def (('!' t.call':'(Var 's' e.vark))
+                                   ':'<Fst Term From Pattern t.contr>)) 
+       (Def (e.valuei':'<Second Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*7. A symbol on the left hand side. Recognition.                                                                      
+   (s.SYMBOL e.valuei) t.contr = 
+       (Def (s.SYMBOL':'<Fst Term From Pattern t.contr>)) 
+       (Def (e.valuei':'<Second Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*/*c.i Treatment of constant parametrs. 
+*c.1. A symbol on the left hand side. Recognition.                                                                      
+   ((Var 'c' s.id s.SYMBOL e.const) e.valuei) t.contr = 
+       (Def (<NewCVar s.SYMBOL> ':'<Fst Term From Pattern t.contr>)) 
+       (Def (<NewCVar e.const> e.valuei':'<Second Term From Pattern t.contr>)) 
+       (Path t.contr);
+*/
+*8. Anything else. Recognition impossible.
+  (e.valuei) t.contr = Zero;
+} /* End of E-sVarL */
+
+/* Symbol variable on the right: e-vari -> e-vari s-varj          */
+* <E-sVarR t.valuei t.contraction> = ...
+*                         == See the output format in the comment to RuleAC
+E-sVarR {
+*1. An e-variable on the right hand side. 
+*   Splitting of the e-variable ( e-parametr ): 
+*           e-vari -> e-vari s-varNew 
+*       '+' e-vari -> [] /* empty */
+  ( e.valuei (Var 'e' s.k e.elevk)) t.contr , <New Var>: s.new =
+       (Fork Split 
+             (Split (Ct (Var 'e' s.k e.elevk)':'
+                        (Var 'e' s.k e.elevk) (Var 's' s.new e.elevk) 
+                    ))
+        '+'  (Split (Ct (Var 'e' s.k e.elevk)':' ))
+       ) /* End of Fork. */ 
+       t.contr;
+
+*2. A t-variable on the right hand side. Narrowing.
+  (e.valuei (Var 't' s.k e.elevk)) t.contr, <New Var>: s.new =
+     (Split (Ct (Var 't' s.k e.elevk)':' (Var 's' s.new e.elevk))) t.contr;
+
+*3. An e-call on the right hand side. Hindrance on the right.
+  ( e.valuei ('!' t.call':'(Var 'e' e.vark))) t.contr =
+                (Hindrance Right (e.valuei ('!' t.call':'(Var 'e' e.vark))':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*4. An e-call on the right hand side. Hindrance on the right.
+  ( e.valuei ('!' t.call':'(Var 't' e.vark))) t.contr =
+                (Hindrance Right (e.valuei ('!' t.call':'(Var 't' e.vark))':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*5. A s-variable on the right hand side. Recognition.                                                                      
+  ( e.valuei (Var 's' e.vark)) t.contr = 
+          (Def ((Var 's' e.vark)':'<Second Term From Pattern t.contr>)) 
+          (Def (e.valuei':'<Fst Term From Pattern t.contr>)) 
+          (Path t.contr);
+
+*6. An s-call on the right hand side. Recognition.
+  ( e.valuei ('!' t.call':'(Var 's' e.vark))) t.contr =
+       (Def (('!' t.call':'(Var 's' e.vark))
+                                   ':'<Second Term From Pattern t.contr>)) 
+       (Def (e.valuei':'<Fst Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*7. A symbol on the right hand side. Recognition.                                                                      
+   ( e.valuei s.SYMBOL) t.contr = 
+       (Def (s.SYMBOL':'<Second Term From Pattern t.contr>)) 
+       (Def (e.valuei':'<Fst Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*/*c.i Treatment of constant parametrs. 
+*c.1. A symbol on the right hand side. Recognition.                                                                      
+   (e.valuei (Var 'c' s.id e.const s.SYMBOL)) t.contr = 
+       (Def (<NewCVar s.SYMBOL>':'<Second Term From Pattern t.contr>)) 
+       (Def (e.valuei <NewCVar e.const>':'<Fst Term From Pattern t.contr>)) 
+       (Path t.contr);
+*/
+
+*8. Anything else. Recognition impossible.
+  (e.valuei) t.contr = Zero;
+} /* End of E-sVarR */
+
+/* Specific symbol on the left: e-vari -> ...... e-vari 
+                                          SYMBOL
+*/
+* <E-SymL t.valuei t.contraction> = ...
+*                         == See the output format in the comment to RuleAC
+E-SymL {
+*1. An e-variable on the left hand side. 
+*   Splitting of the e-variable ( e-parametr ): 
+*           e-vari -> SYMBOL e-vari
+*       '+' e-vari -> [] /* empty */
+  ((Var 'e' e.vark) e.valuei) t.contr =
+       (Fork Split 
+             (Split (Ct (Var 'e' e.vark)':' <Fst Term From Pattern t.contr>
+                        (Var 'e' e.vark)
+                    ))
+        '+'  (Split (Ct (Var 'e' e.vark)':' ))
+       ) /* End of Fork. */ 
+       t.contr;
+
+*2. A call on the left hand side. Hindrance on the left.
+  (('!' t.call':'t.vark) e.valuei) t.contr =
+                (Hindrance Left (('!' t.call':'t.vark) e.valuei':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*3. A t-variable on the left hand side.                                                                       
+  ((Var 't' e.vark) e.valuei) t.contr =
+     (Split (Ct (Var 't' e.vark)':'<Fst Term From Pattern t.contr>)) t.contr;
+
+*4. A s-variable on the left hand side.                                                                       
+  ((Var 's' e.vark) e.valuei) t.contr =
+     (Split (Ct (Var 's' e.vark)':'<Fst Term From Pattern t.contr>)) t.contr;
+
+*5. A symbol on the left hand side. Recognition.                                                                      
+   (s.SYMBOL e.valuei) t.contr,  
+   <Equal (<Fst Term From Pattern t.contr>) (s.SYMBOL)>:True = 
+              (Def (e.valuei':'<Second Term From Pattern t.contr>)) 
+              (Path t.contr);
+
+*/*c.i Treatment of constant parametrs. 
+*c.1. A symbol on the left hand side. Recognition.                                                                      
+   ((Var 'c' s.id s.SYMBOL e.const) e.valuei) t.contr,  
+   <Equal (<Fst Term From Pattern t.contr>) (s.SYMBOL)>:True = 
+       (Def (<NewCVar e.const> e.valuei':'<Second Term From Pattern t.contr>)) 
+       (Path t.contr);
+*/
+
+*6. Anything else. Recognition impossible.
+  (e.valuei) t.contr = Zero;
+} /* End of E-sVarL */
+
+/* Specific symbol on the right: e-vari -> e-vari ......  
+                                                  SYMBOL
+*/
+* <E-SymR t.valuei t.contraction> 
+*                         == See the output format in the comment to RuleAC
+E-SymR {
+*1. An e-variable on the right hand side. 
+*   Splitting of the e-variable ( e-parametr ): 
+*           e-vari -> e-vari SYMBOL 
+*       '+' e-vari -> [] /* empty */
+  ( e.valuei (Var 'e' e.var)) t.contr =
+       (Fork Split 
+             (Split (Ct (Var 'e' e.var)':'
+                        (Var 'e' e.var) <Second Term From Pattern t.contr> 
+                    ))
+        '+'  (Split (Ct (Var 'e' e.var)':' ))
+       ) /* End of Fork. */ 
+       t.contr;
+
+*2. A call on the right hand side. Hindrance on the right.
+  ( e.valuei ('!' t.call':'t.var)) t.contr =
+               (Hindrance Right (e.valuei ('!' t.call':'t.var)':' 
+                                 <Fst Term From Contraction t.contr>)
+               ) t.contr;
+
+*3. A t-variable on the right hand side. 
+*   Narrowing of the t-variable ( t-parametr ). 
+  ( e.valuei (Var 't' e.var)) t.contr =
+     (Split (Ct (Var 't' e.var)':'<Second Term From Pattern t.contr>)) t.contr;
+
+*4. A s-variable on the right hand side. 
+*   Narrowing of the s-variable ( s-parametr ). 
+  ( e.valuei (Var 's' e.var)) t.contr =
+     (Split (Ct (Var 's' e.var)':'<Second Term From Pattern t.contr>)) t.contr;
+
+*5. A symbol on the right hand side. Recognition.                                                                      
+  ( e.valuei s.SYMBOL) t.contr, 
+  <Equal (<Second Term From Pattern t.contr>) (s.SYMBOL)>:True = 
+              (Def (e.valuei':'<Fst Term From Pattern t.contr>)) 
+              (Path t.contr);
+
+*/*c.i Treatment of constant parametrs. 
+*c.1. A symbol on the right hand side. Recognition.                                                                      
+  ( e.valuei (Var 'c' s.id e.const s.SYMBOL)) t.contr, 
+  <Equal (<Second Term From Pattern t.contr>) (s.SYMBOL)>:True = 
+     (Def (e.valuei <NewCVar e.const>':'<Fst Term From Pattern t.contr>)) 
+     (Path t.contr);
+*/
+
+*6. Anything else. Recognition impossible.
+  (e.valuei) t.contr = Zero;
+} /* End of E-SymR */
+
+/* Parentheses on the left: e-vari -> . e-varj . e-vari
+                                      (        )
+*/
+* <E-BrL t.valuei t.contraction> 
+*                         == See the output format in the comment to RuleAC
+E-BrL {
+*1. An e-variable on the left hand side. 
+*   Splitting of the e-variable ( e-parametr ): 
+*           e-vari -> ('*...' e-varNew) e-vari
+*       '+' e-vari -> [] /* empty */
+  ((Var 'e' s.k e.elevk) e.valuei) t.contr , <Equal (e.elevk) (<Infinit>)>:
+    { False, <New Var>: s.new =
+       (Fork Split 
+             (Split (Ct (Var 'e' s.k e.elevk)':'
+                        ('*' (Var 'e' s.new e.elevk)) (Var 'e' s.k e.elevk)
+                    ))
+        '+'  (Split (Ct (Var 'e' s.k e.elevk)':' ))
+       ) /* End of Fork. */ 
+       t.contr;
+      True = (Split (Ct (Var 'e' s.k e.elevk)':' )) t.contr;
+    };
+
+*2. A t-variable on the left hand side. Narrowing.
+  ((Var 't' s.k e.elevk) e.valuei) t.contr, <Equal (e.elevk) (<Infinit>)>: False,
+  <New Var>: s.new  =
+     (Split (Ct (Var 't' s.k e.elevk)':' ('*' (Var 'e' s.new e.elevk)))) t.contr;
+
+*3. An e-call on the left hand side. Hindrance on the left.
+  (('!' t.call':'(Var 'e' e.vark)) e.valuei) t.contr =
+                (Hindrance Left (('!' t.call':'(Var 'e' e.vark)) e.valuei':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*4. An t-call on the left hand side. Hindrance on the left.
+  (('!' t.call':'(Var 't' e.vark)) e.valuei) t.contr =
+                (Hindrance Left (('!' t.call':'(Var 't' e.vark)) e.valuei':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*5. Parentheses on the left hand side. Recognition.                                                                      
+   (('*' e.valuej) e.valuei) t.contr = 
+       (Def (e.valuej':'<Fst Brack From Pattern t.contr>)) 
+       (Def (e.valuei':'<Second Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*c.3. Parentheses on the left hand side. Recognition.                                                                      
+   ((Var 'c' s.id (e.const1) e.const2) e.valuei) t.contr = 
+       (Def (<NewCVar e.const1>':'<Fst Brack From Pattern t.contr>)) 
+       (Def (<NewCVar e.const2> e.valuei':'<Second Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*6. Anything else. Recognition impossible.
+  (e.valuei) t.contr = Zero;
+} /* End of E-BrL */
+
+*==============
+/* Parentheses on the right: e-vari -> e.vari . e-varj . 
+                                              (        )
+*/
+* <E-BrR t.valuei t.contraction> 
+*                         == See the output format in the comment to RuleAC
+E-BrR {
+*1. An e-variable on the right hand side. 
+*   Splitting of the e-variable ( e-parametr ): 
+*           e-vari -> e-vari ('*...' e-varNew) 
+*       '+' e-vari -> [] /* empty */
+  ( e.valuei (Var 'e' s.k e.elevk)) t.contr ,  <Equal (e.elevk) (<Infinit>)>: 
+   { False,  <New Var>: s.new =
+       (Fork Split 
+             (Split (Ct (Var 'e' s.k e.elevk)':'
+                        (Var 'e' s.k e.elevk) ('*' (Var 'e' s.new e.elevk)) 
+                    ))
+        '+'  (Split (Ct (Var 'e' s.k e.elevk)':' ))
+       ) /* End of Fork. */ 
+       t.contr;
+     True = (Split (Ct (Var 'e' s.k e.elevk)':' )) t.contr;
+   };
+
+*2. A t-variable on the right hand side. 
+*   Narrowing of the t-variable ( t-parametr ). 
+  (e.valuei (Var 't' s.k e.elevk)) t.contr, <Equal (e.elevk) (<Infinit>)>: False
+  , <New Var>: s.new 
+   =  (Split (Ct (Var 't' s.k e.elevk)':' ('*' (Var 'e' s.new e.elevk)))) t.contr;
+
+*3. An e-call on the right hand side. Hindrance on the right.
+  ( e.valuei ('!' t.call':'(Var 'e' e.vark))) t.contr =
+                (Hindrance Right (e.valuei ('!' t.call':'(Var 'e' e.vark))':' 
+                                  <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*4. An t-call on the right hand side. Hindrance on the right.
+  ( e.valuei ('!' t.call':'(Var 't' e.vark))) t.contr =
+                (Hindrance Right (e.valuei ('!' t.call':'(Var 't' e.vark))':' 
+                                  <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*5. Parentheses on the right hand side. Recognition.                                                                      
+   ( e.valuei ('*' e.valuej)) t.contr = 
+       (Def (e.valuej':'<Second Brack From Pattern t.contr>)) 
+       (Def (e.valuei':'<Fst Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*c.3. Parentheses on the right hand side. Recognition.                                                                      
+   ( e.valuei (Var 'c' s.id e.const2 (e.const1))) t.contr = 
+       (Def (<NewCVar e.const1>':'<Second Brack From Pattern t.contr>)) 
+       (Def (e.valuei <NewCVar e.const2>':'<Fst Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*6. Anything else. Recognition impossible.
+  (e.valuei) t.contr = Zero;
+} /* End of E-BrR */
+
+/* T-Clash over an e-variable. Just put out a definition, whenever it there
+   exist. The definition assigns a variable to itself if this variable was
+   not defined in the assignment.
+*/
+
+* <T-Clash t.variable's-value-to-contract t.p-contraction> 
+*                         == See the output format in the comment to RuleAC
+T-Clash { 
+ ((e.def) e.value) t.contr = e.def <TClash (e.value) t.contr>;
+} /* End of T-Clash */
+
+/* TClash over a t-variable. There are 3 contractions to t-variables.
+   This function splits our general situation on these 3 cases.
+*/
+
+* <TClash t.variable's-value-to-contract t.p-contraction> 
+*                         == See the output format in the comment to RuleAC
+TClash {
+*1. Symbol variable : t-vari -> s-varj           
+  t.valuei (Ct t.t-vari ':' (Var 's' s.j e.elevj)) =  
+        <T-sVar t.valuei (Ct t.t-vari ':' (Var 's' s.j e.elevj))>;
+
+*2. Specific symbol : t-vari -> ...... 
+*                               SYMBOL 
+  t.valuei (Ct t.t-vari ':' s.SYMBOL) =  
+        <T-Sym t.valuei (Ct t.t-vari ':' s.SYMBOL)>;
+
+*3. Parentheses : t-vari ->  . e-varj . 
+*                            (        )
+   t.valuei (Ct t.t-vari ':' ('*' t.e-varj)) =  
+          <T-Br t.valuei (Ct t.t-vari ':' ('*' t.e-varj))>;  
+} /* End of TClash */
+
+/* Symbol variable: t-vari -> s-varj           */
+* <T-sVar t.valuei t.contraction> = ...
+*                   == See the output format in the comment to RuleAC
+T-sVar {
+*1. An t-variable. 
+*   Narrowing of the t-variable ( t-parametr ). 
+  ((Var 't' s.k e.evalk)) t.contr, <New Var>: s.new  =
+     (Split (Ct (Var 't' s.k e.evalk)':' (Var 's' s.new e.evalk))) t.contr;
+
+*2. An t-call. Hindrance on the left.
+  (('!' t.call':'(Var 't' e.vark))) t.contr =
+                (Hindrance Left (('!' t.call':'(Var 't' e.vark))':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*3. A s-variable. Recognition.                                                                      
+  ((Var 's' e.vark)) t.contr =
+                   (Def ((Var 's' e.vark)':' <Fst Term From Pattern t.contr>)) 
+                   (Path t.contr);
+
+*4. An s-call. Recognition.
+  (('!' t.call':'(Var 's' e.vark))) t.contr =
+      (Def (('!' t.call':'(Var 's' e.vark))':'<Fst Term From Pattern t.contr>)) 
+      (Path t.contr);
+
+*5. A symbol. Recognition.                                                                      
+   (s.SYMBOL) t.contr = 
+       (Def (s.SYMBOL':'<Fst Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*c.i Treatment of constant parametrs. 
+*c.1. A symbol. Recognition.                                                                      
+   ((Var 'c' s.id s.SYMBOL)) t.contr = 
+       (Def (<NewCVar s.SYMBOL> ':'<Fst Term From Pattern t.contr>)) 
+       (Path t.contr);
+
+*6. Anything else. Recognition impossible.
+  (e.valuei) t.contr = Zero;
+} /* End of T-sVar */
+
+/* Specific symbol: t-vari -> ...... 
+                              SYMBOL
+*/
+* <T-Sym t.valuei t.contraction> = ...
+*                         == See the output format in the comment to RuleAC
+T-Sym {
+*1. An t-variable. 
+*   Narrowing of the t-variable ( t-parametr ). 
+  ((Var 't' e.vark)) t.contr =
+     (Split (Ct (Var 't' e.vark)':'<Fst Term From Pattern t.contr>)) t.contr;
+
+*2. A call. Hindrance on the left.
+  (('!' t.call':'t.vark)) t.contr =
+                (Hindrance Left (('!' t.call':'t.vark)':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*3. A s-variable.                                                                       
+*   Narrowing of the t-variable ( t-parametr ). 
+  ((Var 's' e.vark)) t.contr =
+     (Split (Ct (Var 's' e.vark)':'<Fst Term From Pattern t.contr>)) t.contr;
+
+*4. A symbol. Recognition.                                                                      
+   (s.SYMBOL) t.contr,  
+   <Equal (<Fst Term From Pattern t.contr>) (s.SYMBOL)>:True = 
+              (Path t.contr);
+
+*c.i Treatment of constant parametrs. 
+*c.1. A symbol on the left hand side. Recognition.                                                                      
+   ((Var 'c' s.id s.SYMBOL)) t.contr,  
+   <Equal (<Fst Term From Pattern t.contr>) (s.SYMBOL)>:True = 
+       (Path t.contr);
+
+*5. Anything else. Recognition impossible.
+  (e.valuei) t.contr = Zero;
+} /* End of T-Sym */
+
+/* Parentheses: t-vari -> . e-varj . 
+                          (        )
+*/
+* <T-Br t.valuei t.contraction> 
+*                         == See the output format in the comment to RuleAC
+T-Br {
+*1. An t-variable. 
+*   Narrowing of the t-variable ( t-parametr ). 
+  (e.valuei (Var 't' s.k e.elevk)) t.contr, <Equal (e.elevk) (<Infinit>)>: False
+  , <New Var>: s.new  =
+     (Split (Ct (Var 't' s.k e.elevk)':' ('*' (Var 'e' s.new e.elevk))) ) t.contr;
+
+*2. An t-call. Hindrance on the left.
+  (('!' t.call':'(Var 't' e.vark))) t.contr =
+                (Hindrance Left (('!' t.call':'(Var 't' e.vark))':' 
+                                 <Fst Term From Contraction t.contr>)
+                ) t.contr;
+
+*3. Parentheses. Recognition.                                                                      
+   (('*' e.valuej)) t.contr = 
+       (Def (e.valuej':'<Fst Brack From Pattern t.contr>)) 
+       (Path t.contr);
+
+*c.3. Parentheses. Recognition.                                                                      
+   ((Var 'c' s.id (e.const1))) t.contr = 
+       (Def (<NewCVar e.const1>':'<Fst Brack From Pattern t.contr>)) 
+       (Path t.contr);
+
+*4. Anything else. Recognition impossible.
+  (e.valuei) t.contr = Zero;
+} /* End of T-Br */
+
+*--                     --  End of Clash --                                --*
+
+/* RuleAR for conjunction of restrictions:
+   a) to substitute variable's values from an assignment in a restriction;
+   b) to clean repeated and trivial restrictions;
+   A value of a s-variable can be a s-call in this case if the restriction is
+   not Zero or full True then the result is an hindrance of one from
+   that s-calls.
+   Restriction can be only a conjuction of negations of elementary
+   contractions over s.Variables.
+*/
+* <RuleAR (As e.assigns)(Rs e.rests)> 
+*      ==> (Rs e.new_restrs ) (As e.assigns)
+*      ==> (As e.assigns) (Hindrance Left t.hinder) (Rs e.old_restrictions)
+*      ==> Zero
+$ENTRY RuleAR { 
+  t.Assigns t.Rs , <Rule-AR t.Assigns t.Rs>: 
+    { e.trash Zero = Zero;
+*      e.trash (Hindrance Left t.Hind) = t.Assigns (Hindrance Left t.Hind) t.Rs;
+      e.NewRestr = (Rs <DelRepR e.NewRestr >) t.Assigns;
+    } ;
+
+*  t.Assigns t.Rs = (Rs ) t.Assigns;
+} /* End of RuleAR */
+
+* An auxilary function of the function RuleAR.
+Rule-AR {
+*  Substitute assignments (c-var <- p-var) in an restriction
+*  and check an elementary unequality.
+  t.Assigns (Rs t.rest e.rests),
+  <MakeRst <ValuesR t.rest From t.Assigns>>:
+            { Zero = Zero;
+*              (Hindrance Left t.Hind) = (Hindrance Left t.Hind);
+              e.new-rest = e.new-rest <Rule-AR  t.Assigns (Rs e.rests)>;
+            };
+  t.Assigns (Rs) = ;
+} /* End of Rule-AR */
+
+* An auxilary function of the function Rule.
+ValuesR { 
+  (s.SYMBOL1 '#' s.SYMBOL2) From t.Ass = (X X) s.SYMBOL1 '#' s.SYMBOL2;
+  (s.SYMBOL1 '#' t.var2) From t.Ass  
+                 = (X t.var2) s.SYMBOL1 '#' <Rest1 <ValueVar t.var2 t.Ass>>;
+  (t.var1 '#' s.SYMBOL2) From t.Ass 
+                 = (t.var1 X) <Rest1 <ValueVar t.var1 t.Ass>> '#' s.SYMBOL2;
+  (t.var1 '#' t.var2) From t.Ass  
+       = (t.var1 t.var2)
+         <Rest1 <ValueVar t.var1 t.Ass>> '#' <Rest1 <ValueVar t.var2 t.Ass>>;
+*****
+  (t.var1 '#' /* [] */ ) From t.Ass 
+                 = (t.var1 X) <Rest1 <ValueVar t.var1 t.Ass>> '#' /* [] */;
+ } /* End of ValuesR */
+
+* An auxilary function of the function ValuesR.
+Rest1 { (t.head e.rest) = e.rest};
+
+/* MakeRst: check an elementary unequality.
+*/
+* <MakeRst t.value1 '#' t.value2>
+MakeRst {
+*1-2. Identical values.
+ t.vars s.SYMBOL '#' s.SYMBOL = Zero;
+ t.vars (Var 'c' s.id s.SYMBOL) '#' s.SYMBOL = Zero;
+ t.vars s.SYMBOL '#' (Var 'c' s.id s.SYMBOL) = Zero;
+ t.vars (Var 's' s.name e.var1) '#' (Var 's' s.name e.var2) = Zero;
+ t.vars (Var 'c' s.id s.SYMBOL) '#' (Var 'c' s.id1 s.SYMBOL) = Zero;
+
+/*3. Two s-call. Check their syntax.  
+*    It seemes these two cases can be never because of
+*    if we check these unequalities that means we checked
+*    the corresponding equalities in a previos branch.
+*    The last means these calls were evaluated.        
+ (t.v1 t.v2)
+ ('!' t.Call1 ':'(Var 's' s.name1 e.var1))  '#' 
+ ('!' t.Call2 ':'(Var 's' s.name2 e.var2)), <Equal (e.Call1)(e.Call2)>:
+       { True = Zero;
+         False = (Hindrance Left 
+                    (('!' t.Call1 ':'(Var 's' s.name1 e.var1))':'t.v1));
+       };
+
+*4-5. One of values is a s-call other is not. Hindrance. 
+ (t.v1 e.v2)
+ ('!' t.Call1 ':'(Var 's' e.var1)) '#' e.second = 
+                 (Hindrance Left (('!' t.Call1':'(Var 's' e.var1))':'t.v1);
+ (e.v1 t.v2)
+ e.first '#' ('!' t.Call2':'(Var 's' e.var2)) = 
+                 (Hindrance Left (('!' t.Call2':'(Var 's' e.var2))':'t.v2);
+*/
+
+*6-7. One of values is a s-parametr other is a symbol. 
+*     Construct a new restriction in the normal form. 
+ t.vars (Var 's' e.var1) '#' s.SYMBOL = ((Var 's' e.var1) '#' s.SYMBOL);
+ t.vars (Var 's' e.var1) '#' (Var 'c' s.id s.SYMBOL) 
+                                      = ((Var 's' e.var1) '#' s.SYMBOL);
+ t.vars s.SYMBOL '#' (Var 's' e.var2) = ((Var 's' e.var2) '#' s.SYMBOL);
+ t.vars (Var 'c' s.id s.SYMBOL) '#' (Var 's' e.var2) 
+                                      = ((Var 's' e.var2) '#' s.SYMBOL);
+
+*8. Both values are s-parametrs. Construct a new restriction. 
+ t.vars (Var 's' e.var1) '#' (Var 's' e.var2) 
+                                 = ((Var 's' e.var1) '#' (Var 's' e.var2)); 
+
+****** Restriction: "Is not empty ?" ***********
+*9. Identical values.
+ t.vars /* [] */ '#' /* [] */ = Zero;
+
+*10-11. One of values is an expression other is empty. 
+ t.vars e.expr '#' /* [] */ = <NoEmpty t.vars e.expr '#' /* [] */>; 
+* t.vars /* [] */ '#' e.expr = <NoEmpty t.vars e.expr '#' /* [] */>; 
+
+*9. Other cases lie out of our restriction's language or the inequation
+ t.vars e.values = ; 
+} /* End of MakeRst */ 
+
+
+* <NoEmpty e.expr '#' [] > ==> 
+NoEmpty {
+ t.vars e.expr '#' /*[]*/ , <EmptRst e.expr '#' /* [] */ >:   
+     { e.xxx True = ;
+*      e.1 (Hindrance e.hinder) e.2 = (Hindrance e.hinder);
+       e.new-restrs = e.new-restrs;
+     };
+}
+
+* <EmptRst e.expr '#' [] > ==> 
+EmptRst {
+*1. An e-call is encountered. Hindrance. 
+* See comments to the function MakeRst. ( the cases 3-5 )
+* (('!' e.Call1)':'(Var 'e' e.var1)) e.expr '#' /* [] */ = ...
+
+*2. An e-parametr is encountered. 
+*   Construct a new restriction in the normal form. 
+ (Var 'e' e.var1) e.expr '#' /* [] */ 
+              = ((Var 'e' e.var1) '#' /* [] */) <EmptRst e.expr '#' /* [] */>;
+
+*3. Exit.
+  /* exit */ '#' /* [] */ = ; 
+*4. Other cases cannot be empty.
+ e.expr = True; 
+} /* End of NoEmpty */ 
+
+* Delete repeated restrictions.
+* <DelRepR e.restrictions> =  e.restrictions;
+$ENTRY DelRepR { 
+  t.rest e.restrs =  <RemRt (e.restrs) t.rest> <DelRepR e.restrs>;
+                  = ;
+} /* End of DelRepR */ 
+
+* Remove a repeated restriction.
+* <RemRt (e.restrictions) t.rest> ==>  t.rest | [];
+RemRt {  
+ ( ((Var 's' s.name e.var1)'#'s.D) e.R1) ((Var 's' s.name e.var2)'#'s.D) = ;
+ ( ((Var 's' s.name e.var1)'#'s.D) e.R1) (s.D '#' (Var 's' s.name e.var2)) = ;
+ ( (s.D '#' (Var 's' s.name e.var1)) e.R1) ((Var 's' s.name e.var2) '#' s.D) = ;
+ ( (s.D '#' (Var 's' s.name e.var1)) e.R1) (s.D '#' (Var 's' s.name e.var2)) = ;
+
+ ( ((Var 's' s.name e.var1)'#'(Var 's' s.name1 e.var11)) e.R1) 
+    ((Var 's' s.name e.var2)'#'(Var 's' s.name1 e.var12)) = ;
+ ( ((Var 's' s.name1 e.var1)'#'(Var 's' s.name e.var11)) e.R1) 
+    ((Var 's' s.name e.var2)'#'(Var 's' s.name1 e.var12)) = ;
+
+ ( ((Var 'e' s.name e.var1)'#' /* [] */) e.R1) 
+    ((Var 'e' s.name e.var2)'#' /* [] */ ) = ;
+
+  ( t.1 e.R1) t.2 = <RemRt (e.R1) t.2>;
+  ( ) t.2 =  t.2;
+}
+
+* Intersection of two restriction's lists. 
+* <IntSctRR (e.restr1) (e.restr2)> ==> e.restrictions
+$ENTRY IntSctRR { 
+ (t.rest e.restr1) (e.restr2) = 
+               <BelongR t.rest To e.restr2> <IntSctRR (e.restr1) (e.restr2)>;
+ ()                (e.restr2) = ;
+}
+
+/* BelongR: Belonging of an elementary restriction to  a restriction's list. 
+   The result is this restriction in a normal form if it belong to the list. 
+   Else the result is empty. Normal form of an elementary restriction
+   is a restriction where an object expression can occupies only 
+   the second position.
+*/
+* <BelongR t.elementary-restriction To e.restrictions> 
+*                   ==> t.normal-restriction  
+*                   ==> []  
+BelongR { 
+*1.
+ ( (Var 's' s.name1 e.var1)'#'(Var 's' s.name2 e.var2) ) To
+ ( (Var 's' s.name1 e.var3)'#'(Var 's' s.name2 e.var4) ) e.restrs =
+                    ( (Var 's' s.name1 e.var1)'#'(Var 's' s.name2 e.var2) );
+
+*2.
+ ( (Var 's' s.name1 e.var1)'#'(Var 's' s.name2 e.var2) ) To
+ ( (Var 's' s.name2 e.var3)'#'(Var 's' s.name1 e.var4) ) e.restrs =
+                    ( (Var 's' s.name1 e.var1)'#'(Var 's' s.name2 e.var2) );
+
+*3.
+ ( (Var 's' s.name1 e.var1)'#' s.SYMBOL ) To
+ ( (Var 's' s.name1 e.var3)'#' s.SYMBOL ) e.restrs =
+                                  ( (Var 's' s.name1 e.var1)'#' s.SYMBOL );
+
+*4.
+ ( s.SYMBOL '#' (Var 's' s.name1 e.var1) ) To
+ ( s.SYMBOL '#' (Var 's' s.name1 e.var3) ) e.restrs =
+                                  ( (Var 's' s.name1 e.var1)'#' s.SYMBOL );
+
+*5.
+ ( (Var 's' s.name1 e.var1) '#' s.SYMBOL ) To
+ ( s.SYMBOL '#' (Var 's' s.name1 e.var3) ) e.restrs =
+                                  ( (Var 's' s.name1 e.var1) '#' s.SYMBOL );
+
+*6.
+ ( s.SYMBOL '#' (Var 's' s.name1 e.var1) ) To
+ ( (Var 's' s.name1 e.var3) '#' s.SYMBOL ) e.restrs =
+                                  ( (Var 's' s.name1 e.var1) '#' s.SYMBOL );
+
+*7.
+ ( (Var 'e' s.name1 e.var1)'#' /* [] */ ) To
+ ( (Var 'e' s.name1 e.var3)'#' /* [] */ ) e.restrs =
+                                  ( (Var 'e' s.name1 e.var1)'#' /* [] */ );
+
+*8-9.
+   t.rest1 To t.rest2 e.restrs = <BelongR t.rest1 To e.restrs>;
+   t.rest1 To = ;
+}
+
+/* RuleRC for conjunction of restrictions.
+   The formula of this transformation is:
+        (# Vc -> Vc') (Vc -> Vc'')  =  # (Vc'' <- Vc) (Vc -> Vc')
+*/
+
+* <RuleRC t.restriction t.contraction> ==> t.restriction
+$ENTRY RuleRC { 
+ (Rs )        t.contr = (Rs ); 
+ (Rs e.rests) t.contr = <DelAss <RuleAR (As <ConjAs t.contr>) (Rs e.rests)>>;
+} /* End of RuleRC */
+
+/* DelAss deletes an assignment which is a part of a RuleAR's result.
+   There can be an hindrance because we have just constructed the assignment
+   as conjacted one to a contraction. 
+*/
+* <DelAss e.result-of-RuleAR> 
+DelAss { 
+ t.restriction t.assignment = t.restriction;
+ Zero = Zero;
+} /* End of DelAss */
+
+/* ConjAs creates a conjugated assignment.
+   Here we use particular properties the meta-coding. 
+   See definition of the meta-coding transformation.
+*/
+* <ConjAs t.contraction> ==> t.assignment
+$ENTRY ConjAs {
+* We have to create a parenthesis which must be encoded 1+e.elev times
+* with respect to one level down because we transform an encoded expression
+* as well as our pattern which is a part of an encoded program.
+ (Ct t.e-vari':'('*' t.e-varj) e.e-varii) =  
+      (('*' <Times <Elev Of t.e-vari> '*'> t.e-varj) e.e-varii':'t.e-vari);
+
+ (Ct t.e-vari':'t.e-varii ('*' t.e-varj)) =  
+      (t.e-varii ('*' <Times <Elev Of t.e-vari> '*'> t.e-varj)':'t.e-vari);
+
+ (Ct t.var':'e.pattern) =  (e.pattern':'t.var);  
+      }
+
+/* RedElev decomposes a c-contraction with elevation into a sequence of
+   elementary contraction without elevation. The present version of Refal
+   does not allow variables with non-zero elevations. So we have to do
+   this decomposition every time whenever we have a contraction onto
+   an elevated variable ( parametr ). Sure a genuine meta-language
+   must allow the levated variables in patterns.
+   This function gives also a conjucted assinment to the c-contraction.
+*/
+* <RedElev t.contraction> ==> t.contraction ... t.assignment
+$ENTRY RedElev {
+ (Ct t.var ':' e.contr) = 
+      <ElevCon <Elev Of t.var> 
+               (Ct <RemElev t.var ':' e.contr (<ZeroElev>)>)> 
+               (As <ConjAs (Ct t.var ':' e.contr)>);
+ } /* End of RedElev */
+
+/* ElevCon: decomposition of a contraction. */
+* <ElevCon t.elev t.contraction> ==> t.contraction ... 
+ElevCon {
+ t.elev (Ct t.vari':'('*' t.varj) e.varii) = 
+                       (Ct t.vari':'('*' t.varj) e.varii) 
+                       <Times t.elev (Ct t.varj':' '*' t.varj)>;
+ t.elev (Ct t.vari':'t.varii ('*' t.varj)) = 
+                       (Ct t.vari':'t.varii ('*' t.varj)) 
+                       <Times t.elev (Ct t.varj':' '*' t.varj)>;
+ t.elev (Ct e.contraction) = (Ct e.contraction);
+ } /* End of ElevCon */
+
+/* RemElev sets elevation of a contraction to zero */ 
+* <RemElev e.contraction> ==> e.contraction
+$ENTRY RemElev {
+ (Var 'c' e.var) e.1 (e.zero) = (Var 'c' e.var) <RemElev e.1 (e.zero)>;
+ (Var s.t s.i e.elev) e.1 (e.zero) =
+                             (Var s.t s.i e.zero) <RemElev e.1 (e.zero)>;
+ ('*' (Var s.t s.i e.elev)) e.1 (e.zero) =
+                             ('*'(Var s.t s.i e.zero)) <RemElev e.1 (e.zero)>;
+ s.SYMBOL e.1 (e.zero) = s.SYMBOL <RemElev e.1 (e.zero)>;
+ /* empty */  (e.zero) = ;
+ } /* End of RemElev */
+
+* Repeat e.how-many times.
+Times {
+  (s.1 e.how-many) e.what = e.what <Times (e.how-many) e.what>;
+  () e.what = ;
+      }
+
+* RuleRR combines restrictions.
+* The list of restriction is ordered by time of creation of the restrictions.
+* Reducing use the property !
+* <RuleRR (Rs e.restriction) (Rs e.restriction')> ==> e.restriction''
+$ENTRY RuleRR { (Rs e.restr) (Rs e.restr1) = <RuleR (e.restr1) (e.restr)>;}
+RuleR { 
+ (e.R1) (t.1 e.R2) = <RemRt (e.R1) t.1>  <RuleR (e.R1) (e.R2)>;
+ (e.R1) () = e.R1;
+} /* End of RuleRR */
+
+/* RuleAA combines assignments. Simultanious substitution in an assignment.*/
+* <RuleAA t.assign-what  t.stack-where t.assign-where> 
+*                    ==> t.stack t.assignment
+$ENTRY RuleAA { 
+ t.ass-what (Stack t.top e.stack) (As e.ass-where) = 
+            (Stack t.top <SubsSt t.ass-what e.stack>) 
+            (As <SubsAs t.ass-what e.ass-where>); 
+* Driving over c-graph, the stack is fictive. 
+ t.ass-what (Stack ) (As e.ass-where) = 
+            (Stack ) 
+            (As <SubsAs t.ass-what e.ass-where>); 
+ t.ass-what (As e.ass-where) = 
+            (As <SubsAs t.ass-what e.ass-where>); 
+} /* End of RuleAA */
+
+/* Substitution in an assignment. The lists assignments are simultanious. */
+* <SubsAs t.assignment-what  e.assignment-where> ==> e.assignment
+$ENTRY SubsAs {
+  t.what (e.value':'t.var) e.where  =  
+             ( <Subs t.what e.value>':'t.var )  <SubsAs t.what e.where>;
+  t.what  /* empty */ = ; 
+} /* End of SubsAs */
+
+$ENTRY SubsConf {
+*1a. Applicative supercompilation.
+  t.what (Call s.id e.call) e.stack 
+        = <SubsSt t.what (Call <New Call> e.call)> <SubsConf t.what e.stack>;
+*1b. Applicative supercompilation.
+  t.what (Conf e.assign) = (Conf <SubsAs t.what e.assign>);
+*2. Lazy supercopilation.
+  t.what e.assign = <SubsAs t.what e.assign>; 
+} /* End of SubsConf */
+
+/* Substitution in a stack. */
+* <SubsSt t.assignment-what  e.stack> ==> e.stack
+$ENTRY SubsSt {
+  t.what (Conf e.bottom) = (Conf <SubsAs t.what e.bottom>);
+ 
+  (As (e.expr':'(Var 'h' 0 e.hvar))) 
+         (Call e.id (('!' (Fn s.name e.arg)':'t.var)':'t.h-var)) e.stack =
+   (Call e.id 
+       (('!' (Fn s.name <SubsAs (As (e.expr':'(Var 'h' 0 e.hvar))) e.arg>)':'t.var)
+   ':'t.h-var)) e.stack;
+
+/*
+  (As (e.expr':'(Var 'h' e.hvar))) 
+         (Call e.id (('!' (Fn s.name e.arg)':'t.var)':'t.h-var)) e.stack =
+   (Call e.id 
+       (('!' (Fn s.name <SubsAs (As (e.expr':'(Var 'h' e.hvar))) e.arg>)':'t.var)
+   ':'t.h-var)) e.stack;
+*/
+
+  t.what (Call e.id (('!' (Fn s.name e.arg)':'t.var)':'t.h-var)) e.stack =
+       (Call e.id (('!' (Fn s.name <SubsAs t.what e.arg>)':'t.var)':'t.h-var)) 
+       <SubsSt t.what e.stack>;
+  t.what  = ;
+} /* End of SubsSt */
+
+/* Substitution in an expression. */
+* <Subs t.assignment-what  e.expression-where> ==> e.expression
+$ENTRY Subs {
+ t.what e.where = <Cl-CVar <Subs1 t.what e.where>>; 
+}
+
+Subs1 {
+  t.what (Var 'c' e.var) e.where = (Var 'c' e.var) <Subs1 t.what e.where>;
+  t.what (Var e.var) e.where = 
+                             <ValueV (Var e.var) t.what> <Subs1 t.what e.where>;
+  t.what ('*' e.where1) e.where = 
+                            ('*' <Subs t.what e.where1>) <Subs1 t.what e.where>;
+                            
+* Generalization protection. There can be just trivial neighbouhood.
+  t.what ('!' (Fn Const__ (e.arg':'t.var1))':'t.var) e.where =
+           <Protect <Subs t.what e.arg>> <Subs1 t.what e.where>; 
+                    
+* Remove protection. There can be just trivial neighbouhood.
+  t.what ('!' (Fn UnConst__ (e.arg':'t.var1))':'t.var) e.where =
+           <UnProtect <Subs t.what e.arg>> <Subs1 t.what e.where>; 
+           
+  t.what ('!' (Fn s.func e.arg)':'t.var) e.where =    
+           ('!' (Fn s.func <SubsAs t.what e.arg>)':'t.var) <Subs1 t.what e.where>; 
+  t.what s.symbol e.where = s.symbol <Subs1 t.what e.where>;
+  t.what /* empty */ = ;
+} /* End of Subs */
+
+$ENTRY CombAss { 
+  (As e.assign1) (As e.assgn2) e.gr = 
+                 <CombAss (As <SubsAs (As e.assign1) e.assgn2>) e.gr>;
+  s.1 e.gr = s.1 <CombAss e.gr>;
+  t.term e.gr = t.term <CombAss e.gr>;
+              = ;
+} /* End of CombAss */
+
+$ENTRY DistrAs { 
+  e.branch (As e.assign1) '^' (Subgraph e.subgrs t.basics) =
+          e.branch '^' (Subgraph <DisAs (As e.assign1) e.subgrs> t.basics);
+
+  e.branch = e.branch;
+} /* End of DistrAs */
+
+
+DisAs { 
+  (As e.assign1) (As e.assgn2) (s.type e.subgr) e.subgrs, 
+  <CheckSb s.type>:True = 
+        <DisAs1 (As <SubsAs (As e.assign1) e.assgn2>) (s.type e.subgr)> 
+                          <DisAs (As e.assign1) e.subgrs>;
+  (As e.assign1) (Def (('!' (Fn s.fun-name t.assgn2)':'t.var)':'t.out)) e.subgrs  
+   = (Def (('!' (Fn s.fun-name <SubsAs (As e.assign1) t.assgn2>)':'t.var)':'t.out))  
+                          <DisAs (As e.assign1) e.subgrs>;
+  (As e.assign1) e.branch = e.branch;
+} /* End of DisAs */
+
+$ENTRY DisAs1 { 
+  t.assign (Node e.node t.restr (Stack e.stack) t.basics), 
+  <RuleAR t.assign t.restr>:
+  { t.new-restr t.assign1,  <SubsSt t.assign e.stack>: e.new-stack 
+       = <IdAss From Vars  <ListVar Of Situation e.new-stack>>
+         (Node e.node t.new-restr  (Stack e.new-stack) t.basics);
+   Zero = Zero;
+ };
+ 
+  t.assign (Begin (Node e.node)':'t.out End), 
+  <DisAs1 t.assign (Node e.node)>: 
+ { t.assign1 t.node1 = t.assign1 (Begin t.node1':'t.out End);
+   Zero = Zero;
+ };
+  t.assign e.basic =  t.assign e.basic;
+} /* End of DisAs1 */
+
+CheckSb {
+ Begin = True;
+ Basic = True;
+ Node = True;
+ s.type = False
+}
+
+*==========================================================================
+/* Found a part of a graph where the path t.path is finished.  
+* <Throw Path t.path From s.fun-name e.p-graph> == e.p-graph
+$ENTRY Throw { 
+ Path (s.br-name  e.path) From (Fork '+'(s.br-name e.branch) e.p-brs) =  
+                                        <Throw Path (e.path) From e.branch>;  
+
+ Path (s.br-name  e.path) From (Fork '+'(s.br-name1 e.branch) e.p-brs) =  
+                       <Throw Path (s.br-name  e.path) From (Fork e.p-brs)>;  
+
+ Path ((Ct e.contr) e.path) From (Ct e.contr1) e.p-graph,
+ <Equal (e.contr) (e.contr1)>:True = <Throw Path (e.path) From e.p-graph>;  
+
+ Path (s.fun-name e.path) From s.fun-name e.p-graph =  
+                                       <Throw Path (e.path) From e.p-graph>;  
+
+ Path () From e.p-graph = e.p-graph;
+} * End of Subs */
+
+* Temporary definition.
+* Remove those p-branches which demand the same decomposition. 
+* <Subtract Branches t.path From t.p-fork> == t.p-fork
+$ENTRY Subtract { 
+ Branches t.path From t.p-fork = 
+                      <Throw Branches <Subtr Branches t.path From t.p-fork>>;
+} /* End of Subtract */
+
+Subtr { 
+  Branches (e.path s.br-index) From t.p-fork = From t.p-fork;
+  Branches (e.path t.contr) From t.p-fork = 
+                             <Subtr Branches (e.path) From t.p-fork> t.contr;
+} /* End of Subtr */
+
+* Temporary definition. Remove the open variables.
+* <Throw Branches e.path From t.p-fork> == t.p-fork
+Throw { 
+  Branches From t.p-fork = ();
+  Branches From t.p-fork e.path = t.p-fork;
+} /* End of Throw */
+
+/*
+Subtr { 
+  Branches (e.path s.br-index) From t.p-fork = From t.p-fork;
+  Branches (e.path t.contr) From t.p-fork = 
+                             <Subtr Branches (e.path) From t.p-fork> t.contr;
+} /* End of Subtr * /
+
+* Temporary definition. Remove the open variables.
+* <Throw Branches e.path From t.p-fork> == t.p-fork
+Throw { 
+  Branches From ('+'(s.id e.path e.br) e.p-brs) e.path = 
+                                      <Throw Branches From (e.p-brs) e.path>; 
+  Branches From t.p-fork e.path = t.p-fork;
+} /* End of Throw */
+
+*==========================================================================
+
+/* Composition of contractions. */
+* <CompPatt t.patterns-where  t.contarction-what> ==> e.patterns
+*  Here t.patterns-where are simultaneous patterns.
+$ENTRY CompPatt {
+ t.patterns-where t.contraction-what = 
+          <CompPt t.patterns-where t.contraction-what No>;
+}
+
+$ENTRY CompPatt0 {
+ t.patterns-where t.contraction-what = 
+          <CompPt t.patterns-where t.contraction-what Def>;
+}
+
+CompPt {
+  ((Ct (Var s.type s.name e.elev) ':' e.patt) e.where) 
+  (Ct (Var s.type s.name e.elev1) ':' e.what) s.Fl = 
+              <ExComp (Var s.type s.name e.elev) (e.where) 
+                 <CmpPatt1 e.patt (Ct (Var s.type s.name e.elev1) ':' e.what) <DefFl s.Fl>>>;
+
+  ((Ct t.var ':' e.patt) e.where) t.what s.Fl = 
+                        <ExComp t.var (e.where) <CmpPatt1 e.patt t.what s.Fl>>;
+* The t.what contraction never was composed. It is a new pattern.
+  ()   t.what No = t.what;
+  ()   t.what Def = t.what;
+  ()   t.what SubsDef = t.what;
+  ()   t.what s.Subs-Redef = ;
+} /* End of CompPt */
+
+CmpPatt1 {
+ (Var s.type s.name e.elev) e.where 
+                              (Ct (Var s.type s.name e.elev1) ':' e.what) s.Fl 
+  = e.what <CmpPatt1 e.where (Ct (Var s.type s.name e.elev1) ':' e.what) <SubsFl s.Fl>>;
+
+ (Var e.var) e.where t.what s.Fl = (Var e.var) <CmpPatt1 e.where t.what s.Fl>;
+
+ ('*' e.where1) e.where t.what s.Fl = 
+                      <CompFl  ('*' <CmpPatt1 e.where1 t.what s.Fl>) e.where>;
+
+ s.symbol e.where t.what s.Fl = s.symbol <CmpPatt1 e.where t.what s.Fl>;
+ /* empty */ t.what s.Fl = t.what s.Fl;
+} /* End of CmpPatt1 */
+
+DefFl {
+ Def = Redef;
+ SubsDef = Redef;
+ s.Fl = s.Fl;
+}
+
+SubsFl {
+ Redef = Redef;
+ Def   = SubsDef;
+ SubsDef = SubsDef;
+ s.Fl  = Subs;
+}
+
+CompFl {
+('*' e.expr t.what s.Fl) e.where = ('*' e.expr) <CmpPatt1 e.where t.what s.Fl>;
+}
+
+ExComp {
+t.var (e.where) e.patt t.what s.Fl 
+         = (Ct t.var ':' e.patt) <CompPt (e.where) t.what s.Fl>;
+}
+
+*------------ 'c'-parametrs --------------------------------------------
+NewCVar {
+         = ;
+ e.const = (Var 'c' <New Var> e.const);
+}
+
+Cl-CVar {
+ e.1 (Var 'c' s.id1 e.const1) (Var 'c' s.id2 e.const2) e.2 =
+                       <Cl-CVar e.1 <NewCVar e.const1 e.const2> e.2>;
+* e.1 (Var 'c' s.id  /* [] */ ) e.2 = <Cl-Cvar e.1 e.2>;                     
+ e.1 = e.1;
+}
+
+
+Protect { e.expr = <Protect1 () e.expr>; }
+Protect1 {
+ t.const ('*' e.expr1) e.expr
+             = <ContProt t.const ('*' <Protect1 () e.expr1>) e.expr>;
+ (e.const) (Var 'c' s.id e.const1) e.expr
+             = <Protect1 (e.const e.const1) e.expr>;
+ (e.const) s.symbol e.expr = <Protect1 (e.const s.symbol) e.expr>;
+ t.const (Var e.var) e.expr
+             = <SetProt t.const> (Var e.var) <Protect1 () e.expr>;
+ t.const ('!' (Fn s.func e.arg)':'t.var) e.expr 
+            = <SetProt t.const> ('!' (Fn s.func <ProtAs e.arg>)':'t.var)
+              <Protect1 () e.expr>; 
+ t.const /* empty */ = <SetProt t.const>;
+}
+
+
+ContProt {
+ (e.const) ('*' (Var 'c' s.id e.const1)) e.expr
+          = <Protect1 (e.const (e.const1)) e.expr>;
+ (e.const) ('*' /* [] */ ) e.expr = <Protect1 (e.const ()) e.expr>;
+ t.const ('*' e.expr1) e.expr
+          = <SetProt t.const> ('*' e.expr1) <Protect1 () e.expr>;
+}
+
+ProtAs {
+ (e.expr':'t.var) e.assigns
+    = (<Protect e.expr>':'t.var) <ProtAs e.assigns>;
+    = ;                     
+}
+
+UnProtAs {
+ (e.expr':'t.var) e.assigns
+    = (<UnProtect e.expr>':'t.var) <UnProtAs e.assigns>;
+    = ;                     
+}
+
+SetProt {
+ () = ;
+ (e.const) = <NewCVar e.const>;
+}
+
+UnProtect {
+ ('*' e.expr1) e.expr
+             = ('*' <UnProtect e.expr1>) <UnProtect e.expr>;
+ (Var 'c' s.id e.const) e.expr = <Dn0 e.const> <UnProtect e.expr>;
+ s.symbol e.expr    = s.symbol <UnProtect e.expr>;
+ (Var e.var) e.expr = (Var e.var) <UnProtect e.expr>;
+ ('!' (Fn s.func e.arg)':'t.var) e.expr 
+            = ('!' (Fn s.func <UnProtAs e.arg>)':'t.var)
+              <UnProtect e.expr>; 
+ /* empty */ = ;
+}
+
+$ENTRY Nil { e.1 = ; }

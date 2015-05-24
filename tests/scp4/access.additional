@@ -1,0 +1,1013 @@
+* ACCESS.REF (scp4.ref)
+* version 2.10.99, new
+
+* $ENTRY FunName, RestAss, Equal, Equals, Fst, Second, ValueVar, ValueV, Elev;
+* $ENTRY Redef, DelDef, Self, IdAss, BsName,InputVar, TypeNd, IsPassive;
+* $ENTRY New, NewNode, NewInd, RestStk, Basics, Restr, InpFmt, HVars, NewHVar;
+* $ENTRY ClearR, CleanRs, ListVar, ElevExp, ElevExp1,Permit, Permit1, ZeroElev, DelRepS;
+* $ENTRY EqNode, SetType, IsSec, IsRecur,NameNd, NameBs,Found, PutBas, OutVar;
+* $ENTRY Prog, Config, FunPath, EqPath, IsPref;
+* $ENTRY Belong, Subset, IsConst, IsFlat, ClearTrm, ListVar1, IntSect, EmptyCVar;
+* $ENTRY MinElev, Infinit, ListPath, NewNd;  
+* $ENTRY GetBasics, GetPreparatory, GetUserSelf;  
+* $ENTRY GetOutFmt, GetOutFmt1, GetOutRst, GetOutVar, SelfOut, RedefOutVar;  
+* $ENTRY RenameAs, GetGraphF, GetExecutable, RmCVar, GetExtFunc;  
+
+* $INTERIOR NewCalls, MkCalls, MkBott, RedefIn, OutInd, ClAss, MkAss;
+* $INTERIOR ClearVar, ClearR1, ClPath;
+
+* $TEMPORARY ClearR, ClearVar, ClearTrm, ElevExp, Permit, GetGraph, ClAss;
+
+* basic.ref:
+$EXTRN SubsAs, Subs;
+
+* drive.ref:
+$EXTRN Dn0;
+
+* trace.ref:
+$EXTRN CurrFile, FOutput, Trace, Trace0, CommTrace;
+
+* key.ref:
+$EXTRN OutDir, InpDir;
+$EXTRN Length, Depth, CallDepth, Simplify, Transient, PutInHistory, Strategy, GoAhead;
+
+* Extract the function name from a call.
+* <FunName Of Call t.call> == s.fun-name
+$ENTRY FunName { 
+*1. Unitary call from a stack. 
+  Of Call (Call s.index (s.fun-name e.path) e.arg) = s.fun-name; 
+
+*2. Unitary configuration.
+  Of Call ('!' (Fn s.fun-name e.arg)':'t.var ) = s.fun-name;
+}
+
+* Extract the function path from a call.
+* <FunPath Of Call t.call> == t.path
+$ENTRY FunPath { 
+  Of Call (Call s.index t.path e.arg) = t.path; 
+}
+
+* Extract the restictions from a node and assignments from the stack's top
+* of the node.
+* <RestAss Of Node t.node> == t.c-restrictions t.c-stack t.c-assinments
+$ENTRY RestAss { 
+ Of Node 
+ (Node e.id-node (Rs e.restr) 
+  (Stack (Call e.id (('!' (Fn s.f e.arg)':'t.var)':'t.h-var)) e.stack) t.basics
+ ) = (Rs e.restr) 
+     (Stack (Call e.id (('!' (Fn s.f Place)':'t.var)':'t.h-var)) e.stack) 
+     (As e.arg);
+*     (As (e.arg':'<InputVar>));
+
+}
+
+$ENTRY InputVar { = (Var 'e' 1); }
+$ENTRY OutVar { = (Var 'e' <OutInd>); }
+OutInd { = 0; }
+
+* <RestStk Of Node t.node> == t.restrictions t.stack
+$ENTRY RestStk { 
+ Of Node (Node e.id-node t.restr t.stack t.basics) = t.restr t.stack;
+}
+
+* <EqNode t.node1 t.node2> == True | False
+$ENTRY EqNode { 
+ (Node s.id e.node1) (Node s.id e.node2) = True;
+ t.node1 t.node2 = False;
+}
+
+* <SetType Of Node t.node As s.type> == t.node 
+$ENTRY SetType { 
+  Of Node (Node s.index s.type0 e.node) As s.type = 
+                                               (Node s.index s.type e.node); 
+}
+
+* <IsSec Node t.node> == True | False 
+$ENTRY IsSec { 
+  Node (Node s.index Sec e.node) = True;
+  Node t.node = False;
+}
+
+* <IsRecur Node t.node> == True | False 
+$ENTRY IsRecur { 
+  Node (Node s.index Recur e.node) = True;
+  Node t.node = False;
+}
+
+* <NameNd t.node> == s.index 
+$ENTRY NameNd {  (Node s.index e.node) = s.index; }
+
+* <NameBs t.node> == s.index 
+$ENTRY NameBs {  (Basic s.index e.basic) = s.index; }
+
+* <TypeNd t.node> == s.index 
+$ENTRY TypeNd {  (Node s.index s.type e.node) = s.type; }
+
+* <Found Node t.node By s.index> == True | False
+$ENTRY Found { 
+  Node (Node s.index e.node) By s.index = True;
+  Node t.node By s.index = False;
+}
+
+* <Basics From Node t.node> == t.basics
+$ENTRY Basics { 
+ From Node (Node e.id-node t.restr t.stack t.basics) = t.basics;
+}
+
+* <PutBas e.basics Inside t.node> == t.node
+$ENTRY PutBas { 
+ Info (Ready e.basics) Inside t.node = <PutBas e.basics Inside t.node>; 
+ Info e.info Inside t.node = t.node; 
+ e.basics Inside (Node e.node (Basics e.basics1)) 
+*+   = (Node e.node (Basics <ClearTerms e.basics1 e.basics <GetTopBasics>>));
+   = (Node e.node (Basics e.basics1 e.basics));
+}
+
+$ENTRY GetTopBasics { = <Cp TopBasics>; }
+$ENTRY NewTopBasics { 
+ e.basics = <Br TopBasics '=' <ClearTerms <Dg TopBasics> e.basics>>;
+}
+
+* <BsName And OutFormat  t.basic> == s.basic-name t.output-format;
+$ENTRY BsName { 
+  And OutFormat (s.name e.type t.input-format t.output-format) =
+                                         s.name e.type t.output-format;
+}
+
+* Extract the term from the first position of a pattern in a contraction.
+$ENTRY Fst {
+ Brack  From Pattern (Ct t.e-vari ':' ('*' t.e-varj) e.e-varii) = t.e-varj;
+ s.Term From Pattern (Ct t.e-vari ':' t.termj e.e-varii) = t.termj;
+ Term From Contraction (Ct t.e-vari ':' e.pattern) = t.e-vari;
+} /* End of Fst */
+
+* Extract the term from the second position of a pattern in a contraction.
+$ENTRY Second {
+ Brack  From Pattern (Ct t.e-vari ':' t.e-varii ('*' t.e-varj)) = t.e-varj;
+ s.Term From Pattern (Ct t.e-vari ':' t.e-varii t.termj) = t.termj;
+} /* End of Second */
+
+/* The value of a variable in an assignment.
+   The value is defined as the variable is equal to itself
+   if this variable was not defined in the assignment.
+*/
+* <ValueVar t.var t.assignment> == (t.Possible-definition e.Value)
+$ENTRY ValueVar {
+*1. Here e.elevi == e.elevj. Variables with the same name cannot be different. 
+   (Var s.type s.i e.elevi) 
+   (As (e.valuei':'(Var s.type s.i e.elevj)) e.ass) = (() e.valuei);
+
+*2. Variables are different. 
+   t.vari (As (e.valuej':'t.varj) e.ass) = <ValueVar t.vari (As e.ass)>; 
+
+*3. If absent, its value is itself. Include definition.
+   t.vari (As /* empty */ ) = ( ((Def (t.vari':'t.vari) )) t.vari );
+} /* End of ValueVar */
+	
+* <ValueV t.var t.assignment> ==> e.expression
+$ENTRY ValueV { 
+  t.var t.assignment = <Value <ValueVar t.var t.assignment>>;
+} /* End of ValueV */
+
+Value { 
+  (t.Possible-definition e.value) = e.value;
+} /* End of Value */
+
+
+$ENTRY ZeroElev {  = ;} /* End of ZeroElev */
+
+* Define a new variable or redefine an old one.
+* <Redef t.def-assign t.assignment> ==> t.assignment
+$ENTRY Redef { 
+ t.def-assign (As e.assignment) = (As <RedefIn t.def-assign e.assignment>);
+} /* End of Redef */
+
+RedefIn { 
+ (e.value':'(Var s.t s.i e.elevi)) (e.value1':'(Var s.t s.i e.elevj)) e.assign  
+                              = (e.value':'(Var s.t s.i e.elevi)) e.assign;
+ t.assigni t.assignj e.assign = t.assignj <RedefIn t.assigni e.assign>;
+ t.assigni = t.assigni;
+} /* End of RedefIn */
+
+$ENTRY Redefs { 
+ t.def-assign (As e.assignment) = (As <RedefsIn t.def-assign e.assignment>);
+} /* End of Redefs */
+
+* Temporary definition.
+RedefsIn { 
+ (As e.1 (e.value':'(Var s.t s.i e.elevi)) e.2) 
+ (e.value1':'(Var s.t s.i e.elevj)) e.assign
+           = (e.value':'(Var s.t s.i e.elevi)) <RedefsIn (As e.1 e.2) e.assign>;
+ (As e.1) t.assignj e.assign = t.assignj <RedefsIn (As e.1) e.assign>;
+ (As e.1) = e.1;
+} /* End of Redefs */
+
+* Delete a variable in a list of assignments.
+* <DelDef t.var t.assignment> ==> t.assignment
+$ENTRY DelDef { 
+ t.var (As e.assignment) = (As <DelIn t.var e.assignment>);
+} /* End of DelDef */
+
+DelIn { 
+ (Var s.t s.i e.elevi) (e.value':'(Var s.t s.i e.elevj)) e.assign = e.assign;
+ t.vari t.assignj e.assign = t.assignj <DelIn t.vari e.assign>;
+} /* End of DelIn */
+
+$ENTRY RedefOutVar {
+ t.new-var (Output t.restr (e.out-expr ':'t.var)) 
+                          = (Output t.restr (e.out-expr ':' t.new-var));
+}
+
+* The Self of a variable. Used in separating a residual function.
+$ENTRY Self { 
+  (Var 's' s.i e.elevi) = (Var 's' s.i e.elevi);
+  (Var 'e' s.i e.elevi) = (Var 'e' s.i e.elevi);
+  (Var 't' s.i e.elevi) = (Var 't' s.i e.elevi);
+  (Output t.restr (e.out-expr ':'t.var)) = <Self t.var>;
+ }
+
+* The self-output.
+$ENTRY SelfOut { 
+  (Output t.restr ((Expectant)':'t.var)) t.out-var = <Self t.out-var>;
+  (Output t.restr ((No)':'t.var)) t.out-var = <Self t.out-var>;
+  (Output t.restr (e.out-expr ':'t.var)) t.out-var = e.out-expr;
+  (Output t.restr (e.out-expr ':'t.var)) 
+               = <SelfOut (Output t.restr (e.out-expr ':'t.var)) t.var>;
+  (Basic e.basic (Output e.fmt) ':' t.out-var) 
+               = <SelfOut (Output e.fmt) t.out-var>;
+ }
+
+* <SelfOutNew t.outfmt> ==> e.assigns
+$ENTRY SelfOutNew { 
+  (Output t.restr ((Expectant)':'t.var)) t.out-var = (<Self t.out-var>':'t.out-var);
+  (Output t.restr ((No)':'t.var)) t.out-var = (<Self t.out-var>':'t.out-var);
+  (Output t.restr (e.out-expr ':'t.var)) t.out-var 
+            = <RenameAs <ListVar Of Expr e.out-expr>>;
+  (Output t.restr (e.out-expr ':'t.var)) 
+            = <SelfOutNew (Output t.restr (e.out-expr ':'t.var)) t.var>;
+
+
+  (Basic e.basic (Output t.restr ((Expectant)':'t.var)) ':' t.out-var) 
+            = (<Self t.out-var>':'t.out-var)
+              (Basic e.basic (Output t.restr ((Expectant)':'t.var)) ':' t.out-var);
+  (Basic e.basic (Output t.restr ((No)':'t.var)) ':' t.out-var) 
+            = (<Self t.out-var>':'t.out-var)
+              (Basic e.basic (Output t.restr ((No)':'t.var)) ':' t.out-var);
+  (Basic e.basic (Output t.restr (e.out-expr':'t.var)) ':' t.out-var),
+  <RenameAs <ListVar Of Expr e.out-expr>>: e.assign = e.assign
+           (Basic e.basic (Output t.restr 
+                            (<Subs (As e.assign) e.out-expr>':'t.var)) ':' t.out-var);
+}
+
+$ENTRY SelfOutFmt { 
+  (Output t.restr ((Expectant)':'t.var)) 
+                    = (Output t.restr ((Expectant)':'t.var)); 
+  (Output t.restr ((No)':'t.var)) =  (Output t.restr ((No)':'t.var)) ;
+* Temporary definition. Here must be substitution into the restriction.
+  (Output t.restr (e.out-expr ':'t.var)) 
+            = (Output (Rs) (<Subs (As <RenameAs <ListVar Of Expr e.out-expr>>)
+                                    e.out-expr> ':' t.var));
+  (Basic s.id Identety e.basic (Output e.fmt)) 
+            = (Basic s.id Identety e.basic (Output e.fmt));
+  (Basic s.id Project e.basic (Output e.fmt)) 
+            = (Basic s.id Project e.basic (Output e.fmt));
+  (Basic e.basic (Output e.fmt)) 
+            = (Basic e.basic <SelfOutFmt (Output e.fmt)>);
+}
+
+$ENTRY RenameAs {
+ (Var s.type s.id e.elev) e.vars 
+       = ((Var s.type <New Var> e.elev)':'(Var s.type s.id e.elev)) 
+         <RenameAs e.vars>;
+       =  
+}
+
+$ENTRY SelfVar { (Var s.t s.i e.elevi) = (Var s.t <New Var> e.elevi); }
+
+* Extract the elevation of a variable.
+* <Elev Of t.var> ==> (e.elavation)
+$ENTRY Elev {
+ Of (Var 'c' s.i e.elev) = ('*');
+ Of (Var s.t s.i e.elev) = (e.elev);
+ } /* End of Elev */
+
+* Count the elevation of an expression.
+* <ElevEx e.expr> ==> e.elavation
+$ENTRY ElevExp {
+* e.expr = ;
+ e.expr = <ElevExp2 ElevExp (<Infinit>) e.expr>;
+}
+
+$ENTRY ElevExp1 {
+* e.expr = ;
+ e.expr = <ElevExp2 ElevExp1 (<Infinit>) e.expr>;
+}
+
+ElevExp2 {
+ s.Fl t.elev s.1 e.expr = <ElevExp2 s.Fl t.elev e.expr>;
+ s.Fl t.elev (Var 'c' s.id e.const) e.expr = <ElevExp2 s.Fl t.elev ('*') e.expr>;
+ s.Fl t.elev (Var s.type s.id e.elev1) e.expr 
+                 = <ElevExp2 s.Fl (<MinElev1 s.Fl t.elev (e.elev1)>) e.expr>;
+ s.Fl t.elev ('*' e.expr1) e.expr 
+                   = <ElevExp2 s.Fl <Ast t.elev () (e.expr1)> e.expr>;
+* Temporary definition.
+ s.Fl t.elev ('!' (Fn t.fname e.arg1)':'t.var) e.expr 
+                   = <ElevExp2 s.Fl t.elev t.var e.expr>;
+
+* Just for CompExpr-Embedd.
+ ElevExp1 t.elev (e.expr1) e.expr = <ElevExp2 ElevExp1 t.elev e.expr1 e.expr>;
+ s.Fl (e.elev) = e.elev;
+}
+
+* <Ast t.elevation () (e.expr)> ==> (e.elavation) e.expr
+Ast {
+ t.elev (e.ast) ('*' e.expr) =  <Ast t.elev (e.ast '1') (e.expr)>;
+ t.elev t.ast (e.expr) = (<MinElev t.elev t.ast>) e.expr;
+}
+
+* <MinElev e.expr> ==> e.elavation
+* Our structures are not correct inside the embedding.
+* That is a reason why we cheks unarity.
+MinElev1 {
+ ElevExp1 (e.1) (e.2), 
+ <IsUnary e.2>: { True = <MinElev (e.1) (e.2)>;
+                  False = ; };
+ s.Fl (e.1) (e.2) = <MinElev (e.1) (e.2)>;
+}
+
+$ENTRY MinElev {
+ ('1' e.1) ('1' e.2) = '1' <MinElev (e.1) (e.2)>;
+ (e.1) () = ;
+ () (e.2) = ;
+}
+
+IsUnary {
+ '1' e.2 = <IsUnary e.2>;
+   = True;
+  e.2 = False;
+}
+
+* <Infinit> ==> e.elavation
+$ENTRY Infinit {
+*  = '11111';
+  = '11';
+}
+
+* Temporary definition.
+* e.elev1 >= e.elev2
+* <Permit (e.elev1) e.elev2> ==> True | False
+$ENTRY Permit {
+ (e.elev1) e.elev2 = <IsPref (e.elev2) (e.elev1)>;
+}
+
+* Just for CompExpr-Embedd.
+$ENTRY Permit1 {
+ (e.elev1) e.elev2, 
+ <IsUnary e.elev1>: True, <IsUnary e.elev2>: True 
+            = <Permit (e.elev1) e.elev2>;
+ (e.elev1) e.elev2 = True;
+ 
+}
+
+* New index of an object s.name (e.g. variable), or configuration number.
+* <New s.name> ==> s.number
+*  s.name ::= Node | Call | Var |
+$ENTRY New {
+*1. Just user's generalization.
+ Elevation = ;
+ 
+ s.name, <Dg s.name>: s.number
+         = s.number <Br s.name '=' <+ s.number 1>>
+}
+
+* <NewNode t.restriction t.basics e.stack> == t.node
+$ENTRY NewNode { 
+ From Exprs t.restriction t.basics t.paths e.bottomless t.outvar-conf =
+         (Node <New Node> Active t.restriction 
+               (Stack <NewCalls t.paths e.bottomless t.outvar-conf>) t.basics);
+
+ t.restriction t.basics (Stack (Conf e.expr)) = 
+        (Node <New Node> Passive t.restriction (Stack (Conf e.expr)) t.basics);
+
+ t.restriction t.basics (Stack e.stack) = 
+         (Node <New Node> Active t.restriction (Stack e.stack) t.basics);
+
+ t.restriction t.basics t.call e.bottomless t.bottom  = /*<Prout '111'>*/
+         (Node <New Node> Active t.restriction 
+               (Stack t.call e.bottomless t.bottom) t.basics);
+
+ t.restriction t.basics t.bottom  = /*<Prout '222'>*/
+         (Node <New Node> Passive t.restriction  (Stack t.bottom) (Basics));
+ } /* End of NewNode */
+
+* <NewNd t.restriction t.basics e.stack> == t.node
+$ENTRY NewNd { 
+  t.restriction t.basics (Stack e.stack),
+  <ListVar Of Situation e.stack>: e.listvar =
+       <NewNode <ClearR t.restriction e.listvar> t.basics (Stack e.stack)>;
+
+  t.restriction t.basics e.stack,
+  <ListVar Of Situation e.stack>: e.listvar =
+       <NewNode <ClearR t.restriction e.listvar> t.basics e.stack>;
+}
+
+
+* <NewInd To Variable t.var> == t.var
+$ENTRY NewInd { 
+ To Variable (Var s.type s.name e.elev) = (Var s.type <New Var> e.elev);
+ To Output (Output t.restr ((Expectant)':'t.out-var)) =
+                             (Output t.restr ((Expectant)':'t.out-var));
+ To Output (Output t.restr ((No)':'t.var)) = (Output t.restr ((No)':'t.var));
+* Temporary definition. Restriction has been taken into account.  
+ To Output (Output t.restr (e.expr':'t.out-var)) =
+           (Output (Rs) (<NewInd To Expr e.expr> ':'t.out-var));
+ To Expr (Var e.var) e.expr = 
+          <NewInd To Variable (Var e.var)> <NewInd To Expr e.expr>;
+ To Expr ('*' e.expr1) e.expr = 
+          ('*' <NewInd To Expr e.expr1>) <NewInd To Expr e.expr>;
+ To Expr s.1 e.expr = s.1 <NewInd To Expr e.expr>;
+ To Expr  = ;
+ } /* End of NewInd */
+
+* <NewCalls t.paths e.bottomless-expr t.outvar> == e.stack
+NewCalls { 
+ t.paths e.bottomless t.outvar 
+                          = <MkBott <MkCalls t.paths e.bottomless> t.outvar>;
+ } /* End of NewCalls */
+
+* <MkCalls t.paths e.bottomless-expr> == e.bottomless
+$ENTRY MkCalls { 
+ ((s.fname e.path) e.paths) 
+ ('*' ('!' (Fn s.fname e.arg)':'t.var) ) e.bottomless = 
+         (Call <New Call> (s.fname e.path) 
+               (('!' (Fn s.fname e.arg)':'t.var)':'<NewHVar t.var>) )
+         <MkCalls (e.paths) e.bottomless>;
+
+ ()  = ;
+ } /* End of MKCalls */
+
+$ENTRY MkCls1 { 
+ ((Call s.id (s.fname e.path) (e.fun':'t.h-var)) e.calls) 
+ ('*' ('!' (Fn s.fname e.arg)':'t.var) ) e.bottomless = 
+         (Call <New Call> (s.fname e.path) 
+               (('!' (Fn s.fname e.arg)':'t.var)':'t.h-var) )
+         <MkCls1 (e.calls) e.bottomless>;
+
+ (e.calls)  = ;
+ } /* End of MKCalls */
+
+* <MkBott e.bottomless t.outvar> == e.bottomless t.bottom
+MkBott { 
+ e.bottomless (Conf e.conf) = e.bottomless (Conf e.conf);
+
+ e.bottomless (Call e.path (t.call ':'t.hvar)) (Var e.outvar) =
+          e.bottomless  (Call e.path (t.call ':'t.hvar)) 
+                        (Conf (t.hvar':' (Var e.outvar)));
+ } /* End of MkBott */
+
+* Equality of two expressions.
+* <Equal (e.expr1) (e.expr2)> == True
+*                             == False
+$ENTRY Equal { 
+ (s.1 e.expr1) (s.1 e.expr2) = <Equal (e.expr1) (e.expr2)>;
+*- ((Var 'c' s.id e.1) e.expr1) ((Var 'c' s.id e.2) e.expr2) 
+*-                                 = <Equal (e.1 e.expr1) (e.2 e.expr2)>;
+ ((Var 'c' s.id e.1) e.expr1) (e.expr2) 
+                                 = <Equal (e.1 e.expr1) (e.expr2)>;
+ (e.expr1) ((Var 'c' s.id e.2) e.expr2) 
+                                 = <Equal (e.expr1) (e.2 e.expr2)>;
+ ((e.1) e.expr1) ((e.2) e.expr2) = <Equal (e.1 e.expr1) (e.2 e.expr2)>;
+ () () = True;
+ (e.expr1) (e.expr2) = False;
+}
+
+* A first expression is a prefix of a second one.
+* <IsPref (e.expr1) (e.expr2)> == True
+*                             == False
+$ENTRY IsPref { 
+ (s.1 e.expr1) (s.1 e.expr2) = <IsPref (e.expr1) (e.expr2)>;
+ ((e.1) e.expr1) ((e.2) e.expr2),
+  <Equal (e.1) (e.2)>: { True = <IsPref (e.expr1) (e.expr2)>;
+                         False = False; };
+ () (e.expr2) = True;
+ (e.expr1) (e.expr2) = False;
+}
+
+* Equality of two paths.
+* <Equal t.path1 t.path2> == True
+*                         == False
+$ENTRY EqPath { 
+* These two cases: we stop on the begin of the first branch in the first
+* branching ==== we stop on the begin of the function. 
+ (s.Fun s.index-first-branch) (s.Fun) = True;
+ (s.Fun) (s.Fun s.index-first-branch) = True;
+
+ t.path1 t.path2 = <Equal t.path1 t.path2>;
+}
+
+*  Test whether all terms in a list equal one to another.
+*  <Equals e.list> ==> True | False 
+$ENTRY Equals { 
+ s.symb = True; 
+ t.term = True; 
+ s.sumb s.symb e.list = <Equals s.symb e.list>;
+ t.term t.term1 e.list, <Equal t.term t.term1 >:True = <Equals t.term e.list>;
+ e.outs = False; 
+}
+
+* Get variable's list from a situation.
+* <ListVar Of s.where e.situation> ==> e.var-list  
+$ENTRY ListVar { 
+ Of s.where e.expr = <ClearVar <ListVar1 Of s.where e.expr>>;
+}
+
+$ENTRY ListVar1 { 
+ Of Situation (Call e.id (t.call':'t.hvar)) e.stack = 
+                  <ListVar1 Of Expr t.call> <ListVar1 Of Situation e.stack>;
+ Of Situation (Conf (e.conf':'t.out-var)) = <ListVar1 Of Expr e.conf>;  
+ Of Situation  = ;  
+
+ Of Stack e.stack = <ListVar1 Of Situation e.stack>;
+
+ Of Expr (Var 'h' e.var) e.expr = <ListVar1 Of Expr e.expr>;
+ Of Expr (Var 'c' e.var) e.expr = <ListVar1 Of Expr e.expr>;
+ Of s.Expr (Var s.type e.var) e.expr = 
+             (Var s.type e.var) <ListVar1 Of s.Expr e.expr>;
+
+ Of ExprUnFunc ('!' (Fn s.f (e.expr1':'t.var1) e.arg)':'t.var) e.expr = 
+             (Var 'e' <New Var>) <ListVar1 Of ExprUnFunc e.expr>; 
+
+ Of s.Expr ('!' (Fn s.f (e.expr1':'t.var1) e.arg)':'t.var) e.expr = 
+             <ListVar1 Of s.Expr e.expr1 ('!' (Fn s.f e.arg)':'t.var) e.expr>; 
+ Of s.Expr ('!' (Fn s.f)':'t.var) e.expr = <ListVar1 Of s.Expr e.expr>; 
+ Of s.Expr ('*' e.expr1) e.expr = <ListVar1 Of s.Expr e.expr1 e.expr>;
+ Of s.Expr (Expectant) e.expr = <ListVar1 Of s.Expr e.expr>;
+ Of s.Expr (No) e.expr = <ListVar1 Of s.Expr e.expr>;
+ Of s.Expr s.1 e.expr = <ListVar1 Of s.Expr e.expr>;
+ Of s.Expr  = ;
+
+}
+
+* Get path's list from a part of a stack.
+* <ListPath  e.bottomless-stack> ==> e.path-list  
+$ENTRY ListPath { 
+ (Call s.index (s.fun-name e.path) e.arg) e.stack 
+                                   = (s.fun-name e.path) <ListPath e.stack>; 
+                                   = ;
+}
+
+$ENTRY ClearVar { 
+ e.vars = <ClearTrm e.vars>;
+}
+
+
+* Temporary definition.
+$ENTRY ClearTerms { 
+ e.1 t.term e.2 t.term e.3 = e.1 <ClearTerms t.term e.2 e.3>;
+ e.1 = e.1;
+}
+
+
+* Temporary definition.
+$ENTRY ClearTrm { 
+ t.term e.2 = t.term <ClearVar <ClearT1 t.term e.2>>;
+ e.1 = e.1;
+}
+
+ClearT1 { 
+ t.term t.term1 e.2 = <ClearT11 (<Equal t.term t.term1>) t.term t.term1 e.2>;
+ t.term = ;
+}
+
+ClearT11 { 
+ (True) t.term t.term1 e.2 = <ClearT1 t.term e.2>;
+ (False) t.term t.term1 e.2 = t.term1 <ClearT1 t.term e.2>;
+}
+
+
+* Temporary definition.
+* <ClearR t.restriction e.listvar> ==> t.restriction;
+$ENTRY ClearR { 
+ (Rs e.restriction) e.varlist = (Rs <ClearR1 (Rs e.restriction) e.varlist>); 
+}
+
+/*+
+ClearR1 { 
+ (Rs (s.SYMBOL '#' t.var) e.restriction) e.1 t.var e.2 = 
+            (t.var '#' s.SYMBOL) <ClearR1 (Rs e.restriction) e.1 t.var e.2>; 
+ (Rs (t.var '#' s.SYMBOL) e.restriction) e.1 t.var e.2 = 
+            (t.var '#' s.SYMBOL) <ClearR1 (Rs e.restriction) e.1 t.var e.2>; 
+
+ (Rs (t.var1 '#' t.var2) e.restriction) e.1 t.var1 e.2 = 
+       <ClearR1 Second (Rs (t.var1 '#' t.var2) e.restriction) e.1 t.var1 e.2>; 
+ Second (Rs (t.var1 '#' t.var2) e.restriction) e.1 t.var2 e.2 = 
+       (t.var1 '#' t.var2) <ClearR1 (Rs e.restriction) e.1 t.var2 e.2>; 
+
+ (Rs t.restr e.restriction) e.1 = <ClearR1 (Rs e.restriction) e.1>; 
+ Second (Rs t.restr e.restriction) e.1 = <ClearR1 (Rs e.restriction) e.1>;
+ (Rs ) e.1 = ;
+}
+*/
+
+ClearR1 { 
+ (Rs (s.SYMBOL '#' t.var) e.restriction) e.vars = 
+            <ClearR2 <Belong t.var To e.vars> 
+                     (Rs (t.var '#' s.SYMBOL) e.restriction) e.vars>; 
+ (Rs (t.var '#' s.SYMBOL) e.restriction) e.vars = 
+            <ClearR2 <Belong t.var To e.vars> 
+                     (Rs (t.var '#' s.SYMBOL) e.restriction) e.vars>; 
+
+ (Rs (t.var1 '#' e.expr) e.restriction) e.vars = 
+            <ClearR2 <Belong t.var1 To e.vars> 
+                     (Rs (t.var1 '#' e.expr) e.restriction) e.vars>; 
+ (Rs ) e.1 = ;
+}
+
+ClearR2 { 
+ True (Rs (e.var1 '#' (e.var2)) e.restriction) e.vars = 
+            <ClearR2 Second <Belong (e.var2) To e.vars> 
+                     (Rs (e.var1 '#' (e.var2)) e.restriction) e.vars>; 
+
+ True (Rs t.rest1 e.restriction) e.vars = 
+            t.rest1 <ClearR1 (Rs e.restriction) e.vars>; 
+ False (Rs t.rest1 e.restriction) e.vars = <ClearR1 (Rs e.restriction) e.vars>; 
+
+ Second True (Rs t.rest1 e.restriction) e.vars = 
+            t.rest1 <ClearR1 (Rs e.restriction) e.vars>; 
+ Second False (Rs t.rest1 e.restriction) e.vars = 
+                    <ClearR1 (Rs e.restriction) e.vars>; 
+}
+
+
+* Temporary definition.
+$ENTRY CleanRs { 
+ e.expr = e.expr;
+}
+
+$ENTRY ClPath {
+* A previous branch has no successful contraction.
+* s.fun e.path s.id-br = s.fun e.path; 
+* e.path = e.path; 
+
+ e.path (e.contr) = <ClPath e.path>;  
+ e.path = e.path; 
+}
+
+$ENTRY ClPath1 {
+* A previous branch has no successful contraction.
+* s.fun e.path s.id-br = s.fun e.path; 
+* e.path = e.path; 
+
+ e.path (e.contr) = <ClPath1 e.path> (e.contr);  
+ e.path s.id-br = s.id-br; 
+}
+
+* Delete repeated symbols.
+* <DelRepS e.symbols> == e.symbols
+$ENTRY DelRepS {  
+ s.D s.D e.1 = <DelRepS s.D e.1>;
+ s.D s.Q e.1 = s.Q <DelRepS s.D e.1>;
+ s.D = ;
+ }
+
+*  <Restr Of Basic t.basic> == t.restriction
+$ENTRY Restr { 
+ Of Basic (s.name e.type (Input t.restr e.format) t.outfmt) = t.restr;
+ Of Basic t.basic = (Rs );
+ Of Node  (Node e.node t.restr t.stack t.basics) = t.restr;
+}
+
+* <InpFmt t.basic> == (e.bottomless-stack)
+$ENTRY InpFmt { 
+ Of Basic (s.name e.type (Input t.restr (e.stack)) t.outfmt) = (e.stack);
+}
+
+* <HVars Of Call t.call> == t.outvar t.hvar
+$ENTRY HVars { 
+ Of Call (Call e.id (('!' (Fn s.f e.arg)':'t.var)':'t.hvar)) = t.var t.hvar;
+}
+
+* <NewHVar t.var> == t.hvar
+$ENTRY NewHVar { 
+* (Var s.type s.name e.elev)  = (Var 'h' <New Var> e.elev);
+ (Var s.type s.name e.elev)  = (Var 'h' <OutInd> e.elev);
+}
+
+$ENTRY IdAss {  
+ From Stack (Stack e.stack) = (As <ClAss <MkAss e.stack>>);
+ From Vars e.vars = (As <ClAss <MkAss From Expression e.vars>>);
+ From Vars1 e.vars = <ClAss <MkAss From Expression e.vars>>;
+  = (As Identety); 
+}
+
+MkAss {  
+ (Call e.id (t.call':'t.hvar)) e.stack = 
+                              <MkAss From Expression t.call> <MkAss e.stack>;
+ (Conf (e.conf':'t.out-var)) =  <MkAss From Expression e.conf>; 
+
+ From Expression  ('!' (Fn s.f (e.expr1':'t.var1) e.arg)':'t.var) e.expr = 
+         <MkAss From Expression  ('!' (Fn s.f e.arg)':'t.var) e.expr1 e.expr>; 
+ From Expression  ('!' (Fn s.f )':'t.var) e.expr = 
+                                              <MkAss From Expression  e.expr>; 
+
+
+ From Expression  ('*' e.expr1) e.expr = 
+                                      <MkAss From Expression e.expr1 e.expr>;
+ From Expression  (Var 'h' e.var) e.expr = <MkAss From Expression e.expr>;
+ From Expression  (Var 'c' e.var) e.expr = <MkAss From Expression e.expr>;
+ From Expression  (Var s.type e.var) e.expr = 
+     ((Var s.type e.var)':'(Var s.type e.var)) <MkAss From Expression e.expr>;
+ From Expression  s.1 e.expr = <MkAss From Expression e.expr>;
+ From Expression  = ;
+}
+
+/*+
+* Temporary definition.
+ClAss {  
+ e.X (e.value':'(Var s.type s.name e.var)) 
+ e.Y (e.value':'(Var s.type s.name e.var)) e.Z =
+                  <ClAss e.X (e.value':'(Var s.type s.name e.var)) e.Y e.Z>;
+ e.assignments = e.assignments;
+}
+*/
+
+$ENTRY ClAss {  
+ e.assignments = <ClearTrm e.assignments>;
+}
+
+
+* <IsPassive e.expr> == True | False
+$ENTRY IsPassive {
+  s.x    e.expr = <IsPassive e.expr>;
+  (Var e.var) e.expr = <IsPassive e.expr>;
+  ('*' e.expr1) e.expr = <IsPassive e.expr1 e.expr>;
+  ('!' e.call)  e.expr = False;
+         = True;
+} /* End of IsPassive */
+
+* The first set is subset of the second.
+* <Subset e.set1 (e.set)> == True | False
+$ENTRY Subset { 
+              (e.set) = True;
+ s.1 e.names1 (e.names) , <Belong s.1 To e.names> : True
+           = <Subset e.names1 (e.names)>;
+ t.1 e.terms1 (e.terms) , <Belong t.1 To e.terms> : True
+           = <Subset e.terms1 (e.terms)>;
+ e.xxx = False;
+}
+
+* Intersection of two sets.
+* <IntSect (e.set1) (e.set2)> == e.set3
+$ENTRY IntSect { 
+ ()  (e.set2) = ;
+ (e.set1)  () = ;
+ (s.1 e.set1) (e.set2) , <Belong s.1 To e.set2>: 
+         { True  = s.1 <IntSect (e.set1) (e.set2)>;
+           False = <IntSect (e.set1) (e.set2)>;};
+ (t.1 e.set1) (e.set2) , <Belong t.1 To e.set2>: 
+         { True  = t.1 <IntSect (e.set1) (e.set2)>;
+           False = <IntSect (e.set1) (e.set2)>;};
+}
+
+/*  Test: A symbol belongs to a set.
+* <Belong s.symbol To e.set> == True | False
+$ENTRY Belong { 
+ s.1 To s.1 e.names = True;
+ s.1 To s.2 e.names = <Belong s.1 To e.names>;
+ t.1 To t.2 e.names, <Equal t.1 t.2>: True = True;
+ t.1 To t.2 e.names = <Belong t.1 To e.names>;
+ e.xxx = False;
+ }
+*/
+
+* Test: A term belongs to a set.
+* <Belong t.term To e.set> == True | False
+$ENTRY Belong { 
+ s.1 To s.1 e.names = True;
+ s.1 To s.2 e.names = <Belong s.1 To e.names>;
+
+* We embrace the call to Equal to have more tighter generalization.
+* That is redundant when output formats will be calculated. 
+ (Var s.t s.id e.var1) To e.2 (Var s.t s.id e.var2) e.names = True;
+ t.1 To t.2 e.names = <Belong1 (<Equal t.1 t.2>) t.1 To t.2 e.names>;
+ e.xxx = False;
+ }
+
+Belong1 { 
+ (True) t.1 To t.2 e.names = True;
+ (False) t.1 To t.2 e.names = <Belong t.1 To e.names>;
+ }
+
+* Test: A expression is an object expression.
+* <IsConst e.expression> == True | False
+$ENTRY IsConst { 
+ (Var 'c' e.var) e.expr = <IsConst e.expr>;
+ (Var e.var) e.expr = False;
+ ('*' e.expr1) e.expr = <IsConst e.expr1 e.expr>;
+ (Expectant)   e.expr = False;
+ (No)          e.expr = False;
+ s.symbol      e.expr = <IsConst e.expr>;
+                      =  True;
+ }
+
+$ENTRY EmptyCVar {
+ (Var 'c' s.id /* [] */) = ;
+ (Var 'c' s.id e.exp), <New Var>:s.id1 = (Var 'c' s.id1 e.exp);
+  = ;
+ e.exp, <New Var>:s.id1 = (Var 'c' s.id1 e.exp);
+}
+
+* Remove protection.
+* <RmCVar e.expression> == e.expr
+$ENTRY RmCVar { 
+ (Var 'c' s.id e.const) e.expr = <Dn0 e.const> <RmCVar e.expr>;
+ (Var e.var) e.expr = (Var e.var) <RmCVar e.expr>;
+ ('*' e.expr1) e.expr = ('*'<RmCVar e.expr1>) <RmCVar e.expr>;
+ s.symbol      e.expr = s.symbol <RmCVar e.expr>;
+                      = ;
+ }
+
+* Function IsFlat is a predicate: 
+* Is there an h-variable inside of an expression ?
+* <IsFlat e.expr> ==> True | False
+$ENTRY IsFlat { 
+ (Var 'h' e.var) e.expr =  False;
+ (Var e.var)     e.expr = <IsFlat e.expr>;
+ ('*' e.expr1)   e.expr = <IsFlat e.expr1 e.expr>;
+ s.symbol        e.expr = <IsFlat e.expr>;
+                        =  True;
+ }
+
+* Get an output format.  
+* <GetOutFmt t.out> ==> e.expr
+$ENTRY GetOutFmt { (Output t.restr (e.expr':'t.var)) = e.expr; }
+
+$ENTRY GetOutFmt1 { 
+ (Output t.restr ((No)':'t.var)) = ;
+ t.outfmt = <GetOutFmt t.outfmt>;
+}
+
+* Get an output variable from an output format.  
+* <GetOutVar t.out> ==> t.var
+$ENTRY GetOutVar { (Output t.restr (e.expr':'t.var)) = t.var; }
+
+* Get a restriction to an output format.  
+* <GetOutRst t.out> ==> t.restriction
+$ENTRY GetOutRst { (Output t.restr (e.expr':'t.var)) = t.restr; }
+
+*========================================================================= 
+$ENTRY Config {  
+ (s.1 e.2) = <Config Content <InpDir> <Arg 1>>; 
+
+ Content e.config '.mst', <InpDir>: e.InpDir 
+                         = <CommTrace 'Your mst-scheme: ' e.config '.mst'> 
+                           <SaveMst <Read_Msts e.config>>
+                           <SaveExecut <Sysfun 1 e.InpDir 'execut.scp'>>
+                           <SaveKey <Sysfun 1 e.InpDir 'key.scp'>>;
+ Content e.config = <Config Content e.config '.mst'> 
+}
+
+$ENTRY Prog {  
+   = <Prog Content <Open 'r' <CurrFile> <InpDir> 'content.scp'> 
+                   <Sysfun 1 <InpDir> 'content.scp'>>;
+
+ Content e.content  
+   = <CommTrace 'The content of your program to transform: ' e.content> 
+     (Prog <Prog Fun e.content>); 
+
+ Fun e.content = ;  
+
+ Fun = ;  
+}
+
+SaveExecut { e.execut = <Br Execut '=' e.execut>; }
+SaveKey { 
+ e.key (PutInHistory e.1) e.2
+       = <Br Key '=' e.key (PutInHistory e.1 <PutInHistory>) e.2>;
+ e.key (GoAhead e.1) e.2
+       = <Br Key '=' e.key (GoAhead e.1 <GoAhead>) e.2>;
+ e.key = <Br Key '=' e.key>;
+}
+
+Read_Msts {
+e.config =  <Open 'r' <CurrFile> e.config '.mst'> <Sysfun 1 e.config '.mst'>
+            <Open 'r' <CurrFile> <OutDir> 'INT_MST.SCP'>  
+            <Sysfun 1 <OutDir> 'INT_MST.SCP'>;
+}
+
+SaveMst {
+ e.mst-scheme (Basic e.basics) e.1
+              = <SaveMst e.mst-scheme e.1> <Br MstBasic '=' e.basics>;
+ e.mst-scheme (Preparatory e.fun-names) e.1
+              = <SaveMst e.mst-scheme e.1> <Br MstPrep '=' e.fun-names>;
+ e.mst-scheme (UserGener e.fun-names) e.1
+              = <SaveMst e.mst-scheme e.1> <Br MstGener '=' e.fun-names>;
+ e.mst-scheme (UserReduce e.fun-names) e.1
+              = <SaveMst e.mst-scheme e.1> <Br MstReduce '=' e.fun-names>;
+ e.mst-scheme (GoAhead e.fun-names) e.1
+              = <SaveMst e.mst-scheme e.1> <Br MstGoAhead '=' e.fun-names>;
+ e.mst-scheme = <FOutput (<OutDir> 'mst.scp') 0 e.mst-scheme> 
+                <ClearMst e.mst-scheme>; 
+/*+
+ e.mst-scheme = <Open 'w' <CurrFile> <OutDir> 'mst.scp'> 
+                <FOutput 0 e.mst-scheme> <ClearMst e.mst-scheme>; 
+*/
+}
+
+ClearMst {
+ e.mst (Comment e.comment) e.1 = e.mst <ClearMst e.1>;
+*- e.mst (Comments e.comment) e.1 = e.mst <ClearMst e.1>;
+ e.mst = e.mst;
+}
+
+$ENTRY GetExecutable { = <Cp Execut>; }
+$ENTRY GetBasics { = <Cp MstBasic>; }
+$ENTRY GetPreparatory { = <Cp MstPrep>; }
+$ENTRY GetUserSelf { 
+ Gener = <Cp MstGener>; 
+ Reduce = <Cp MstReduce>; 
+}
+
+$ENTRY GetGoAhead { = <Cp MstGoAhead>; }
+$ENTRY GetKey { 
+ s.key , <Cp Key>: e.1 (s.key e.2) e.3 = e.2;
+ s.key = <Mu s.key>;
+}
+
+
+*========================================================================= 
+* <GetGraph t.fun-path> == e.p-graph
+$ENTRY GetGraph {          
+*+  t.path    = <Trace 'GetGraph: ' t.path> <GetGraph t.path <Cp Program>>;
+
+  (Appl__  )  = <ApplBody 0>;  
+  (Appl1__  ) = <ApplBody 1>;  
+* Temporary definiton.
+  (s.fname e.path), <Explode s.fname>: e.file  
+      = <Open 'r' <CurrFile> <InpDir> e.file>
+        <GetSub (e.path) <Sysfun 1 <InpDir> e.file>>;
+
+/*+  (s.fname e.path) (Prog (s.fname e.definition) e.prog) = 
+                            <GetSub (e.path) e.definition>;
+  (s.fname e.path) (Prog (s.fname1 e.definition) e.prog) = 
+                            <GetGraph (s.fname e.path) (Prog e.prog)>;
++*/
+}
+
+* <GetSub t.path> == e.p-graph
+$ENTRY GetSub {          
+ (s.br-name ) (Fork '+'(s.br-name e.br) e.brs)  
+                                           = (Fork '+'(e.br) e.brs); 
+
+ (s.br-name s.br-name1 e.path) (Fork '+'(s.br-name e.br) e.brs) = 
+                   <GetSub (s.br-name1 e.path) (Fork e.brs)>;
+
+ (s.br-name e.path) (Fork '+'(s.br-name e.br) e.brs) = 
+                   <GetSub (e.path) (Fork '+'(e.br) e.brs)>;
+
+ (s.br-name e.path) (Fork '+'(s.br-name1 e.br) e.brs) = 
+                    <GetSub (s.br-name e.path) (Fork e.brs)>;
+
+ (s.br-name e.path) (Fork '+'((Fork e.fork)) e.brs) = 
+                    <GetSub (s.br-name e.path) (Fork e.fork)>;
+
+ (s.br-name e.path) (Fork '+'((Rs e.rest) e.br) e.brs) = 
+                    <GetSub (s.br-name e.path) (Fork '+'(e.br) e.brs)>;
+
+ ((Ct e.cntr) e.path) (Fork '+'((Ct e.cntr1) e.br) e.brs),
+ <Equal (Ct e.cntr) (Ct e.cntr1)>: True = 
+                                  <GetSub (e.path) (Fork '+'(e.br))>;
+*+                                  <GetSub (e.path) (Fork '+'(e.br) e.brs)>;
+
+ (s.br-name e.path) (Fork '+'(e.br) e.brs) = 
+                   <GetSub (s.br-name e.path) (Fork e.brs)>;
+
+ () (Fork e.brs) = (Fork e.brs);
+
+* ((Ct e.cntr) e.path) (Ct e.cntr1) e.br, 
+* <Equal (Ct e.cntr) (Ct e.cntr1)>: True = <GetSub (e.path) e.br>;
+* () e.definition = e.definition;
+}
+   
+* <GetGraphF e.file> ==> e.c-graph
+$ENTRY GetGraphF { 
+e.file  = <Open 'r' <CurrFile> <OutDir> e.file>
+          <Sysfun 1 <OutDir> e.file>; }
+
+* <GetExtFunc e.file> ==> e.body
+$ENTRY GetExtFunc { 
+ s.name, <Explode s.name>: e.file  
+   = <Open 'r' <CurrFile> <InpDir> e.file> <Sysfun 1 <InpDir> e.file>; 
+}
+
+ApplBody {
+ 0 = (Fork '+'(0 (Conf (('!'(Fn Appl__ ((Var 'e' 1)':'(Var 'e' 1)
+                                       )
+                           )':'(Var 'e' 0)
+                       )':'(Var 'e' 0))
+      )));
+
+ 1 = (Fork '+'(0 (Conf ((Var 'e' 1)':'(Var 'e' 0)))));
+}
+
+

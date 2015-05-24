@@ -1,0 +1,893 @@
+* FINAL.REF: (scp4.ref)
+* version 02.10.99 , new
+
+* A final analysis of a whole residual program:
+* - An easy driving of output formats. They were not driven with the first
+*   main stage supercompilation. The reason is these formats were created 
+*   after references to them were written on the disk. 
+
+* Notes about the programming style:
+* In this version of Refal sources we use t-variables just in situations
+* where we can certainly change them with the following
+* substitution  ( (e.term) <-  t.term ). So that can be done automatically.
+
+/* Syntax of the refal-graphs. 
+  e.c-graph ::= e.branch
+  e.branch ::=   e.contactions e.branch 
+             |   t.assignment t.basic e.branch 
+             |   t.assignment t.subgraph e.branch 
+             |   t.definition e.branch 
+             |   t.fork 
+             |   t.output 
+  t.contraction ::= (Ct e.contraction) 
+  t.assignment  ::= (As e.assignment) 
+  t.basic       ::= (Basic s.name e.type t.outfmt ':'t.var) 
+  t.subgraph    ::= (Begin e.c-graph ':' t.out End)
+  t.output      ::= (Out e.assignment)
+  t.fork        ::= (Fork e.branches)
+  e.branches    ::=  '+'(e.branch) e.branches | e.empty
+  t.outfmt      ::= (Output t.restriction (e.outexpr':'t.var)) 
+  e.outexpr     ::= (No) | (Expectant) | e.expression
+  t.restriction ::= (Rs e.restrictions)
+  e.restrictions ::= (t.meta-symbol '#' t.meta-symbol) 
+                   | ((Var 'e' e.var) '#' e.empty) 
+                   | (e.empty '#' (Var 'e' e.var))
+  t.meta-symbol  ::= (Var 's' e.var) | SYMBOL
+*/
+
+* $ENTRY Final, FinPrGraph, ExpectOut, OutDrive, GetSaveOut;
+
+* $INTERIOR InitBox, DriveOutFmts, OutDev, OutDev1, OutDrv;
+* $INTERIOR OutDrvBr, OutBranch, OutBranchon, OutDriveon, OutRiser ;
+* $INTERIOR OutExitBrs, OutRuleAC, RmPath, OutRedElev, OutRuleRC, OutRuleAA;
+* $INTERIOR OutSubsAs, OutBlock, OutBlock1, RedToOutFmt;
+* $INTERIOR DriveOutZero, DriveOutZ, DrvOutZero, OutZero, OutFork ;
+* $INTERIOR PickUpInfo, PickUpFmt, FunType;
+* $INTERIOR Save, SaveZero, ClSave, GetSaveInp, GetResids, GetResid;
+* $INTERIOR FinalOutGraphs, FinalOutGraph, FinPrintGr, FinPrGraph0 ;
+* $INTERIOR FinPrGraph, PrHeader, PrInpFmt, PrOutFmt ;
+
+* drive.ref:
+$EXTRN MultGrL, MultGrR, FullTrn ;
+
+* compare.ref
+$EXTRN RedExpr;
+
+* basic.ref:
+$EXTRN RuleAC, RuleRC, RedElev, RuleRR, RuleAR, RuleAA;
+$EXTRN SubsConf, SubsAs, Nil ;
+
+* access.ref:
+$EXTRN Redef, DelDef, CleanRs, New, ListVar, GetOutFmt, RenameAs, GetGraphF;
+$EXTRN IdAss, RmCVar;
+
+* final.ref
+$EXTRN SelfOut;
+
+* trace.ref:
+$EXTRN Trace, Trace0, TraceRes, DiskoutF, ReName, Diskout;
+$EXTRN PrArg, PrBranch, PrAs1, PrPatt, PrAsV, PrOutAs, Print1;
+
+/*  A final analysis of a whole residual program:
+     - An easy driving of output formats. They were not driven with the first
+       main stage supercompilation. The reason is these formats were created 
+       after references to them were written on the disk. 
+*/
+* The main function.   
+* <Final> ==> []
+$ENTRY Final {
+* Pick up information about formats of c-graphs. Drive output formats
+* along the graphs. Clean the c-graphs if some graphs were reduced to Zero.
+  = <InitBox> 
+    <Diskout ('content.int') <FinalOutGraphs <DriveOutZero 
+                              <DriveOutFmts <GetResids <GetGraphF 'content.int'>>>
+    >>>;
+ }
+
+/* This function initializes boxes: Graphs contains c-graphs, 
+   OutFmts contains output formats, InpFmts contains input formats, 
+   Zero contains a list of function that were reduced to Zero.
+*/
+* <InitBox> ==> []  
+InitBox {  
+  = <Nil <Dg Graphs> <Dg OutFmts> <Dg InpFmts> <Dg Zero> <Dg Consts>>
+    <Br Graphs '=' > <Br OutFmts '=' > <Br InpFmts '=' > <Br Zero '=' > 
+    <Br Consts '=' >; 
+ } 
+
+****************************************************************************
+/* DriveOutFmts drives output formats graph by graph. 
+*/
+* <DriveOutFmts (s.name e.c-graph) ... > 
+*           ==> ((t.name t.input-format t.output-format)) e.c-graph) ...
+DriveOutFmts {
+* The whole residual program is Zero.
+ (GRAPH e.1 (GRAPH s.id ) e.grs) e.graphs 
+        = (((GRAPH s.id) Zero) Zero) <DriveOutFmts (GRAPH e.1 e.grs) e.graphs>;
+ (GRAPH ) e.graphs = (((GRAPH GRAPH) Zero) Zero);
+ (GRAPH e.1 (GRAPH e.2) e.grs) e.graphs 
+        = <DriveOutFmts e.1 (GRAPH e.2) e.grs e.graphs>;
+
+ (GRAPH s.id e.graph) e.graphs, 
+<GetSaveOut GRAPH>: t.outfmt, <GetSaveInp GRAPH>: t.inpfmt
+        = (((GRAPH s.id) t.inpfmt t.outfmt) 
+           <OutDev GRAPH t.outfmt e.graph>) <DriveOutFmts e.graphs>;
+
+ (s.name e.graph) e.graphs, 
+<GetSaveOut s.name>: t.outfmt, <GetSaveInp s.name>: t.inpfmt
+        = ((s.name t.inpfmt t.outfmt) 
+           <OutDev s.name t.outfmt e.graph>) <DriveOutFmts e.graphs>;
+
+* Temporary definition. No reference to the graph.
+* See GetSaveInp/Out for additional comments.
+ (s.name e.graph) e.graphs = <DriveOutFmts e.graphs>;
+        = ;
+}
+
+/* OutDev drives output formats s.name-graph and check:
+   was the graph reduced to Zero ?
+   This function goes along a branch and takes a current call which is 
+   encountered. Output format of the call was possible taken into account
+   on the first ( main ) stage of driving if it was created after discovery
+   of the output format by the analysis of global properties of the c-graph 
+   ( the function AnlzGr ). In this case the call was marked with the real
+   output format. Else the call contains an imaginary output format: NO or
+   ((Expectant)':'t.var). In the second case there is a really necessity 
+   to drive a real output format of the call along the current branch from
+   this call to the end. We declare the output format as an uknown datum
+   ( with parametrs - c-variables ) which was created just on this point
+   of the branch. So the general structure of the algorithm is exactly 
+   analogous to the first main stage of driving: see functions from the
+   main driving for additional comments. ( drive.ref )
+*/
+* <OutDev s.name t.outformat e.graph> ==> e.graph 
+OutDev {
+ s.name t.outfmt e.graph = <OutZero s.name <OutDev1 (s.name t.outfmt) e.graph>>;
+}
+
+/* An auxilary function of the function OutDev. It just prepares initial
+   arguments to call the driving itself. We starts with trivial situation
+   as no call was still encountered. 
+*/
+OutDev1 {
+ t.id-gr e.graph = <OutFork <OutDrive t.id-gr ((Rs)(As)) e.graph>>;
+}
+
+* OutDrive drives a fork and analyzis a result. 
+* <OutDrive t.id-gr t.node e.graph> ==> e.graph 
+*                                    ==> Zero
+$ENTRY OutDrive {
+*1. A fork encountered.
+  t.id-gr t.situation (Fork e.branches) = 
+       <OutExitBrs Secondary t.situation 
+                   <OutDrv t.id-gr t.situation (Fork e.branches)>>;
+
+*2. Single branch. Reduce to a fork.
+  t.id-gr t.situation e.branch = 
+                  <OutDrive t.id-gr t.situation (Fork '+'(e.branch))>;
+} /* End of OutDrive */
+
+* <OutDrv t.id-gr t.situation t.fork> ==> s.fork-type e.c-graph 
+*                                      ==> s.fork-type Zero
+OutDrv {    
+*1. Non-empty branching.  Set the start value of the primary-flag as 
+    t.id-gr t.situation (Fork '+'e.branches) 
+                           = <OutDrvBr t.id-gr t.situation '+'e.branches>;
+
+*2. Empty branching. Recognition impossible.
+    t.id-gr t.situation (Fork ) = Zero;
+} /* End of OutDrv */
+
+/* An auxiliary function for the function OutDrv.  
+   Drive output formats through the first branch and analyze whether 
+   the current branch screens the following branches.
+*/
+* <OutDrvBr t.id-gr t.situation '+'e.branches>  
+OutDrvBr {    
+*1. A branch was constructed as result of splitting of parametrs (c-variables).
+   t.id-gr t.situation '+'(Split e.c-contr) e.branches =
+        <OutDriveon  t.id-gr <OutBranchon t.id-gr 
+                         <OutBranch t.id-gr t.situation '^' (Split e.c-contr)> 
+                                    t.situation (e.branches)>
+        >; 
+*2. A regular branch starts.
+  t.id-gr t.situation '+'(e.branch) e.branches =
+        <OutDriveon t.id-gr <OutBranchon t.id-gr 
+                         <OutBranch t.id-gr t.situation '^' e.branch> 
+                                   t.situation (e.branches)>
+        >; 
+} /* End of OutDrvBr */
+
+*****************************************************************************
+*-- The first part of the definition executes combine-commute operations. --*
+*****************************************************************************
+/*
+ Function OutBranch drives output formats through a linear segment of 
+ a branch using a variant of the Turchin's CRA rules. 
+*/
+* <OutBranch t.id-gr (e.c-walk) '^' e.graph> 
+*         ==> (e.c-walk Zero) '^'  /* operation impossible */
+*         ==> (e.c-walk) '^' t.cc-fork  e.graph
+*         ==> (e.c-walk) '^' t.fork
+*         ==> (e.c-walk) '^' /* driving has just finished */
+OutBranch {
+*0a. Function call. Pick up its output format. It is an uknown datum
+*    that exists just with this point.  
+  t.id-gr (e.c-walk (Rs e.restrs)(As e.assigns))  
+                              '^' (As e.assign1) (Basic e.basic) e.graph =
+        <OutBranch t.id-gr (e.c-walk (As <OutSubsAs (As e.assigns) e.assign1>) 
+                                             (Rs e.restrs)(As e.assigns))'^' 
+                                 <OutBlock (Basic e.basic)> e.graph>;
+*0b. Block. Go into the block. Its output format was driven on the main
+*    stage of compilation.
+  t.id-gr (e.c-walk (Rs e.restrs)(As e.assigns)) 
+                             '^' (As e.assign1) (Begin e.block End) e.graph =
+        <OutBranch t.id-gr (e.c-walk (As <OutSubsAs (As e.assigns) e.assign1>) 
+                                             (Rs e.restrs)(As e.assigns))'^' 
+                                  <OutBlock (Begin e.block End)> e.graph>;
+*0c. Zero is encountered.
+  t.id-gr (e.c-walk) '^' Zero e.graph  = (e.c-walk Zero) '^';
+
+****************** the output CRA rules.**************************
+*1. Rule RC: R ^ C  ==>  ^ C R'
+  t.id-gr (e.c-walk (Rs e.rests)) '^' (Ct e.contr) e.graph   = 
+        <OutBranch t.id-gr (e.c-walk (Ct e.contr)) '^' 
+                    <CleanRs <OutRuleRC (Rs e.rests)(Ct e.contr)>> e.graph>;
+
+*2. Rule AC, Clash. A ^ C ==> ^ C1 A1 A; See definition of Clash for details.
+*                         ==> A' ^
+*                         ==> ^ Zero
+  t.id-gr (e.c-walk (As e.assigns)) '^' (Ct e.contr) e.graph = 
+        <OutBranch t.id-gr (e.c-walk (As e.assigns)) '^' 
+                       <OutRuleAC (As e.assigns)(Ct e.contr)> e.graph>;
+
+*3. C-contraction resulting from clash. 
+  t.id-gr (e.c-walk (As e.assigns))'^' (Split t.contr e.gr) e.graph = 
+       <OutBranch t.id-gr (e.c-walk) 
+                        '^' <OutRedElev t.contr> (As e.assigns) e.gr e.graph>;
+
+*4. Define a new variable or redefine an old one. 
+  t.id-gr (e.c-walk (As e.assigns)) '^' (Def (e.value':'t.var)) e.graph =
+        <OutBranch t.id-gr (e.c-walk <Redef (e.value':'t.var) (As e.assigns)>) 
+                            '^' e.graph>;
+*5. Delete a variable.
+  t.id-gr (e.c-walk (As e.assigns)) '^' (Del t.var) e.graph =
+       <OutBranch t.id-gr (e.c-walk <DelDef t.var (As e.assigns)>) '^' e.graph>;
+
+*6. Rule XC: X ^ C  ==>  X C ^   where X is not R or A.
+  t.id-gr (e.c-walk) '^' (Ct e.contr) e.graph = 
+        <OutBranch t.id-gr (e.c-walk (Ct e.contr)) '^' e.graph>;
+
+*7. Rule RR: R ^ R'  ==>  {R R'} ^ . Combine restrictions.
+  t.id-gr (e.c-walk (Rs e.restrs)) '^' (Rs e.restrs1) e.graph  = 
+        <OutBranch t.id-gr (e.c-walk (Rs <RuleRR (Rs e.restrs) (Rs e.restrs1)>)) 
+                             '^' e.graph>;
+
+*8. Rule AR: A ^ R  ==>  ^ R' A
+  t.id-gr (e.c-walk (As e.assigns)) '^'(Rs e.rests) e.graph = 
+    <OutBranch t.id-gr (e.c-walk) '^' 
+                   <CleanRs <RuleAR (As e.assigns)(Rs e.rests)>> e.graph>;
+
+*9. Rule XR: X ^ R  ==>  X R ^  where X  is not R or A.
+  t.id-gr (e.c-walk) '^' (Rs e.rests) e.graph = 
+        <OutBranch t.id-gr (e.c-walk (Rs e.rests)) '^' e.graph>;
+
+*10a. Rule AA: A ^ A  ==>  A' ^   Combine assignments. 
+  t.id-gr (e.c-walk (As e.assigns))'^'(As e.assigns1) e.graph = 
+      <OutBranch t.id-gr (e.c-walk <OutRuleAA (As e.assigns)(As e.assigns1)>)
+                            '^' e.graph>;
+
+*10b. Rule AA: A ^ Out  ==>  A' ^   Combine assignments. 
+  t.id-gr (e.c-walk (As e.assigns))'^'(Out e.conf) = 
+      <OutBranch t.id-gr (e.c-walk 
+                             (Out <SubsConf (As e.assigns) e.conf>)) '^' >;
+
+*11. Rule XA: X ^ A  ==>  X A ^ , where X is not A.
+  t.id-gr (e.c-walk) '^' (As e.assigns) e.graph = 
+        <OutBranch t.id-gr (e.c-walk (As e.assigns)) '^' e.graph>;
+
+*12a. End of the whole walk. Reconstruct output in according to 
+*    the output format of the graph which has just finished. 
+  t.id-gr (e.c-walk (Rs e.restr)(Out e.conf)) '^' 
+     = (e.c-walk <RedToOutFmt t.id-gr (Out e.conf)>) '^';
+
+*12b. End of the whole walk. A call on the end. Just get its output assignment.
+  t.id-gr (e.c-walk (Basic e.basic)(Rs e.restr)(As e.assign)) '^' 
+     = <OutBranch t.id-gr (e.c-walk (Basic e.basic)(Rs e.restr) 
+                            <RedToOutFmt t.id-gr (Basic e.basic)>) '^'>;
+
+*12c. End of the whole walk. A block on the end. Just get its output assignment.
+  t.id-gr (e.c-walk (Begin e.block End)(Rs e.restr)(As e.assign)) '^' 
+     = <OutBranch t.id-gr (e.c-walk (Begin e.block End)(Rs e.restr) 
+                            <RedToOutFmt t.id-gr (Begin e.block End)>) '^'>;
+
+*13. A block was analised: RA '^' Block ==> Block RA '^'
+  t.id-gr (e.c-walk (Rs e.restrs)(As e.assigns)) '^' (Block t.block) e.graph 
+     = <OutBranch t.id-gr (e.c-walk t.block (Rs e.restrs)(As e.assigns)) 
+                             '^' e.graph>;
+*13a. A last block was removed. Just take it's output.
+  t.id-gr (e.c-walk (As e.as)(Rs e.restrs)(As e.assigns)) '^' (Block Empty t.out) 
+     = <OutBranch t.id-gr (e.c-walk (Rs e.restrs) t.out) '^' >;
+
+*13a. A block was removed. The block is not last.
+  t.id-gr (e.c-walk (As e.as)(Rs e.restrs)(As e.assigns)) '^' (Block Empty e.out) e.graph 
+     = <OutBranch t.id-gr (e.c-walk (Rs e.restrs)(As e.assigns)) '^' e.graph>;
+
+*14. A problem is encountered. End in the linear segment of the walk.
+  t.id-gr (e.c-walk) '^' t.interface e.graph 
+    = (e.c-walk) '^' t.interface e.graph;
+} /* End of OutBranch */
+
+**************************************************************************
+* The second part of the definition deals with moving through graph.    **
+**************************************************************************
+
+/*
+ Function OutBranchon goes on to drive the situation through a subgraph
+ after resolving the problem which was encountered by the function OutBranch.
+*/
+* <OutBranchon (e.c-walk) '^' e.graph> 
+*                           ==> (e.c-walk) '^' e.graph
+*                           ==> (Riser e.c-branches) '^' e.graph
+OutBranchon {
+*1. C-branching of a parameter. Drive the situation over this c-branching.
+  t.id-gr (e.c-walk (Rs e.restr)(As e.assign)) '^' 
+         (Fork Split e.split) e.graph t.situation t.branches =
+    <OutRiser (e.c-walk 
+         <OutExitBrs RiserSec ((Rs e.restr)(As e.assign))
+                    <OutDrv t.id-gr ((Rs e.restr)(As e.assign)) 
+                                       (Fork <MultGrR (e.split) (e.graph)>)> 
+         > ) '^' t.situation t.branches>;
+
+*2. Fork. Process this fork and go on to drive.
+  t.id-gr (e.c-walk (Rs e.restr)(As e.assign)) '^' (Fork e.fork) e.graph =
+    (e.c-walk 
+      <OutExitBrs Secondary ((Rs e.restr)(As e.assign))
+        <OutDrv t.id-gr ((Rs e.restr)(As e.assign)) (Fork e.fork)>
+      >
+    ) '^' e.graph;
+
+*3. The linear segment is finished. 
+  t.id-gr (e.c-walk) '^' e.graph = (e.c-walk) '^' e.graph; 
+} /* End of OutBranchon */
+
+/*
+Function OutDriveon takes care of continuation of the driving output
+formats along the fork. A situation  can be happened when the current 
+branch screens the next branches. 
+*/
+* <OutDriveon t.id-gr (e.c-walk) '^' e.graph> 
+*                            ==>  
+*                            ==>  '+' t.c-branch ... 
+OutDriveon {
+*1. An operation impossible. The last branch. 
+  t.id-gr (e.c-walk Zero) '^' e.z t.situation() = ;
+
+*2. An operation impossible. Not last branch in p-fork. 
+*   The branch is pruned. Eleminate it. Go on driving. 
+  t.id-gr (e.c-walk Zero) '^' e.z t.situation('+' e.branches) = 
+         <OutDrvBr t.id-gr t.situation '+' e.branches>;
+
+*3. A linear segment is finished. A branching was arised. Process the next 
+*   branch. There are c-contractions along the current branch.  Go on driving.
+   t.id-gr (Riser e.c-branches ) '^' t.situation ('+' e.branches) =  
+        e.c-branches <OutDrvBr t.id-gr t.situation '+' e.branches>;
+
+*4. A liner segment is finished. Process the next branch.
+*   There are c-contractions along the current branch.  Go on driving.
+   t.id-gr (e.c-walk) '^' 
+        t.situation ('+' e.branches), <FullTrn e.c-walk>:False  =  
+        '+' (e.c-walk) <OutDrvBr t.id-gr t.situation '+' e.branches>;
+
+*5. The linear segment is finished. There are not contractions or 
+*   the last branch. The driving of a branching is finished.
+  t.id-gr (e.c-walk) '^' t.situation (e.branches) = '+'(e.c-walk);
+
+*6.
+  t.id-gr (e.c-walk) '^' e.graph = e.graph; 
+} /* End of OutDriveon */
+
+/* Riser splits a branch in two ones according to a c-branching of
+   parametrs. See function Riser ( drive.ref ) for additional comments.
+*/
+* <OutRiser (e.c-branch)'^' e.cp-graph> 
+*                      ==> (Riser e.c-branches s.primary-flag)'^' e.cp-graph
+*                      ==> (e.c-branch)'^' e.cp-graph
+OutRiser {
+*1. The branching to rise was reduced to a single branch. Cancel riseing.
+   (e.c-walk CancelRiser) '^' t.situation(e.brs) = 
+                                        (e.c-walk) '^' t.situation(e.brs); 
+*2. Not last branch.
+*   Rise the c-splitting to the preceding node. That is the same as
+*   to distribute the multiplication over the addition. Go on driving.
+   (e.c-walk (Fork e.c-brs)) '^' t.situation('+'e.brs) = 
+                         (Riser <MultGrL (e.c-walk) (e.c-brs)>) '^'
+                                          t.situation('+' e.brs);
+*4. Last branch or not node as a result of a pruning. 
+  e.cp-graph = e.cp-graph;  
+} /* End of OutRiser */
+
+/*
+ Function ExitBrs: exit from a branching. 
+ Type-of-branching can be "RiserSec" or "Secondary". 
+*/
+* <OutExitBrs s.type-of-branching t.situation e.branches>
+*                 ==  e.branch
+*                 ==  Zero
+OutExitBrs {
+*1. Every branch was pruned.
+ s.type t.situation = Zero; 
+
+*2. Single secondary branch from decomposition. 
+*   Just remove the marker of branching .
+ s.type t.situation '+'(e.branch) = e.branch;
+
+*3. Single secondary branch as the result of a pruning. 
+*   That is a c-branching of a parametr. Cancel the riseing. 
+*   Remove the label of branching .
+ RiserSec t.situation '+'(e.branch) = e.branch CancelRiser;
+
+*4. A real branching is encountered. 
+  s.type t.situation '+'(e.branch)'+'e.brs = (Fork '+'(e.branch)'+'e.brs);
+ } /* End of OutExitBrs */
+**************** The End of general structurs of the driving ***************
+
+********  Variant of the Turchin's CRA rules for the driving. **************
+
+* See RuleAC function ( basic.ref ) for additional comments.
+*<OutRuleAC t.assignment t.contraction>
+OutRuleAC {
+*1. The assignment is empty. Nothing to do. Just mark the contraction as Old.
+ (As )(Ct e.contr) = (Split (Ct Old e.contr));
+
+*2. The assignment is not empty. 
+ (As e.assign)(Ct e.contr) = <RmPath <RuleAC (As e.assign)(Ct e.contr)>>;
+}
+
+* An auxilary function for the function OutRuleAC.
+RmPath { 
+ e.1 (Path e.path) e.2 = e.1 e.2; 
+ e.1 = e.1;
+}
+
+* See RedElev function ( basic.ref ) for additional comments.
+* <OutRedElev t.contr> 
+OutRedElev {
+ (Ct Old e.contr) = (Ct e.contr);
+ t.contr = <RedElev t.contr>;
+}
+
+* See RuleRC function ( basic.ref ) for additional comments.
+*<OutRuleRC t.restriction t.contraction> ==> t.restriction
+OutRuleRC {
+ (Rs )(Ct e.contr) = (Rs);
+ (Rs e.rests)(Ct e.contr) = <RuleRC (Rs e.rests)(Ct e.contr)>;
+}
+
+*<OutRuleAA t.assign-what t.assign-where> ==> t.assignment
+OutRuleAA {
+ t.as-what (As e.as-where) = (As <OutSubsAs t.as-what e.as-where>);
+}
+
+*<OutSubsAs t.assign-what e.assigns-where> ==> e.assignments
+OutSubsAs {
+ (As ) e.as-where = e.as-where; 
+ (As e.as-what) e.as-where = <SubsAs (As e.as-what) e.as-where>; 
+}
+
+/* OutBlock function creates parametrized data in accoring to an output format
+   for a function call or drives output formats over a unrecurrent block.
+*/ 
+* <OutBlock t.restr t.assign t.basic> ==> Zero | (Block e.block)
+OutBlock {
+*0. This case just for sreen-driving. Temporary definition.
+ (Basic s.name (Output e.output)':'t.var) 
+              = (Block (Basic s.name (Output e.output)':'t.var)); 
+ (Basic s.name Const (Output e.output)':'t.var) 
+              = (Block (Basic s.name (Output e.output)':'t.var)); 
+ (Basic s.name Project (Output e.output)':'t.var) 
+              = (Block (Basic s.name (Output e.output)':'t.var)); 
+ (Basic s.name Identety (Output e.output)':'t.var) 
+              = (Block (Basic s.name (Output e.output)':'t.var)); 
+ (Basic s.name GRAPH (Output e.output)':'t.var) 
+              = (Block (Basic s.name (Output e.output)':'t.var)); 
+ (Basic s.name ':'t.var) 
+              = (Block (Basic s.name ':'t.var)); 
+
+*1. An external built-in function. At present output and input formats
+*   of external function are trivial. So nothing to do. 
+ (Basic s.name Built e.basic) = (Block (Basic s.name Built e.basic)); 
+
+*2. An internal function. Get its output format. 
+ (Basic s.name e.basic t.outfmt ':' t.outvar), <GetSaveOut s.name>: 
+       { Zero = Zero;
+         (Output t.restr (e.expr':'t.var)), 
+         <SelfOut (Output t.restr (e.expr':'t.var))>: e.out-expr, 
+         <ListVar Of Expr e.out-expr>: e.listvar,
+         <ExpectOut t.outfmt>: 
+               { /* A. The output format was still not driven. Create new uknown
+                    data in according the output format. 
+                    t.var bacemes an image output whenever a real output format 
+                    was created. We cannot put a real output variable because of 
+                    there can be a number of them. Take them form t.outfmt1 whenever 
+                    your need! */
+                 True, <RenameAs e.listvar>:  
+                    { 
+/* No only! There can be side effect function inside the block.        */
+                      /* This case can be happened when a basic node is not
+                         recurrent. Just take output format and remove the block. */
+*                      /* empty */ = (Block Empty (Out (e.out-expr':'t.var))) 
+*                                    (Rs) (Def (e.out-expr':'t.outvar));
+                      e.assigns, <RuleAR (As e.assigns) t.restr>: t.restr1 t.assign,
+                       <OutRuleAA t.assign (As (e.out-expr':'t.outvar))>: 
+                       (As t.assign1)  
+                         = (Block (Basic s.name e.basic 
+                                      (Output t.restr1 t.assign1) ':' t.outvar)
+                           ) t.restr1 (Def t.assign1);
+                     };
+                 /* The output format was already driven. Nothing to do. 
+                 */ 
+                 False, e.listvar:
+                   {/* Case A. See above. */
+*                          = (Block Empty (Out (e.expr':'t.var)));
+                    e.xxx = (Block (Basic s.name e.basic 
+                                       t.outfmt ':' t.outvar));
+*                                     (Output t.restr (e.expr':'t.outvar)) ':' t.outvar));
+                   };
+              };
+* Temporary definition. See GetSaveOut for additional comments.
+*            = Zero;
+       };
+
+*3. A block. Final driving of the block. 
+ (Begin e.subgr ':' t.out End) =
+           <OutBlock1 (Begin <OutDev1 (Subgr t.out) e.subgr> ':' t.out End)>;
+} /* End of OutBlock */
+
+* An auxilary function for the function OutBlock.
+OutBlock1 {
+*1. A block was reduced to Zero. 
+ (Begin e.subgr Zero ':' t.out End) = Zero;
+*2. General case.
+ (Begin e.subgr ':' t.out End) = (Block (Begin e.subgr ':' t.out End));
+} /* End of OutBlock1 */
+
+/* An auxilary function for the function OutBlock.
+   Function ExpectOut is a predicate: Was not an output format driven ?
+*/
+* <ExpectOut t.output-format> == True | False
+$ENTRY ExpectOut {
+ (Output t.restr ((No)':'t.var)) = True;
+ (Output t.restr ((Expectant)':'t.var)) = True;
+ (Output e.outfmt) = False;
+}
+
+* Reconstruct an output in according to an output format of a graph. 
+* <RedToOutFmt t.id-gr (Out e.conf)> ==> (Out e.assignment)
+RedToOutFmt {
+* Reduce the ouput expression to the output format.
+ (s.id (Output t.restr ((No)':'t.var))) t.out 
+              = <RedToOutFmt (s.id (Output t.restr (t.var':'t.var))) t.out>;
+ (s.id (Output t.restr ((Expectant)':'t.var))) t.out 
+              = <RedToOutFmt (s.id (Output t.restr (t.var':'t.var))) t.out>;
+ (s.id (Output t.restr (e.expr':'t.var))) (Out (e.expr1':'t.outvar))
+              = <RedToOut1 <RedExpr UnCond ((<RmCVar e.expr1>) '=' (e.expr))>>;
+
+ t.graph-id (Basic s.name e.basic t.outfmt ':' t.var1 ) = <RedToOut1 t.outfmt>;
+ t.graph-id (Begin e.subgr':' t.out End) = <RedToOut1 t.out>;
+}
+
+RedToOut1 {
+ True (As e.assignment) = (Out e.assignment);
+ (Output t.restr (e.expr':'t.var)), 
+ <SelfOut (Output t.restr (e.expr':'t.var))>: e.out-expr
+                        = (Out (e.out-expr':'t.var));
+}
+****************  The End the CRA rules for the driving. ******************
+
+******************  Final cleaning of calls to Zero . *********************
+/* Function DriveOutZero prunes branches where fuction calls are encountered
+   which was reduced to Zero by the final driving. We can do that just after
+   driving all graphs.
+*/
+*<DriveOutZero ((t.name t.input-format t.output-format) e.graph) ...> 
+*              ==> ((t.name t.input-format t.output-format) e.graph) ...
+DriveOutZero {
+*1. There is no graph was reduced to Zero. To do nothing.
+ e.graphs, <Dg Zero>: /* [] */ = e.graphs;
+
+*2. There are graphes which were reduced to Zero. Prune calls to them.
+*   It could be happened that a whole graph will be pruned so we have
+*   to repeat the cleaninig.
+ e.graphs = <DriveOutZero <DriveOutZ e.graphs>>;
+ }
+
+* An auxilary function for the function DriveOutZero.
+* Function DriveOutZ cleans graphs graph by graph.
+*<DriveOutZ ((t.name t.input-format t.output-format) e.graph) ...> 
+*              ==> ((t.name t.input-format t.output-format) e.graph) ...
+DriveOutZ {
+ e.graphs (((GRAPH GRAPH) e.fmts) Zero) = (((GRAPH GRAPH) Zero) Zero);
+ e.graphs (((GRAPH s.id) e.fmts) Zero) 
+                      = <DriveOutZ e.graphs> (((GRAPH s.id) Zero) Zero);
+*+ e.graphs ((GRAPH e.fmts) Zero) = ((GRAPH Zero) Zero);
+ e.graphs ((s.name e.fmts) Zero) = <DriveOutZ e.graphs>;
+ e.graphs (t.id e.gr) = <DriveOutZ e.graphs> (t.id <DrvOutZero e.gr>);
+   = ;
+ }
+
+/* Function DrvOutZero prunes branches of a graph where fuction calls 
+   are encountered  which was reduced to Zero by the final driving. 
+*/
+* <DrvOutZero e.graph> ==> e.graph | Zero
+DrvOutZero {
+*1. A call to a function which was reduced to Zero. Prune the current branch.
+ (Basic s.name e.basic) e.graph, <GetSaveOut s.name>: Zero = Zero;
+
+*2. A block is encountered. Clean the block and analyse the result.
+ (Begin e.subgr ':' t.out End) e.graph   
+              = <OutZero (Begin <DrvOutZero e.subgr> ':' t.out End) e.graph>;
+
+*3. A fork is encountered. Clean the fork and analyse the result.
+ (Fork e.brs) = <OutZero (Fork <DrvOutZero e.brs>)>;    
+
+*4. A branch is encountered. Clean the branch and analyse the result.
+ '+' (e.br) e.brs = <OutZero '+'(<DrvOutZero e.br>)> <DrvOutZero e.brs>;    
+
+*5. A term without of calls is encountered. 
+ t.term e.graph = t.term <DrvOutZero e.graph>;
+*6. A branch is finished.
+                = ;
+}
+
+/* Function OutZero analyses a result of the cleaning or the driving of
+   a part of a graph.
+*/
+* <OutZero s.graph-name e.graph> | <OutZero e.graph> ==> e.graph | Zero
+OutZero {
+*1. A whole graph was reduced to Zero. Put its names into the Zero-list.
+ s.name e.graph Zero = Zero <Save Zero s.name>;
+
+*2. There is just one branch inside a fork. Remove the fork's mark.
+ s.name (Fork '+' (e.br)) = e.br;
+*3. General case.
+ s.name e.graph = e.graph;
+
+*4. A subgraph was reduced to Zero. 
+ (Begin e.subgr Zero ':' t.out End) e.graph = Zero;
+
+*5. A subgraph was cleaned. General case. Go on to clean the branch.
+ (Begin e.subgr ':' t.out End) e.graph 
+                = (Begin e.subgr ':' t.out End) <DrvOutZero e.graph>;
+
+*6. A branch was reduced to Zero. 
+ '+'(e.br Zero) = ;
+
+*7. There is no branch inside a fork. Reduce it to Zero.
+ (Fork ) = Zero;
+*8. There is just one branch inside a fork. Remove the fork's mark.
+ (Fork '+' (e.br)) = e.br;
+*9. General case. 
+ e.graph = e.graph;
+}
+
+OutFork { e.graph = <OutZero e.graph>; }
+******************  Th End of the cleaning of calls to Zero . **************
+
+/* Function PickUpInfo just picks up a format's information from a graph
+   and mark functions call as Built (external) or Func (internal). It
+   saves the format's information in InpFmts and OutFmts boxes.
+*/
+* <PickUpInfo e.c-graph> = e.c-graph
+PickUpInfo {
+ t.assign (Basic s.name e.basic) e.graph =
+     <PickUpFmt t.assign (Basic s.name <FunType s.name> e.basic)> 
+     <PickUpInfo e.graph>;
+ t.assign (Begin e.subgr ':' t.out End) e.graph = t.assign 
+     (Begin <PickUpInfo e.subgr> ':' t.out End) <PickUpInfo e.graph>;
+
+ (Fork e.brs) = (Fork <PickUpInfo e.brs>);    
+ '+' (e.br) e.brs = '+'(<PickUpInfo e.br>) <PickUpInfo e.brs>;    
+ (GRAPH (s.id e.graph) e.graphs) 
+                =  (s.id <PickUpInfo e.graph>) <PickUpInfo (GRAPH e.graphs)>;
+ (GRAPH ) = ; 
+ t.term e.graph = t.term <PickUpInfo e.graph>;
+                = ;
+}
+
+/* Function PickUpFmt picks up  formats from a function call.
+   It saves the formats in InpFmts and OutFmts boxes.
+*/
+* <PickUpFmt t.assign t.basic> ==> t.assign t.basic
+PickUpFmt {
+*1-3. An imaginary output format. We are free to unsave its input format
+* because a call ( with a real output format ) to the same function must
+* be encountered. 
+ t.assign (Basic s.name Built e.basic) = t.assign (Basic s.name Built e.basic); 
+
+*4. A real output format. Save the format's information.
+ t.assign (Basic s.name e.basic (Output e.output) ':' t.outvar ) 
+               = t.assign <Save InpFmts (s.name t.assign)>
+                 (Basic s.name e.basic (Output e.output) ':' t.outvar ) 
+                 <Save OutFmts (s.name (Output e.output))>;
+}
+
+* Type of a function name.
+* <FunType s.function-name> ==> Func | Built | Subgr
+FunType {
+ s.name, <Type s.name>:{
+   'N' e.xxx = Func;
+   'W' e.xxx, <Explode s.name>: { 'S' s.1 e.str, <Type s.1>: 'D' e.yyy = Subgr;
+                                  'GRAPH' = Func;
+                                   e.str  = Built;
+                                };
+  };
+ (s.name s.id) = <FunType s.name>; 
+}
+
+****************************** Access to boxes. ****************************
+
+* Put an information to a box.  
+* <Save s.box-name t.value> ==> []
+Save {
+ Zero  s.name = <SaveZero s.name <Dg OutFmts>> <Save Zero (s.name)>; 
+ s.Box (s.id e.info) =  <Br s.Box '=' <ClSave s.Box <Dg s.Box> (s.id e.info)>>; 
+}
+
+* An auxilary function for the function Save.
+SaveZero {
+ s.name e.outfmts (s.name e.outfmt) e.1 
+                  = <Br OutFmts '=' e.outfmts (s.name Zero) e.1>; 
+ s.name e.outfmts = <Br OutFmts '=' e.outfmts (s.name Zero)>;
+}
+
+* An auxilary function for the function Save. To remove repeated information.
+ClSave {
+ OutFmts e.content (s.id (Output e.restr ((Expectant)':'t.var))) 
+ e.1 (s.id e.info1) = e.content (s.id e.info1) e.1;
+ OutFmts e.content (s.id (Output e.restr ((No)':'t.var))) 
+ e.1 (s.id e.info1) = e.content (s.id e.info1) e.1;
+
+ s.Box e.content (s.id e.info) e.1 (s.id e.info1) = e.content (s.id e.info) e.1;
+ s.Box e.content = e.content;
+}
+
+* Get an output format of a function from the OutFmts-box.  
+* <GetSaveOut s.graph-name> ==> t.output-format
+$ENTRY GetSaveOut {
+ GRAPH = (Output (Rs) ((Var 'e' 0)':'(Var 'e' 0)));
+ s.name, <Cp OutFmts>: e.1 (s.name t.outfmt) e.2, 
+ <ExpectOut t.outfmt>: { True = <GetSaveOut GRAPH>;
+                         False = t.outfmt;
+                       };
+
+* Temporary definition. At present redundant c-graphs can be happened.
+* There are not references to them. The reason: we keep all basic 
+* configurations after generalization. We cannot remove it now because
+* of the list also keeps configuration from parallel subgraphs.
+* We have to implement a stack of the basic configuration to remove
+* just from current subgraph.   
+ s.name = ;
+}
+
+* Get an input format of a function from the OutFmts-box.  
+* <GetSaveInp s.graph-name> ==> t.input-format
+GetSaveInp {
+* Temporary definition.
+ GRAPH = (As );
+ s.name, <Cp InpFmts>: e.1 (s.name e.inpfmt) e.2 = e.inpfmt;
+ s.name = ;
+}
+
+* Get whole residual program.
+* <GetResids e.contents> ==> (s.graph-name e.graph) ...
+GetResids {
+ s.name e.names
+   =  ( <GetResid <Explode s.name>> ) <GetResids e.names>;
+   = ;
+}
+
+* Get a c-graph from the disk and pick up a format's imformation from it.
+* <GetResids e.file-name> ==> s.graph e.c-graph
+GetResid {
+ 'F' e.name = <Numb e.name> <PickUpInfo <GetGraphF 'F' e.name>>;
+ 'GRAPH'    = <Implode 'GRAPH'> <PickUpInfo (GRAPH <GetGraphF 'GRAPH'>)>;
+}
+****************************** Access to boxes. ****************************
+
+****************** Final pretty print of residual graphs. ******************
+* Print of a list of residual graphs. 
+* <FinalOutGraphs (t.id-graph e.graph) ...> ==> []
+FinalOutGraphs { e.graphs = <FinalOutGraphs0 (GRAPH ) e.graphs>; }
+
+FinalOutGraphs0 {
+ (GRAPH e.grs) e.1 (((GRAPH s.id) e.fmts) e.graph) e.graphs 
+        = <FinalOutGraph GRAPH (((GRAPH s.id) e.fmts) e.graph)> 
+          <FinalOutGraphs0 
+            (GRAPH e.grs ((GRAPH s.id) (Formats e.fmts) e.graph)) e.1 e.graphs>;
+ (GRAPH e.grs) (t.id e.graph) e.graphs 
+        = <FinalOutGraph (t.id e.graph)> <FinalOutGraphs0 (GRAPH e.grs) e.graphs>;
+ (GRAPH e.grs) = GRAPH <DiskoutF (GRAPH) e.grs>;
+}
+
+* Output of a residual c-graph into the trace-file, screen
+* and the scpout directory.
+* <FinalOutGraph ((t.graph-name t.input-format t.output-format) e.graph)> => []
+FinalOutGraph {
+*0. The function was removed with the final clearance.
+* See comments above;
+*  ((s.name t.inp t.out) e.graph), <IsEmptyOut t.out>: True =  ;
+
+  ((t.name e.fmts) e.graph) = <Implode <ReName t.name>>
+          <FinPrintGr (t.name e.fmts) e.graph> <DiskoutF (t.name e.fmts) e.graph>;
+  GRAPH ((t.name e.fmts) e.graph) = <FinPrintGr (t.name e.fmts) e.graph>;
+}
+
+* <IsEmptyOut t.out>
+IsEmptyOut {
+ t.outfmt, <ListVar Of Expr <SelfOut t.outfmt>>: {  = True;
+                                             e.vars = False; };
+}
+* Pretty print of a c-graph.
+* <FinPrintGr t.graph-id e.graph> ==> [] 
+FinPrintGr {
+  t.formats e.gr 
+      = <Print1 <PrHeader t.formats> '{ ' NL <FinPrGraph0 e.gr> '}'>; 
+}
+
+FinPrGraph0 { 
+ (Fork e.brs) = <PrBranch e.brs FinPrGraph>;
+ e.graph = <FinPrGraph e.graph>; 
+}
+
+* Transform a c-graph to a string.
+* <FinPrGraph e.c-graph> ==> e.string 
+$ENTRY FinPrGraph { 
+*1. Compose contractions into a pattern.
+  (Ct e.C) e.gr  = <PrPatt (Ct e.C) e.gr FinPrGraph>;
+
+  (Fork e.brs) =  NL ':{ ' NL <PrBranch e.brs FinPrGraph> '}; ' NL;
+  (As e.as) (Basic s.id Built e.basic ':' t.outvar) e.gr = 
+       '{'<PrAs1 e.as>'} <'s.id <PrAsV e.as> '>  <- ' <PrArg t.outvar> '; ' 
+        <FinPrGraph e.gr>;
+  (As e.as) (Basic s.id e.basic t.outfmt ':' t.var) e.gr = 
+        '{'<PrAs1 e.as>'} <F's.id <PrAsV e.as> '>  <- ' 
+        <PrOutAs t.outfmt t.var> '; ' <FinPrGraph e.gr>;
+  (As e.as) (Begin e.subgr ':' t.out End) e.gr = 
+       '{'<PrAs1 e.as>'} ' <FinPrGraph (Begin e.subgr ':' t.out End) e.gr>;
+  (Begin e.subgr ':' t.out End) e.gr, 
+  <ListVar Of Expr <SelfOut t.out>>: e.vars  
+             = '{' <FinPrGraph e.subgr> '} <- {'<PrArg e.vars> '};'  
+                NL  <FinPrGraph e.gr>;
+  (Out e.as) = '{'<PrAs1 e.as>'} ' '/* output */';
+
+  (As e.as) e.gr = '{' <PrAs1 e.as> '} ' <FinPrGraph e.gr>;
+  Zero         =  Zero;
+               = ; 
+         e.xxx = '?' e.xxx;
+ }
+
+* Header of a residual function.
+PrHeader { 
+  (t.id Zero) = ;
+  (t.id t.inpfmt t.outfmt), <ReName t.id>: e.name =
+           NL '* Format: <' e.name ' ' <PrInpFmt t.inpfmt> '>'
+                              ' <- { ' <PrOutFmt t.outfmt> '}'
+           NL e.name ' ';
+}
+
+* Input format of a residual function.
+PrInpFmt { 
+  (As (e.value':'t.var) e.assign) = <PrArg t.var> <PrInpFmt (As e.assign)>; 
+  (As ) = ;
+}
+
+* Output format of a residual function.
+* <PrOutFmt t.outfmt> 
+PrOutFmt {
+ t.outfmt = <PrArg <ListVar Of Expr <SelfOut t.outfmt>>>;
+}
+********************* The End of the final pretty print. ********************
+
+
+ 

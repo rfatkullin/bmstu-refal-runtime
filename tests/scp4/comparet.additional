@@ -1,0 +1,2797 @@
+* ==============  NJ-97/PZ-98: REDUCING  & GENERALIZATION =================
+* COMPARE.REF (scp4.ref)  
+* version 02.10.99, new
+
+* $ENTRY Gener, Reduce, Refer, FormGen, GenRstr, GenExpr, RedExpr;
+
+* $INTERIOR ExRedTo, RedTo, RedStk, RedStk1, RedPath, MakeOut, RedAs;
+* $INTERIOR GenSit, GenStk, GenStk1, Pref, Context, Ctx, GenEx, GenAs ;
+* $INTERIOR GenRR, GenConRes, Tautol, GetConst, PrRestr, PrImg1, TermPr;
+* $INTERIOR MkRestr, MkRestr1;
+* $INTERIOR CompExpr, Decide, Embedd, Emb1, EmbSym, EmbSym1;
+* $INTERIOR UserCtx, UserCtx1, UserContext;
+
+* $TEMPORARY RedRestr, GenRstr, GenExpr, RedExpr, Red, Opvar, ConPn, Lengop;
+* $TEMPORARY CheckFn, Check, RedAs, GenAs, GenArg;
+
+* basic.ref:
+$EXTRN Subs, SubsAs, SubsSt, RuleAR, RuleRR, DelRepR, IntSctRR;
+
+* scp4.ref:
+$EXTRN Decomp, DecAss, SetSubgr;
+
+* access.ref:
+$EXTRN ClearR, ListVar, NewNode, RestStk, Basics, Restr, InpFmt, NewInd,OutVar;
+$EXTRN HVars, New, ElevExp, Permit, Equal, IdAss, BsName, NameNd, IsPassive;
+$EXTRN ElevExp1, Permit1, GetBasics, GetPreparatory, GetUserSelf, ClAss, MkCalls;
+$EXTRN DelRepS, EqPath, MinElev, Infinit, ListPath, IsPref, Subset, MkCls1;
+$EXTRN SelfOut, SelfOutFmt, PutBas, GetTopBasics, GetKey, EmptyCVar;  
+
+* trace.ref:
+$EXTRN Trace, Trace0, UserTrace;
+
+* key.ref:
+$EXTRN Length, Depth, CallDepth, Simplify, UserGener, UserReduce;
+
+*  ======================  Reducing =====================================
+/* Function Reduce tries to reduce a current node to a previous one.
+   At the first it tries to reduce the current situation to 
+   a basic situation from the list of the previous node. 
+   If that does not success the function  tries to reduce 
+   the current situation to the previous situation.
+   t.rest is a part of the current stack which is an overflow, id est
+   length( e.curr-stack ) =  length( e.prev-stack ) + length( e.rest ).
+   See comments to the function RedStk for an additional information.
+*/
+
+* <Reduce t.curr-node To t.prev-node> 
+*  == (False)
+*  == ((t.assignment (t.prev-prefix e.rest)) (Basic s.basic-name No))
+*  == ((t.assignment (t.prev-prefix e.rest)) (Basic s.basic-name t.out-format))
+$ENTRY Reduce {
+*1. Try to reduce to the basic situations and examine the result.
+  t.curr-node To t.prev-node,  <Basics From Node t.prev-node>: (Basics e.basics)
+*  , <Trace 'Basics: '> <Trace e.basics>: e.xxx
+  =
+                        <ExRedTo t.curr-node To t.prev-node ToBasic 
+                               <RedTo <RestStk Of Node t.curr-node> ToBasic 
+                                      (Basics e.basics <GetTopBasics>)>>;
+*2. Try to reduce to the list basic situations.
+  t.curr-node To Basics (Basics e.basics),
+*  <Trace 'Basics: '> <Trace (Basics e.basics)>: e.xxx,
+  <RedTo <RestStk Of Node t.curr-node> ToBasic (Basics e.basics <GetTopBasics>)>:
+   { (ToBasic e.reduction) = (ToBasic e.reduction);
+     False = (False);
+   };
+} /* End of Reduce */
+
+
+/* Function ExRedTo analyzes a result of an attempt of reducing.
+   In the case, when the attempt is not successful and we have just tried
+   to reduce to the list of basic situation, we do the next attempt to
+   reduce to the previous situation itself.
+*/
+* <ExRedTo t.curr-node To t.prev-node s.where t.reduction> 
+*                                 == (ToBasic e.reduction t.basic)
+*                                 == (ToPrev e.reduction t.basic)
+ExRedTo {
+*1. Reducing to a basic situation is successful. Just return the result.
+  t.curr-node To t.prev-node s.where 
+  (ToBasic e.reduction t.basic) = (ToBasic e.reduction <SelfOutFmt t.basic>);
+
+*2. Reducing to the previous situation is successful. 
+*   Put the name of that situation and No inside the result. No means we
+*   have no information about an out-format of the previous node.  
+  t.curr-node To t.prev-node s.where (ToPrev e.reduction) = 
+       (ToPrev e.reduction (Basic <NameNd t.prev-node> 
+                                  (Output (Rs) ((No)':'(Var 'e' 0))) ));
+
+*3. Reducing to the basic situation is not successful. 
+*   Try to reduce to the previous situation and examine the result.
+  t.curr-node To t.prev-node ToBasic False =
+                    <ExRedTo t.curr-node To t.prev-node ToPrev 
+                                  <RedTo <RestStk Of Node t.curr-node> ToPrev 
+                                         <RestStk Of Node t.prev-node>>>;
+
+*4. Reducing to the previous situation is not successful. 
+*   That is full fail of the reducing.
+  t.curr-node To t.prev-node ToPrev False = (False);
+} /* End of ExRedTo */
+
+
+/* Function RedTo is an attempt of reducing to the basic situation or
+   to the previous one. A flag s.where indicates where we try to reduce.
+*/
+* <RedTo t.curr-restriction t.curr-stack s.where e.to-reduce-to> 
+*                               == False
+*                               == (ToBasic e.reduction t.basic)
+*                               == (ToPrev  e.reduction)
+RedTo {
+*1. Reducing to the first basic configuration. If that is successful then
+*   reduce restrictions. Everything Ok. Put the name of this basic situation
+*   inside the result.
+  t.crestr (Stack e.cstack t.cbottom) ToBasic (Basics t.pbasic e.p-basic),
+       <InpFmt Of Basic t.pbasic>: (e.base-stack),
+       <RedStk (e.cstack) (e.base-stack)>:(e.reduction),
+       <ListVar Of Stack e.base-stack>: e.plistvar,
+       <RedRestr t.crestr To <Restr Of Basic t.pbasic> 
+                          By (e.reduction) (e.plistvar)>:True = 
+                (ToBasic e.reduction (Basic <BsName And OutFormat  t.pbasic>));
+
+*2. Reducing to the basic situation is not successful. Try the next one.
+  t.crestr (Stack e.cstack t.cbottom) ToBasic (Basics t.pbasic e.p-basic) =
+      <RedTo t.crestr (Stack e.cstack t.cbottom) ToBasic (Basics e.p-basic)>;
+
+*3. Reducing to the basic situation. The list of the basic situations is empty.
+  t.crestr (Stack e.cstack t.cbottom) ToBasic (Basics ) = False;
+
+*4. Reducing to the previous configuration. If that is successful then
+*   reduce restrictions. Everything Ok. Just return the result. 
+  t.crestr (Stack e.cstack t.cbottom) ToPrev 
+  t.prestr (Stack e.pstack t.pbottom),
+    <RedStk (e.cstack) (e.pstack)>:(e.reduction),
+    <ListVar Of Situation e.pstack t.pbottom>: e.plistvar,
+    <RedRestr t.crestr To t.prestr By (e.reduction) (e.plistvar)>:True = 
+                                                       (ToPrev e.reduction);
+
+*5. Reducing to the previous situation is not successful. 
+  t.crestr (Stack e.cstack t.cbottom) 
+  ToPrev t.prestr (Stack e.pstack t.pbottom) = False;
+} /* End of RedTo */
+
+
+
+/* Function RedStk reduces stacks one to other.
+  Reducing of stacks:
+  Prev: top ________ 
+            |      |      reducing, the plus's part is formed as a subgraph       
+            |      |      we splitting of the current stack. The reduced part
+  Curr: top ========+++++ is the same as the previous in the functional aspect.
+                     Rest
+*/
+* <RedStk t.current-stack t.previous-stack> 
+*                               == False
+*                               == (t.assignment (t.cprefix e.rest))
+RedStk {
+*1. Reducing of paths one to other is successful. They are equal one to other
+*  while the previous stack is not finished. Reduce this pieces of the stacks
+*  one to other. See the figure above.  The prefix is not empty.
+  t.cstack t.pstack,  <RedPath ()() t.cstack t.pstack>: 
+                  e.pairs (s.True (e.cprefix t.call) t.pprefix e.rest) 
+       =
+       <UserTrace TryReduceStack t.cstack To t.pstack>
+       <RedStk1 <RedExpr Func e.pairs> ((e.cprefix t.call) e.rest)>;
+
+*2. Reducing of paths is not successful or the prefix is empty.
+*   In the latter case a number of calls in the current bottom is less than
+*   in the previous bottom. That gives finitness. 
+  t.cstack t.pstack = False;
+} /* End of RedStk */
+
+* An auxilary function of the function RedStk.
+RedStk1 {
+  True t.assignment t.current = (t.assignment t.current);
+  False e.rest = False <UserTrace 'Reducing is not successful.'>;
+} /* End of RedStk1 */
+
+/* Function RedPath compares the paths which markes function calls in
+   the previous and current stacks. It tests if the previous stack is
+   a prefix of the current one in this path's aspect. The function
+   form a system of equations to be resolved by the reducing.
+   e.rest-of-current-stack is those part of the current stack which continues
+   the prefix. t.prev-prefix is the previous prefix itself.
+*/
+* <RedPath ()() t.current-stack t.previous-stack> 
+*    == e.trash False
+*    == e.equations (True t.curr-prefix t.prev-prefix e.rest-of-current-stack)
+RedPath {
+*1. Paths on the top of the stacks are identical. Throw away the calls.
+*   These calls will take part in the reducing itself. Form one equation
+*   in the system to be resolved in the reducing.
+ (e.cprefix) (e.pprefix)
+ ( (Call s.index1 t.path1 (t.call1 ':' t.hvar1))  e.stack1)
+ ( (Call s.index2 t.path2 (t.call2 ':' t.hvar2))  e.stack2),
+ <EqPath t.path1 t.path2>:True = 
+       ((t.call1) '=' (t.call2)) 
+       <RedPath 
+               (e.cprefix (Call s.index1 t.path1 (t.call1 ':' t.hvar1))) 
+               (e.pprefix (Call s.index2 t.path2 (t.call2 ':' t.hvar2))) 
+                (e.stack1) (e.stack2)>;
+
+*1a. Bottom is encountered. 
+*   These bottoms will take part in the reducing itself. Form one equation
+*   in the system to be resolved in the reducing.
+ (e.cprefix) (e.pprefix)
+ ( (Conf (e.conf1 ':' t.outvar1))) ( (Conf (e.conf2 ':' t.outvar2))) =
+       ((e.conf1) '=' (e.conf2)) 
+       <RedPath (e.cprefix (Conf (e.conf1 ':' t.outvar1))) 
+                (e.pprefix (Conf (e.conf2 ':' t.outvar2))) () ()>;
+
+*2. Paths on the top of the stacks are not identical. Reducing impossible.
+ t.cprefix t.pprefix 
+ ( t.curr-call  e.curr-calls ) ( t.prev-call  e.prev-calls ) = False;
+
+*3. The current stack is finished, the previous is not. Reducing impossible.
+ t.cprefix t.pprefix () ( t.prev-call  e.prev-calls ) = False;
+
+*4. The previous stack is finished. Try to reduce.
+ t.cprefix t.pprefix (e.curr-calls) () = (True t.cprefix t.pprefix e.curr-calls);
+ } /* End of RedPath */
+
+* <Refer From t.node To t.from-to> == t.subgraph t.reduction t.basic-call
+*                                  == t.subgraph t.node
+$ENTRY Refer {
+*1. Reducing to a basic or previous situation. The length of the basic 
+*   stack was equal to the length of the current stack. The bottom is flat.
+  From (Node e.node t.restr 
+             (Stack e.calls (Conf ((Var 'h' e.var)':'t.out-var) )) t.basics)  
+  To (t.reduction ((e.cprefix t.call)) (e.basic)) =
+   <SetSubgr 
+* Others restriction must be here whenever there are applicative assignments!
+* !!!!!! 
+*+     (<DecAss t.restr t.reduction>) (e.basic':'t.out-var) (Basics )>;
+     (<DecAss (Rs) t.reduction>) (e.basic':'t.out-var) (Basics )>;
+
+*2. Reducing to a basic or previous situation. The length of the basic 
+*   stack was equal to the length of the current stack. The bottom is unflat.
+  From (Node e.node t.restr 
+             (Stack e.calls (Conf (e.conf':'t.out-var))) t.basics)  
+  To (t.reduction ((e.cprefix t.call)) (e.basic t.outfmt)),
+  <NewInd To Output t.outfmt>: t.outfmt1,
+  <CorrectIdentetyBasic t.reduction t.outfmt (e.basic t.outfmt1)>: t.reduction1,
+  <MakeOut t.call>: t.var t.hvar =
+  <SetSubgr 
+* Others restriction must be here whenever there are applicative assignments!
+* t.var bacemes an image output whenever a real output format was created.
+* We cannot put a real output variable because of there can be a number of them.
+* Take them form t.outfmt1 whenever your need!
+    (<DecAss (Rs) t.reduction1>) (e.basic t.outfmt1 ':'t.var) 
+      <Decomp 
+        <NewNode <ClearR t.restr <ListVar Of Expr e.conf>> t.basics
+               (Conf (<Subs (As (<SelfOut t.outfmt1 t.var> ':'t.hvar)) e.conf>':'t.out-var))>
+      > t.basics>;
+
+*3. Reducing to a basic or previous situation. The length of the basic 
+*   stack was less than the length of the current stack. e.rest is a rest of 
+*   the current stack. We have to create a new node with a stack e.rest.  
+  From (Node e.node t.restr 
+            (Stack e.calls (Conf (e.conf':'t.out-var))) t.basics)  
+  To (t.reduction ((e.cprefix t.call) 
+                    (Call e.path (('!' (Fn s.f e.args)':'t.var1)':'t.h-var))
+                    e.rest) (e.basic t.outfmt)), 
+ <MakeOut t.call>: t.var t.hvar, <NewInd To Output t.outfmt>: t.outfmt1,
+ <CorrectIdentetyBasic t.reduction t.outfmt (e.basic t.outfmt1)>: t.reduction1,
+ <SelfOut t.outfmt1 t.var>: e.selfout,
+ <ListVar Of Expr e.selfout> : e.listout,
+ <ListVar Of Situation (Call e.path (('!' (Fn s.f e.args)':'t.var1)':'t.h-var)) 
+          e.rest (Conf (e.conf':'t.out-var))>: e.listvar =
+  <SetSubgr 
+* Others restriction must be here whenever there are applicative assignments!
+*+    (<DecAss t.restr t.reduction1>) (e.basic':'t.var) 
+    (<DecAss (Rs) t.reduction1>) (e.basic t.outfmt1 ':'t.var) 
+       <IdAss From Vars e.listvar e.listout>
+       (Begin 
+        <NewNode <ClearR t.restr e.listvar> t.basics
+                 (Call e.path (('!' 
+                       (Fn s.f <SubsAs (As (e.selfout ':'t.hvar)) e.args>)
+                               ':'t.var1)':'t.h-var)
+                 ) e.rest (Conf (e.conf':'t.out-var))>
+                ':' (Output (Rs ) ((Expectant)':'t.out-var)) End) (Basics)>;
+} /* End of Refer */
+
+*  <MakeOut t.call> == t.var t.hvar
+$ENTRY MakeOut {
+ t.call, <HVars Of Call t.call>: t.outvar t.hvar 
+       = <NewInd To Variable t.outvar> t.hvar;
+ } /* End of Refer */
+
+
+* <CorrectIdentetyBasic t.reduction (e.basic t.outfmt1)>: t.reduction1,
+CorrectIdentetyBasic {
+ (As e.1 (e.expr':' (Var s.t s.id e.var)) e.assign) 
+ (Output t.Rs0 ((Var s.t s.id e.old-var) ':' t.var0))
+  (Basic s.name Identety (Output t.Rs ((Var s.t s.id2 e.var2) ':' t.var1))) 
+ = (As e.1 (e.expr':' (Var s.t s.id2 e.var2)) e.assign);
+
+ (As e.assign) (Output t.Rs0 (e.old-proj ':' t.var0))
+ (Basic s.id Project (Output t.Rs (e.new-proj ':' t.var1)))
+ = <CorrectProjectBasic (As e.assign) 
+                        (<ListVar Of Expr e.old-proj>)(<ListVar Of Expr e.new-proj>)>;
+
+ (As e.assign) t.Old-Output (Basic e.basic) = (As e.assign);
+}
+
+CorrectProjectBasic {
+ (As e.1 (e.expr':' (Var s.t s.id e.var)) e.assign) 
+ ((Var s.t s.id e.var1) e.old-list) ((Var s.t s.id2 e.var2) e.new-list)
+  =
+ <CorrectProjectBasic (As e.1 (e.expr':' (Var s.t s.id2 e.var2)) e.assign) 
+                      (e.old-list) (e.new-list)>;
+
+ (As e.assign) ((Var s.t e.var1) e.old-list) ((Var s.t e.var2) e.new-list)
+  = <CorrectProjectBasic (As e.assign) (e.old-list) (e.new-list)>;
+
+ (As e.assign) () () = (As e.assign);
+}
+
+*  ======================  Reducing of expressions ========================
+/* Function RedExpr resolves a system of equations over expreassions. 
+   The left hand sides of equations depand on parametrs while the right ones
+   depand on variables. There is not intersection between the parametrs and
+   variables. If s.flag is Data, then functional assignments are
+   not allowed while, if the flag is Func, then any assignments are allowed.
+   If the flag is UnCond then the UserReduce is not applied.  
+*/   
+* Temporary definition.
+* <RedExpr s.flag ((e.curr) '=' (e.prev)) e.equations>
+*                     ==> True (As e.assignment) | False
+$ENTRY RedExpr {
+  s.flag ((e.curr) '=' (e.prev)) e.equations = 
+              <Red Left (s.flag ) ((e.curr) '=' (e.prev)) e.equations>; 
+  (s.flag e.assignments) ((e.curr) '=' (e.prev)) e.equations = 
+              <Red Left (s.flag e.assignments) ((e.curr) '=' (e.prev)) e.equations>; 
+} /* End of RedExpr */
+
+* <Red s.dirrection (s.flag e.assignments) e.equations> = 
+Red {                  
+*01.                 
+  Left  (e.sFAss)   
+ (((Var 'c' s.id1 e.const) e.curr) '=' ((Var 'c' s.id2 e.const) e.prev)) e.eqs = 
+            <Red Left (e.sFAss) ((e.curr) '=' (e.prev)) e.eqs>; 
+  Left  (e.sFAss)   
+ (((Var 'c' s.id1 e.const) e.curr) '=' ((Var 'c' s.id2 e.const e.2) e.prev)) e.eqs = 
+            <Red Left (e.sFAss) ((e.curr) '=' ((Var 'c' s.id2 e.2) e.prev)) e.eqs>; 
+  Left  (e.sFAss)   
+ (((Var 'c' s.id1 e.const e.1) e.curr) '=' ((Var 'c' s.id2 e.const) e.prev)) e.eqs = 
+            <Red Left (e.sFAss) (((Var 'c' s.id1 e.1) e.curr) '=' (e.prev)) e.eqs>; 
+
+*1a.                 
+   Left  (s.Fl e.sFAss)   ((('*' User__ e.1) e.curr) '='
+                      (('*' User__ e.2) e.prev)) e.eqs, <UnCond s.Fl>: False = 
+            <UserRed Left (s.Fl e.sFAss)
+                     ((User__ e.1)'='(User__ e.2)) ((e.curr)'='(e.prev)) e.eqs>;
+
+*1.                 
+   Left  (e.sFAss)   ((('*' e.1) e.curr) '=' (('*' e.2) e.prev)) e.eqs = 
+               <Red Left (e.sFAss) ((e.1)'='(e.2)) ((e.curr)'='(e.prev)) e.eqs>;
+
+*1aa.                 
+   Left  (s.FL e.Ass) ((('*' e.1) e.curr) '=' ((Var 'c' s.id (e.2) e.const) e.prev)) e.eqs 
+*?   ,<UnCond s.Fl>:True = 
+    =          <Red Left (s.FL e.Ass) ((e.1)'='(<EmptyCVar (Var 'c' s.id e.2)>)) 
+                         ((e.curr)'='(<EmptyCVar (Var 'c' s.id e.const)> e.prev)) e.eqs>;
+*1ab.                 
+   Left  (s.FL e.Ass) (((Var 'c' s.id (e.1) e.const) e.curr) '=' (('*' e.2) e.prev)) e.eqs 
+*?   ,<UnCond s.Fl>:True = 
+    =          <Red Left (s.FL e.Ass) ((<EmptyCVar (Var 'c' s.id e.1)>)'='(e.2)) 
+                         ((<EmptyCVar (Var 'c' s.id e.const)> e.curr)'='(e.prev)) e.eqs>;
+
+*1b.                 
+   Left  (e.sFAss)   (((UserFunc s.f e.curr)) '=' ((UserFunc s.f e.prev))) e.eqs = 
+            <UserRed Left (e.sFAss)
+                     ((UserFunc s.f e.curr)'='(UserFunc s.f e.prev)) e.eqs>;
+*2.                 
+   Left  (s.FL e.Ass) (((Var 's' e.J) e.curr)'='((Var 's' e.I) e.prev)) e.eqs, 
+   <Check s.FL ((Var 's' e.J)':'(Var 's'e.I)) e.Ass>:
+                 { e.trash False = False;
+                   e.A1 = <Red Left (s.FL e.A1) ((e.curr)'='(e.prev)) e.eqs>};
+*2b.                 
+   Left  (s.FL e.Ass) (((Var 't' e.J) e.curr)'='((Var 't' e.I) e.prev)) e.eqs, 
+   <Check s.FL ((Var 't' e.J)':'(Var 't' e.I)) e.Ass>:
+                 { e.trash False = False;
+                   e.A1 = <Red Left (s.FL e.A1) ((e.curr)'='(e.prev)) e.eqs>};
+*2c.                 
+   Left  (s.FL e.Ass) (((Var 's' e.J) e.curr)'='((Var 't' e.I) e.prev)) e.eqs, 
+   <Check s.FL ((Var 's' e.J)':'(Var 't' e.I)) e.Ass>:
+                 { e.trash False = False;
+                   e.A1 = <Red Left (s.FL e.A1) ((e.curr)'='(e.prev)) e.eqs>};
+*3.                 
+  Left (s.FL e.Ass) 
+  ( (('!'(Fn s.F e.arg1)':'t.var1) e.curr) '='
+    (('!'(Fn s.F e.arg2)':'t.var2) e.prev)) e.eqs, <Equal t.var1 t.var2>:True
+   ,<RedAs s.F s.FL (As e.arg1) (As e.arg2)>: e.pairs True =
+        <Red Left (s.FL e.Ass) e.pairs ((e.curr)'='(e.prev)) e.eqs>;
+*4.                 
+   Left (s.FL e.Ass) ((s.1 e.curr) '=' ((Var 's' e.I) e.prev)) e.eqs, 
+   <Check s.FL (s.1 ':'(Var 's'e.I)) e.Ass>:
+                 { e.trash False = False;
+                   e.A1 = <Red Left (s.FL e.A1) ((e.curr)'='(e.prev)) e.eqs>};
+*4a.                 
+   Left (s.FL e.Ass) ((s.1 e.curr) '=' ((Var 't' e.I) e.prev)) e.eqs, 
+   <Check s.FL (s.1 ':'(Var 't' e.I)) e.Ass>:
+                 { e.trash False = False;
+                   e.A1 = <Red Left (s.FL e.A1) ((e.curr)'='(e.prev)) e.eqs>};
+*4b.                 
+   Left (s.FL e.Ass) ((('*' e.1) e.curr) '=' ((Var 't' e.I) e.prev)) e.eqs, 
+   <CheckT s.FL (('*' e.1) ':'(Var 't' e.I)) e.Ass>:
+                 { e.trash False = False;
+                   e.A1 = <Red Left (s.FL e.A1) ((e.curr)'='(e.prev)) e.eqs>};
+*5.                 
+   Left  (e.sFAss) (((Var 'h'e.J) e.curr) '=' ((Var 'h'e.I) e.prev)) e.eqs, 
+   <Equal (Var 'h'e.J) (Var 'h'e.I)>:True =
+                            <Red Left (e.sFAss) ((e.curr)'='(e.prev)) e.eqs>;
+
+*6.                 
+   Left (e.sFAss) ((s.1 e.curr) '=' (s.1 e.prev)) e.eqs = 
+                            <Red Left (e.sFAss) ((e.curr)'='(e.prev)) e.eqs>;
+*6a.                 
+   Left (s.FL e.Ass) ((s.1 e.curr) '=' ((Var 'c' s.id s.1 e.const) e.prev)) e.eqs =
+*  ,<UnCond s.Fl>:True = 
+       <Red Left (s.FL e.Ass) ((e.curr)'='(<EmptyCVar (Var 'c' s.id e.const)> e.prev)) 
+           e.eqs>;
+*6b.                 
+   Left (s.FL e.Ass) (((Var 'c' s.id s.1 e.const) e.curr) '=' (s.1 e.prev)) e.eqs =
+*   ,<UnCond s.Fl>:True = 
+       <Red Left (s.FL e.Ass) ((<EmptyCVar (Var 'c' s.id e.const)> e.curr)'='(e.prev)) 
+           e.eqs>;
+ 
+*7.                 
+   s.side (e.sFAss) 
+   ((e.curr) '=' ((Var 'e' e.vari) e.prev (Var 'e' e.varj))) e.eqs = 
+             <Opvar (e.sFAss) 
+                    ( (() e.curr)'='((Var 'e' e.vari) e.prev (Var 'e' e.varj)))
+               e.eqs>;
+*9.                 
+   s.side (Data e.Ass) ((e.curr) '=' ((Var 'e' e.var))) e.eqs, 
+   <CheckFn  e.curr ((e.curr':'(Var 'e' e.var)) e.Ass)>:
+              { e.trash False = False;
+                e.A1 = <Red Left (Data e.A1) e.eqs> };
+*9a.                 
+   s.side (s.Func e.Ass) ((e.curr) '=' ((Var 'e' e.var))) e.eqs, 
+   <Check  s.Func (e.curr':'(Var 'e' e.var)) e.Ass>:
+              { e.trash False = False;
+                e.A1 = <Red Left (s.Func e.A1) e.eqs> };
+*10.                 
+   Left (e.sFAss) ((e.curr) '=' ((Var 'e' e.var) e.prev)) e.eqs = 
+      <Red Right (e.sFAss) ((e.curr) '=' ((Var 'e' e.var) e.prev)) e.eqs> ; 
+
+*011.                 
+  Right (e.sFAss)   
+ ((e.curr (Var 'c' s.id1 e.const)) '=' (e.prev (Var 'c' s.id2 e.const))) e.eqs = 
+            <Red Right (e.sFAss) ((e.curr) '=' (e.prev)) e.eqs>; 
+  Right (e.sFAss)   
+ ((e.curr (Var 'c' s.id1 e.const)) '=' (e.prev (Var 'c' s.id2 e.2 e.const))) e.eqs = 
+            <Red Right (e.sFAss) ((e.curr) '=' (e.prev (Var 'c' s.id2 e.2))) e.eqs>; 
+  Right (e.sFAss)   
+ ((e.curr (Var 'c' s.id1 e.1 e.const)) '=' (e.prev (Var 'c' s.id2 e.const))) e.eqs = 
+            <Red Right (e.sFAss) ((e.curr (Var 'c' s.id1 e.1)) '=' (e.prev)) e.eqs>; 
+
+*11a.                 
+   Right (s.Fl e.sFAss) ((e.curr ('*' User__ e.1)) '='
+                       (e.prev ('*' User__ e.2))) e.eqs, <UnCond s.Fl>: False  = 
+      <Red Right (s.Fl e.sFAss)
+           ((e.curr)'='(e.prev)) (('*' User__ e.1)'='('*' User__ e.2)) e.eqs>;
+*11.                 
+   Right  (e.sFAss)   ((e.curr ('*' e.1)) '=' (e.prev ('*' e.2))) e.eqs = 
+      <Red Right (e.sFAss) ((e.curr)'='(e.prev)) ((e.1)'='(e.2)) e.eqs>;
+*11aa.                 
+   Right  (s.FL e.Ass) ((e.curr ('*' e.1)) '=' (e.prev (Var 'c' s.id e.const (e.2)))) e.eqs 
+*?   ,<UnCond s.Fl>:True = 
+    =          <Red Left (s.FL e.Ass) 
+                         ((e.curr)'='(e.prev <EmptyCVar (Var 'c' s.id e.const)>)) 
+                         ((e.1)'='(<EmptyCVar (Var 'c' s.id e.2)>)) 
+                e.eqs>;
+*11ab.                 
+   Right  (s.FL e.Ass) ((e.curr (Var 'c' s.id e.const (e.1))) '=' (e.prev ('*' e.2))) e.eqs 
+*?   ,<UnCond s.Fl>:True = 
+    =          <Red Left (s.FL e.Ass) 
+                         ((e.curr <EmptyCVar (Var 'c' s.id e.const)>)'='(e.prev))
+                         ((<EmptyCVar (Var 'c' s.id e.1)>)'='(e.2)) 
+                e.eqs>;
+
+*12.                 
+   Right  (s.FL e.Ass) ((e.curr (Var 's' e.J))'='(e.prev (Var 's' e.I))) e.eqs, 
+   <Check s.FL ((Var 's' e.J)':'(Var 's' e.I)) e.Ass>:
+                 { e.trash False = False;
+                   e.A1 = <Red Right (s.FL e.A1) ((e.curr)'='(e.prev)) e.eqs>};
+*12a.                 
+   Right  (s.FL e.Ass) ((e.curr (Var 't' e.J))'='(e.prev (Var 't' e.I))) e.eqs, 
+   <Check s.FL ((Var 't' e.J)':'(Var 't' e.I)) e.Ass>:
+                 { e.trash False = False;
+                   e.A1 = <Red Right (s.FL e.A1) ((e.curr)'='(e.prev)) e.eqs>};
+*12b.                 
+   Right  (s.FL e.Ass) ((e.curr (Var 's' e.J))'='(e.prev (Var 't' e.I))) e.eqs, 
+   <Check s.FL ((Var 's' e.J)':'(Var 't' e.I)) e.Ass>:
+                 { e.trash False = False;
+                   e.A1 = <Red Right (s.FL e.A1) ((e.curr)'='(e.prev)) e.eqs>};
+*13.                 
+  Right (s.FL e.Ass) 
+  ( (e.curr ('!'(Fn s.F e.arg1)':'t.var1)) '='
+    (e.prev ('!'(Fn s.F e.arg2)':'t.var2))) e.eqs, <Equal t.var1 t.var2>:True,
+   <RedAs s.F s.FL (As e.arg1) (As e.arg2)>: e.pairs True =
+                <Red Right (s.FL e.Ass) ((e.curr)'='(e.prev)) e.pairs e.eqs>;
+
+*14.                 
+  Right (s.FL e.Ass) ((e.curr s.1) '=' (e.prev (Var 's' e.I))) e.eqs, 
+  <Check s.FL (s.1':'(Var 's' e.I)) e.Ass>:
+                 { e.trash False = False;
+                   e.A1 = <Red Right (s.FL e.A1) ((e.curr)'='(e.prev)) e.eqs>};
+*14a.                 
+  Right (s.FL e.Ass) ((e.curr s.1) '=' (e.prev (Var 't' e.I))) e.eqs, 
+  <Check s.FL (s.1':'(Var 't' e.I)) e.Ass>:
+                 { e.trash False = False;
+                   e.A1 = <Red Right (s.FL e.A1) ((e.curr)'='(e.prev)) e.eqs>};
+*14b.                 
+  Right (s.FL e.Ass) ((e.curr ('*' e.1)) '=' (e.prev (Var 't' e.I))) e.eqs, 
+  <CheckT s.FL (('*' e.1)':'(Var 't' e.I)) e.Ass>:
+                 { e.trash False = False;
+                   e.A1 = <Red Right (s.FL e.A1) ((e.curr)'='(e.prev)) e.eqs>};
+*15.                 
+   Right (e.sFAss) ((e.curr (Var 'h'e.J)) '=' (e.prev (Var 'h'e.I))) e.eqs, 
+   <Equal (Var 'h'e.J) (Var 'h'e.I)>:True =
+                           <Red Right (e.sFAss) ((e.curr)'='(e.prev)) e.eqs>;
+
+*16.                 
+   Right (e.sFAss) ((e.curr s.1) '=' (e.prev s.1)) e.eqs = 
+                           <Red Right (e.sFAss) ((e.curr)'='(e.prev)) e.eqs>;
+*16a.                 
+   Right (s.FL e.Ass) ((e.curr s.1) '=' (e.prev (Var 'c' s.id e.const s.1))) e.eqs =
+*?   ,<UnCond s.Fl>:True = 
+       <Red Left (s.FL e.Ass) ((e.curr)'='(e.prev <EmptyCVar (Var 'c' s.id e.const)>)) 
+           e.eqs>;
+*16b.                 
+   Right (s.FL e.Ass) ((e.curr (Var 'c' s.id e.const s.1)) '=' (e.prev s.1)) e.eqs =
+*?   ,<UnCond s.Fl>:True = 
+       <Red Left (s.FL e.Ass) ((e.curr <EmptyCVar (Var 'c' s.id e.const)>)'='(e.prev)) 
+            e.eqs>;
+ 
+
+*17.                 
+   s.side (e.sFAss) (()'='()) e.eqs = <Red Left (e.sFAss) e.eqs>;
+
+*18.                 
+   s.side (s.FL e.Ass) = True (As e.Ass);
+
+*29.                 
+   s.side (e.sFAss) ((e.curr)'='(e.prev)) e.eqs = False;
+     }
+
+* Open variable
+Opvar {
+ (s.FL e.Ass) (((e.vali) e.curr)'='((Var 'e' e.vari) e.prev (Var 'e' e.varj))) 
+ e.eqs, <Check s.FL (e.vali':'(Var 'e' e.vari)) e.Ass>:
+   { e.trash False = 
+       <Lengop (s.FL e.Ass) 
+               (((e.vali) e.curr)'='((Var 'e' e.vari) e.prev (Var 'e' e.varj)))
+         e.eqs>;
+
+* Put a backtracking point with the function ConPn.
+    e.A1 = 
+     <ConPn ( (s.FL e.Ass) 
+              (((e.vali) e.curr)'='((Var 'e' e.vari) e.prev (Var 'e' e.varj)))
+            e.eqs)
+            <Red Left (s.FL e.A1) ((e.curr)'='(e.prev (Var 'e'e.varj))) e.eqs>>
+   };
+ }
+
+ConPn { 
+       (e.prev) True (As e.ass) = True (As e.ass);
+       (e.prev) False e.trash = <Lengop e.prev>;
+ }
+
+* Lengthening of an open variable.
+Lengop {
+  (e.sFAss)  (((e.vali) s.1 e.curr)'='(e.prev)) e.eqs = 
+              <Opvar (e.sFAss) (((e.vali s.1) e.curr)'='(e.prev)) e.eqs>;
+
+* Test whether there exists a function call inside a term (e.t1) ?  
+  (Data e.Ass) (((e.vali) (e.t1) e.curr)'='(e.prev)) e.eqs, 
+  <CheckFn e.t1 ()> :
+       { e.trash False = False;
+          = <Opvar (Data e.Ass) (((e.vali (e.t1)) e.curr)'='(e.prev)) e.eqs>;
+        };
+
+  (s.Func e.Ass) (((e.vali) t.1 e.curr)'='(e.prev)) e.eqs = 
+             <Opvar (s.Func e.Ass) (((e.vali t.1) e.curr)'='(e.prev)) e.eqs>; 
+
+  (e.sFAss)  (((e.vali) )'='(e.prev)) e.eqs = False;
+ }
+
+* Test whether there exists a function call inside an expression ?  
+CheckFn { 
+    ('!' e.call) e.expr (e.expr2) = False;
+    (Var 'h' e.var) e.expr (e.expr2) = False;
+    (Var e.var)  e.expr (e.expr2) = <CheckFn  e.expr (e.expr2)>;
+    ('*' e.expr1) e.expr (e.expr2) = <CheckFn e.expr1 e.expr (e.expr2)>;
+    s.symbol      e.expr (e.expr2) = <CheckFn e.expr (e.expr2)>;
+                   () = ;
+                   (e.expr2) = <Check Data e.expr2>;
+ }
+
+* Checking of values of repeated variables and correctness of an elevation. 
+* <Check s.Flag (e.value':'t.var) e.assignments> == 
+Check { 
+  s.Fl (e.val1 ':'(Var s.type s.name e.elev)) 
+  (e.val2 ':'(Var s.type s.name e.elev2)) e.assigns ,<Equal (e.val1)(e.val2)>: 
+       { True = <Check s.Fl (e.val1 ':'(Var s.type s.name e.elev)) e.assigns>;
+         False = False};
+
+  s.FL t.assgn1 t.assgn11 e.assigns = t.assgn11 <Check s.FL t.assgn1 e.assigns>; 
+
+*0.
+  s.FL (e.val ':'(Var s.type s.name Meta)),
+  <PermitR s.FL e.val>:True = (e.val ':'(Var s.type s.name Meta));
+  s.FL (e.val ':'(Var s.type s.name e.elev)), 
+  <Permit (<ElevExp e.val>) e.elev>:      
+        { True, <PermitR s.FL e.val>:True = (e.val ':'(Var s.type s.name e.elev));
+          e.False = False; };
+ } 
+
+* Checking of values of a t-variable.
+* <CheckT s.Flag (e.value':'t.var) e.assignments> == 
+CheckT { 
+  Data (e.value':'t.var) e.assigns 
+          = <CheckFn  e.value ((e.value':'t.var) e.assigns)>;
+  s.Func (e.value':'t.var) e.assigns 
+          = <Check  s.Func (e.value':'t.var) e.assigns>;
+}
+
+UnCond {
+ UnCond = True;
+ s.flag = False;
+ }
+
+/* Function RedAs forms equations from values of the same p-variables
+   in the previous and current situations.  
+   Number of assignments that can appear inside one step Refal machine
+   is restrected with the number of p-variables in the program. So we
+   can safely expect their repeation. Another way to construct of
+   a reduction is to add identety assignments in the current or previous
+   assignment's list as that was done in the Scp2. The last way 
+   extands the input formats of both previous and current  situations.
+   Somebody can choose a middle solution: only the current ( or previous )
+   input format can be extended.
+*/ 
+
+* <RedAs s.fun-name s.Flag t.current-assignment t.previous-assignment> ==> e.equations
+RedAs {
+ s.fname s.flag t.curr-assign t.prev-assign, <UnCond s.flag>: True 
+           = <RedAs0 (Regular) s.flag t.curr-assign t.prev-assign>;
+ s.fname s.flag t.curr-assign t.prev-assign, <UserSelf Reduce s.fname>: 
+   { False = <RedAs0 (Regular) s.flag t.curr-assign t.prev-assign>;
+     True  = <RedAs0 (UserFunc s.fname ()()) s.flag t.curr-assign t.prev-assign>;
+   };
+} /* End of RedAs */
+
+* Temporary definition: open e-varables.
+RedAs0 {
+ (Regular) User
+ (As (e.value1':'t.var1) e.cur-ass2) (As (e.value2':'t.var2) e.prev-ass2) 
+   = ((e.value1)'='(e.value2))
+     <RedAs0 (Regular) User (As e.cur-ass2) (As e.prev-ass2)>;
+
+ (UserFunc s.fname (e.cur-neighb)(e.prev-neighb)) User
+ (As (e.value1':'t.var1) e.cur-ass2) (As (e.value2':'t.var2) e.prev-ass2) 
+   = <RedAs0  (UserFunc s.fname (e.cur-neighb (e.value1':'t.var1))
+                                (e.prev-neighb (e.value2':'t.var2))
+              ) User (As e.cur-ass2) (As e.prev-ass2)>;
+
+ (Regular) s.Flag
+ (As (e.value1':'(Var s.type s.name e.elev1)) e.cur-ass2) 
+ (As e.prev-ass1 (e.value2':'(Var s.type s.name e.elev2)) e.prev-ass2) 
+   = ((e.value1)'='(e.value2)) 
+     <RedAs0 (Regular) s.Flag (As e.cur-ass2) (As e.prev-ass1 e.prev-ass2)>;
+ 
+ (UserFunc s.fname (e.cur-neighb)(e.prev-neighb)) s.Flag
+ (As (e.value1':'(Var s.type s.name e.elev1)) e.cur-ass2) 
+ (As e.prev-ass1 (e.value2':'(Var s.type s.name e.elev2)) e.prev-ass2) 
+   = <RedAs0  (UserFunc s.fname 
+                  (e.cur-neighb (e.value1':'(Var s.type s.name e.elev1)))
+                  (e.prev-neighb (e.value2':'(Var s.type s.name e.elev2)))
+              ) s.Flag (As e.cur-ass2) (As e.prev-ass2)>;
+ 
+ (Regular) s.Flag (As ) (As ) = True;
+ (UserFunc s.fname (e.cur-neighb)(e.prev-neighb)) s.Flag (As ) (As ) 
+   = ( ((UserFunc s.fname e.cur-neighb)) '='
+       ((UserFunc s.fname e.prev-neighb)) ) True;
+ t.type    s.Flag (As e.cur-ass1) (As e.prev-ass2) = False;
+} /* End of RedAs0 */
+
+/* RedRestr: reducing of a current restriction to a previous one
+   by an assignment. We have to substitute the assignment to
+   the previous restriction ( let it be t.new-restriction ) 
+   then to clean t.new-restriction from redundant variables.
+*/
+* <RedRestr t.curr-restr To t.prev-restr By t.reduction t.plistvar>
+*               == True 
+*               == False 
+RedRestr {
+  t.crestr To t.prestr By (t.red-ass e.reduction) (e.plistvar), 
+  <RuleAR t.red-ass t.prestr>: 
+       { t.new-restr t.assignment = <SubsetR t.new-restr t.crestr>;
+         Zero = False;
+       };
+* e.xxx  = True;
+} /* End of RedRestr */
+
+* The first list of restrictions is a subset of the second.
+* Temporary definition. A t.variable is not just (e.variable)
+* Repeated t-variable.
+SubsetR { 
+ (Rs (t.var '#')  e.new-restr) (Rs e.1 (t.var '#')  e.crestr) 
+      = <SubsetR (Rs e.new-restr) (Rs e.1 (t.var '#')  e.crestr)>; 
+ (Rs (t.var '#' t.var1)  e.new-restr) (Rs e.1 (t.var '#' t.var1)  e.crestr) 
+      = <SubsetR (Rs e.new-restr) (Rs e.1 (t.var '#' t.var1)  e.crestr)>; 
+ (Rs (t.var1 '#' t.var)  e.new-restr) (Rs e.1 (t.var '#' t.var1)  e.crestr) 
+      = <SubsetR (Rs e.new-restr) (Rs e.1 (t.var '#' t.var1)  e.crestr)>; 
+ (Rs ) (Rs e.crestr) = True;
+ (Rs e.new-restr) (Rs e.crestr) = False;
+}
+
+*  ======================  End of Reducing ================================
+
+*  ======================  Generalization =================================
+
+/* Gener is the main function of generalization. At the first place 
+   the function cuts contexts from the stacks. The contexts are those calls
+   which did not take a part in the evaluation from the previous node to
+   the current one. We recognize them by the aid of comparison 
+   of clall's indexes. The indexes are ,in fact, times when we created 
+   the calls. The previous prefix is defined by removing of the context from
+   the previous stack. We cut the current prefix by means of the length
+   of the previous stack.
+   The follwing note requires an additional thinking: 
+   By the definition of contexts, the calls from the current context always
+   can be reduced to the corresponding calls from the previos context with 
+   the exception of the header of the current context. The reason: 
+   because of the context's call did not take a part in evaluation,
+   arguments of the header can be changed only by means of two ways.
+   The first one is a substitution ( as a result of the mashine step ),
+   the second is a narrowing which can be done by the driving. The latter
+   way can change other calls as well. At present we does not generalize
+   the first calls of the contexts at all. They play a role of outputs.
+   It is not clear enough whether that can be a reason of indetermination.
+
+   The result of this function is can be seen below. Red-flag says the current
+   situation is reduced to the previous but  t.toprev-assignment has 
+   active assignments ( with function calls ).
+*/
+* <Gener t.curr-node With t.prev-node>
+*     == (False)
+*     == (Gen t.gen-restriction t.gen-prefix 
+*             t.prev-assignment t.curr-assignment 
+*             (Prev t.pprefix t.pcontext) (Curr t.ccontext (e.rest)))
+*     == (Red t.prev-assignment t.pcontext t.current);
+$ENTRY Gener {
+* Take the situations the nodes and generalize them.
+  t.curr-node With t.prev-node =
+      <GenSit <RestStk Of Node t.curr-node> With <RestStk Of Node t.prev-node>>;
+ } /* End of Gener */
+
+* The function GenSit generalizes two situations.
+GenSit {
+*1. Generalizaton of the two stacks is successful. Generalize the restriction. 
+  t.curr-restr t.curr-stack With t.prev-restr t.prev-stack,
+    <GenStk t.curr-stack With t.prev-stack>: (e.gener) =
+                       <ExGenSit (e.gener) t.curr-restr t.prev-restr>;
+
+*2. Generalizaton of the two stacks is not successful. 
+  t.curr-restr t.curr-stack With t.prev-restr t.prev-stack = (False);
+ } /* End of GenSit */
+
+* The function ExGenSit examines a result of GenSit to form a final 
+* result. It calls generalization of restrictions.
+ExGenSit {
+*1. Reduction of prefixes is happened. Generalize the restrictions. 
+*   (Red e.reduction) t.curr-restr t.prev-restr = (Red e.reduction);
+   (Red t.assignment e.reduction) t.curr-restr t.prev-restr ,
+   <GenRstr t.curr-restr t.assignment With t.prev-restr>: (Rs e.grestr)  
+                            = (Red (Rs e.grestr) t.assignment e.reduction);
+
+*2. Generalizaton of the two stacks is successful. There are holders inside assignments.
+   (GenNewSplit e.hass (s.Gen t.true (t.gprefix t.prev-assignment t.curr-assignment) e.gener))
+   t.curr-restr t.prev-restr,
+   <GenRstr t.curr-restr t.curr-assignment With t.prev-restr t.prev-assignment>: 
+   (Rs e.grestr)  = 
+   <NewSplit (H-As e.hass) 
+             (s.Gen t.true (Rs e.grestr) t.gprefix t.prev-assignment t.curr-assignment e.gener)>;
+
+*3. Generalizaton of the two stacks is successful. No holder. Generalize the restriction. 
+   (s.Gen  (t.gprefix t.prev-assignment t.curr-assignment) e.gener)
+   t.curr-restr t.prev-restr,
+   <GenRstr t.curr-restr t.curr-assignment With t.prev-restr t.prev-assignment>: 
+   (Rs e.grestr)  = 
+   (s.Gen  (Rs e.grestr) t.gprefix t.prev-assignment t.curr-assignment e.gener);
+ } /* End of GenSit */
+
+* Reconstruction of a stack when an holder is encountered inside an assignment.
+* <NewSplit t.h-assignment t.generalization> 
+*  ==> (t.gstack t.pstack t.pass t.h-assignment) ...
+NewSplit {
+ (H-As e.hass) 
+ (s.Gen t.true t.grestr (e.gprefix) t.prevass t.curass 
+       (Prev (e.pprefix) (e.pcontext) e.prev) t.current) 
+  = (GenHolders (s.Gen t.true t.grestr (e.gprefix) t.prevass t.curass
+                            (Prev (e.pprefix) (e.pcontext) e.prev) t.current) 
+      (Splitting <NewSplit1 (H-As e.hass) (Stacks ()())(As) (e.gprefix)(e.pprefix)>)
+    );
+}
+
+
+NewSplit1 {
+*1.No holder inside assignment. Just pick up current calls.
+ (H-As (e.prevass1 (As )) e.hass) (Stacks (e.gstack)(e.pstack))(As e.prevass2)
+ (t.gcall e.gprefix)(t.pcall e.pprefix) 
+    = <NewSplit1 (H-As e.hass) (Stacks (e.gstack t.gcall)(e.pstack t.pcall))
+                 (As e.prevass2 e.prevass1) (e.gprefix)(e.pprefix)>;
+
+*2.An holder is encountered. Splitting.
+ (H-As (e.prevass1 (As (t.hvar':'t.var))) ) (Stacks t.gstack t.pstack)(As e.prevass2)
+ (e.gprefix)(e.pprefix) 
+    = (t.gstack t.pstack (As e.prevass2)(H-As (As (t.hvar':'t.var)))) 
+      <NewSplit1 (H-As ) (Stacks ()())(As e.prevass1) (e.gprefix)(e.pprefix)>;
+
+ (H-As (e.prevass1 (As (t.hvar':'t.var))) e.hass) (Stacks t.gstack t.pstack)(As e.prevass2)
+ (e.gprefix)(e.pprefix) 
+    = (t.gstack t.pstack (As e.prevass2)(H-As (As (t.hvar':'t.var)))) 
+      <NewSplit1 (H-As ( (As )) e.hass) (Stacks ()())(As e.prevass1) (e.gprefix)(e.pprefix)>;
+
+*3a.Exit.
+ (H-As (e.prevass1 (As ))) (Stacks t.gstack t.pstack)(As e.prevass2)
+ (e.gprefix)(e.pprefix) 
+    = (t.gstack t.pstack (As e.prevass2)(H-As e.prevass1 (As )));
+
+*3a.Exit.
+ (H-As ) (Stacks ()())(As e.prevass2) (t.gcall)(t.pcall) 
+    = ((t.gcall) (t.pcall) (As e.prevass2)(H-As (As )));
+
+*3b.Exit.
+ (H-As ) (Stacks ()())(As ) ()() = ;
+
+*3??c.Exit.
+ (H-As ) (Stacks t.gstack t.pstack)(As e.prevass2)
+ ()() 
+    = (t.gstack t.pstack (As e.prevass2)(H-As (As )));
+
+}
+
+
+/* Function GenStk generalizes two stacks. 
+  Generalization of the stacks:
+  Prev: top ________ context 
+            |      | \        the context is formed as a subgraph.       
+            |      |   \        
+  Curr: top ========++++ context 
+                    Rest
+
+  At present we demand that the stack's parts to generalize have the same
+  paths inside every call from them ( as well the upper function name of
+  course ).
+*/
+* <GenStk t.curr-stack With t.prev-stack>
+*     == False
+*     == (Gen  (t.gen-prefix t.prev-assignment t.curr-assignment) 
+*              t.previous t.current)
+*     == (Red t.prev-assignment t.pcontext t.current)
+GenStk {
+*1. Take contexts from the two stack. If the current stack has a prefix 
+*   which is equal to the previous prefix in the path aspect, then
+*   try to reduce the current prefix to the previous. In this reducing
+*   active calls are allowed to substitute in a previous variable. 
+  t.curr-stack With t.prev-stack, <Context t.curr-stack t.prev-stack>: 
+                                  (e.cstack t.ccontext)(e.pstack t.pcontext),
+  <RedPath ()() (e.cstack) (e.pstack)>: 
+  e.pairs (s.True t.cprefix (e.pprefix t.call) e.rest),
+  <RedPath ()() t.ccontext t.pcontext>: e.ctx-pairs (s.True1 e.true)
+   =  <UserTrace TryGenerStack t.curr-stack With t.prev-stack>
+      <GenStk1 (s.True e.rest)
+               (e.pairs (Prev (e.pprefix t.call) t.pcontext) 
+               (Curr e.ctx-pairs t.ccontext (e.rest))) 
+               <RedExpr Func e.ctx-pairs e.pairs>>; 
+
+*2. The current stack has a prefix which is not equal to the previous 
+*   prefix in the path aspect or  the latter prefix is empty.
+*   In the latter case a number of calls in the current context is less than
+*   in the previous context. That gives finitness. 
+  t.curr-stack With t.prev-stack = False; 
+ } /* End of GenStk */
+
+* An auxilary function of the function GenStk. It analyzes the result 
+* of an attempt of reducing.
+GenStk1 {
+*1. Reducing is successful. Just form the result.
+  t.true
+  (e.pairs t.previous (Curr e.ctx-pairs t.ccontext t.rest)) 
+  True t.assignment = (Red t.assignment t.previous (Curr t.ccontext t.rest));
+
+*2. Reducing is not successful. Try to generalize the stack's prefixes itselves.
+*   Generalization still can be fail because a "condition of continuation"
+*   which takes in account unfunctional structures of arguments.
+*   See definition of the function GenArg. Nevertheless if the generalization
+*   of the prefixes can be done, we just form the it's result.
+  t.true
+  (e.pairs (Prev t.pprefix t.pcontext) 
+           (Curr e.ctx-pairs t.ccontext t.rest)) s.False e.trash,
+           <GenCtx e.ctx-pairs t.pcontext>: ((e.gen-pctx) t.pass t.cass),
+           <GenArg <Pref ()() e.pairs>>: e.hold-as (e.generalization),
+           e.hold-as:
+           { /* There is an holder in the assignment. */
+            e.1 (e.prevass1 (As t.assign e.assigns)) e.2 ,
+            <RepeatAs1 (e.generalization) ((e.gen-pctx) t.pass t.cass)>:
+                      t.gener1 (As e.grep-assign) (e.gen-pctx1) (As e.rep-assign1)
+                      = (GenNewSplit <RepeatHd (As e.grep-assign)(As e.rep-assign1) e.hold-as> 
+                            (Gen t.true t.gener1 (Prev t.pprefix e.gen-pctx1)
+                                                 (Curr t.ccontext t.rest)));
+
+            /* There is no holder in the assignment. */                            
+            e.trash1, <RepeatAs (e.generalization) ((e.gen-pctx) t.pass t.cass)>:
+                      t.gener1 (e.gen-pctx1)
+ ,t.true:
+    {
+* 2.a Lengths of the stacks are equal one to other.
+* Generalization without splitting of the stacks.
+    (True) = <HoldAs (GenNoSplit t.gener1 (Prev t.pprefix e.gen-pctx1)
+                                          (Curr t.ccontext t.rest))>;
+* 2.b Splitting of the stacks is demanded.
+    e.true1 = (Gen t.gener1        (Prev t.pprefix e.gen-pctx1)
+                                   (Curr t.ccontext t.rest));
+    };   
+         };
+*3. The generalization of the prefixs is not successful. Fail.
+  t.true (e.pairs t.previous t.current) False e.trash
+            = False <UserTrace 'Generalisation is not successful.'>;
+ } /* End of GenStk1 */
+
+
+* <RepeatAs (e.generalization) (t.gen-pctx t.pass t.cass)>
+RepeatAs {
+ (t.gen t.pass t.cass) (t.gen-pctx1 t.pass1 t.cass1) =
+                     (<ClearGen Expr t.gen <RepAs t.pass t.cass>>)
+                     (<ClearGen Stack t.gen-pctx1 <RepAs t.pass1 t.cass1>>);
+}
+
+RepeatAs1 {
+ (t.gen t.pass t.cass) (t.gen-pctx1 t.pass1 t.cass1)
+ ,<RepAs t.pass t.cass>: e.assign t.pass0 t.cass0
+ ,<RepAs t.pass1 t.cass1>: e.assign1 t.pass10 t.cass10
+   =
+    (<ClearGen Expr t.gen e.assign t.pass0 t.cass0>)
+    (As e.assign)
+    (<ClearGen Stack t.gen-pctx1 e.assign1 t.pass10 t.cass10>)
+    (As e.assign1);
+}
+
+* Temporary definition.
+RepAs {
+(As e.11 (e.value ':'t.var) e.12 (e.value ':'t.var1) e.13)
+(As e.21 (e.value1':'t.var) e.22 (e.value1':'t.var1) e.23) 
+    = (t.var':'t.var1) <RepAs (As e.11 (e.value ':'t.var) e.12 e.13)
+                              (As e.21 (e.value1':'t.var) e.22 e.23)>;
+(As e.1) (As e.2) = (As e.1) (As e.2);                              
+}
+
+*Temporary definition/
+*<RepeatHd (As e.grep-assign)(As e.rep-assign1) e.hold-as> 
+RepeatHd {
+ (As e.grep-assign)(As e.rep-assign1) e.hold-as 
+   = <RepeatHd1 (As e.grep-assign e.rep-assign1) e.hold-as>;
+} 
+
+RepeatHd1 {
+ (As e.grep-assign)  (e.assign (As e.hass)) e.hold-as 
+   = (<RepeatHd2 (As e.grep-assign) e.assign> (As e.hass)) 
+      <RepeatHd1 (As e.grep-assign) e.hold-as>;
+ (As e.grep-assign) = ;
+} 
+
+RepeatHd2 {
+ (As e.rep-assign (t.var1':'t.var) e.0) e.assign (e.expr ':' t.var) e.1
+   = <RepeatHd2 (As e.rep-assign (t.var1':'t.var) e.0) e.assign (e.expr ':' t.var1) e.1>;
+ (As e.rep-assign) e.assign = e.assign;
+} 
+
+
+* Temporary definition.
+HoldAs {
+(GenNoSplit t.gener1 (Prev t.pprefix t.gen-context (As e.pass) t.cass)
+                     (Curr t.ccontext t.rest)), <HldAs e.pass>: 
+    { /* There is no holder in the assignment. */
+      e.pass1 (As ) = (GenNoSplit t.gener1 
+                        (Prev t.pprefix t.gen-context (As e.pass) t.cass)
+                        (Curr t.ccontext t.rest));
+      /* There is an holder in the assignment. */
+      e.pass1 (As e.hass) 
+                   = (GenHoldNoSplit t.gener1 
+                        (Prev t.pprefix t.gen-context (As e.pass1) t.cass)
+                        (Holders (Prev (Prefix) (Context (As e.hass))))
+                        (Curr t.ccontext t.rest));
+    };
+}
+
+* Temporary definition.
+HldAs {
+ (e.value ':'t.var) e.assign, <HldExpr e.value>:
+  { e.value1 (As ) = (e.value ':'t.var) <HldAs e.assign>;
+    e.value1 (As e.hass) = (e.value1 ':'t.var) e.assign (As e.hass);
+  };
+ = (As );
+}
+
+HldExpr {
+ s.x e.expr = s.x <HldExpr e.expr>;
+
+ ('*' e.expr1) e.expr = <LiftH ('*' <HldExpr e.expr1>) e.expr>;
+ ('!' (Fn s.name e.arg)':'t.var) e.expr 
+      = <LiftH ('!' (Fn s.name <HldAs e.arg>)':'t.var) e.expr>;
+      = (As );
+
+ (Var 'h' s.id e.var) e.expr, <New Var>:s.id1 
+             = (Var 'e' s.id1 e.var) e.expr 
+               (As ((Var 'h' s.id e.var)':'(Var 'e' s.id1 e.var)));
+ 
+ (Var e.var) e.expr = (Var e.var) <HldExpr e.expr>;
+}
+
+LiftH {
+ ('*' e.expr1 (As )) e.expr = ('*' e.expr1) <HldExpr e.expr>;
+ ('*' e.expr1 (As e.hass)) e.expr = ('*' e.expr1) e.expr (As e.hass);
+
+ ('!' (Fn s.name e.arg (As ))':'t.var) e.expr
+                 = ('!' (Fn s.name e.arg)':'t.var) <HldExpr e.expr>;
+ ('!' (Fn s.name e.arg (As e.hass))':'t.var) e.expr
+                 = ('!' (Fn s.name e.arg)':'t.var) e.expr (As e.hass);
+}
+
+ClearGen {
+*1. No repeated variables in generalization.
+ s.flag t.gen            t.pass t.cass = t.gen t.pass t.cass;
+ 
+*2. There are reapeted variables. Rename them.
+ Expr (e.gen) e.assign t.pass t.cass
+                         = (<Subs (As e.assign) e.gen>) t.pass t.cass;
+ Stack (e.gen) e.assign t.pass t.cass
+                         = (<SubsSt (As e.assign) e.gen>) t.pass t.cass;
+}
+
+/* The function Pref just reformats a list of equations to two expressions
+   which are just concatenations left ( the first expression ) 
+   and right ( the second expression ) parts of the equations. 
+*/
+* <Pref () () e.equation-on-calls> = t.left-parts With t.right-parts
+Pref {
+* We metacode the parenthesis to have the expression as correct metacoded
+* configurations.
+ (e.left) (e.right) ((t.call1) '=' (t.call2)) e.pair = 
+              <Pref (e.left ('*' t.call1)) (e.right ('*' t.call2)) e.pair>;
+
+ (e.left) (e.right) =  (e.left) With (e.right) ; 
+ } /* End of Pref */
+
+/* The function Context retuns contexts of two stacks.
+   The contexts is defined from right to left.   
+*/
+* <Context t.curr-stack t.prev-stack> == t.curr-context t.prev-context
+Context {
+ (Stack e.stack1 (Conf e.conf1)) (Stack e.stack2 (Conf e.conf2)) =
+            <Ctx ((Conf e.conf1)) ((Conf e.conf2)) (e.stack1) (e.stack2)>;
+  } /* End of Context */
+
+* An auxilary function of the function Context.  
+* <Ctx (t.bottom1) (t.bottom2) t.stack1 t.stack2> == t.context1 t.context2
+Ctx {
+ (e.context1) (e.context2) 
+ (e.stack1 (Call s.index t.path1 e.call1)) 
+ (e.stack2 (Call s.index t.path2 e.call2)), <EqPath t.path1 t.path2>:True =
+     <Ctx ((Call s.index t.path1 e.call1) e.context1) 
+          ((Call s.index t.path2 e.call2) e.context2) (e.stack1 ) (e.stack2 )>;
+ (e.context1) (e.context2) (e.stack1) (e.stack2) = 
+                     <UserCtx (e.stack1 (e.context1)) (e.stack2 (e.context2))>; 
+} /* End of Ctx */
+
+* We need to generalize only a top of a previous context. 
+* Any topless current context is reduced to the topless previous context. 
+* <GenCtx e.ctx-pairs t.pcontext> == ((e.gen-context) t.prev-ass t.cur-ass)
+GenCtx {
+*1. There is a call on the top of the context.
+((t.call1) '=' (t.call)) e.ctx-pairs 
+((Call s.id t.path (('!' (Fn s.fname e.arg)':'t.var)':'t.var1)) e.pcontext),
+* This call has to be successful ! 
+* Just when we do not use simplification or something like that!
+ <GenArg (('*' t.call1)) With (('*' t.call))>: 
+*  ( (('*' ('!' (Fn s.fname e.gen-arg)':'t.var2)))  
+*   (As e.prev-ass) t.cur-ass) = 
+
+ { /* 1. There is an holder in the assignment. * Temporary definition.
+  e.1 (e.prevass1 (As t.assign e.assigns)) 
+  e.hold-as ( (('*' ('!' (Fn s.fname e.gen-arg)':'t.var2)))  
+               (As e.prev-ass) t.cur-ass) = 
+(
+  ((Call <New Call> t.path (('!' (Fn s.fname e.gen-arg)':'t.var2)':'t.var1)) e.pcontext)
+  (As e.prev-ass <IdAss From Vars1 <ListVar Of Situation e.pcontext>>) t.cur-ass 
+);
+*/
+
+  /* 2. There is no holder in the assignment. */
+  e.trash ( (('*' ('!' (Fn s.fname e.gen-arg)':'t.var2)))  
+               (As e.prev-ass) t.cur-ass) = 
+(
+  ((Call <New Call> t.path (('!' (Fn s.fname e.gen-arg)':'t.var2)':'t.var1)) e.pcontext)
+  (As e.prev-ass <IdAss From Vars1 <ListVar Of Situation e.pcontext>>) t.cur-ass 
+);
+  e.xxx = False;
+};
+
+*2. There are no calls inside the context.
+ e.ctx-pairs (e.pcontext) = 
+   ((e.pcontext) <IdAss From Vars <ListVar Of Situation e.pcontext>> (As ));
+}
+
+
+* <FormGen t.generalization t.prev-node> 
+*        == t.subgraph-context t.trivial-reduction t.node-prefix
+*        == t.subgraph-context 
+*           e.gen-prefix-subgraphs t.gen-reduction t.gen-node
+$ENTRY FormGen {
+*1. There was not generalization of the prefixes. The context is not trivial.
+*   Just form the previous context as a subgraph. Reduction is trival.
+ (Red t.grestr t.reduction 
+      (Prev (e.pprefix t.call) (e.pcontext (Conf (e.expr':'t.out-var)) )) 
+  t.current) (Node e.prevnode t.restr t.stack t.basics0),  
+ <RecBasics e.prevnode t.basics0>: t.basics, 
+ <MakeOut t.call>: t.var t.hvar, 
+ <ListVar Of Stack e.pprefix t.call>: e.listvar1,
+ <ListVar Of Situation e.pcontext (Conf (e.expr':'t.out-var))>: e.listvar2 = 
+  '^'(Subgraph  <IdAss From Vars e.listvar1>
+      (Begin <NewNode <ClearR t.grestr e.listvar1> t.basics
+                 e.pprefix t.call (Conf (t.hvar':'t.var))>
+                                  ':' <ExpectOut1 t.var> 
+       End)  <IdAss From Vars e.listvar2 t.var>
+      (Begin   
+* Here we can use the old ungeneralized restrictions to work with the context!
+       <NewNode <ClearR t.restr e.listvar2> t.basics
+                      <SubsSt (As (t.var':'t.hvar)) e.pcontext 
+                                  (Conf (e.expr':'t.out-var))>
+       >':' <ExpectOut1 t.out-var>
+       End) 
+     (Basics ));
+   
+*2. Generalization of the prefixes was happened. Context is empty.
+*   The previous bottom must be flat. 
+ (Gen t.grestr (e.gprefix) t.prevass t.curass 
+      (Prev (e.pprefix t.call) (  (Conf ((Var 'h' e.h-var)':'t.out-var))))  
+  t.current) (Node e.prevnode t.restr t.stack t.basics0),  
+  <ListPath e.pprefix t.call>: e.listpath,
+  <RecBasics e.prevnode t.basics0>: t.basics, 
+ <NewNode From Exprs t.grestr t.basics (e.listpath) e.gprefix 
+                     (Conf ((Var 'h' e.h-var)':'t.out-var))>:t.gen-node,
+ <DecAss t.restr t.prevass>:
+   { 
+*2a. No applicative prev-assignments.
+    t.reduction = t.reduction t.gen-node;
+
+*2b. There are applicative prev-assignments.
+    e.decomp t.reduction = 
+       '^'(Subgraph e.decomp t.reduction 
+             (Begin t.gen-node':'<OutVar1 t.gen-node> End) (Basics ));
+  };
+
+*3. Generalization of the prefixes was happened. 
+ (Gen t.grestr (e.gprefix) t.prevass t.curass 
+      (Prev (e.pprefix t.call) (e.pcontext (Conf (e.expr':'t.out-var)))
+                               (As e.pass) t.cass)  
+  t.current) (Node e.prevnode t.restr t.stack t.basics0),  
+ <MakeOut t.call>: t.var t.hvar, 
+ <RecBasics e.prevnode t.basics0>: t.basics, 
+ <ListVar Of Situation e.pcontext (Conf (e.expr':'t.out-var))>: e.listvar2,
+ <ListPath e.pprefix t.call>: e.listpath =
+   <SetSubgr
+     (<DecAss t.restr t.prevass>)  
+      (Begin <NewNode From Exprs t.grestr t.basics (e.listpath) e.gprefix t.var>
+             ':' <ExpectOut1 t.var>
+      End) (As e.pass <IdAss From Vars1 t.var>)  
+      (Begin  
+            <NewNode <ClearR t.restr e.listvar2> t.basics
+                     <SubsSt (As (t.var':'t.hvar)) 
+                             e.pcontext (Conf (e.expr':'t.out-var))>
+            >':' <ExpectOut1 t.out-var>
+     End) (Basics )>;
+     
+*4. Generalization without splitting of the stacks. 
+ (GenNoSplit t.grestr (e.gprefix) (As e.prevass) t.curass 
+      (Prev (e.pprefix t.call) (e.pcontext (Conf (e.expr':'t.out-var)))
+                               (As e.pass) t.cass)  
+  t.current) (Node e.prevnode t.restr t.stack t.basics0),
+  <RecBasics e.prevnode t.basics0>: t.basics, 
+  <ListPath e.pprefix t.call>: e.listpath =
+   <SetSubgr
+     (<DecAss t.restr (As <ClAss e.prevass e.pass>)>)  
+      (Begin
+       <NewNode t.grestr t.basics <MkCalls (e.listpath) e.gprefix >
+                e.pcontext (Conf (e.expr':'t.out-var)) >
+                ':' <ExpectOut1 t.out-var>
+       End) t.basics>;
+     
+*5. Generalization of the prefixes was happened. There was an holder in the assignment. 
+ (GenHoldNoSplit t.grestr (e.gprefix) t.prevass t.curass 
+      (Prev (e.pprefix t.call) (e.pcontext (Conf (e.expr':'t.out-var)))
+                               (As e.pass) t.cass)  
+      (Holders (Prev (Prefix) (Context (As (t.hvar':'t.var)))))
+  t.current) (Node e.prevnode t.restr t.stack t.basics0),  
+ <RecBasics e.prevnode t.basics0>: t.basics, 
+ <ListVar Of Situation e.pcontext (Conf (e.expr':'t.out-var))>: e.listvar2,
+ <ListPath e.pprefix t.call>: e.listpath,
+ <ClearR t.restr e.listvar2>: t.restr1 =
+   <FormGenHoldNoSplit 
+     (<DecAss t.restr t.prevass>)  
+      (Begin <NewNode From Exprs t.grestr t.basics (e.listpath) e.gprefix t.var>
+             ':' <ExpectOut1 t.var>
+      End) (<DecAss t.restr1 (As e.pass)>)
+      (Begin  
+            <NewNode t.restr1 t.basics
+                             e.pcontext (Conf (e.expr':'t.out-var))
+            >':' <ExpectOut1 t.out-var>
+     End) (Basics )>;
+/*+  
+   <SetSubgr
+     (<DecAss t.restr t.prevass>)  
+      (Begin <NewNode From Exprs t.grestr t.basics (e.listpath) e.gprefix t.var>
+             ':' <ExpectOut1 t.var>
+      End) (As e.pass)  
+      (Begin  
+            <NewNode t.restr1 t.basics
+                             e.pcontext (Conf (e.expr':'t.out-var))
+            >':' <ExpectOut1 t.out-var>
+     End) (Basics )>;
+*/
+  
+*6.Generalization of the prefixes was happened. There was an holder in the assignment.    
+ (GenHolders e.gener) (Node e.node) = <FormGenSplit e.gener (Node e.node)>;  
+} /* End of FormGen */
+
+FormGenHoldNoSplit {
+ (e.decomp)  (Begin e.subgraph End) 
+ (e.decomp1) (Begin  e.subgraph1 End) (Basics e.basics)
+       = '^'(Subgraph e.decomp (Begin e.subgraph End) 
+                      e.decomp1 (Begin  e.subgraph1 End) (Basics e.basics)); 
+}
+
+* Generalization of the prefixes was happened. There was an holder in the assignment.    
+FormGenSplit {
+*1.    
+ (s.Gen t.true t.grestr t.gprefix t.prevass t.curass t.previous t.current) 
+ (Splitting e.stacks) (Node e.prevnode t.restr t.stack t.basics0),  
+  <RecBasics e.prevnode t.basics0>: t.basics 
+  =  '^'(Subgraph 
+           <FormGenSplit1 (s.Gen t.true t.grestr t.basics t.previous) 
+                       (Splitting e.stacks) (Node e.prevnode t.restr t.stack t.basics0)>  
+              (Basics ));
+} /* End of FormGenSplit */
+
+FormGenSplit1 {
+*1. An holder was encountered inside stack. 
+*   Generalization of the prefixes was happened.   
+ (s.Gen t.true t.grestr t.basics (Prev t.pprefix t.pcontext t.pass t.cass)) 
+   (Splitting ((e.gstack) (e.pstack) 
+              (As e.prevass2)(H-As e.prevass1 (As (t.hvar':'t.var)))) 
+              e.stacks) (Node e.prevnode t.restr t.stack t.basics0) ,
+ <SplitPrefix (e.gstack) t.pprefix>: e.pprefix1 t.pprefix2,  
+ <ListPath e.pprefix1>: e.listpath =
+      <DecAss t.restr (As e.prevass2)>
+      (Begin <NewNode From Exprs t.grestr t.basics (e.listpath) e.gstack t.var>
+             ':' <ExpectOut1 t.var>
+      End) 
+      <FormGenSplit1 (s.Gen t.true t.grestr (Basics ) 
+                                  (Prev t.pprefix2 t.pcontext t.pass t.cass))
+                    (Splitting e.stacks) (Node e.prevnode t.restr t.stack t.basics0)  
+      >;
+  
+*2.Last stack after a splitting. No holder inside.    
+*  Generalization of the prefixes was happened.
+ (Gen t.true t.grestr t.basics 
+        (Prev (e.pprefix t.call) (e.pcontext (Conf (e.expr':'t.out-var)))
+                                 (As e.pass) t.cass)) 
+   (Splitting ((e.gstack) (e.pstack) 
+               (As e.prevass2)(H-As e.prevass1 (As ))) ) 
+ (Node e.prevnode t.restr t.stack t.basics0),
+ <MakeOut t.call>: t.var t.hvar, 
+ <ListVar Of Situation e.pcontext (Conf (e.expr':'t.out-var))>: e.listvar2,
+ <ListPath e.pprefix t.call>: e.listpath =
+      <DecAss t.restr (As e.prevass2)>
+      (Begin <NewNode From Exprs t.grestr t.basics (e.listpath) e.gstack t.var>
+             ':' <ExpectOut1 t.var>
+      End) (As e.pass <IdAss From Vars1 t.var>)  
+      (Begin  
+            <NewNode <ClearR t.restr e.listvar2> t.basics
+                     <SubsSt (As (t.var':'t.hvar)) 
+                             e.pcontext (Conf (e.expr':'t.out-var))>
+            >':' <ExpectOut1 t.out-var>
+      End);
+
+*2.Last stack after a splitting. No holder inside.    
+*  Generalization without splitting of the stacks. 
+ (GenNoSplit t.true t.grestr t.basics 
+        (Prev (e.pprefix t.call) (e.pcontext (Conf (e.expr':'t.out-var)))
+                                 (As e.pass) t.cass)) 
+   (Splitting ((e.gstack) (e.pstack) 
+               (As e.prevass2)(H-As e.prevass1 (As ))) ) 
+ (Node e.prevnode t.restr t.stack t.basics0),
+ <ListPath e.pprefix t.call>: e.listpath =
+      <DecAss t.restr (As <ClAss e.prevass1 e.pass>)>
+      (Begin
+       <NewNode t.grestr t.basics <MkCalls (e.listpath) e.gstack >
+                e.pcontext (Conf (e.expr':'t.out-var)) >
+                ':' <ExpectOut1 t.out-var>
+       End);
+} /* End of FormGenSplit1 */
+
+SplitPrefix {
+ (t.gcall e.gstack) (t.call e.pprefix) = t.call <SplitPrefix (e.gstack)(e.pprefix)>;
+ () (e.pprefix) = (e.pprefix);
+}
+
+* Temporary definition.
+* <RecBasics e.prevnode t.basics0> ==> t.basics, 
+RecBasics {
+* The node to be generalized is recurrent. 
+* There are refrences to it between the basic configuration.
+* We have to throw out the basic configuration because the node is changed.  
+ s.id Recur e.prevnode t.basics = (Basics ); 
+
+ s.id s.type e.prevnode t.basics = t.basics; 
+}
+
+* Cut stack in according to the external h-assignment.
+* <CutStack (e.prefix) (e.context)>  
+*                            ==> (e.stack t.input t.h-assign t.out-var) ...
+CutStack {
+() (e.context (Conf (e.expr':'t.out))) (As e.passign)   
+                    = (e.context (Conf (e.expr':'t.out)) (As)(As) t.out);
+
+(e.prefix) (e.context) (As e.passign), 
+<ExtHVar (HVars ) e.context>: e.ext-assigns,
+<CutStack2 (As ) (e.prefix) (e.context) (As e.passign e.ext-assigns)>:
+  e.stacks (e.stack t.input t.h-assign t.out-var)
+        = e.stacks (e.stack (As <InpStk e.ext-assigns>) t.h-assign t.out-var)
+}
+
+* <CutStack1 t.assign (e.prefix) (e.context)> 
+*                               ==> (e.stack t.input t.h-assign t.out-var) ...
+CutStack1 {
+(As e.assign) () (e.context (Conf (e.expr':'t.out))) 
+                         = (e.context (Conf (e.expr':'t.out)) () t.out);
+
+* Change external h-variables with out-variables inside the context. 
+(As e.assign) (e.prefix) (e.context) = 
+               <CutStack2 (As e.assign) (e.prefix) (e.context) 
+                          (As <ExtHVar (HVars ) e.context>)>;
+}
+
+* Here the first argument keeps all external assignments.
+* They say how to cut the stack.
+CutStack2 {
+ (As e.assign) (e.prefix) (e.context (Conf (e.expr':'t.out))) 
+ (As (t.var':'t.hvar)) = 
+            <CutStk (As (t.var':'t.hvar)) e.prefix> 
+            (<SubsSt (As (t.var':'t.hvar)) e.context (Conf (e.expr':'t.out))> 
+             (As (t.var':'t.var)) (As (t.var':'t.hvar)) t.out); 
+
+ (As e.assign) (e.prefix) (e.context (Conf (e.expr':'t.out))) (As e.assign1) = 
+            <CutStk (As e.assign e.assign1) e.prefix> 
+            (<SubsSt (As e.assign1) e.context (Conf (e.expr':'t.out))> 
+             (As <InpStk e.assign1>) (As e.assign1) t.out); 
+}
+
+InpStk {
+ (t.var':'t.hvar) e.assign = (t.var':'t.var) <InpStk e.assign>;
+   = ;
+}
+
+* <CutStk (As e.assign e.assign1) e.prefix> 
+CutStk {
+ (As (t.var':'(Var 'h' s.id e.elev))) e.stack 
+ (Call e.call (e.fun':'(Var 'h' s.id e.elev1)))  
+   = (e.stack (Call e.call (e.fun':'(Var 'h' s.id e.elev1))) 
+              (Conf ((Var 'h' s.id e.elev1)':'t.var)) (As) (As) t.var);
+
+ (As e.1 (t.var':'(Var 'h' s.id e.elev)) e.2) e.stack 
+ (Call e.call (e.fun':'(Var 'h' s.id e.elev1)))  = 
+ <CutStack1 (As e.1 e.2) (e.stack)  
+  ((Call e.call (e.fun':'(Var 'h' s.id e.elev1))) (Conf ((Var 'h' s.id e.elev1)':'t.var)))>;
+}
+
+ExtHVar {
+ (HVars e.hvars) (Call e.id (('!' (Fn s.f e.arg)':'t.var)':'t.h-var)) e.expr =
+   <ExtHVar (HVars e.hvars) (As e.arg)> <ExtHVar (HVars e.hvars t.h-var) e.expr>;
+ t.HVars (Conf e.assign) = <ExtHVar t.HVars (As e.assign)>; 
+
+ t.HVars (As (e.expr1 ':'t.var) e.assign) e.expr 
+                      =  <ExtHVar t.HVars e.expr1 (As e.assign) e.expr>;
+ t.HVars (As ) e.expr = <ExtHVar t.HVars e.expr>;
+
+ t.HVars ('*' e.expr1) e.expr = <ExtHVar t.HVars e.expr1 e.expr>;
+
+ (HVars e.1 (Var 'h' s.id e.elev1) e.2) (Var 'h' s.id e.elev) e.expr 
+    =  <ExtHVar (HVars e.1 (Var 'h' s.id e.elev1) e.2) e.expr>;
+ t.HVars (Var 'h' s.id e.elev) e.expr 
+    =  ((Var 'e' <New Var> e.elev)':'(Var 'h' s.id e.elev)) 
+       <ExtHVar t.HVars e.expr>;
+
+ t.HVars (Var e.var) e.expr = <ExtHVar t.HVars e.expr>;
+ t.HVars s.1 e.expr =  <ExtHVar t.HVars e.expr>;
+ t.HVars = ;
+}
+
+*<FormSubg t.restr t.basics (e.stack t.inputs t.h-assign t.out) ...>
+FormSubg {
+t.restr t.basics (e.stack t.inputs t.h-assign t.out-var) e.stacks =
+      <IdAss From Vars <ListVar Of Situation e.stack>> 
+      (Begin <NewNode t.restr t.basics e.stack> ':' <ExpectOut1 t.out-var> End) 
+      <FormSubg t.restr t.basics e.stacks>; 
+t.restr t.basics = ;
+}
+
+OutVar1 {
+ (Basic e.basic (Output e.outfmt) ':'t.var) = <ExpectOut1 t.var>;
+ (Basic e.basic ':'t.var) = <ExpectOut1 t.var>;
+
+* ?? Can be more assignments inside configuration ?
+ (Node e.node (Stack e.stack (Conf (e.expr':'t.var))) t.basics) 
+                                       = <ExpectOut1 t.var>;
+}
+
+$ENTRY ExpectOut1 { t.var = (Output (Rs ) ((Expectant)':'t.var)); }
+*  ======================  Generalization of expressions ====================
+* Temporary definition.
+* <GenArg (e.cexpr) With (e.pexpr)> 
+*             == ((e.generalization) t.prev-ass t.cur-ass) 
+GenArg {
+ (e.cexpr) With (e.pexpr) = <GenArgs (As )(As )() (e.pexpr) With (e.cexpr)>; 
+} /* End of GenArg */
+
+GenArgs {
+ (As e.pass)(As e.cass) (e.gen)
+ (('*' ('!' (Fn t.fname e.arg1)':'t.var)) e.cexpr) With
+ (('*' ('!' (Fn t.fname e.arg2)':'t.var)) e.pexpr),
+ <CompAs (As )(As ) (e.arg1) With (e.arg2)>:
+    { (As e.arg11)(As e.arg22) True =
+           <GenArgsX <GenAs t.fname (As )(As )() (e.arg11) With (e.arg22)>
+                     (
+                      (As e.pass) (As e.cass) 
+                           (e.gen ('*' ('!' (Fn t.fname XXX)':'t.var)))
+                           (e.cexpr) With (e.pexpr)
+                     )
+           >;
+      e.False = False;
+   };
+ t.pass t.cass (e.gen) () With () = ((e.gen) t.pass t.cass); 
+ t.pass t.cass (e.gen) (e.cexpr) With (e.pexpr) = False;
+} /* End of GenArgs */
+
+GenArgsX {
+ ((e.gen-arg) (As e.ass1)(As e.ass2))
+ (            (As e.pass)(As e.cass) 
+              (e.gen ('*' ('!' (Fn t.fname XXX)':'t.var)))
+              (e.cexpr) With (e.pexpr)
+ ) =
+           <GenArgsX1 <UserCond ('!' (Fn t.fname e.gen-arg)':'t.var)>
+                     ((As e.ass1)
+                      (As e.pass e.ass1) (As e.cass e.ass2) 
+                           (e.gen ('*' ('!' (Fn t.fname e.gen-arg)':'t.var)))
+                           (e.cexpr) With (e.pexpr)
+                     )
+           >;
+
+  e.False = False;
+} /* End of GenArgsX */
+
+GenArgsX1 {
+ True ((As e.ass1) e.res) = (<HldAs e.ass1>) <GenArgs  e.res>;
+ e.False = False;
+} /* End of GenArgsX1 */
+
+GenArgs1 {
+ t.flag (('!' (Fn s.f e.parg)':'t.var1)) With (('!' (Fn s.f e.carg)':'t.var2))
+   = <GenArgs11 <OrderAs (As )(As ) (e.parg) With (e.carg)>
+       ( t.flag (('!' (Fn s.f )':'t.var1)) With (('!' (Fn s.f )':'t.var2)) )>;
+
+ e.False = False;
+}
+
+GenArgs11 {
+ (As e.arg11)(As e.arg22) True
+ ( t.flag (('!' (Fn s.f )':'t.var1)) With (('!' (Fn s.f )':'t.var2)) )
+   = <GenArgs10 t.flag
+        (('!' (Fn s.f )':'t.var1)) With (('!' (Fn s.f )':'t.var2))
+         <GenAs <ZeroTerm t.flag> s.f (As )(As )() (e.arg11) With (e.arg22)>>;
+
+ e.False = False;
+}
+
+GenArgs10 {
+ t.flag (('!' (Fn s.f e.parg)':'t.var1)) With (('!' (Fn s.f e.carg)':'t.var2))
+ t.flag1 ((e.gen-arg) t.p-assign t.c-assign) 
+       = t.flag1 t.p-assign t.c-assign (('!' (Fn s.f e.gen-arg)':'t.var1)); 
+ t.flag (e.cexpr) With (e.pexpr) e.False = False;
+}
+
+* <GenAs t.fname (As e.prev-ass) (As e.cur-ass) (e.gen) (e.ass1) With (e.ass2)> 
+*                    ==> e.info ((e.gen-arg) (As e.prev-ass)(As e.cur-ass))
+GenAs {
+ e.flag0 t.fname (As )(As )() (e.arg1) With (e.arg2), <UserSelf Gener t.fname>: 
+     { False = <GenAs0 e.flag0 (As )(As )() (e.arg1) With (e.arg2)>;
+       True  = <UserGen <InitFlag e.flag0>
+                   (Call_To_Function t.fname) (e.arg1) With (e.arg2)>;
+     };
+} /* End of GenAs */
+
+GenAs0 {
+ e.flag0 (As e.pass)(As e.cass)(e.gen) 
+ ((e.value1':'t.var1) e.ass12) With ((e.value2':'t.var1) e.ass22),
+ <GenExpr0 e.flag0 (e.value1) With (e.value2)>: 
+  { t.flag (As e.pass1)(As e.cass1)(e.gen1), <PermitGR t.flag e.cass1>: True 
+            = <GenAs0 <JoinInfAs e.flag0 t.flag>
+                      (As e.pass e.pass1)(As e.cass e.cass1) 
+                      (e.gen (e.gen1':'t.var1))
+                      (e.ass12) With (e.ass22)>;
+   e.xxx  = False;
+  };
+
+ e.flag0 (As e.pass)(As e.cass)(e.gen) () With () 
+                   = <GetInfAs e.flag0> ((e.gen) (As e.pass)(As e.cass));
+} /* End of GenAs */
+
+* Temporary definition. 
+CompAs {
+ (As e.pass)(As e.cass) 
+ ((e.value1':'(Var s.type s.name e.elev1)) e.ass12) With 
+ (e.ass21 (e.value2':'(Var s.type s.name e.elev2)) e.ass22),
+ <CompExpr (e.value1) With (e.value2)>: 
+ { False = False;
+   True = <CompAs (As e.pass (e.value1':'(Var s.type s.name e.elev1)))
+                  (As e.cass (e.value2':'(Var s.type s.name e.elev2)))
+                  (e.ass12) With (e.ass21 e.ass22)>;
+ };
+
+ (As e.pass)(As e.cass) () With () = (As e.pass)(As e.cass) True;
+ (As e.pass)(As e.cass) (e.ass1) With (e.ass2) = False;
+} /* End of CompAs */
+
+* Temporary definition. 
+OrderAs {
+ (As e.pass)(As e.cass) 
+ ((e.value1':'(Var s.type s.name e.elev1)) e.ass12) With 
+ (e.ass21 (e.value2':'(Var s.type s.name e.elev2)) e.ass22)
+    = <OrderAs (As e.pass (e.value1':'(Var s.type s.name e.elev1)))
+               (As e.cass (e.value2':'(Var s.type s.name e.elev2)))
+               (e.ass12) With (e.ass21 e.ass22)>;
+
+ (As e.pass)(As e.cass) () With () = (As e.pass)(As e.cass) True;
+ (As e.pass)(As e.cass) (e.ass1) With (e.ass2) = False;
+} /* End of OrderAs */
+
+* Unconditional generalization is used to create an output format. 
+$ENTRY GnExUnc {
+ (e.expr) With (e.expr1),
+ <GenExpr (UnCond) Left (e.expr) With (e.expr1)>: t.flag e.result = e.result;  
+}
+
+* <GenExpr0 (e.value1) With (e.value2)> 
+$ENTRY GenExpr0 {
+ e.flag0 (e.prev-expr) With (e.curr-expr)
+   = <GenExpr <InitFlag e.flag0> Left (e.prev-expr) With (e.curr-expr)>;
+
+*+ , <UserSelf Gener s.fname>: 
+*+   { False = <GenExpr t.flag Left (e.prev-expr) With (e.curr-expr)>;
+*+     True  = <UserGen t.flag (Call_To_Function s.fname) 
+*+                             (e.prev-expr) With (e.curr-expr)>;
+*+   };
+}
+
+InitFlag {
+ (UnCond e.1) = (UnCond e.1);
+ (Cond e.1) = (Cond e.1);
+ t.old-info t.info = <InitFlag t.old-info>;
+ e.flag = (Cond (0)(0)(0));
+}
+
+* Temporary definition. 
+* <GenExpr (As e.prev-ass) (As e.cur-ass) (e.gen) (e.expr1) With (e.expr2)> 
+*                    ==> ((e.gen-expr) (As e.prev-ass)(As e.cur-ass))
+$ENTRY GenExpr {
+*1.
+ t.flag s.side
+ (e.expr1 (Var 'h' s.id e.hvar1) e.expr11) With (e.expr2 (Var 'h' s.id e.hvar2) e.expr21)
+    = <PutInf t.flag <PutInf t.flag
+                      <GenExpr t.flag Left (e.expr1) With (e.expr2)> 
+                      t.flag (As)(As)((Var 'h' s.id e.hvar1))> 
+                      <GenExpr t.flag Left (e.expr11) With (e.expr21)>>;
+
+*2.
+* Maybe there are repeated variables. We have to change the variable's name.
+ t.flag s.side
+ ((Var 's' s.id1 e.elev1) e.expr1) With ((Var 's' s.id2 e.elev2) e.expr2)
+,<New Var>:s.ind, <MinElev (e.elev1) (e.elev2)>: e.elev  
+    = <PutInf t.flag
+              t.flag (As ((Var 's' s.id1 e.elev1)':'(Var 's' s.ind e.elev)))
+                     (As ((Var 's' s.id2 e.elev2)':'(Var 's' s.ind e.elev)))
+              ((Var 's' s.ind e.elev)) <GenExpr <IncTerm t.flag> s.side (e.expr1) With (e.expr2)>>;
+*3.
+* Maybe there are repeated variables. We have to change the variable's name.
+ t.flag s.side
+ ((Var 't' s.id1 e.elev1) e.expr1) With ((Var 't' s.id2 e.elev2) e.expr2)
+,<New Var>:s.ind, <MinElev (e.elev1) (e.elev2)>: e.elev  
+    = <PutInf t.flag
+              t.flag (As ((Var 't' s.id1 e.elev1)':'(Var 't' s.ind e.elev)))
+                     (As ((Var 't' s.id2 e.elev2)':'(Var 't' s.ind e.elev)))
+              ((Var 't' s.ind e.elev)) <GenExpr <IncTerm t.flag> s.side (e.expr1) With (e.expr2)>>;
+*4.
+ t.flag s.side 
+ (s.SYMBOL e.expr1) With (s.SYMBOL e.expr2)
+   = <PutInf t.flag
+             t.flag (As)(As)(s.SYMBOL) <GenExpr <IncTerm t.flag> s.side (e.expr1) With (e.expr2)>>; 
+*5.
+* Maybe there are repeated variables. We have to change the variable's name.
+ t.flag s.side
+ (e.expr1 (Var 's' s.id1 e.elev1)) With (e.expr2 (Var 's' s.id2 e.elev2)) 
+, <New Var>:s.ind, <MinElev (e.elev1) (e.elev2)>: e.elev   
+    = <PutInf t.flag   
+              <GenExpr <IncTerm t.flag> s.side (e.expr1) With (e.expr2)>
+                      t.flag
+                      (As ((Var 's' s.id1 e.elev1)':'(Var 's' s.ind e.elev)))
+                      (As ((Var 's' s.id2 e.elev2)':'(Var 's' s.ind e.elev)))
+                      ((Var 's' s.ind e.elev)) >;
+*5a.
+* Maybe there are repeated variables. We have to change the variable's name.
+ t.flag s.side
+ (e.expr1 (Var 't' s.id1 e.elev1)) With (e.expr2 (Var 't' s.id2 e.elev2)) 
+, <New Var>:s.ind, <MinElev (e.elev1) (e.elev2)>: e.elev   
+    = <PutInf t.flag   
+              <GenExpr <IncTerm t.flag> s.side (e.expr1) With (e.expr2)>
+                      t.flag
+                      (As ((Var 't' s.id1 e.elev1)':'(Var 't' s.ind e.elev)))
+                      (As ((Var 't' s.id2 e.elev2)':'(Var 't' s.ind e.elev)))
+                      ((Var 't' s.ind e.elev)) >;
+*6.
+ t.flag Right
+ (e.expr1 (Var 's' s.id1 e.elev1)) With (e.expr2 s.SYMBOL),<New Var>:s.ind  
+    = <PutInf  t.flag <GenExpr <IncTerm t.flag> Right (e.expr1) With (e.expr2)> 
+                      t.flag
+                      (As ((Var 's' s.id1 e.elev1)':'(Var 's' s.ind e.elev1)))
+                      (As (s.SYMBOL ':'(Var 's' s.ind e.elev1)))
+                      ((Var 's' s.ind e.elev1)) >; 
+*7.
+ t.flag s.side
+ (e.expr1 s.SYMBOL) With (e.expr2 s.SYMBOL)
+     = <PutInf t.flag <GenExpr <IncTerm t.flag> s.side (e.expr1) With (e.expr2)> 
+                      t.flag (As)(As)(s.SYMBOL)>; 
+*8.
+* Maybe there are repeated variables. We have to change the variable's name.
+ t.flag s.side
+ ((Var 'e' s.id1 e.elev1)) With ((Var 'e' s.id2 e.elev2)), 
+ <New Var>:s.ind, <MinElev (e.elev1) (e.elev2)>: e.elev   
+    = t.flag (As ((Var 'e' s.id1 e.elev1)':'(Var 'e' s.ind e.elev)))
+             (As ((Var 'e' s.id2 e.elev2)':'(Var 'e' s.ind e.elev)))
+             ((Var 'e' s.ind e.elev)); 
+
+*9.
+ t.flag Left (s.SYMBOL e.expr1) With ((Var 's' s.id2 e.elev2) e.expr2)
+    = <GenExpr t.flag Right (s.SYMBOL e.expr1) With ((Var 's' s.id2 e.elev2) e.expr2)>;
+
+*9a.
+ t.flag Left (t.term e.expr1) With ((Var 't' s.id2 e.elev2) e.expr2)
+    = <GenExpr t.flag Right (t.term e.expr1) With ((Var 't' s.id2 e.elev2) e.expr2)>;
+
+*10.
+ t.flag Right
+ (e.expr1 s.SYMBOL) With (e.expr2 (Var 's' s.id2 e.elev2)), <New Var>:s.ind  
+    = <PutInf t.flag <GenExpr <IncTerm t.flag> Right (e.expr1) With (e.expr2)>
+                     t.flag
+                     (As (s.SYMBOL ':'(Var 's' s.ind e.elev2)))
+                     (As ((Var 's' s.id2 e.elev2)':'(Var 's' s.ind e.elev2)))
+                     ((Var 's' s.ind e.elev2)) >; 
+*11b.
+ t.flag Left (('*' User__ e.expr11) e.expr1) With (('*' User__ e.expr21) e.expr2) 
+    = <IfGenExpr GenExprX t.flag Left
+                 (Old (('*' User__ e.expr11)) (('*' User__ e.expr21)))
+                 (Gener <PutBr <UserGen <ZeroTerm t.flag> 
+                                 (User__ e.expr11) With (User__ e.expr21)>>) 
+                 (Continue <IncTerm t.flag> (e.expr1) With (e.expr2))>;
+
+*12a.
+ t.flag Right (('*' User__ e.expr11) e.expr1) With (('*' User__ e.expr21) e.expr2) 
+    = <PutInf t.flag <PutBr <UserGen <ZeroTerm t.flag> (User__ e.expr11)
+                                                  With (User__ e.expr21)>>
+                     <GenExpr <IncTerm t.flag> Right (e.expr1) With (e.expr2)>>;
+
+*11.
+ t.flag Left (('*' e.expr11) e.expr1) With (('*' e.expr21) e.expr2) 
+    = <IfGenExpr GenExprX t.flag Left (Old (('*' e.expr11))(('*' e.expr21)))
+                 (Gener <PutBr <GenExpr <ZeroTerm t.flag> Left (e.expr11) With (e.expr21)>>) 
+                 (Continue <IncTerm t.flag> (e.expr1) With (e.expr2))>;
+*XXX.
+ t.flag s.side (e.expr1) With (e.expr2) 
+    = <GenExprX t.flag s.side (e.expr1) With (e.expr2)>;
+} /* End of GenExpr */
+
+GenExprX {
+*12a.
+ t.flag Right (e.expr1 ('*' User__ e.expr11)) With (e.expr2 ('*' User__ e.expr21)) 
+    = <PutInf t.flag <GenExpr <IncTerm t.flag> Right (e.expr1) With (e.expr2)> 
+              <PutBr <UserGen <ZeroTerm t.flag> (User__ e.expr11)
+                                           With (User__ e.expr21)>>>;
+*12.
+ t.flag Right (e.expr1 ('*' e.expr11)) With (e.expr2 ('*' e.expr21)) 
+    = <IfGenExpr GenExprY t.flag Right (Old (('*' e.expr11))(('*' e.expr21)))
+              (Continue <IncTerm t.flag> (e.expr1) With (e.expr2))
+              (Gener <PutBr1 <GenExpr (UnCond Cond) Left (e.expr11) With (e.expr21)>>)>;
+*XXX.
+ t.flag s.side (e.expr1) With (e.expr2) 
+    = <GenExprY t.flag s.side (e.expr1) With (e.expr2)>;
+} /* End of GenExprX */
+
+GenExprY {
+*13a.
+ t.flag Left (('!' (Fn s.f e.arg1)':'t.var1) e.expr1) With 
+               (('!' (Fn s.f e.arg2)':'t.var2) e.expr2) 
+ , <Equal (t.var1) (t.var2)>:True, <PermitForUser t.flag s.f>: True
+    = <IfGenExpr GenExprZ t.flag Left (Old (('!' (Fn s.f e.arg1)':'t.var1))
+                                           (('!' (Fn s.f e.arg2)':'t.var2)))
+                 (Gener <GenArgs1 t.flag (('!' (Fn s.f e.arg1)':'t.var1)) 
+                                    With (('!' (Fn s.f e.arg2)':'t.var2))>) 
+                 (Continue <IncTerm t.flag> (e.expr1) With (e.expr2))>;
+*14.
+ t.flag Left (('!' (Fn s.f e.arg1)':'t.var1) e.expr1) With 
+               (('!' (Fn s.f e.arg2)':'t.var2) e.expr2) 
+ ,<Equal (t.var1) (t.var2)>:True , <PermitForUser t.flag s.f>: False
+    = <IfGenExpr GenExprZ t.flag Left (Old (('!' (Fn s.f e.arg1)':'t.var1))
+                                             (('!' (Fn s.f e.arg2)':'t.var2)))
+                 (Gener <GenArgs1 t.flag (('!' (Fn s.f e.arg1)':'t.var1)) 
+                                    With (('!' (Fn s.f e.arg2)':'t.var2))>) 
+                 (Continue <IncTerm t.flag> (e.expr1) With (e.expr2))>;
+*13.
+ t.flag Right (('!' (Fn s.f e.arg1)':'t.var1) e.expr1) With 
+               (('!' (Fn s.f e.arg2)':'t.var2) e.expr2) 
+ , <Equal (t.var1) (t.var2)>:True, <PermitForUser t.flag s.f>: True
+    = <PutInf t.flag <GenArgs1 t.flag (('!' (Fn s.f e.arg1)':'t.var1)) 
+                                 With (('!' (Fn s.f e.arg2)':'t.var2))>
+              <GenExpr <IncTerm t.flag> Right (e.expr1) With (e.expr2)>>;
+*XXX.
+ t.flag s.side (e.expr1) With (e.expr2) 
+    = <GenExprZ t.flag s.side (e.expr1) With (e.expr2)>;
+} /* End of GenExprY */
+
+GenExprZ {
+*c.15.
+ t.flag s.side
+ ((Var 'c' s.id1 e.const) e.expr1) With ((Var 'c' s.id2 e.const) e.expr2) 
+   = <PutInf t.flag t.flag (As)(As)((Var 'c' s.id1 e.const)) 
+                    <GenExpr <IncTerm t.flag> s.side (e.expr1) With (e.expr2)>>; 
+*16.
+ t.flag Right (e.expr1 ('!' (Fn s.f e.arg1)':'t.var1)) With 
+              (e.expr2 ('!' (Fn s.f e.arg2)':'t.var2)) 
+ ,<Equal (t.var1) (t.var2)>:True ,<PermitForUser t.flag s.f>:True
+        = <PutInf t.flag <GenExpr <IncTerm t.flag> Right (e.expr1) With (e.expr2)> 
+                 <GenArgs1 t.flag (('!' (Fn s.f e.arg1)':'t.var1)) 
+                             With (('!' (Fn s.f e.arg2)':'t.var2))>>;
+*17.
+ t.flag Right (e.expr1 ('!' (Fn s.f e.arg1)':'t.var1)) With 
+              (e.expr2 ('!' (Fn s.f e.arg2)':'t.var2)) 
+ ,<Equal (t.var1) (t.var2)>:True , <PermitForUser t.flag s.f>: False
+    = <IfGenExpr GenExprW t.flag Right (Old (('!' (Fn s.f e.arg1)':'t.var1))
+                                            (('!' (Fn s.f e.arg2)':'t.var2)))
+              (Continue <IncTerm t.flag> (e.expr1) With (e.expr2))
+              (Gener <GenArgs1 (UnCond Cond) (('!' (Fn s.f e.arg1)':'t.var1)) 
+                                        With (('!' (Fn s.f e.arg2)':'t.var2))>)>;
+*XXX.
+ t.flag s.side (e.expr1) With (e.expr2) 
+    = <GenExprW t.flag s.side (e.expr1) With (e.expr2)>;
+} /* End of GenExprZ */
+
+GenExprW {
+*c.18.
+ t.flag s.side
+ (e.expr1 (Var 'c' s.id1 e.const)) With (e.expr2 (Var 'c' s.id2 e.const))
+     = <PutInf t.flag <GenExpr <IncTerm t.flag> s.side (e.expr1) With (e.expr2)> 
+                      t.flag (As)(As)((Var 'c' s.id1 e.const))>; 
+*6a.
+ t.flag Right
+ (e.expr1 (Var 't' s.id1 e.elev1)) With (e.expr2 t.term)
+    = <IfGenExpr GenExprWA t.flag Right (Old ((Var 't' s.id1 e.elev1))(t.term))
+                 (Continue <IncTerm t.flag> (e.expr1) With (e.expr2))
+                 (Gener <GenT t.flag Right  (Var 't' s.id1 e.elev1) With t.term>)>; 
+
+*10a.
+ t.flag Right
+ (e.expr1 t.term) With (e.expr2 (Var 't' s.id2 e.elev2))
+    = <IfGenExpr GenExprWA t.flag Right (Old (t.term)((Var 't' s.id2 e.elev2)))
+                 (Continue <IncTerm t.flag> (e.expr1) With (e.expr2))
+                 (Gener <GenT t.flag Left t.term With (Var 't' s.id2 e.elev2)>)>; 
+
+*XXX.
+ t.flag s.side (e.expr1) With (e.expr2) 
+    = <GenExprWA t.flag s.side (e.expr1) With (e.expr2)>;
+} /* End of GenExprW */
+
+GenExprWA {
+*3a.
+ t.flag Right
+ ((Var 's' s.id1 e.elev1) e.expr1) With (s.SYMBOL e.expr2), <New Var>:s.ind  
+    = <PutInf t.flag
+              t.flag (As ((Var 's' s.id1 e.elev1)':'(Var 's' s.ind e.elev1)))
+                     (As (s.SYMBOL ':'(Var 's' s.ind e.elev1)))
+              ((Var 's' s.ind e.elev1)) <GenExpr <IncTerm t.flag> Right (e.expr1) With (e.expr2)> >;
+*9a.
+ t.flag Right
+ (s.SYMBOL e.expr1) With ((Var 's' s.id2 e.elev2) e.expr2), <New Var>:s.ind  
+    = <PutInf   t.flag t.flag
+                (As (s.SYMBOL ':'(Var 's' s.ind e.elev2)))
+                (As ((Var 's' s.id2 e.elev2)':'(Var 's' s.ind e.elev2)))
+                ((Var 's' s.ind e.elev2)) 
+                <GenExpr <IncTerm t.flag> Right (e.expr1) With (e.expr2)>>;
+*19. 
+ t.flag Right (s.SYMBOL1 e.expr1) With (s.SYMBOL2 e.expr2)
+, <PrmSGen t.flag s.SYMBOL1>:
+  { True, <New Var>:s.ind, <Infinit>: e.infinit
+         = <PutInf t.flag t.flag
+              (As (s.SYMBOL1 ':'(Var 's' s.ind e.infinit)))
+              (As (s.SYMBOL2 ':'(Var 's' s.ind e.infinit)))
+              ((Var 's' s.ind e.infinit)) 
+              <GenExpr <IncTerm t.flag> Right (e.expr1) With (e.expr2)>>; 
+   False = False;
+  };
+
+*20.
+ t.flag Right (e.expr1 s.SYMBOL1) With (e.expr2 s.SYMBOL2)
+, <PrmSGen t.flag s.SYMBOL1>:
+  { True, <New Var>:s.ind, <Infinit>: e.infinit
+         = <PutInf t.flag <GenExpr <IncTerm t.flag> Right (e.expr1) With (e.expr2)>
+                   t.flag
+                   (As (s.SYMBOL1 ':'(Var 's' s.ind e.infinit)))
+                   (As (s.SYMBOL2 ':'(Var 's' s.ind e.infinit)))
+                   ((Var 's' s.ind e.infinit))>; 
+   False = False;
+  };
+
+*11c.
+ t.flag Right (('*' e.expr11) e.expr1) With (('*' e.expr21) e.expr2) 
+    = <IfGenExpr GenExprU t.flag Right (Old (('*' e.expr11))(('*' e.expr21)))
+              (Gener <PutBr1 <GenExpr (UnCond Cond) Left (e.expr11) With (e.expr21)>>)
+              (Continue <IncTerm t.flag> (e.expr1) With (e.expr2))>;
+
+*14c.
+ t.flag Right (('!' (Fn s.f e.arg1)':'t.var1) e.expr1) With 
+               (('!' (Fn s.f e.arg2)':'t.var2) e.expr2) 
+ ,<Equal (t.var1) (t.var2)>:True , <PermitForUser t.flag s.f>: False
+    = <IfGenExpr GenExprU t.flag Right (Old (('!' (Fn s.f e.arg1)':'t.var1))
+                                            (('!' (Fn s.f e.arg2)':'t.var2)))
+                 (Gener <GenArgs1 (UnCond Cond) (('!' (Fn s.f e.arg1)':'t.var1)) 
+                                           With (('!' (Fn s.f e.arg2)':'t.var2))>) 
+                 (Continue <IncTerm t.flag> (e.expr1) With (e.expr2))>;
+*18a.
+ t.flag Right (t.term1 e.expr1) With (t.term2 e.expr2)
+, <IsTerms t.term1 t.term2>: False 
+    = <GenExprU t.flag Right (t.term1 e.expr1) With (t.term2 e.expr2)>;
+
+*3a.
+ t.flag Right
+ ((Var 't' s.id1 e.elev1) e.expr1) With (t.term e.expr2)
+    = <IfGenExpr GenExprU t.flag Right (Old ((Var 't' s.id1 e.elev1))(t.term))
+                 (Gener <GenT t.flag Right (Var 't' s.id1 e.elev1) With t.term>) 
+                 (Continue <IncTerm t.flag> (e.expr1) With (e.expr2))>;
+
+*18b.
+ t.flag Right (e.expr1 t.term1) With (e.expr2 t.term2)
+, <IsTerms t.term1 t.term2>: False 
+    = <GenExprU t.flag Right (e.expr1 t.term1) With (e.expr2 t.term2)>;
+
+*9b.
+ t.flag Right
+ (t.term e.expr1) With ((Var 't' s.id2 e.elev2) e.expr2)
+    = <IfGenExpr GenExprU t.flag Right (Old (t.term)((Var 't' s.id2 e.elev2)))
+                 (Gener <GenT t.flag Left t.term With (Var 't' s.id2 e.elev2)>)
+                 (Continue <IncTerm t.flag> (e.expr1) With (e.expr2))>;
+
+*19a. 
+ t.flag Right (t.term1 e.expr1) With (t.term2 e.expr2)
+         = <GenTT t.flag Right (t.term1 e.expr1) With (t.term2 e.expr2)
+                  Left (<PrmTTGen t.flag t.term1 t.term2>)>;
+*20a.
+ t.flag Right (e.expr1 t.term1) With (e.expr2 t.term2)
+         = <GenTT t.flag Right (e.expr1 t.term1) With (e.expr2 t.term2)
+                  Right (<PrmTTGen t.flag t.term1 t.term2>)>;
+*XXX.
+ t.flag s.side (e.expr1) With (e.expr2) 
+    = <GenExprU t.flag s.side (e.expr1) With (e.expr2)>;
+} /* End of GenExprWA */
+
+GenExprU {
+*21.
+ t.flag s.side () With () = t.flag (As)(As)(); 
+
+*22.0
+ t.flag Left (e.expr1) With (e.expr2) = <GenExpr t.flag Right (e.expr1) With (e.expr2)>;
+
+*22. 
+ t.flag Right (e.expr1) With (e.expr2), <PermitGen t.flag e.expr1>:
+   { True, 
+* This call is very important to connect generalization with reducing.
+* See comment to PermitGr-PermitR functions. 
+     <PermitGR1 t.flag e.expr2>: True, 
+          <New Var>:s.ind, 
+          <MinElev (<ElevExp e.expr1>) (<ElevExp e.expr2>)>: e.elev 
+            = t.flag
+              (As (e.expr1 ':'(Var 'e' s.ind e.elev)))
+              (As (e.expr2 ':'(Var 'e' s.ind e.elev))) ((Var 'e' s.ind e.elev));
+    e.False = False;
+  };
+} /* End of GenExprU */
+
+IfGenExpr {
+ s.fun-name t.flag s.side t.Old
+ (Gener e.info2 (e.gn)) (Continue t.flag1 (e.expr1) With (e.expr2))
+           = <PutInf t.flag e.info2 (e.gn)
+                     <GenExpr t.flag1 s.side (e.expr1) With (e.expr2)>>;
+ s.fun-name t.flag s.side (Old (e.expr11)(e.expr21))
+ (Gener e.false) (Continue t.flag1 (e.expr1) With (e.expr2))
+         = <Mu s.fun-name t.flag s.side (e.expr11 e.expr1) With (e.expr21 e.expr2)>;
+ s.fun-name t.flag s.side t.Old
+ (Continue t.flag1 (e.expr1) With (e.expr2)) (Gener e.info2 (e.gn))  
+         = <PutInf t.flag <GenExpr t.flag1 s.side (e.expr1) With (e.expr2)>
+                             e.info2 (e.gn)>;
+ s.fun-name t.flag s.side (Old (e.expr11)(e.expr21))
+ (Continue t.flag1 (e.expr1) With (e.expr2)) (Gener e.false) 
+         = <Mu s.fun-name t.flag s.side (e.expr1 e.expr11) With (e.expr2 e.expr21)>;
+}
+
+GenT {
+t.flag Right t.term1 With t.term2 
+    = <GenT1 t.flag Right t.term1 With t.term2 (<PermitGenTR t.flag t.term2>)>;
+t.flag Left t.term1 With t.term2 
+    = <GenT1 t.flag Left t.term1 With t.term2 (<PermitGenTL t.flag t.term1>)>;
+} 
+
+GenT1 {
+t.flag Right (Var 't' s.id1 e.elev1) With t.term (True e.elev2)
+,<New Var>:s.ind ,<MinElev (e.elev1) (e.elev2)>: e.elev = 
+                      t.flag
+                      (As ((Var 't' s.id1 e.elev1)':'(Var 't' s.ind e.elev)))
+                      (As (t.term ':'(Var 't' s.ind e.elev)))
+                      ((Var 't' s.ind e.elev)); 
+t.flag Left t.term With (Var 't' s.id2 e.elev2) (True e.elev1)
+,<New Var>:s.ind ,<MinElev (e.elev1) (e.elev2)>: e.elev =
+                     t.flag
+                     (As (t.term ':'(Var 't' s.ind e.elev)))
+                     (As ((Var 't' s.id2 e.elev2)':'(Var 't' s.ind e.elev)))
+                     ((Var 't' s.ind e.elev)); 
+t.flag s.side t.term1 With t.term2 e.False = False;
+} 
+
+GenTT {
+  t.flag s.side (t.term1 e.expr1) With (t.term2 e.expr2)
+  Left (True e.elev), <New Var>:s.ind
+         = <PutInf t.flag t.flag
+              (As (t.term1 ':'(Var 't' s.ind e.elev)))
+              (As (t.term2 ':'(Var 't' s.ind e.elev)))
+              ((Var 't' s.ind e.elev)) 
+              <GenExpr <IncTerm t.flag> s.side (e.expr1) With (e.expr2)>>; 
+
+  t.flag s.side (e.expr1 t.term1) With (e.expr2 t.term2)
+  Right (True e.elev), <New Var>:s.ind
+        = <PutInf t.flag <GenExpr <IncTerm t.flag> Right (e.expr1) With (e.expr2)>
+                   t.flag
+                   (As (t.term1 ':'(Var 't' s.ind e.elev)))
+                   (As (t.term2 ':'(Var 't' s.ind e.elev)))
+                   ((Var 't' s.ind e.elev))>; 
+
+ t.flag s.side (e.expr1) With (e.expr2) s.side1 (False) = False;
+}
+
+PutInf {
+ t.old-flag
+ t.flag (As e.pass)(As e.cass)(e.gen) t.flag1 (As e.pass1)(As e.cass1)(e.gen1) =
+ <JoinF t.old-flag t.flag t.flag1> 
+ (As e.pass e.pass1)(As e.cass e.cass1)(e.gen e.gen1);
+
+  e.xxx = False;
+}
+
+PutBr {
+  (Cond t.ln (e.dpth) t.CallDepth) e.info (e.gn) 
+           = (Cond t.ln (<Add (e.dpth) 1>) t.CallDepth) e.info (('*' e.gn));
+  e.info (e.gn) = e.info (('*' e.gn));
+  e.xxx = False;
+}
+
+PutBr1 {
+  t.cond e.info (e.gn) = (Cond (0)(0)(0)) e.info (('*' e.gn));
+  e.xxx = False;
+}
+
+PutFun {
+  t.cond e.info (e.gn) = (Cond (0)(0)(0)) e.info (e.gn);
+  e.xxx = False;
+}
+
+AsFun {
+ ('!' (Fn t.fname e.arg1)':'t.var) 
+   = <AsFun1 ('!' (Fn t.fname)':'t.var) 
+            <GenAs t.fname (As )(As )() (e.arg1) With (e.arg1)>>; 
+}
+
+AsFun1 {
+ ('!' (Fn t.fname )':'t.var) ((e.gen-arg) (As e.ass1)(As e.ass2)) 
+       =  (As e.ass1)(As e.ass2) (('!' (Fn t.fname e.gen-arg)':'t.var));
+ e.trash = False;      
+}
+
+PermitR {
+ UnCond   = True;
+
+*2. This case can case infinite loop: 
+* the idea of example is generalization can happend here to the same previous
+* configuration (as it is itself) while the current configuration contains
+* the empty structures but cannot be reduced to the previous.  
+* This important case must be very careful connected with generalization.
+**+ s.cond   = False;
+
+ s.cond e.expr  = <TestCVar (s.cond) e.expr>;
+* e.expr  = True;
+}
+
+TestCVar {
+ (Cond e.cond) e.expr = <TestCVar1 e.expr>;
+ (UnCond Cond) e.expr = <TestCVar1 e.expr>;
+ t.uncond e.expr = True;
+}
+
+TestCVar1 {
+ ('*' User__ e.expr1) e.expr = False;
+ ('*' e.expr1) e.expr = <TestCVar1 e.expr1 e.expr>;
+* ('!' (Fn t.fname e.arg1)':'t.var) e.expr = <TestCVar1 (As e.arg1) e.expr>;
+ ('!' (Fn t.fname e.arg1)':'t.var) e.expr = <TestCVar1 e.expr>;
+ (As (e.expr1':'t.var) e.assign) e.expr = <TestCVar1 e.expr1 (As e.assign) e.expr>;
+ (As ) e.expr = <TestCVar1 e.expr>;
+ s.1 e.expr = <TestCVar1 e.expr>;
+ (Var 'c' e.var) e.expr  = False;
+ (Var e.var) e.expr  = <TestCVar1 e.expr>;
+    = True;
+}
+
+
+* This function can case infinite loop: 
+* the idea of example is generalization can happend here to the same previous
+* configuration (as it is itself) while the current configuration contains
+* the empty structures but cannot be reduced to the previous.  
+* This important case must be very careful connected with generalization.
+PermitGR {
+ t.flag (e.expr':'(Var 'e' e.var)) e.assign
+        = <TstPerm <PermitGR1 t.flag e.expr> t.flag e.assign>;
+ t.flag (e.expr':'(Var 't' e.var)) e.assign
+        = <TstPerm <PermitGR1 t.flag e.expr> t.flag e.assign>;
+ t.flag t.assign1 e.assign = <PermitGR t.flag e.assign>;
+ t.flag = True;
+}
+
+TstPerm { 
+ True t.flag e.assign = <PermitGR t.flag e.assign>; 
+ False t.flag e.assign = False;
+}
+
+PermitGR1 {
+ (s.Cond e.cond) e.expr = <PermitR s.Cond e.expr>
+}
+
+PermitGen {
+*+ (Cond e.cond) e.expr = False;
+
+* This condition is important  for arith.ref.
+(Cond e.cond), <PermitGen1 (Cond e.cond)>:
+        { False = False;
+          True = True;
+        };
+
+(Cond e.cond) s.1, <PermitGen1 (Cond e.cond)>:
+        { False = False;
+          True = <PermitS s.1>;
+        };
+
+t.cond  e.expr  = <TestCVar t.cond e.expr>;
+* e.expr  = True;
+}
+
+PermitGen1 {
+(Cond t.ln t.depth t.CallDepth), <Sub t.ln <GetKey Length>>: '-' e.X,
+ <Sub t.depth <GetKey Depth>>: '-' e.Y, 
+ <Sub t.CallDepth <GetKey CallDepth>>: '-' e.Z = False;
+ e.xxx = True;
+}
+
+PrmSGen {
+e.expr1  = True;
+}
+
+PermitS { s.C = <PermitS1 <Type s.C>> ; }
+PermitS1 {
+*          'N' e.C = True;
+*+          'D' e.C = True;
+*+          sT  e.C = False;
+          e.xxx = True;
+        }
+
+* Permit of generalization of a right term.
+*<PermitGenTR t.flag t.term> ==> s.bool e.elev
+PermitGenTR { 
+ t.flag t.term = <PermitGenTR1 t.flag t.term <IsTerm t.term>>; 
+}
+
+PermitGenTR1 { 
+ t.flag t.term True = <PermitT <PermitGR1 t.flag t.term> t.term>; 
+ t.flag t.term False = False;
+}
+
+* Permit of generalization of a left term.
+*<PermitGenTL t.flag t.term> ==> s.bool e.elev
+PermitGenTL { 
+ t.flag t.term = <PermitGenTL1 t.flag t.term <IsTerm t.term>>; 
+}
+
+PermitGenTL1 { 
+ t.flag t.term True = <PermitT <PermitGen t.flag t.term> t.term>; 
+ t.flag t.term False = False;
+}
+
+* Permit of generalization of a pair of terms.
+* <PrmTTGen t.flag t.termL t.termR> ==> s.bool e.elev
+PrmTTGen {
+ t.flag t.termL t.termR 
+           = <PrmTTGen1 t.flag t.termR (<PermitGenTL t.flag t.termL>)>;
+}
+
+PrmTTGen1 {
+ t.flag t.termR (True e.elev1)
+        = <PrmTTGen2 (e.elev1) (<PermitGenTR t.flag t.termR>)>;
+ t.flag t.termR (e.False) = False;
+}
+
+PrmTTGen2 {
+ (e.elev1) (True e.elev2) = True <MinElev (e.elev1) (e.elev2)>;
+ (e.elev1) (e.False) = False;
+}
+
+IsTerms { t.term1 t.term2 = <IsTerms1 <IsTerm t.term1> t.term2>; }
+IsTerms1 {
+ True  t.term2 = <IsTerm t.term2>;
+ False t.term2 = False;
+}
+
+IsTerm {
+ s.1 = True;
+ ('*' e.expr) = True;
+ (Var 'c' s.id t.1) = True;
+ t.1 = False;
+}
+
+PermitT {
+ True t.term = True <ElevExp t.term>;
+ False t.term = False;
+}
+
+IncTerm {
+(Cond t.ln t.depth t.CallDepth) = (Cond (<Add t.ln 1>) t.depth t.CallDepth);
+t.flag    = t.flag;
+}
+
+ZeroTerm {
+(Cond t.ln t.depth t.CallDepth) = (Cond (0) t.depth t.CallDepth);
+t.flag    = t.flag;
+}
+
+JoinF {
+(Cond t.old-ln t.old-depth t.old-CallDepth) 
+(Cond t.ln t.depth t.CallDepth) (Cond t.ln1 t.depth1 t.CallDepth1) 
+      = (Cond t.old-ln <Max t.depth t.depth1> <Max t.CallDepth t.CallDepth1>);       
+ t.old-flag t.flag t.flag1  = t.old-flag;
+}
+
+JoinInfAs {
+ t.old-flag t.flag t.flag1 = t.old-flag <JoinF t.old-flag t.flag t.flag1>;
+ t.old-flag t.flag = t.old-flag t.flag;
+            t.flag = ;
+}
+
+GetInfAs {
+ t.old-flag t.new-flag = t.new-flag;
+                       = ;
+}
+
+Max { t.1 (e.2), <Sub t.1 e.2>: 
+        { '-' e.xxx = (e.2);
+              e.xxx = t.1; };
+}
+
+*  ======================  Generalization of restriction ====================
+
+* <GenRstr t.curr-restr t.curr-assignment With t.prev-restr t.prev-assignment>: 
+*        == (Rs e.gen-restriction) 
+$ENTRY GenRstr {
+ t.crestr t.cassign With t.prestr t.passign = 
+                         <GenRR t.crestr t.cassign With t.prestr t.passign>; 
+
+*2. Generalization of restrictions without generalization of stacks.
+*   The current stack was reduced to the previous. 
+*   Make an identety assignment to the previous restriction.   
+ t.crestr t.cassign With t.prestr, <GenIdAs t.cassign>: t.passign = 
+                         <GenRR t.crestr t.cassign With t.prestr t.passign>; 
+} /* End of GenRstr */
+
+GenIdAs {  (As e.ass) = (As <GenId e.ass>); } 
+GenId {
+ (e.val':'t.var) e.ass = (t.var':'t.var) <GenId e.ass>;
+                       = ;
+} /* End of GenIdAs */
+
+
+/* The function GenRR: generalization of two pairs of assignment-restriction,
+   the assignments are reductions of a generalization-configuration to 
+   the generalized configurations and the restrictions are given in terms of 
+   these generalized configurations.
+   (As prev-var <- gen-var)(Rs prev-restr)
+   (As curr-var <- gen-var)(Rs curr-restr)
+   GenRR works by this principle: 
+    1. Generation of a restrictions from a positive information 
+       about the configurations.
+     A: s-restrictions:
+     - take symbols which where assigned to the s-variables from gen-var;
+     - generate elementary tautologies-restrictions from these symbols;
+     - the previous two steps are done for the both pairs arguments t.ass t.rest;
+     B: e-restrictions:
+     - take e-parametrs from gen-var, which shure are not empty;
+     - generate e-restrictions from these e-parametrs;
+     - the previous two steps are done for the both pairs arguments t.ass t.rest;
+
+    2. Generalization itself is intersection of pro-images of 
+       (Rs prev-restr prev-tautologies) 
+                             under the substitution (As prev-var <- gen-var)
+       and
+       (Rs curr-restr curr-tautologies)
+                             under the substitution (As curr-var <- gen-var)
+      Here we mean under pro-images of an e-parametr any e.gen-var from
+      the substitutions such that (e.expr1 e.parametr e.expr2 <- e.gen-var).
+
+   Statement: (As prev-var <- gen-var)(Rs prev-pro-images) == (Rs prev-restr)
+              (As curr-var <- gen-var)(Rs curr-pro-images) == (Rs curr-restr) 
+*/
+* <GenRR (As e.AssignmentToPrev)(Rs e.PrevRestriction) With
+*       (As e.AssignmentToCurr)(Rs e.CurrRestriction) >
+*         ==>  (Rs e.GenerRestriction)
+GenRR { 
+* e.xxx = (Rs );
+ (Rs e.Restr1) t.As1 With (Rs e.Restr2) t.As2,
+ <GenConRes t.As1 t.As2>: (e.s-R1)(e.e-R1) (e.s-R2)(e.e-R2) = 
+        (Rs <IntSctRR (<DelRepR <PrRestr (Rs e.Restr1 e.s-R1) t.As1>> e.e-R1) 
+                      (<DelRepR <PrRestr (Rs e.Restr2 e.s-R2) t.As2>> e.e-R2) 
+            >);
+} /* End of GenRR */
+
+/* Generations two list tautologies-restrictions from symbols, wich were
+  assigned to s-variables in two substitutions, and e-restrictions to
+  e-variables, which are not empty . 
+*/
+* <GenConRes t.assignment1 t.assignment2>  
+*           ==> (e.tautologies1)(e.e-restrs1) (e.tautologies2)(e.e-restrs1)
+GenConRes { 
+ (As e.assign1) (As e.assign2),
+  <GetConst e.assign1>: (e.symbols1) (e.e-restrs1), 
+  <GetConst e.assign2>: (e.symbols2) (e.e-restrs2) = 
+     (<Tautol e.symbols1>) (e.e-restrs1) (<Tautol e.symbols2>) (e.e-restrs2); 
+*        (<Tautol <GetConst e.assign1>>) (<Tautol <GetConst e.assign2>>); 
+}          
+
+* Construct a list of elementary tautologies-restrictions: ('a' '#' 'b') ...
+* <Tautol e.symbols> ==> e.tautologies-restrictions 
+Tautol { 
+  s.D e.symbols, 
+  <DelRepS s.D e.symbols>: e.symb = <MkRestr1 s.D e.symb> <Tautol e.symb>;
+                                  = ;
+}
+
+* Get s-constants which were assigned to s-variables and e-restrictions 
+* to those e-variables which are non-empty expressions.
+* <GetConst  e.assignments > ==> (e.symbols)(e.e-restrictions)  
+GetConst { 
+ e.assignmets = <GetCnst1 ()() e.assignmets>; 
+} 
+
+GetCnst1 { 
+ (e.symbs) t.e-restrs (s.SYMBOL ':' (Var 's' e.var)) e.As  
+    = <GetCnst1 (e.symbs s.SYMBOL) t.e-restrs e.As>;
+
+ t.symbs (e.e-restrs) (e.value ':' (Var 'e' e.var2)) e.As, 
+ <IsNotEmp e.value>: True 
+    = <GetCnst1 t.symbs ( e.e-restrs ((Var 'e' e.var2) '#' /* [] */) ) e.As>;
+
+ t.symbs t.e-restrs (e.value ':' (Var e.var2)) e.As 
+    = <GetCnst1 t.symbs t.e-restrs e.As>;
+
+ t.symbs t.e-restrs = t.symbs t.e-restrs;
+} 
+
+* <IsNotEmp e.expr> ==> True | Unknown
+IsNotEmp {
+ s.1 e.expr = True;
+ ('*' e.expr1) e.expr = True;
+ (Var 's' e.var) e.expr = True;
+ (Var 't' e.var) e.expr = True;
+ ('!' t.Call1 ':'t.var) e.expr = <IsNotEmp t.var e.expr>;
+ t.term e.expr = <IsNotEmp e.expr>;
+               = Unknown;
+}
+
+/* PrRestr: the function creates new restriction's pairs over s-variables 
+   in a pro-image of a substitution and new restrictions over e-variables
+   in the pro-image. 
+*/     
+* <PrRestr t.restrictions t.assignment> ==> e.gen-restrictions 
+PrRestr { 
+* Take pro-images of restriction's pair under an assignment and create
+* a new list restriction over the variables from the pro-image. 
+ (Rs t.Rest e.Rests) t.As = 
+                   <MkRestr <PrImg1 t.Rest t.As>> <PrRestr (Rs e.Rests) t.As>;
+ (Rs ) t.As = ;
+}
+
+/* PrImg1: the function takes s-pro-images of one restriction's pair under
+   an assignment as well as the "e-pro-images". 
+*/     
+* <PrImg1 t.unequality t.assignment> 
+*                                    ==> (e.s-pro-images1) (e.s-pro-images2)
+*                                    ==> (e.e-pro-images1) ()
+PrImg1 { 
+ (s.SYMB1 '#' s.SYMB2) (As e.As) = 
+                          (<TermPr s.SYMB1 e.As>) (<TermPr s.SYMB2 e.As>); 
+ (s.SYMB1 '#' t.s-var) (As e.As) = 
+                          (<TermPr s.SYMB1 e.As>) (<TermPr t.s-var e.As>); 
+ (t.s-var '#' s.SYMB2) (As e.As) = 
+                          (<TermPr t.s-var e.As>) (<TermPr s.SYMB2 e.As>);
+ (t.s-var1 '#' t.s-var2) (As e.As) = 
+                          (<TermPr t.s-var1 e.As>) (<TermPr t.s-var2 e.As>); 
+ (t.e-var1 '#' /* [] */) (As e.As) = (<TermPr t.e-var1 e.As>) (); 
+}
+
+* TermPr: the function takes s-pro-images of a term under an assignment.
+* as well as e-parametr's "pro-images".
+* <TermPr t.term e.assignment> ==> e.s-pro-images | e.e-parametr's-pro-images
+TermPr  { 
+*1.
+  (Var 's' s.name e.var1) ((Var 's' s.name e.var1)':'(Var 's' e.var3)) e.As 
+                  = (Var 's' e.var3) <TermPr (Var 's' s.name e.var1) e.As>;
+
+*2. e.x # [];  ... e.x ... <- e.y; ==> e.y # []; 
+  (Var 'e' s.name e.var1) 
+  ( e.1 (Var 'e' s.name e.var1) e.2 ':'(Var 'e' e.var3)) e.As 
+                  = (Var 'e' e.var3) <TermPr (Var 'e' s.name e.var1) e.As>;
+
+*3.
+  s.D (s.D ':' (Var 's' e.var3)) e.As = (Var 's' e.var3) <TermPr s.D e.As>;
+
+*4-5.
+  s.D   t.assign e.As = <TermPr s.D e.As> ;
+  t.var t.assign e.As = <TermPr t.var e.As> ;
+
+*6.
+  s.D  = s.D;
+*7.
+  t.var = ;  
+}
+
+* MkRestr: the function creates every possible pair-unequalities from
+* two sets of metasymbols and e-parametrs 
+* { U } '#' { V } ==> U_ij { (u_i '#' v_j) }
+MkRestr { 
+ (s.1 e.U) (e.V) =<MkRestr1 s.1 e.V> <MkRestr (e.U)(e.V)>;
+ (t.1 e.U) (e.V) =<MkRestr1 t.1 e.V> <MkRestr (e.U)(e.V)>;
+ () (e.V) = ;
+ }
+
+* MkRestr1: the function creates every possible pair-unequalities from
+* a term and a set of metasymbols: term '#' { V } ==> U_i { (term '#' v_i) }
+* b) creates a restriction to an e-parametr: e.x '#' [] 
+MkRestr1 { 
+ s.1 s.2 e.V = (s.1'#'s.2) <MkRestr1 s.1 e.V>;
+ s.1 t.2 e.V = (s.1'#'t.2) <MkRestr1 s.1 e.V>;
+
+ t.1 s.2 e.V = (t.1'#'s.2) <MkRestr1 t.1 e.V>;
+ t.1 t.2 e.V = (t.1'#'t.2) <MkRestr1 t.1 e.V>;
+
+ (Var 'e' e.var) = (Var 'e' e.var) '#' /* [] */;
+ e.exit =;
+}
+*  ================  End of generalization of restriction =================
+
+* --------------- SIMPLIFICATION ORDERING----------------------
+* Scp4: 2.12.98
+
+/*
+ CompExpr is a whistle proper. 
+ *******************************************************************
+ === Simplification ordering.===
+
+   s.X  >= s.Y
+   t.X  >= t.Y
+   e.X  >= e.Y
+   s.X  >= t.Y  !!! 
+   s.X  >= e.Y  !!! 
+   t.X  >= e.Y  !!! 
+   Symb >= Symb,   not Symb1 >= Symb2
+                   not Symb  >= ()
+   () >= (),       not (t1 e1) >= (), if there was not any term into the ()
+                       (t1 e1) >= (), if there was a term into the () 
+   (t1 e1) >= (t2 e2), 
+    if not t1 >= t2 , then (e1) >= (t2 e2) 
+                      else (e1) >= (e2) or t1 >= (t2 e2)
+************************************************************************
+ Flags: s.F1 ,  where s.F1 indicates a state of a bracket,
+*/
+
+CompExpr {
+*   e.xxx = False;
+   (e.pexpr) With (e.cexpr), 
+  <GetKey Simplify>: { Yes = <Embedd Empty (e.cexpr) (e.pexpr)>;
+                      e.No = True; };
+  }
+
+* Decide whether the second case must be considered.
+Decide {
+   e.X True  = True;
+   e.X False = <Embedd e.X>;
+       } 
+
+* <Embedd (e.Cur)(e.Prev)>
+Embedd {
+   s.F   s.P  s.P = True;
+   s.F   s.C  s.P = <EmbSym s.C s.P>;
+   s.F  (Var 's' e.C) (Var 's' e.P) = True;
+   s.F  (Var 't' e.C) (Var 't' e.P) = True;
+* Inserted 18.08.99.
+   s.F  s.C (Var 's' e.P) = True;
+   s.F  s.C (Var 't' e.P) = True;
+   s.F  (Var 's' e.C) s.P = True;
+   s.F  (Var 't' e.C) s.P = True;
+
+* Reducing and generalization work when the whistle said 'True',
+* so we can looping by reducing s1 <- e2 
+   s.F  (Var 's' e.C) (Var 'e' e.P) = True;
+   s.F  (Var 's' e.C) (Var 't' e.P) = True;
+   s.F  (Var 't' e.C) (Var 'e' e.P) = True;
+* Inserted 1.09.99.
+   s.F  (Var 'e' e.C) (Var 's' e.P) = True;
+   s.F  (Var 'e' e.C) (Var 't' e.P) = True;
+   s.F  (Var 't' e.C) (Var 's' e.P) = True;
+
+*+   s.F  (Var 'e' s.C e.celev) (Var 'e' s.P e.pelev) 
+*+                            = <Permit1 (e.celev) e.pelev>;
+* Temporary.
+   s.F  (Var 'e' e.C) (Var 'e' e.P) = True;
+
+   s.F  (e.C) (Var 'e' s.P e.pelev) = <Permit1 (<ElevExp1 (e.C)>) e.pelev>;
+   s.F  t.C (Var 't' s.P e.pelev) = <Permit1 (<ElevExp1 t.C>) e.pelev>;
+   s.F    () ()   = True;    
+   Empty (e.C) () = False;
+   Expr  (e.C) () = True;
+
+* A special treatment of the current empty.
+   s.F    () ((Var 'e' e.pvar) e.P) = <Embedd Expr () (e.P)>;
+   s.F    () (e.P) = False;
+
+*  (e.1) >= Symb ?
+   s.F    (s.P e.C) s.P = True;
+   s.F    (s.1 e.C) s.P, <EmbSym s.1 s.P>:
+                 { True  = True; 
+                   False = <Embedd s.F (e.C) s.P >;
+                 };
+   s.F    ((e.1) e.C) s.P = <Embedd s.F (e.1 e.C) s.P>;
+   s.F    () s.P = False;
+
+******  (t.1 e.1) >= (t.2 e.2) *******
+*   if not t.1 >= t.2 , then (e.1) >= (t.2 e.2) 
+*                       else (e.1) >= (e.2) or t.1 >= (t.2 e.2)
+
+* Temporary definition: This is only the empty case for encoded data.
+   s.F    (s.1 e.C) (s.1 e.P) = <Embedd Expr (e.C) (e.P)>;
+
+   s.F    (s.1 e.C) (s.2 e.P), <EmbSym s.1 s.2>:
+                 { True  = <Embedd Expr (e.C) (e.P)>;
+                   False = <Embedd s.F  (e.C) (s.2 e.P)>;
+                 };
+ 
+* Inserted 1.09.99.
+* A special treatment of previous e-variables.
+* This case is very rough. A previous case to treat current empty
+* was not removed with an intention to weaken the condition.
+   s.F    (e.C) ( e.1 (Var 'e' e.pvar) e.P) = <Embedd Expr (e.C) (e.1 e.P)>;
+
+   s.F    (s.1 e.C) ((e.2) e.P) = <Embedd s.F (e.C) ((e.2) e.P)>;
+   s.F    ((e.1) e.C) (s.2 e.P) = 
+        <Decide s.F (e.1) (s.2 e.P)
+                <Emb1 Expr (e.C) (e.P)
+                    <Decide s.F (e.C) (s.2 e.P) <Embedd s.F (e.1) s.2>>
+                >
+         >;
+   s.F    ((e.1) e.C) ((e.2) e.P) = 
+        <Decide s.F (e.1) ((e.2) e.P)
+                <Emb1 Expr (e.C) (e.P)
+                    <Decide s.F (e.C) ((e.2) e.P) <Embedd Empty (e.1) (e.2)>>
+                >
+         >;
+        }
+
+* Auxiliaries for Embedd
+Emb1 { s.F True = True;
+       e.X True = <Embedd e.X>;
+       e.X False = False;
+     }
+
+EmbSym { s.C s.P = <EmbSym1 (<Type s.C>) s.C s.P>; }
+EmbSym1 { 
+  ('N' e.T)  s.C s.P = <EmbSym1 (<Type s.P>) s.P>; 
+  ('N' e.T)  s.C = True; 
+  e.1 = False;
+ }
+
+SubNeg { 
+  s.C s.P '-' e.X = False;
+  s.C s.P e.X, <Sub (s.C) 10>:
+      { '-'e.Y = False;
+           e.Y = True;
+      };
+ }
+* --------------- The End of the SIMPLIFICATION ORDERING----------------------
+
+/*
+  The function UserCond checks "Does belong the function call to a class,
+  which was defined by a user. 
+*/
+* <UserCond ('!' (Fn t.fname e.gen-arg)':'t.var)> ==> True | False
+UserCond {
+ t.func = <UserCond1 True t.func <GetBasics>>; 
+}
+
+UserCond1 {
+ s.bool ('!' (Fn s.fname e.arg)':'t.var) 
+ (('!' (Fn s.fname e.arg1)':'t.var1)) e.basics, 
+ <UserExpr <RedAs s.fname User (As e.arg) (As e.arg1)>>:
+   { True e.trash = True;
+     False e.trash = <UserCond1 False ('!' (Fn s.fname e.arg)':'t.var) e.basics>;
+   };
+
+ s.bool t.func t.basic e.basics  = <UserCond1 s.bool t.func e.basics>;
+ s.bool t.func = s.bool;
+}
+
+UserExpr {
+ e.pairs True = <RedExpr User e.pairs>;
+ e.trash False = False;
+}
+
+* <UserSelf s.flag s.fun-name>: 
+UserSelf {
+ s.flag s.fname, <GetUserSelf s.flag>:
+   { e.1 EveryFunction__ e.user-self = True;
+     e.1 s.fname e.user-self = True;
+     e.user-self = False;
+   }
+} 
+
+******************* Generalization from a user. ********************
+UserGen {
+ (UnCond e.flag) e.type (e.prev-expr) With (e.curr-expr)
+       = <GenExpr (UnCond e.flag) Left (e.prev-expr) With (e.curr-expr)>;
+ 
+ t.flag (User__ e.prev-expr) With (User__ e.curr-expr) 
+       = <UserGen0 t.flag (User__) <UserGener (Current e.curr-expr) With 
+                                              (Previous e.prev-expr)>>;
+ t.flag t.call (e.prev-args) With (e.curr-args) 
+       = <UserGen0 t.flag t.call <UserGener t.call (Current e.curr-args) With 
+                                                   (Previous e.prev-args)>>;
+}
+
+UserGen0 {
+ t.flag t.type (As e.cassign)(As e.passign)(Gener e.gen-expr) 
+        = <GenFromUser0 t.flag t.type (As e.cassign)(As e.passign) (e.gen-expr)>;
+ t.flag t.type False = False;         
+ t.flag t.type e.trash = <UserError 'Output format of UserGener is incorrect: ' e.trash>;
+}
+
+* <GenFromUser0 t.flag (As e.cassign)(As e.passign) (e.gen-expr)>;
+GenFromUser0 {
+ t.flag (User__) t.c-assign t.p-assign (e.gen-expr) 
+        = <PutInf t.flag t.flag t.p-assign t.c-assign () 
+                             <GenFromUser t.flag User__ e.gen-expr>>;
+ t.flag (Call_To_Function s.fun) t.c-assign t.p-assign (e.gen-args),
+ <PutInf t.flag t.c-assign t.p-assign ()
+        <AsFunUser t.flag ('!' (Fn s.fun e.gen-args)':'(Var 'e' 0))>>:
+  { t.flag1 t.p-assign1 t.c-assign1 (('!' (Fn s.f e.gen-arg1)':'t.var1))
+        = t.flag ((e.gen-arg1) t.p-assign1 t.c-assign1);
+    e.trash False = False;
+  };
+}
+
+GenFromUser {
+ t.flag s.symbol e.expr 
+   = <PutInf t.flag
+             t.flag (As)(As)(s.symbol) <GenFromUser <IncTerm t.flag> e.expr>>; 
+ t.flag ('*' e.expr1) e.expr 
+   = <PutInf t.flag <PutBr <GenFromUser <ZeroTerm t.flag> e.expr1>> 
+                    <GenFromUser <IncTerm t.flag> e.expr>>;
+ t.flag ('!' e.fun) e.expr =
+   <PutInf t.flag <AsFunUser t.flag ('!' e.fun)> <GenFromUser <IncTerm t.flag> e.expr>>;
+ t.flag (Var e.var) e.expr
+   = <PutInf t.flag
+             t.flag (As)(As)((Var e.var)) <GenFromUser <IncTerm t.flag> e.expr>>;
+ t.flag = t.flag (As)(As)();
+ 
+ t.flag (Auto (Current e.cexpr)(Previous e.pexpr)) e.expr
+   = <PutInf t.flag <GenExpr <ZeroTerm t.flag> Left (e.pexpr) With (e.cexpr)> 
+                    <GenFromUser t.flag e.expr>>;
+ t.flag t.bad e.trash = <UserError 'Unexpected stucture: ' t.bad>;
+}
+
+AsFunUser {
+ t.flag ('!' (Fn t.fname (Auto (Current e.c-args)(Previous e.p-args))) ':'t.var) =
+ <GenArgs1 t.flag ('!' (Fn t.fname e.c-args) ':'t.var) With 
+                  ('!' (Fn t.fname e.p-args) ':'t.var)>;
+ t.flag ('!' (Fn t.fname e.arg)':'t.var) =
+   t.flag <AsFun1 ('!' (Fn t.fname)':'t.var) <GenAsUser (As )(As )() e.arg>>; 
+ t.flag e.trash = <UserError 'Format of a call is incorrect: ' e.trash>;
+}
+
+GenAsUser {
+ (As e.p-as)(As e.c-as)(e.gen) (e.value':'t.var) e.assign
+ , <GenFromUser (Cond (0)(0)(0)) e.value>: 
+    t.flag (As e.p-as1)(As e.c-as1)(e.gen1) 
+            = <GenAsUser (As e.p-as e.p-as1)(As e.c-as e.c-as1) 
+                         (e.gen (e.gen1':'t.var)) e.assign>;
+
+ (As e.p-as)(As e.c-as)(e.gen) = ((e.gen) (As e.p-as)(As e.c-as));
+ (As e.p-as)(As e.c-as)(e.gen) e.trash
+            = <UserError 'Format of a call is incorrect: ' e.trash>;
+} /* End of GenAsUser */
+
+GenArgsUser {
+ t.flag 
+ (('!' (Fn s.f e.parg)':'t.var1)) With (('!' (Fn s.f e.carg)':'t.var2))
+ ,<GenAs s.f (As )(As )() (e.parg) With (e.carg)>: 
+ ((e.gen-arg) t.p-assign t.c-assign) 
+       = t.flag t.p-assign t.c-assign (('!' (Fn s.f e.gen-arg)':'t.var1)); 
+}
+
+UserError {
+ e.user-error = <Trace0 e.user-error> <Add e.user-error>;
+}
+
+********************** Reducing from a user. ***********************
+* <UserRed s.side (s.flag e.assignment) e.equations> 
+*                     ==> True (As e.assignment) | False
+UserRed {
+ Left t.info t.user-eq e.eqs = <UserRed2 t.info <UserRed1 t.user-eq> (e.eqs)>;
+}
+
+UserRed1 {
+ ((User__ e.curr-expr) '=' (User__ e.prev-expr)) 
+    = (User__) <UserReduce (Current e.curr-expr) To (Previous e.prev-expr)>;
+ ((UserFunc s.f e.curr-expr) '=' (UserFunc s.f e.prev-expr)) 
+    = (UserFunc s.f) <UserReduce (Call_To_Function s.f)
+                                 (Current e.curr-expr) To (Previous e.prev-expr)>;
+}
+
+UserRed2 {
+ (s.flag e.assign) t.type True (As e.assign1) e.user-pairs (e.eqs)
+ ,<PutAssign (As e.assign1) To (As e.assign)>:
+        { (As e.assign2) = <Red Left (s.flag e.assign2)
+                                     <RedFromUser t.type e.user-pairs> e.eqs>;
+          False = False; 
+        };
+ (s.flag e.assign) t.type False   (e.eqs) = False;
+ (s.flag e.assign) t.type e.trash (e.eqs) 
+        = <UserError 'Output format of UserReduce is incorrect: ' e.trash>;
+}  
+
+RedFromUser {
+* Non assignments.
+ t.type (Auto (Current ('*' e.expr1) e.cexpr) (Previous e.pexpr)) e.pairs
+       = ((('*' e.expr1) e.cexpr) '=' (e.pexpr)) <RedFromUser t.type e.pairs>;
+
+* Assignments.
+(UserFunc s.f) (Auto (Current (e.val1 ':' t.var1) e.cexpr)
+                     (Previous (e.val2 ':' t.var2) e.pexpr)) e.pairs
+     = ((e.val1) '=' (e.val2)) 
+       <RedFromUser (UserFunc s.f) (Auto (Current e.cexpr)(Previous e.pexpr)) e.pairs>;
+
+ t.type (Auto (Current e.cexpr)(Previous e.pexpr)) e.pairs
+          = ((e.cexpr) '=' (e.pexpr)) <RedFromUser t.type e.pairs>;
+ t.type         = ;                   
+ t.type e.trash = <UserError 'Output format of UserReduce is incorrect: ' e.trash>;
+}
+
+PutAssign {
+ (As (e.value':'t.var) e.assign1) To (As e.assign),
+ <Check Func (e.value':'t.var) e.assign>:
+    { e.trash False = False;
+      e.assign2     = <PutAssign (As e.assign1) To (As e.assign2)>;
+    };
+ (As ) To (As e.assign) = (As e.assign);   
+}
+
+* <PermitForUser t.flag s.f>
+PermitForUser {
+ (UnCond) s.func = False;
+ t.flag s.func = <UserSelf Gener s.func>;
+}
+******************* Generalization from a user. ********************
+
+/* Function UserCxt.  
+  Cutting of the stacks:
+  Prev: top ________ CTX1 rest-context 
+            |      | \  |\              
+            |      | | \|  \      
+            |      | |  |\   \       
+            |      | |  |  \   \       
+            |      | |  |    \   \       
+  Curr: top ======== RST1 ++++ CTX1 rest-context 
+                        Rest
+  Let CTX1, RST1 be elements of the stacks ( see above ). Let CTX1 be equal
+  to RST1 in a functional aspect ( function name and path ), then here are
+  two way to cut the stacks. The first is from the Turchin's algorithm.
+  The second was suggested by And. Klimov. He suggested to move CTX1 and
+  RST1 into the correspond prefixes. The promotion can be done reccursivly
+  over the context.
+  We give a possibility for users to mark functions that are allowed to be
+  moved from a context to a prefix. That is useful when some function's calls
+  prefer to be together.
+*/
+* <UserCtx (e.curr-stack (e.curr-context)) (e.prev-stack (e.prev-context))> 
+*       == (e.curr-stack (e.curr-context)) (e.prev-stack (e.prev-context)) 
+UserCtx {
+ (e.cstack (e.ccontext)) (e.pstack (e.pcontext))  
+          = <UserCtx1 (() e.cstack (e.ccontext)) (() e.pstack (e.pcontext))
+                      <GetPreparatory>>; 
+} /* End of UserCtx */
+
+* An auxilary function of the function UserCtx.  
+* Just separate prefix from the current stack.
+* <UserCtx1 (() e.curr-stack (e.curr-context)) 
+*           (() e.prev-stack (e.prev-context)) e.function-names> 
+*       == (e.curr-stack (e.curr-context)) (e.prev-stack (e.prev-context)) 
+UserCtx1 {
+*0. no preparatory functions. 
+ (() e.cstack (e.ccxt)) (() e.pstack (e.pcxt)) /* [] */
+         = (e.cstack (e.ccxt)) (e.pstack (e.pcxt)); 
+
+*1. There are preparatory functions. There is a call in the previous prefix.
+*   There is a call in the current prefix.  
+ ((e.cpfx) t.call1 e.cstack (e.ccxt)) 
+ ((e.ppfx) t.call2 e.pstack (e.pcxt)) e.fun-names
+         = <UserCtx1 ((e.cpfx t.call1) e.cstack (e.ccxt)) 
+                     ((e.ppfx t.call2) e.pstack (e.pcxt)) e.fun-names >;
+
+*2. There are preparatory functions. The previous prefix is empty.
+*   Move calls from the contexts to the prefixes.
+ ((e.cpfx) e.cstack (e.ccxt)) ((e.ppfx) (e.pcxt)) e.fun-names
+        = <UserContext ((e.cpfx) e.cstack (e.ccxt)) ((e.ppfx) (e.pcxt))
+                       e.fun-names>;
+
+*3. There are preparatory functions. 
+*   The previous prefix is grater than the current one. 
+*   Just return the start situation.
+ ((e.cpfx) (e.ccxt)) ((e.ppfx) e.pstack (e.pcxt)) e.fun-names
+        = (e.cpfx (e.ccxt)) (e.ppfx e.pstack (e.pcxt)); 
+} /* End of UserCtx1 */
+
+* <UserContext ((e.cpfx) e.curr-rest (e.curr-context)) 
+*              ((e.ppfx)             (e.prev-context)) e.function-names> 
+*       == (e.curr-stack (e.curr-context)) (e.prev-stack (e.prev-context)) 
+UserContext {
+*1. Here  (Call s.index t.path1 e.call1) is equal to t.ccall.
+ ((e.cstack) (Call s.index1 (s.fun e.path1) e.call1) e.crest (t.ccall e.ccontext)) 
+ ((e.pstack) ((Call s.index2 (s.fun e.path2) e.call2) e.pcontext)) 
+ e.fun-names s.fun e.1 , <EqPath (s.fun e.path1) (s.fun e.path2)>:True 
+ = <UserContext 
+    ((e.cstack (Call s.index1 (s.fun e.path1) e.call1)) e.crest t.ccall (e.ccontext)) 
+    ((e.pstack (Call s.index2 (s.fun e.path2) e.call2)) (e.pcontext)) 
+    e.fun-names s.fun e.1 >;
+
+ ((e.cstack) e.crest (e.ccontext)) ((e.pstack) (e.pcontext)) e.fun-names 
+                  = (e.cstack e.crest (e.ccontext)) (e.pstack (e.pcontext)); 
+} /* End of UserContext */
+*======================  End of Generalization =============================
+

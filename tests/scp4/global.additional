@@ -1,0 +1,939 @@
+* version 19.03.2000
+* Global alalysis of a folded graph. ,new
+
+* $ENTRY Folding ;
+
+* $INTERIOR ;
+
+* $TEMPORARY ;
+
+* access.ref:
+$EXTRN IdAss, ListVar, Equal, Subset, IntSect, ClearR;
+$EXTRN New, NewNode, Belong, ListVar1;
+
+* basic.ref:
+$EXTRN SubsSt, Subs, SubsAs, RuleAR;
+
+* scp4.ref:
+$EXTRN Result;
+
+* compare.ref:
+$EXTRN RedExpr;
+
+* analyze.ref:
+$EXTRN RmPl, VarLess, UpdSubgr;
+
+* drive.ref:
+$EXTRN Dn0;
+
+* trace.ref:
+$EXTRN Trace, TraceRes;
+
+
+/* The function Folding analyzes global properties of a normilized graph and 
+   transformes it in a fashion according to the properties. 
+   The function is called whenever a n-graph with a recurrent top 
+   or a subgraph had been just created. These properties are used 
+   by the SCP to transform the rest of the full input p-graph.  
+   A number of the properties to be found: 
+    - to be a projection;
+   See comments to the subfunctions for detailes.
+   The function pruns a branch if it is a subcase of a next one.
+*/
+* e.info ::= t.basics | t.basics t.finish | (Subgraph e.cntx) t.outvar t.assign
+* s.global is a boolen constant: does not an external references exist from the graph ?
+*  <Folding e.info t.ready s.global (s.type e.n-graph) t.outfmt>
+$ENTRY Folding {
+*1. A recurrent graph .
+  (Basics e.basics) t.ready s.global (GRAPH t.node(Dev e.n-dev)) t.outfmt =
+*           <TraceRes ('Result of the analyzing') 
+        <AnResFold (Basics e.basics) t.ready GRAPH t.outfmt 
+           <Fold <InitInfFld t.ready (Identety s.global) 
+                                     (SubCase True) t.node> t.node(Dev e.n-dev)>> 
+*           >;
+                 ;
+*+                    <Result GRAPH t.outfmt (Basics e.basics) e.n-graph>; 
+
+*1a.
+  (Basics e.basics) t.ready s.global (Tree t.node(Dev e.n-dev)) t.outfmt =
+*           <TraceRes ('Result of the analyzing') 
+        <AnResFold (Basics e.basics) t.ready Tree t.outfmt 
+           <Fold <InitInfFld t.ready (Identety s.global) 
+                                     (SubCase True) t.node> t.node(Dev e.n-dev)>> 
+*           >;
+                 ;
+*+                    <Result GRAPH t.outfmt (Basics e.basics) e.n-graph>; 
+
+*2. A final graph. Temporary definition. An improvement can be still done.
+ (Basics e.basics) (Finish e.finish) t.ready s.global (s.type e.n-graph) t.outfmt =
+                     <Result GRAPH (Finish e.finish) (Basics e.basics) e.n-graph>; 
+*3. Subgraph.
+ (Subgraph e.cntx) t.outvar t.assign t.ready s.global (s.type e.n-graph) t.outfmt =
+      <AnResFold (Subgraph e.cntx) t.outvar t.assign t.ready s.type t.outfmt 
+         <Fold <InitInfFld t.ready (Identety <IdConst s.type s.global>) (SubCase True) t.assign> e.n-graph>>;
+
+*+        <UpdSubgr (Subgraph e.cntx) t.outvar t.assign (s.type e.n-graph) t.outfmt>; 
+
+}
+
+IdConst {
+ Const    s.global = False;
+ Project  s.global = False;
+ s.type   s.global = s.global;
+}
+
+* Reconstruct a n-graph according to its global properties.
+AnResFold { 
+*1. A recurrent graph. An identety function.
+*+  (Basics e.basics) t.ready GRAPH (Output t.restr (e.expr':'t.var)) 
+  (Basics e.basics) t.ready s.type (Output t.restr (e.expr':'t.var)) 
+  (Node s.id s.t t.restr1 (Stack e.calls t.conf) t.basics1)(Dev e.n-dev) 
+  (Info (Identety True e.vars) e.info (Outs (Hypoth e.out) e.outs) t.NextBr),
+  <ClearR t.restr1 <ListVar Of Expr e.out>>: t.restr2 =
+  <Result Identety (Output t.restr2 (e.out':'t.var)) (Basics e.basics) 
+*  Here we imitate an empty development just for output functions! 
+       (Node s.id Recur t.restr2 (Stack e.calls (Conf (e.out':'t.var))) 
+             t.basics1)(Dev /* empty */) >;
+
+*2.A recurrent graph. General case.
+*+  (Basics e.basics) t.ready GRAPH t.outfmt e.n-graph t.info =
+*+                    <Result GRAPH t.outfmt (Basics e.basics) e.n-graph>; 
+  (Basics e.basics) t.ready s.type t.outfmt e.n-graph t.info =
+                    <Result GRAPH t.outfmt (Basics e.basics) e.n-graph>; 
+
+*3a. Subgraph. A constant function.
+  (Subgraph e.cntx) e.ready-info Const t.outfmt 
+  e.n-graph t.info =
+        <UpdSubgr (Subgraph e.cntx) e.ready-info (Const e.n-graph) 
+                  t.outfmt>; 
+
+*3b. Subgraph. A projection function.
+  (Subgraph e.cntx) e.ready-info Project t.outfmt 
+  e.n-graph t.info =
+        <UpdSubgr (Subgraph e.cntx) e.ready-info (Project e.n-graph) 
+                  t.outfmt>; 
+
+*3. Subgraph. An identety function.
+  (Subgraph e.cntx) e.ready-info s.type 
+  (Output t.restr (e.expr':'t.var)) e.n-graph  
+  (Info (Identety True e.vars) e.info (Outs (Hypoth e.out) e.outs) t.NextBr) =
+        <UpdSubgr (Subgraph e.cntx) e.ready-info (Identety e.n-graph) 
+                  (Output (Rs) (e.out':'t.var))>; 
+*4. Subgraph. General case.
+  (Subgraph e.cntx) e.ready-info s.type t.outfmt 
+  e.n-graph t.info =
+        <UpdSubgr (Subgraph e.cntx) e.ready-info (s.type e.n-graph) 
+                  t.outfmt>; 
+}
+
+* Initialization of a basket for information. 
+* <InitInfFld ... > ==> t.info
+InitInfFld { 
+ (Ready t.dict (Refrs e.refs)) (Identety False) t.SubCase t.node 
+              = (Info (Identety False) t.SubCase (Outs ) (NextBr));
+
+ (Ready t.dict (Refrs e.refs)) 
+ (Identety True) t.SubCase (Node e.node (Stack e.stack) t.basics1), 
+ <IdAss From Stack (Stack e.stack)>: (As e.assign) =
+        (Info (Identety True <Vars e.assign>) t.SubCase 
+        (Outs <Hypothesis e.assign>) (NextBr));
+
+ (Ready t.dict (Refrs e.refs)) (Identety True) t.SubCase (As e.assign) =
+        (Info (Identety True <Vars e.assign>)  t.SubCase 
+        (Outs <Hypothesis e.assign>) (NextBr));
+
+  (Info (Identety s.bool e.id-vars) e.info) 
+        (Identety s.bool1) t.SubCase (As e.assign),
+   s.bool1: 
+  {True = (Info (Identety True <Vars e.assign>) t.SubCase 
+                (Outs <Hypothesis e.assign>) (NextBr));
+   False = (Info (Identety False)  t.SubCase (Outs) (NextBr)); 
+  };
+
+  t.info = t.info;
+ } /* End of InitInfFld */
+
+
+* Hypothesis of a output structure.
+Hypothesis {
+ (e.expr':'t.var) e.assign 
+   = (Hypoth t.var (Var 'e' <New Var> Meta)) <Hypothesis e.assign>;
+   = ;
+}
+
+* Take input format from an assignment.
+Vars {
+ (e.expr':'t.var) e.assign = t.var <Vars e.assign>;
+   = ;
+}
+
+FldInfo { t.Info-old t.Info-new = t.Info-new; }
+FalseInfo { (Info (Identety e.bool) e.info) = (Info (Identety False) e.info); }
+
+*****************************************************************************
+*                        Folding                                            *
+*****************************************************************************
+/*
+  Folding of a n-graph to patterns and right hand side. 
+*/
+
+* <Fold t.info e.n-graph> ==> e.n-graph t.info' 
+Fold {
+*1. A n-branching is encountered.
+   t.info t.node(Dev e.dev) = 
+*    <TraceRes ('Graph has just been analyzed on global properties. Result:  ') 
+       <FdEndBrs t.info t.node (Dev <FdAnlz t.info () e.dev>) >
+*    >;
+     ;
+
+*2. Single branch. Trivial graph.
+   t.info (Node e.node) = (Node e.node) <FalseInfo t.info>;
+   t.info t.assign (Basic e.basic) = t.assign (Basic e.basic) <FalseInfo t.info>;
+
+*3.There is branching on the end or a subgraph. Subcase analysis.
+   t.info e.n-br t.node(Dev e.dev) = <RmPl1 <FdAnlz t.info
+                                               () '+'(e.n-br t.node(Dev e.dev))>>;
+   t.info e.n-br (Begin e.subgr End) e.1
+             = <RmPl1 <FdAnlz t.info () '+'(e.n-br (Begin e.subgr End) e.1)>>;
+
+*4. Single branch. No identety property.
+   (Info (Identety False e.vars) e.info) e.n-branch 
+                     = e.n-branch (Info (Identety False e.vars) e.info);
+
+*5. Single branch. Identety analysis.
+   t.info e.n-branch = <RmPl1 <FdAnlz t.info () '+'(e.n-branch)>>;
+} /* End of Fold */
+
+* Just a reconstruction.
+RmPl1 { 
+  t.info '+'(e.br (Fold e.f-br)) 
+            = <RmPl1 <IsIdent (Dev ('+' (e.br (Fold e.f-br)))) t.info>>;
+  (Dev ('+' (e.br)) t.info) = e.br t.info; 
+  (Info e.info) '+'(e.br) = e.br (Info e.info); 
+  '+'(e.br) = e.br; 
+}
+
+* Folding of a list of branches. We scan the branches from down to up!
+* <FdAnlz t.info e.n-branches> ==> e.n-branches t.info'    
+FdAnlz {    
+   t.info (e.f-walk) e.n-branches '+'(e.n-branch) =
+       <Foldon (e.f-walk) <FdBron <FoldBr0 t.info (e.f-walk) '^' e.n-branch>> 
+                (e.n-branches)>; 
+} /* End of FdAnlz */
+
+/*****************************************************************************
+** Folding works by this principle: the pointer ^ separates                 **
+** the members of the pair to be combined or commuted.                      **
+******************************************************************************/
+/*
+ Function FoldBr folds a linear segment of a n-branch       
+ using some rules like the Turchin's CRA rules. These transformations are 
+ performed by a "big" step of the normalization. In fact there exist 
+ a number of "small" steps which run under the "big" step. The rules informes 
+ the normalization about a next "small" step by means of the following 
+ interface:
+                         ==> ^ (Norma e.f-walk)   
+                         ==> ^ t.something_else   
+ The function saves unfolded version of the sigment.
+ t.info ::= (Info t.IdentetyStatus t.SubCaseStatus t.Hypothesis-outs t.NextFoldedBranch)
+*/
+* <FoldBr0 t.info (e.f-walk) '^' e.n-graph> 
+*                           ==> e.n-walk ((e.f-walk t.info) '^' t.n-node(Dev e.dev))
+*                           ==> e.n-walk (((e.f-walk) t.info) '^')
+FoldBr0 {
+   t.info (e.f-walk) '^' e.n-br (Node e.node)(Dev e.dev) = e.n-br
+         <FoldBr t.info (e.f-walk) '^' e.n-br (Node e.node)(Dev e.dev)>;
+   t.info (e.f-walk) '^' e.n-br = e.n-br
+         <FoldBr t.info (e.f-walk) '^' e.n-br>;
+}
+
+FoldBr {
+*1.  
+*  Rule AB N: AB ^ (Norma Basic) ==> AB' ^
+   t.info (e.f-walk (AsB e.basics)) '^' (Norma (As e.assign) t.basic t.info1) e.n-graph = 
+        <FoldBr <FldInfo t.info t.info1> 
+                (e.f-walk <RuleAsBB (AsB e.basics) (As e.assign) t.basic>) '^' e.n-graph>;
+*1b.
+*  Rule AB N: AB ^ (Norma Basic) ==> AB' ^
+   t.info (e.f-walk (AsB e.basics)) '^' (Norma (Def e.def) t.info1) e.n-graph = 
+        <FoldBr <FldInfo t.info t.info1> 
+                (e.f-walk <RuleAsBB (AsB e.basics) (Def e.def)>) '^' e.n-graph>;
+
+*2. 
+*  Rule XN: X ^ (Norma Basic) ==> X AB ^
+   t.info (e.f-walk) '^' (Norma (As e.assign) t.basic t.info1) e.n-graph = 
+        <FoldBr <FldInfo t.info t.info1> 
+                (e.f-walk <RedefB (AsB ) (As e.assign) t.basic>) '^' e.n-graph>;
+*2b.
+*  Rule AB N: AB ^ (Norma Def) ==> AB' ^
+   t.info (e.f-walk) '^' (Norma (Def e.def) t.info1) e.n-graph = 
+        <FoldBr <FldInfo t.info t.info1> 
+                (e.f-walk <RedefB (AsB ) (Def e.def)>) '^' e.n-graph>;
+
+*3. AsB ^ (Norma e.norm) ==> X e.norm ^
+   t.info (e.f-walk) '^' (Norma e.norm) e.n-graph = 
+     <FoldBr t.info (<FinFold e.f-walk e.norm>) '^' e.n-graph>;
+
+*4. C' ^ C''  ==>  ^  C'' C' | (Norma C' C'')
+   t.info (e.f-walk (Ct e.contr1)) '^' (Ct e.contr) e.n-graph = 
+        <FoldBr t.info (e.f-walk ) '^' <FoldCt (Ct e.contr1)(Ct e.contr)> e.n-graph>; 
+
+*5.
+*  Rule : X ^ Basic ==> X ^ (Norma Basic) 
+   t.info (e.f-walk) '^' (As e.assign) t.basic e.n-graph 
+       = <FoldBr t.info (e.f-walk) '^' 
+                        <FldSubgr t.info (As e.assign) t.basic> e.n-graph>;
+
+*5a.
+*  Rule : X ^ Basic ==> X ^ (Norma Basic) 
+   t.info (e.f-walk) '^' (Def e.def) e.n-graph 
+       = <FoldBr t.info (e.f-walk) '^' 
+                        <FldSubgr t.info (Def e.def)> e.n-graph>;
+
+*6.
+*   Rule AB: AB ^ C ==>  Basic C ^
+   t.info (e.f-walk (AsB e.basics)) '^' (Ct e.contr) e.n-graph = 
+        <FoldBr t.info (e.f-walk ) '^' <FldAsBCont (AsB e.basics) (Ct e.contr)>
+                e.n-graph>;
+
+*7.
+*   Rule X: X ^ C ==>  X C ^ , X is not AsB, Ct
+   t.info (e.f-walk) '^' (Ct e.contr) e.n-graph = 
+        <FoldBr t.info (e.f-walk (Ct e.contr)) '^' e.n-graph>;
+
+*8.
+*   Rule X: X ^ AsB ==>  X C ^ , X is not AsB, Ct
+   t.info (e.f-walk) '^' (AsB e.basic) e.n-graph = 
+        <FoldBr t.info (e.f-walk (AsB e.basic)) '^' e.n-graph>;
+
+*9. The passive end. X ^ Out ==> X Out ^
+   t.info (e.f-walk) '^' (Node e.node) =
+        <FoldBr t.info (<FldPass e.f-walk (Node e.node)>) '^'>;
+
+*10. The liner segment has been finished. 
+   t.info (e.f-walk) '^' =  ((e.f-walk t.info) '^'); 
+
+*11. A problem is encountered. End in the linear segment of the walk.
+   t.info (e.f-walk) '^' t.nf-interface e.n-graph = 
+                    ((e.f-walk t.info) '^' <RmEmptyShaft t.nf-interface e.n-graph>);
+} /* End of FoldBr */
+
+
+*  To test the result of folding of a linear segment.
+*  <FdBron e.n-walk (t.f-walk '^' e.n-graph)> ==> t.n-walk1 '^' 
+FdBron {
+*1. N-fork. Process this N-fork and go on to fold.
+*   A normalization still can be done whenever a shared factor was found.
+  e.n-walk ((e.f-walk t.info) '^' t.n-node(Dev e.dev)) = e.n-walk
+       <FdEndBrs t.info t.n-node(Dev <FdAnlz t.info (e.f-walk) e.dev>)> '^';
+
+*2. The linear segment is finished. 
+  e.n-walk ((e.f-walk) '^') = e.n-walk (e.f-walk) '^' ; 
+} /* End of FdBron */
+
+*  The function Foldon takes care of folding of branches: 
+*  branch by branch. From bottom to top.
+*  <Foldon t.f-walk e.n-walk t.info '^' (e.n-branches)> ==>  t.info e.f-branches
+Foldon {
+*00. Branching has just finished. Every branch was pruned.
+   (e.f-walk0) e.n-walk Zero (Info e.info) '^' ('+' e.n-branches) 
+                = <FdAnlz (Info e.info) (e.f-walk0) '+' e.n-branches>;
+
+*01. Branching has just finished.
+   (e.f-walk0) e.n-walk (Info e.info) '^' ('+' e.n-branches) 
+                = <FdAnlz (Info e.info) (e.f-walk0) '+' e.n-branches> '+'(e.n-walk);
+
+*02. Branching has just finished.
+   (e.f-walk0) e.n-walk Zero (Info e.info) '^' () = (Info e.info);
+   (e.f-walk0) e.n-walk (Info e.info) '^' () = (Info e.info) '+'(e.n-walk);
+
+*1. A liner segment is finished. Process the previous branch.
+*   Go on folding from bottom to top. 
+*   Analyse: is the current branch a subcase of the passed ?
+    (e.f-walk0) e.n-walk (e.f-walk t.info) '^' (e.n-branches) =  
+*        <Trace 'Branch was folded. ' >
+*        <Trace 'Result: ' e.f-walk>
+         <FdResSubC (e.f-walk0) (e.n-branches)
+                   <FdSubCase '+'(e.n-walk (Fold e.f-walk)) t.info>>; 
+
+} /* End of Foldon */
+
+* Auxiliary function for Foldon.
+* Just reconstruction of the structures.
+FdResSubC { 
+ (e.f-walk0) ('+' e.n-branches) e.brs t.info =
+        <FdAnlz t.info (e.f-walk0) '+' e.n-branches> e.brs;
+
+*2. The linear segment is finished.  
+ (e.f-walk0) () e.brs t.info = t.info e.brs;
+}
+
+
+* Folding of a subgraph.
+* Temporary definition.
+FldSubgr {
+/*
+ t.info t.assign (Begin e.subgr (Ready e.ready) ':'t.out End)
+       = (Norma t.assign (Begin e.subgr (Ready e.ready) ':'t.out End) t.info);
+*/
+
+*Temporary definition.
+ (Info (Identety s.bool e.id-vars) e.info) 
+ t.assign (Begin e.subgr (Ready e.ready) ':'t.out End)
+       = (Norma t.assign (Begin e.subgr (Ready e.ready) ':'t.out End) 
+                (Info (Identety False) e.info) 
+         );
+
+ t.info t.assign (Begin e.subgr ':'t.out End)
+       = <FldSubgr1 t.info t.assign 
+                    (Begin <Fold <InitInfFld t.info (Identety False) 
+                                                    (SubCase True) (As )> e.subgr> 
+                              ':'t.out End)>;
+ t.info e.basic = (Norma e.basic t.info);
+}
+
+FldSubgr1 {
+ t.old-info t.assign (Begin e.subgr (Info e.info) (Ready e.ready) ':'t.out End)
+         = (Norma t.assign (Begin e.subgr (Ready e.ready) ':'t.out End) (Info e.info)); 
+}
+
+/* 
+  Exit from a branching inside the folding. 
+*/
+* <FdEndBrs t.old-info t.node(Dev t.new-info e.n-dev)> 
+*                                ==> e.branch t.info 
+FdEndBrs {
+*1. Single branch. Recurrent node. We keep the node. 
+*   There can be a reference to the node.
+  t.info (Node s.name Recur e.node) (Dev t.info1 '+'t.br) =
+         (Node s.name Recur e.node) (Dev '+'t.br) 
+         <FdJoinInf t.info t.info1>;
+
+*2. Single branch. Unrecurrent node. Just remove the branching .
+  t.info (Node s.name s.type e.node) (Dev t.info1 '+'(e.br)) 
+          = e.br <FdJoinInf t.info t.info1>;
+
+*3. Every branch was pruned. Just put Zero.
+  t.info (Node s.name s.type e.node) (Dev t.info1) 
+          = Zero <FdJoinInf t.info t.info1>;
+
+*4. A real branching is encountered. A f-development is present.
+  t.info t.node(Dev t.info1 e.f-dev) 
+          = t.node(Dev e.f-dev) <FdJoinInf t.info t.info1>; 
+} /* End of FdEndBrs0 */
+
+
+FdJoinInf {
+ t.old-info t.new-info = t.new-info; 
+}
+
+
+************************ Basic rules for folding. ***************************
+* Compasition of functions.
+RuleAsBB {
+ (AsB e.basics) (As e.assign) t.basic 
+      = <RedefB (AsB e.basics) (As <SubsAs (As e.basics) e.assign>) t.basic>;
+ (AsB e.basics) (Def e.def) 
+      = <RedefB (AsB e.basics) (Def e.def)>;
+}
+
+RedefB {
+*1. Basic.
+ (AsB e.basics (e.expr':'(Var s.t s.id e.var)) e.1)
+ (As e.assign) (Basic e.basic':'(Var s.t s.id e.var1)) = 
+ (AsB e.basics e.1 
+    ((As e.assign) (Basic e.basic':'(Var s.t s.id e.var1))
+     ':'(Var s.t s.id e.var)));
+
+*2. Subgraph.
+ (AsB e.basics (e.expr':'(Var s.t s.id e.var)) e.1)
+ (As e.assign) (Begin e.subgr':'(Var s.t s.id e.var1) End) = 
+ (AsB e.basics e.1 
+    ((As e.assign) (Begin e.subgr':'(Var s.t s.id e.var1) End)
+     ':'(Var s.t s.id e.var)));
+
+*3. Definition.
+ (AsB e.basics (e.expr':'(Var s.t s.id e.var)) e.1)
+ (Def (e.fun':'(Var s.t s.id e.var1))) =
+ (AsB e.basics e.1 
+    ((Def (e.fun':'(Var s.t s.id e.var1))) ':'(Var s.t s.id e.var)));
+
+*4-6. New output.
+ (AsB e.basics) (As e.assign)(Basic e.basic':'t.var) =
+ (AsB e.basics ((As e.assign)(Basic e.basic':'t.var)':'t.var));
+
+ (AsB e.basics) (As e.assign)(Begin e.subgr':'(Var e.var) End) =
+ (AsB e.basics ((As e.assign)(Begin e.subgr':'(Var e.var) End)':'(Var e.var)));
+
+* Temporary definition.
+ (AsB e.basics) (As e.assign)(Begin e.subgr ':'(Output t.Rs (e.expr':'t.var)) End) =
+   <RedefB (AsB e.basics) (As e.assign)(Begin e.subgr ':'t.var End)>;
+
+ (AsB e.basics) (Def (e.fun':'t.var)) =
+ (AsB e.basics ((Def (e.fun':'t.var))':'t.var));
+}
+
+* Folding of two contractions.
+* <FoldCt t.contr1 t.contr2> 
+*     ==> t.contraction | (Norma t.contr1 t.contr2) | t.contr2 t.contr1
+FoldCt {
+ (Ct t.var1 ':'e.pattern1) (Ct t.var2':'e.pattern2), 
+  <SubsTest (e.pattern2':'t.var2) e.pattern1> : 
+   { e.pattern3 True = (Ct t.var1 ':'e.pattern3) ;
+     e.trash    False, <VarLess t.var1 t.var2>: 
+        {True = (Norma (Ct t.var1 ':' e.pattern1) (Ct t.var2 ':' e.pattern2));
+         False = (Ct t.var2 ':' e.pattern2) (Ct t.var1 ':' e.pattern1);
+        };
+   };
+}
+
+* Final folding of a list of contractions.
+* Temporary definition. Unfolded walks still can be because.
+* <FinFold e.nf-walk> ==> e.f-walk
+FinFold {
+  e.1 (Ct e.cont) (Ct t.var':'e.patt), 
+  <FinFold1 False e.1 (Ct t.var':'e.patt)>: 
+     { /* Folding was happend */
+       True e.walk = e.walk (Ct e.cont);
+       /* No folding. */
+       False e.walk = e.walk (Ct e.cont) (Ct t.var':'e.patt);
+     };
+  e.1 = e.1;
+}
+
+FinFold1 {
+ s.bool e.1 (Ct t.var1':'e.where) (Ct t.var':'e.what),
+ <SubsTest0 s.bool (e.what':'t.var) e.where> : e.pattern s.bool1
+       = <FinFold1 s.bool1 e.1 (Ct t.var':'e.what)> (Ct t.var1':'e.pattern);
+ s.bool e.1 (Ct t.var':'e.what) = s.bool e.1;
+}
+
+* Substitution with an information about real fact of a replacement.
+* <SubsTest t.what-assignment e.where-expr> = e.expr s.boolean
+SubsTest { t.what e.where = <SubsTest0 False t.what e.where>;}
+SubsTest0 {
+ s.bool t.what s.1 e.where = s.1 <SubsTest0 s.bool t.what e.where>;
+ s.bool (e.value ':'(Var s.t s.id e.var)) (Var s.t s.id e.var1) e.where 
+         =  e.value <SubsTest0 True (e.value ':'(Var s.t s.id e.var)) e.where>;
+ s.bool t.what (Var e.var) e.where 
+         = (Var e.var) <SubsTest0 s.bool t.what e.where>;
+ s.bool t.what ('*' e.expr) e.where 
+         = <GetUp ('*' <SubsTest0 s.bool t.what e.expr>) t.what e.where>;
+ s.bool t.what = s.bool;
+}
+
+GetUp {
+ ('*' e.expr s.bool) t.what e.where 
+            = ('*' e.expr) <SubsTest0 s.bool t.what e.where>;
+}
+
+
+* Composition with a final assignment.
+FldPass {
+ e.f-walk (AsB e.basics) 
+ (Node s.name Passive t.restr (Stack (Conf (e.expr':'t.outvar))) e.node) 
+  = e.f-walk (Out t.restr <SubsAs (As e.basics) (e.expr':'t.outvar)>);
+
+ e.f-walk  
+ (Node s.name Passive t.restr (Stack (Conf (e.expr':'t.outvar))) e.node) 
+  = e.f-walk (Out t.restr (e.expr':'t.outvar));
+
+}
+
+
+/*
+  Pick up assignments that can be moved over a contraction.
+*/
+* <FldAsBCont (AsB e.basics) (Ct e.contr)>
+FldAsBCont {
+ t.basics (Ct t.var1':'e.patt), <ListVar Of Expr e.patt>: e.vars
+    = <FldAsBCont1 t.basics (Ct t.var1':'e.patt) (Vars e.vars t.var1)>;
+}
+
+FldAsBCont1 {
+ e.exprs (AsB e.1 (e.expr':'t.var) e.basics) t.contr (Vars e.vars),
+ <Belong t.var To e.vars>: True
+    = <FldAsBCont1 e.exprs e.expr 
+                            (AsB e.1 e.basics) t.contr (Vars e.vars)>;
+
+ e.expr (AsB e.basics) t.contr (Vars e.vars)
+    = (Norma e.expr) t.contr (AsB e.basics);
+}
+
+* Remove empty shaft. Just a cleanining.
+RmEmptyShaft {
+ t.node(Dev '+'t.br '+'(t.node1(Dev e.dev1)) ) 
+       = <RmEmptyShaft t.node(Dev '+'t.br e.dev1)>; 
+ t.node(Dev '+'(t.node1(Dev e.dev1)) ) 
+       = <RmEmptyShaft t.node(Dev e.dev1)>; 
+ t.node(Dev e.dev) = t.node(Dev e.dev);
+}
+
+******************** Subcase analyzing. *************************************
+/*
+  The function SubCase removes the current branch from a branching whenever
+  this branch is a subcase of the next one. Informaly the meaning of "subcase"
+  is explaned below:
+  Every c-branch consists of walks like the next:
+  e.n-walk ::= e.n-segment e.n-walk 
+  e.n-segment ::= e.n-contractions e.n-actions
+  e.n-contraction ::= [] | t.n-contraction e.n-contractions
+  e.n-actions ::= t.assignment t.basic | t.assignment (Begin e.subgraph End)
+                  | t.node
+
+  Definition: A branch is a subcase of another branch iff every e.n-segment
+  from the first is a subcase of the correspond e.n-segment of the second
+  branch. An e.n-segment1 = e.n-contractions1 e.n-actions1 is a subcase of
+  an e.n-segment2 = e.n-contractions2 e.n-actions2 iff the predicate
+  e.n-contractions1 can be reduced to the e.n-contractions2 ( as patterns ) 
+  as well as the e.n-actions1 can be reduced to  the e.n-actions2 
+  ( as expressions ) by the aid of the same substituition as the patterns.
+
+*/
+* <FdSubCase '+' t.br t.info> ==>  '+' t.br t.info | t.info
+FdSubCase {
+ '+' (e.br1 (Fold e.fd1)) (Info e.info (NextBr (Fold e.fd2)))
+      = <IsSubCase '+'(e.br1 (Fold e.fd1)) (Info e.info (NextBr (Fold e.fd2)))
+                       <SubSent (As ) '+' (e.fd1) '+' (e.fd2)>>; 
+
+* Last branch just pick up it and dothe  identety analysis.
+ '+' (e.br1 (Fold e.fd1)) (Info e.info (NextBr ))
+      = <IsSubCase '+'(e.br1 (Fold e.fd1)) (Info e.info (NextBr (Fold e.fd1)))
+                       False>; 
+
+ '+' t.br t.info = '+' t.br t.info; 
+} /* End of FdSubCase */
+
+
+* Just exam: what is result of the test on the subcase.
+* <IsSubCase '+' t.br t.info e.bool> ==>  '+' t.br t.info |t.info
+IsSubCase {
+ '+' (e.br1 (Fold e.fd1))
+     (Info t.Ident  t.SubCase t.Outs (NextBr (Fold e.fd2)) e.info1) False 
+     = <IsIdent '+' <RmRestr (e.br1 (Fold e.fd1))> 
+                (Info t.Ident t.SubCase t.Outs (NextBr (Fold e.fd1)) e.info1)>;
+
+ '+' t.br1 t.info True (As e.assign) = t.info;
+} /* IsSubCase  */
+
+* Temporary definition. The restriction can be invalid now.
+* It is neccessary to corret it.
+RmRestr {
+ (e.br (Node s.id Passive (Rs e.resr) e.node) (Fold e.fd1))
+        = (e.br (Node s.id Passive (Rs) e.node) (Fold e.fd1));
+ (e.br) = (e.br);
+}
+ 
+SubSent {
+* Temporary definition.
+ t.As '+'((Ct (Var s.t s.id e.var)':'e.patt) e.br) 
+      '+'((Ct (Var s.t s.id e.var1)':'e.patt1) e.br1) 
+   = <ExamSubSent '+'(e.br)'+'(e.br1) 
+                  <RedContr t.As (e.patt)'='(e.patt1)>>; 
+
+* No contraction on a variable inside the next branch. Put trivial contraction.
+ t.As '+'((Ct t.Var':'e.patt) e.br) '+'(e.br1) 
+   = <SubSent t.As '+'((Ct t.Var':'e.patt) e.br)'+'((Ct t.Var':'t.Var) e.br1)>;
+
+ t.As '+'((Def e.def) e.br) '+'((Def e.def1) e.br1)
+   = <ExamSubSent '+'(e.br)'+'(e.br1) 
+                  <RedDef t.As (Def e.def)'='(Def e.def1)>>; 
+
+ t.As '+'((As e.assign) t.basic e.br) '+'((As e.assign1) t.basic1 e.br1)
+   = <ExamSubSent '+'(e.br)'+'(e.br1) 
+        <RedSBas t.As ((As e.assign) t.basic)'='((As e.assign1) t.basic1)>>; 
+
+ t.As '+'((Out t.Rs e.assign)) '+'((Out t.Rs1 e.assign1))
+   = <RedSAs t.As (As e.assign)'='(As e.assign1)>;
+
+ t.As '+'(e.br) '+'(e.br1) = False;
+}
+ 
+* Examination of a result of reducing.
+ExamSubSent {
+ e.brs True (As e.assign) = <SubSent (As e.assign) e.brs>;
+ e.brs False = False;
+}
+
+* Reducing of contractions.
+RedContr {
+ (As e.assign) (e.patt)'='(e.patt1) 
+     =  <RedExpr (UnCond e.assign) ((<DelFnCall e.patt>)'='(<DelFnCall e.patt1>))>; 
+}
+
+* Reducing of definitions.
+RedDef {
+ t.assign
+ (Def (('!' (Fn s.name e.args)':'(Var s.t s.id e.var))':'(Var s.t0 s.id0 e.var0)))'='
+ (Def (('!' (Fn s.name e.args1)':'(Var s.t s.id e.var1))':'(Var s.t0 s.id0 e.var2)))
+         = <RedSAs t.assign (As e.args)'='(As e.args1)>; 
+ e.False = False;
+}
+
+* Temporary definition. Subgraphes still can be reduced.
+* Reducing of calls.
+RedSBas {
+ t.assign
+ (As e.args1)(Basic s.name e.basic1 ':'(Var s.t s.id e.var1))
+ (As e.args2)(Basic s.name e.basic2 ':'(Var s.t s.id e.var2))
+         = <RedSAs t.assign (As e.args1)'='(As e.args1)>; 
+ e.False = False;
+}
+
+* Reducing of assignments.
+RedSAs {
+ (As e.assign) (As e.args)'='(As e.args1)
+   =  <RedSAs0 (As e.assign) 
+               ((<DelFnAs (As e.args)>)'='(<DelFnAs (As e.args1)>))>; 
+}
+
+RedSAs0 {
+ t.assign ((e.expr)'='(e.expr1)) 
+   =  <RedSAs1 t.assign (Vars <ListVar Of Expr e.expr e.expr1>) ((e.expr)'='(e.expr1))>; 
+}
+
+* We have pick up variables which were not defined inside contractions.
+RedSAs1 {
+*1. The variable was defined.
+ (As e.assign (e.val':'(Var s.t s.id e.var1)) e.1)
+ (Vars (Var s.t s.id e.var) e.vars) ((e.expr)'='(e.expr1))
+   =  <RedSAs1 (As e.assign (e.val':'(Var s.t s.id e.var1)) e.1)
+               (Vars e.vars) ((e.expr)'='(e.expr1))
+       >; 
+
+*2. The variable was not defined. Define it.
+ (As e.assign)
+ (Vars (Var s.t s.id e.var) e.vars) ((e.expr)'='(e.expr1))
+   =  <RedSAs1 (As e.assign ((Var s.t s.id e.var)':'(Var s.t s.id e.var)))
+               (Vars e.vars) ((e.expr)'='(e.expr1))
+       >; 
+
+*3. Test on reducing.
+ (As e.assign) (Vars ) ((e.expr)'='(e.expr1))
+   =  <RedExpr (UnCond e.assign) ((e.expr)'='(e.expr1))>; 
+}
+
+DelFnAs {
+ (As (e.expr':'t.var) e.assign) 
+       = ('*' As <DelFnCall e.expr>) <DelFnAs (As e.assign)>;
+ (As ) = ;
+}
+
+* Temporary definition.
+DelFnCall {
+ (As e.assign)(Basic s.name e.basic ':' t.var) e.expr
+        = <DelFnAs (As e.assign)> ('*' Basic s.name) <DelFnCall e.expr>; 
+ (Def (('!' (Fn s.name e.args)':'t.Var1)':'t.Out)) e.expr
+        = <DelFnAs (As e.args)> ('*' Def s.name) <DelFnCall e.expr>; 
+
+* Temporary definition.The subgraphs still can be reduced.
+ (As e.assign)(Begin e.subgr ':' t.out End) e.expr
+        = ('*' Begin <New Call>) <DelFnCall e.expr>; 
+ ('*' e.expr1) e.expr = ('**' <DelFnCall e.expr1>) <DelFnCall e.expr>;
+ (Var 'c' s.id e.const) e.expr = <DelFnConst e.const> <DelFnCall e.expr>;
+ (Var s.t s.id e.elev) e.expr = (Var s.t s.id) <DelFnCall e.expr>;
+ s.1 e.expr = s.1 <DelFnCall e.expr>;
+            = ;
+}
+
+DelFnConst {
+ (e.expr1) e.expr = ('**' <DelFnConst e.expr1>) <DelFnConst e.expr>;
+ s.1 e.expr = s.1 <DelFnConst e.expr>;
+  = ;
+}
+
+******************** The End of Subcase analyzing. *****************************
+
+
+********************** Test on identety. *****************************
+* Temporary definition. Just projection on one of variable.
+IsIdent {
+*1. The test is not required. Just delet the folded information.
+ '+' (e.br1 (Fold e.f-br1)) (Info (Identety False e.vars) e.info) 
+       = '+' (e.br1) (Info (Identety False e.vars) e.info);
+
+ '+' (e.br1 (Fold e.f-br1)) 
+ (Info (Identety True e.id-vars)  t.SubCase t.Outs0 e.info),
+ <ExmTst <TestId (e.f-br1) (e.id-vars) t.Outs0>>: s.bool (Outs e.outs)
+       = '+' (e.br1) 
+         (Info (Identety s.bool e.id-vars) t.SubCase (Outs e.outs) e.info);
+
+* The branch is a fork.
+ '+' t.br t.info = '+'t.br t.info;
+}
+
+ExmTst {
+* No hypothethis.
+  = False (Outs );
+ e.hypoth = True (Outs e.hypoth);
+}
+
+TestId {
+*1-2. Function call on the left hand side is encountered.
+ (e.1 (As e.assign) t.basic (Ct e.cont) e.2) e.info = ;
+ (e.1 (AsB e.assign) e.3 (Ct e.cont) e.2) e.info = ;
+ (e.1 (Def e.def) e.2) e.info = ;
+
+*3-4. No function call on the left hand side.
+ (e.pats (AsB t.assign)) t.inp-fmt t.outs
+       = <RedNewOuts (<EncodeAs <Conjuct t.inp-fmt e.pats>> (Out (Rs) t.assign))
+                     t.inp-fmt t.outs>;
+ (e.pats (Out t.Rs (e.expr':'t.out))) t.inp-fmt t.outs
+       = <RedNewOuts (<EncodeAs <Conjuct t.inp-fmt e.pats>> (Out t.Rs (e.expr':'t.out))) 
+                           t.inp-fmt t.outs>;
+ (e.1) e.info = ;
+}
+
+RedNewOuts {
+ (e.expr) t.inp-fmt e.outs (Hypoth e.hyp) e.1 = 
+    (Hypoth e.hyp) <RedNewOuts (e.expr) t.inp-fmt e.outs e.1>;
+
+ (e.expr) t.inp-fmt (Outs e.outs) (Outs e.outs1) e.1 = 
+    <RedNewOuts (e.expr) t.inp-fmt (Outs e.outs e.outs1) e.1>;
+
+*3-4. No function call on the left hand side.
+ (e.left (As e.assign) t.basic) t.inp-fmt (Outs e.outs)
+       = <RedNewOuts (e.left (As e.assign) t.basic) t.inp-fmt 
+             <ReduceOuts t.inp-fmt (Left e.left) 
+                         (Rights <RemoveFnCall (Outs e.outs) (As e.assign) t.basic>)>>;
+ (e.left (Out t.Rs (e.expr':'t.out))) t.inp-fmt (Outs e.outs)
+       = <RedNewOuts (e.left (Out t.Rs (e.expr':'t.out))) t.inp-fmt 
+                     <ReduceOuts t.inp-fmt (Left e.left) 
+                                 (Rights <RemoveFnCall (Outs e.outs) e.expr>)>>;
+ (e.expr) t.inp-fmt = ;
+}
+
+* The RemoveFnCall function constructs all possible values of an expression
+* in according with a list of hypotheses.
+* <RemoveFnCall t.InputFormat e.expression> ==> (e.out':'t.out-var) ...
+RemoveFnCall {
+ (Outs t.out e.outs) e.expr
+        = (<PassOut t.out <GetFmtOut t.out e.expr>>':'t.out) 
+           <RemoveFnCall (Outs e.outs) e.expr>;
+ (Outs ) e.expr = ;
+}
+
+
+* An auxiliary function for RemoveFnCall.
+GetFmtOut {
+ (Hypoth e.out) (As e.assign) (Basic e.basic) e.expr 
+    =  <GetFmtOut (Hypoth e.out) <Subs (As e.assign) e.out>>
+       <GetFmtOut (Hypoth e.out) e.expr>;
+ t.out ('*' e.expr1) e.expr 
+     = ('**' <GetFmtOut t.out e.expr1>) <GetFmtOut t.out e.expr>;
+ t.out s.1 e.expr = s.1 <GetFmtOut t.out e.expr>;
+ t.out (Var 'c' s.id e.const) e.expr = <DelFnConst e.const> <GetFmtOut t.out e.expr>;
+ t.out (Var e.var Meta) e.expr = (Var e.var Meta) <GetFmtOut t.out e.expr>;
+ t.out (Var s.t s.id e.elev) e.expr = ('*' Var s.t s.id) <GetFmtOut t.out e.expr>;
+ t.out  = ;
+}
+
+PassOut {
+* (Hypoth e.out) e.exp (Var e.var Meta) =  e.exp (Var e.var Meta);
+* (Hypoth e.out (Var e.var Meta)) e.exp =  e.exp (Var e.var Meta);
+ t.out e.exp = e.exp;
+}
+
+EncodeAs {
+ (e.expr':'t.var) e.assign = (<EncodeExpr e.expr>':'t.var) <EncodeAs e.assign>;
+  = ;
+}
+
+EncodeExpr {
+ ('*' e.expr1) e.expr 
+     = ('**' <EncodeExpr e.expr1>) <EncodeExpr e.expr>;
+ s.1 e.expr = s.1 <EncodeExpr e.expr>;
+ (Var 'c' s.id e.const) e.expr = <DelFnConst e.const> <EncodeExpr e.expr>;
+ (Var s.t s.id e.elev) e.expr = ('*' Var s.t s.id) <EncodeExpr e.expr>;
+   = ;
+}
+
+* Get a list of formal parametres which can be "identety parametres" 
+* w.r.t. the given function.
+ReduceOut {
+ t.inp-fmt (Left e.assign) 
+ (Right (e.value':'(Hypoth e.out t.var))),<RmLn t.var>: e.rst,
+ <RedExpr (UnCond ) ((<Subs (As e.assign) e.out e.rst>)'='(e.value))>:
+    {True t.assign1, <EmptyAs t.assign1>:
+       {False, <LengthHypoth t.inp-fmt (Left e.assign) (Hypoth e.out t.var)>:
+               { True e.outs = (Outs e.outs);
+                 False e.trash = ;
+               };
+        True, <LengthHypoth t.inp-fmt (Left e.assign) (Hypoth e.out t.var)>:
+               { True e.outs = (Hypoth e.out e.rst) (Outs e.outs);
+                 False e.trash = (Hypoth e.out e.rst);
+               };
+*        True  = (Hypoth e.out e.rst);
+        Empty = (Hypoth e.out e.rst);
+       };
+     False = ;
+    };
+}
+
+RmLn { 
+ (Var 'e' s.id Meta) = ;
+ t.var = t.var;
+}
+
+EmptyAs {
+ (As e.1 (t.term e.value ':'t.var) e.assign) = False;
+ (As ) = Empty;
+ (As e.assign) = True;
+}
+
+ReduceOuts {
+ t.inp-fmt t.Left (Rights t.right1 e.right) 
+     = <ReduceOut t.inp-fmt t.Left (Right t.right1)>
+       <ReduceOuts t.inp-fmt t.Left (Rights e.right)>;
+
+* (Left ) (Rights) = ;
+* Temporary definition.
+ t.inp-fmt t.Left (Rights) = ;
+}
+
+*<LengthHypoth t.inp-fmt (Left e.assign) (Hypoth e.out t.var)>
+LengthHypoth1 {
+* Temporary definition. Just projections are consedered.
+ (e.inp-fmt t.var e.0)
+ t.Left (Hypoth e.out t.var e.1 t.var0) 
+   = <LengthHypoth1 (e.inp-fmt e.0) t.Left (Hypoth e.out t.var e.1 t.var0)>;
+
+ (e.inp-fmt (Var s.t s.id e.var) e.0)
+ (Left e.1 (':'(Var s.t s.id e.var1)) e.assign) (Hypoth e.out t.var0)
+   = <LengthHypoth1 (e.inp-fmt e.0) (Left e.1 e.assign) (Hypoth  e.out t.var0)> 
+     (Hypoth e.out (Var s.t s.id e.var) t.var0);
+
+ t.inp-fmt t.Left t.Hypoth = t.inp-fmt t.Hypoth;
+}
+
+* Temporary definition.
+LengthHypoth {
+ t.inp-fmt t.Left t.hypoth 
+          = <LengthHypoth10 <LengthHypoth1 t.inp-fmt t.Left t.hypoth>>;
+}
+
+LengthHypoth10 {
+ () e.hypoth = False;
+ t.inp-fmt e.hypoth = True <LengthHypoth0 t.inp-fmt e.hypoth (e.hypoth)>;
+}
+
+LengthHypoth0 {
+ (t.var e.inp-fmt) (Hypoth e.out t.var0) e.hypoth t.rest
+         =  (Hypoth e.out t.var t.var0) <LengthHypoth0 (t.var e.inp-fmt) e.hypoth t.rest>;
+ (t.var e.inp-fmt) (e.rest) 
+         = <LengthHypoth0 (e.inp-fmt) e.rest (e.rest)>;
+ () e.hypoth = ;
+}
+
+Conjuct {
+ (e.1 (Var s.t s.id e.var) e.inp-fmt) (Ct (Var s.t s.id e.var1) ':'e.expr) e.patts 
+     = (e.expr':'(Var s.t s.id e.var)) <Conjuct (e.1 e.inp-fmt) e.patts>;
+ ()  = ;
+ (t.var e.inp-fmt) = (t.var ':' t.var) <Conjuct (e.inp-fmt)>; 
+}
+
+**************************** The End Test on identety. *****************************
+
+******************************* The End of Folding.   ******************************
+
+

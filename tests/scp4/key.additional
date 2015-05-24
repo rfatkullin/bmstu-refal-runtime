@@ -1,0 +1,273 @@
+/*
+KEY.REF , Version 25.09.2000, new
+This file is shared by inref4, mst, scp4, cgr54, redund.
+Content:
+        -- PART I  -- This part contains handles to control the generalization.
+        -- PART II -- This part is to supply compatibility between different     
+                      operating systems. It contains all parameters that my vary 
+                      on different machines.       
+Please, do not forget to retranslate this file after your changes.
+*/
+
+$EXTERN New;
+
+* $ENTRY Length, Depth, Simplify, Transient, UserGener, UserReduce;
+* $ENTRY Executable, OutDir, InpDir;
+
+$ENTRY Scp4Version { =  '25/09/2000'; }
+
+**************************** Part -I . ************************************
+* This part contains handles to control the generalization.               *
+***************************************************************************
+
+* A list of function to be executed by the supercompiler
+* whenever they will be called in a left-hand side of a sentence.
+$ENTRY Executable {
+  = Type Numb Symb Implode
+    Add  Sub  Mul  Div Mod Divmod 
+*    Equal___ Open___
+    ;
+}
+
+/*
+ Do not generalize any empty expression ( [] ) inside a previous configuration
+ if the empty expression belongs to a bracket's structure where
+ there are less than <Length> of terms on the bracket's level and
+ there is not a term on the level that has a depth grater or equal to <Depth>.
+*/
+* <Length> ==> s.number
+$ENTRY Length { = 2; }
+*$ENTRY Length { = 1; }
+*$ENTRY Length { = 0; }
+
+* <Depth> ==> s.number
+$ENTRY Depth { = 2; }
+*$ENTRY Depth { = 1; }
+*$ENTRY Depth { = 0; }
+
+* <CallDepth> ==> s.number
+$ENTRY CallDepth { = 2; }
+*$ENTRY CallDepth { = 1; }
+*$ENTRY CallDepth { = 0; }
+
+* Do you want to use the simplification condition to generalize ?
+* <Simplify> ==> Yes | No
+$ENTRY Simplify { = Yes; }
+*$ENTRY Simplify { = No; }
+
+* Do you want to have the transient configurations in the history ?
+* <Transient > ==> Yes | No
+$ENTRY Transient { = No; }
+*$ENTRY Transient { = Yes; }
+
+* If you want to have transient configurations of a function in the history
+* just put name of the function in the right side of the PutInHistory function.
+* <PutInHistory> ==> e.function-names
+*$ENTRY PutInHistory { = Command; }
+$ENTRY PutInHistory { = ; }
+
+* If you do not want to have a function call on the top of a stack in the history
+* just put name of the function in the right side of the GoAhead function.
+* <GoAhead> ==> e.function-names
+*$ENTRY GoAhead { = Subs; }
+$ENTRY GoAhead { = ; }
+
+* Strategy to drive your program: an order to evaluate function call by call.
+* <Strategy > ==> Lazy | Applicative
+*$ENTRY Strategy  { = Applicative; }
+$ENTRY Strategy  { = Lazy; }
+
+
+/*
+  Open generalization for a clever user:
+  -A-
+  The SCP4 does not generalize any parenthesis of the next kind
+  (USER__ e.expression):
+    - it just gives a pair of such parentheses to be generalized
+      to the UserGener function:
+      <UserGener (Current e.curr-expr) With (Previous e.prev-expr)>,
+      where e.curr-expr is an expression inside current parentheses
+      (USER__ e.cur-expr) and e.prev-expr is an expression inside
+      previous parentheses (USER__ e.prev-expr).
+      You can use another algorithm  to generalize them.
+    - it never generalizes (USER__ e.expression).
+
+  -B-
+  The SCP4 does not generalize any element of a first order neighbourhood 
+  of a function call if the function was declared to be generalized by
+  a user. See comments in DOC/MST4.TXT file for additional explanations.
+  ( $USER_GENER ). A name of the function is shown in the first argument
+  of the open generalization.
+
+  Here e.expression is an encoded expression with parameters:
+  s.SYMBOL presents itself;
+  ('*' e.expr) is an encoded (e.expr);
+
+  ('!' (Fn s.fname e.input-format)':'t.var) is an encoded function call;
+        s.fname ::= s.User-Fun-name
+        e.input-format ::= (e.argument':'t.format-variable) e.input-format
+                         | e.empty
+        e.argument ::= e.expression
+
+  (Var 'e' s.variable-name e.elevation) is an e-parameter;
+  (Var 't' s.variable-name e.elevation) is a t-parameter;
+  (Var 's' s.variable-name e.elevation) is a s-parameter;
+  (Var 'h' s.variable-name e.elevation) is a place where a function
+                                        call will be subsituted;
+  (Var 'c' s.variable-name e.constant)  is a constant that protected
+                                        from generalization;
+                           e.constant is an object expression, this
+                                         expression is NOT encoded;
+                           e.elevation ::= '1' e.elevation | e.empty
+
+RESTRICTIONS to the user's generalization:
+      - do not change h-parameters;
+      - generalize every s-parameters and e-parameters at least to
+        parameters with new names, use a call <New Var> to create
+        a new variable's name;
+      - generalize any two elevations to one of them with more short
+        elevation;
+      - use a call <New Elevation> whenever you do not know which
+        new elevation has to be created;
+      - do not change pieces of expression that you do not understand
+        what is it;
+
+OUTPUT has to be:
+(As e.curr-assignment)(As e.prev-assignment) (Gener e.generalization),
+where
+   - e.curr-assignment is a reduction of the generalization
+     to the e.curr-expr;
+   - e.prev-assignment is a reduction of the generalization
+     to the e.prev-expr;
+   - e.generalization is a generalized expression;
+
+      e.curr-assignment ::= e.assignment
+      e.prev-assignment ::= e.assignment
+      e.assignment ::= (e.expression':'t.gen-var) ...
+      t.gen-var  ::= (Var t.gen-type s.variable-name e.elevation)
+      t.gen-type ::= 'e' | 's' | 't'
+
+      e.generalization    ::= e.output-expression
+      e.output-expression ::= t.output-expression e.output-expression
+                            | e.empty
+      t.output-expression ::= ('*' e.output-expression)
+                            | ('!' (Fn s.fname e.format)':'t.var)
+                            | (Var e.variable)
+                            | s.symbol
+                            | (Auto (Current  e.output-expression)
+                                    (Previous e.output-expression))
+      e.format ::= (e.output-expression':'t.var) e.format | e.empty
+      (Var e.variable) ::= see above for an explanation;
+
+ Whenever you put (Auto (Current e.curr-expr)(Previous e.prev-expr))
+an automatic algorithm will generalize these two expressions.
+*/
+
+* <UserGener (Current e.curr-expr) With (Previous e.prev-expr)>
+*                    ==> (As e.curr-assignment)(As e.prev-assignment)
+*                        (Gener e.generalization)
+*                    ==> False
+$ENTRY UserGener {
+* -A-
+ (Current e.curr-expr) With (Previous e.prev-expr)
+     = (As )(As ) (Gener (Auto (Current e.curr-expr) (Previous e.prev-expr)));
+* -B-
+ (Call_To_Function s.fname)
+ (Current e.curr-element-of-neighbourhood) With 
+ (Previous e.prev-element-of-neighbourhood)
+     = (As )(As ) (Gener (Auto (Current e.curr-element-of-neighbourhood) 
+                               (Previous e.prev-element-of-neighbourhood)));
+}
+
+/*
+  Open reducing for a clever user:
+  -A-
+  The SCP4 does not reduce any parenthesis of the next kind
+  (USER__ e.expression):
+    - it just gives a pair of such parenthesis to be reduced
+      to the UserReduce function:
+      <UserReduce (Current e.curr-expr) To (Previous e.prev-expr)>,
+      where e.curr-expr is an expression inside current parenthesis
+      (USER__ e.cur-expr) and e.prev-expr is an expression inside
+      previous parenthesis (USER__ e.prev-expr).
+      You can use another algorithm  to reduce them.
+
+  -B-
+  The SCP4 does not reduce any element of a first order neighbourhood 
+  of a function call if the function was declared to be reduced by
+  a user. See comments in the DOC/MST4.TXT file for additional explanations.
+  ( $USER_REDUCE ). A name of the function is shown in the first argument
+  of the open reducing.
+
+  Here e.expression is an encoded expression with parameters.
+  See comments to the UserGener function for additional explanations.
+
+RESTRICTIONS to the user's reducing:
+      - do not change h-parameters;
+      - the simplest kind of a reducing assignments is identical (not empty);
+      - use a call <New Elevation> whenever you do not know which
+        new elevation has to be created;
+      - do not change pieces of expression that you do not understand
+        what is it;
+
+OUTPUT has to be: True (As e.assignment) e.auto-pairs | False
+,where
+   - e.assignment is a reduction of the current expression
+     to the previous;
+   - e.auto-pairs is pairs of an expression to be reduced in
+     an automatic fashion;
+         e.auto-pairs ::= (Auto (Current  e.output-expression)
+                                (Previous e.output-expression))
+                                e.auto-pairs
+                        | e.empty
+  See comments to the UserGener function for additional explanations.
+*/
+
+* <UserReduce (Current e.curr-expr) To (Previous e.prev-expr)>
+*                    ==> True (As e.reduction) e.auto-pairs
+*                    ==> False
+$ENTRY UserReduce {
+* -A-
+ (Current e.curr-expr) To (Previous e.prev-expr)
+         = True (As) (Auto (Current e.curr-expr) (Previous e.prev-expr));
+
+* -B-
+ (Call_To_Function s.fname)
+ (Current e.curr-element-of-neighbourhood) To
+ (Previous e.prev-element-of-neighbourhood)
+         = True (As) (Auto (Current e.curr-element-of-neighbourhood)
+                           (Previous e.prev-element-of-neighbourhood));
+}
+
+********************** End of the first part. ******************************
+
+$ENTRY InpDir { = <TmpDir> 'pgraph' <SubDir>; }
+$ENTRY OutDir { = <TmpDir> 'scpout' <SubDir>; }
+*TmpDir { = <HereDir>; }
+TmpDir { = <TmpDir1 <GetEnv 'TMPSCP'>>; }
+
+TmpDir1 {
+  = <HereDir>;
+ e.tmpscp = e.tmpscp <SubDir>;
+}
+
+**************************** Part -II . ************************************
+* This part is to supply compatibility between different operating         *
+* systems. It contains all parameters that my vary on different machines.  *
+****************************************************************************
+                                                                              
+* The Operating Systems currently supported are:                                
+*     Windows NT
+*     Windows 95
+*     Windows 98
+*     Linux
+*     MS-DOS on IBM-PC                                                          
+*     Apple Macintosh OS                                                        
+
+* --- Linux 
+$ENTRY HereDir       { = }              /* working directory symbol*/
+$ENTRY SubDir        { = '/' }          /* subdirectory symbol */
+       MemLim        { = ' -l32' }      /* memory limit */
+$ENTRY OpSystem      { = 'unix' }   
+********************** End of the second part. *************************
+********** The End. *************************************************
