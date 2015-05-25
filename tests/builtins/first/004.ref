@@ -1,0 +1,4 @@
+$ENTRY Go
+{
+	= <Prout <First 8 'Hello, world!!!'>>
+}

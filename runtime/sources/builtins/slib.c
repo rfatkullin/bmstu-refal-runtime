@@ -386,6 +386,63 @@ struct func_result_t Ord(int entryStatus)
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm, .callChain = 0};
 }
 
+uint64_t min(uint64_t a, uint64_t b)
+{
+    if (a > b)
+        return b;
+
+    return a;
+}
+
+struct func_result_t First(int entryStatus)
+{
+    gcInitBuiltinEnv();
+
+    if (BUILTIN_FRAG->length == 0)
+        FMT_PRINT_AND_EXIT(BAD_ARG, "First");
+
+    if (_memMngr.vterms[BUILTIN_FRAG->offset].tag != V_INT_NUM_TAG)
+        FMT_PRINT_AND_EXIT(BAD_ARG, "First");
+
+    struct vint_t* numData = _memMngr.vterms[BUILTIN_FRAG->offset].intNum;
+
+    if (GET_INT_SIGN(numData))
+        FMT_PRINT_AND_EXIT(BAD_ARG, "First");
+
+    mpz_t num;
+    mpz_init(num);
+
+    mpz_import(num, GET_INT_LENGTH(numData), 1, sizeof(uint8_t), 1, 0, numData->bytes);
+    uint64_t length = mpz_get_ui(num);
+    mpz_clear(num);
+
+    struct lterm_t* firstLTerm = allocateFragmentLTerm(1);
+    struct lterm_t* restLTerm = allocateSimpleChain();
+    struct lterm_t* bracket = allocateChainKeeperLTerm(1);
+    struct lterm_t* res = allocateSimpleChain();
+    struct fragment_t* firstFrag = firstLTerm->fragment;
+
+    firstFrag->offset = BUILTIN_FRAG->offset + 1;
+    firstFrag->length = min(BUILTIN_FRAG->length - 1, length);
+
+    ADD_TO_CHAIN(bracket->chain, firstLTerm);
+    ADD_TO_CHAIN(res, bracket);
+
+    BUILTIN_FRAG->offset += 1 + firstFrag->length;
+
+    if (firstFrag->length < BUILTIN_FRAG->length - 1)
+        BUILTIN_FRAG->length -= 1 + firstFrag->length;
+    else
+        BUILTIN_FRAG->length = 0;
+
+    restLTerm->tag = L_TERM_FRAGMENT_TAG;
+    restLTerm->fragment = BUILTIN_FRAG;
+    ADD_TO_CHAIN(res, restLTerm);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
+}
+
+
 static void chRecApplyOrd(uint64_t offset, uint64_t length, allocate_result* res)
 {
     uint64_t i = 0;

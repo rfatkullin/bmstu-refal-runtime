@@ -41,6 +41,7 @@
 #define OPERAND_BAD_TYPE            "[Builtins][%s]: Operand must be int or double!\n"
 #define BAD_BINARY_OPERATION        "[Builtins][%s]: Unknown binary operation\n"
 #define MOD_TO_DOUBLE_ERROR         "[Builtins][%s]: Can't applay mod operation to double!\n"
+#define BAD_ARG                     "[Builtins][%s]: Bad argument!\n"
 
 #define HASH_TABLE_BAD_ARG          "[Builtins] Key must contain only chars!\n"
 

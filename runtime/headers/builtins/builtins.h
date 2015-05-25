@@ -88,6 +88,8 @@ struct func_result_t Type(int entryStatus);
 struct func_result_t Chr(int entryStatus);
 struct func_result_t Ord(int entryStatus);
 
+struct func_result_t First(int entryStatus);
+
 /* Вспомогательные функции.*/
 
 /// Обрабатывает аргументы командной строки и заполняет _refalProgramArgs.
