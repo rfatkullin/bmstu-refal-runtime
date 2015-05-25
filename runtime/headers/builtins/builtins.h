@@ -89,6 +89,7 @@ struct func_result_t Chr(int entryStatus);
 struct func_result_t Ord(int entryStatus);
 
 struct func_result_t First(int entryStatus);
+struct func_result_t Last(int entryStatus);
 
 /* Вспомогательные функции.*/
 

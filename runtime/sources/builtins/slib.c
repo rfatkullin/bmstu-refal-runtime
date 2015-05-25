@@ -18,6 +18,7 @@ static uint32_t getCharFromInt(struct vint_t* numData);
 static void recApplyChr(uint64_t offset, uint64_t length);
 static struct func_result_t gcSwitchCase(uint32_t op(uint32_t ch));
 static int getCharInfo(uint32_t ch, uint32_t* first, uint32_t* add);
+static struct func_result_t gcGetPart(int first, const char* funcName);
 static struct vint_t* chGetNumFromChar(uint32_t ch, allocate_result* res);
 static void chRecApplyOrd(uint64_t offset, uint64_t length, allocate_result* res);
 static int getFragmentFirstVTermType(struct fragment_t* frag, uint32_t* first, uint32_t* add);
@@ -394,20 +395,34 @@ uint64_t min(uint64_t a, uint64_t b)
     return a;
 }
 
-struct func_result_t First(int entryStatus)
+struct func_result_t First(int first)
+{
+    return gcGetPart(1, "First");
+}
+
+struct func_result_t Last(int first)
+{
+    return gcGetPart(0, "Last");
+}
+
+static struct func_result_t gcGetPart(int first, const char* funcName)
 {
     gcInitBuiltinEnv();
 
     if (BUILTIN_FRAG->length == 0)
-        FMT_PRINT_AND_EXIT(BAD_ARG, "First");
+        FMT_PRINT_AND_EXIT(BAD_ARG, funcName);
 
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag != V_INT_NUM_TAG)
-        FMT_PRINT_AND_EXIT(BAD_ARG, "First");
+        FMT_PRINT_AND_EXIT(BAD_ARG, funcName);
+
+    checkAndCleanHeaps(0, FRAGMENT_LTERM_SIZE(1) +
+                       2 * CHAIN_LTERM_SIZE +
+                       CHAIN_KEEPER_LTERM_SIZE(1));
 
     struct vint_t* numData = _memMngr.vterms[BUILTIN_FRAG->offset].intNum;
 
     if (GET_INT_SIGN(numData))
-        FMT_PRINT_AND_EXIT(BAD_ARG, "First");
+        FMT_PRINT_AND_EXIT(BAD_ARG, funcName);
 
     mpz_t num;
     mpz_init(num);
@@ -417,31 +432,49 @@ struct func_result_t First(int entryStatus)
     mpz_clear(num);
 
     struct lterm_t* firstLTerm = allocateFragmentLTerm(1);
-    struct lterm_t* restLTerm = allocateSimpleChain();
+    struct lterm_t* secondLTerm = allocateSimpleChain();
     struct lterm_t* bracket = allocateChainKeeperLTerm(1);
     struct lterm_t* res = allocateSimpleChain();
-    struct fragment_t* firstFrag = firstLTerm->fragment;
 
-    firstFrag->offset = BUILTIN_FRAG->offset + 1;
-    firstFrag->length = min(BUILTIN_FRAG->length - 1, length);
+    secondLTerm->tag = L_TERM_FRAGMENT_TAG;
+    secondLTerm->fragment = BUILTIN_FRAG;
+
+    uint64_t fOffset = 0;
+    uint64_t fLength = 0;
+    uint64_t sOffset = 0;
+    uint64_t sLength = 0;
+
+    length = min(length, BUILTIN_FRAG->length - 1);
+
+    if (first)
+    {
+        fOffset = BUILTIN_FRAG->offset + 1;
+        fLength = length;
+
+        sOffset = fOffset + fLength;
+        sLength = BUILTIN_FRAG->length - 1 - length;
+    }
+    else
+    {
+        fOffset = BUILTIN_FRAG->offset + 1;
+        fLength = BUILTIN_FRAG->length - 1 - length;
+
+        sOffset = fOffset + fLength;
+        sLength = length;
+    }
+
+    firstLTerm->fragment->offset = fOffset;
+    firstLTerm->fragment->length = fLength;
+
+    secondLTerm->fragment->offset = sOffset;
+    secondLTerm->fragment->length = sLength;
 
     ADD_TO_CHAIN(bracket->chain, firstLTerm);
     ADD_TO_CHAIN(res, bracket);
-
-    BUILTIN_FRAG->offset += 1 + firstFrag->length;
-
-    if (firstFrag->length < BUILTIN_FRAG->length - 1)
-        BUILTIN_FRAG->length -= 1 + firstFrag->length;
-    else
-        BUILTIN_FRAG->length = 0;
-
-    restLTerm->tag = L_TERM_FRAGMENT_TAG;
-    restLTerm->fragment = BUILTIN_FRAG;
-    ADD_TO_CHAIN(res, restLTerm);
+    ADD_TO_CHAIN(res, secondLTerm);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
-
 
 static void chRecApplyOrd(uint64_t offset, uint64_t length, allocate_result* res)
 {

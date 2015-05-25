@@ -1,0 +1,4 @@
+$ENTRY Go
+{
+	= <Prout <Last 0 'Offset' (1 ) (2) (3) (4) (5) rest expr 'asd' >>
+}
