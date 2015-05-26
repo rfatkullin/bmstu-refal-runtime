@@ -18,6 +18,7 @@ uint64_t allocateDoubleNumVTerm(double value);
 uint64_t allocateSymbolVTerm(uint32_t ch);
 uint64_t allocateUInt8VTerm(uint8_t val);
 uint64_t allocateClosureVTerm();
+uint64_t allocateIdentVTerm(struct vstring_t* str);
 
 /// Копирует термы из фрагмента в новую область.
 uint64_t allocateVTerms(struct fragment_t* frag, allocate_result* res);

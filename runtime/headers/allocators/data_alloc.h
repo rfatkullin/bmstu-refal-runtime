@@ -30,6 +30,7 @@ struct lterm_t*     allocateFuncCallLTerm();
 struct lterm_t*     allocateChainKeeperLTerm(uint32_t count);
 struct lterm_t*     allocateSimpleChain();
 struct fragment_t*  allocateFragment(uint32_t count);
+struct vstring_t*   allocateVString(uint64_t length);
 
 /// Инициализирует окружение функции. Также выделяет память.
 struct env_t*       initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patternsCount, uint32_t bracketsCount);

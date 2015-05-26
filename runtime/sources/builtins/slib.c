@@ -500,6 +500,89 @@ struct func_result_t Explode(int entryStatus)
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
+static int implodeAllowableChar(uint32_t ch)
+{
+    if (ch == '-' || ch == '_')
+        return 1;
+
+    // Обработка цифр.
+    if (ch >= '0' && ch <= '9')
+        return 1;
+
+    // Обработка латинских символов
+    if (ch >= 'a' && ch <= 'z' ||
+        ch >= 'A' && ch <= 'Z')
+        return 1;
+
+    // Обработка латинских символов
+    if (ch >= 'a' && ch <= 'z' ||
+        ch >= 'A' && ch <= 'Z')
+        return 1;
+
+    // Обработка символов, принадлежащих русскому алфавиту.
+    if (ch >= 0x410 && ch <= 0x44F)
+        return 1;
+
+    // Обработка символов Ё и ё.
+    if (ch == 0x401 || ch == 0x451)
+        return 1;
+
+    return 0;
+}
+
+struct func_result_t Implode(int entryStatus)
+{
+    gcInitBuiltinEnv();
+
+    uint64_t i = 0;
+    for (i = 0; i < BUILTIN_FRAG->length; ++i)
+    {
+        struct vterm_t* term = _memMngr.vterms + BUILTIN_FRAG->offset + i;
+
+        if (term->tag != V_CHAR_TAG || !implodeAllowableChar(term->ch))
+            break;
+    }
+
+    uint64_t offset;
+    if (i == 0)
+    {
+        checkAndCleanHeaps(1, BUILTINS_RESULT_SIZE + VINT_STRUCT_SIZE(1));
+
+        offset = allocateUInt8VTerm(0);
+    }
+    else
+    {
+        uint64_t addSize = BUILTIN_FRAG->length - i > 0 ? CHAIN_LTERM_SIZE : 0;
+
+        checkAndCleanHeaps(1, BUILTINS_RESULT_SIZE + VSTRING_SIZE(i) + addSize);
+
+        struct vstring_t* ident = allocateVString(i);
+
+        uint64_t j = 0;
+        for (j = 0; j < i; ++j)
+            ident->head[j] = _memMngr.vterms[BUILTIN_FRAG->offset + j].ch;
+
+        offset = allocateIdentVTerm(ident);
+    }
+
+    BUILTIN_FRAG->offset += i;
+    BUILTIN_FRAG->length -= i;
+
+    struct lterm_t* res = allocateBuiltinsResult(offset, 1);
+
+    if (BUILTIN_FRAG->length > 0)
+    {
+        struct lterm_t* restExpr = allocateSimpleChain();
+
+        restExpr->tag = L_TERM_FRAGMENT_TAG;
+        restExpr->fragment = BUILTIN_FRAG;
+
+        ADD_TO_CHAIN(res, restExpr);
+    }
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
+}
+
 static void chRecApplyOrd(uint64_t offset, uint64_t length, allocate_result* res)
 {
     uint64_t i = 0;

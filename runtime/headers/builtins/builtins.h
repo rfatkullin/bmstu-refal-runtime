@@ -92,6 +92,7 @@ struct func_result_t First(int entryStatus);
 struct func_result_t Last(int entryStatus);
 
 struct func_result_t Explode(int entryStatus);
+struct func_result_t Implode(int entryStatus);
 
 /* Вспомогательные функции.*/
 

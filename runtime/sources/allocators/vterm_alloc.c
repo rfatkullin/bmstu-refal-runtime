@@ -95,6 +95,14 @@ uint64_t allocateSymbolVTerm(uint32_t ch)
     return _memMngr.vtermsOffset++;
 }
 
+uint64_t allocateIdentVTerm(struct vstring_t* str)
+{
+    _memMngr.vterms[_memMngr.vtermsOffset].tag = V_IDENT_TAG;
+    _memMngr.vterms[_memMngr.vtermsOffset].str = str;
+
+    return _memMngr.vtermsOffset++;
+}
+
 uint64_t allocateIntNumVTerm(struct vint_t* value)
 {
     _memMngr.vterms[_memMngr.vtermsOffset].tag = V_INT_NUM_TAG;

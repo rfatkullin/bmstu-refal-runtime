@@ -215,6 +215,19 @@ struct fragment_t* allocateFragment(uint32_t count)
     return fragment;
 }
 
+struct vstring_t*  allocateVString(uint64_t length)
+{
+    struct vstring_t* str = (struct vstring_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += sizeof(struct vstring_t);
+
+    str->length = length;
+    str->head = (uint32_t*)(_memMngr.data + _memMngr.dataOffset);
+
+    _memMngr.dataOffset += length * sizeof(uint32_t);
+
+    return str;
+}
+
 struct lterm_t* allocateFuncCallLTerm()
 {
     struct lterm_t* lterm = (struct lterm_t*)(_memMngr.data + _memMngr.dataOffset);
