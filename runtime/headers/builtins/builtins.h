@@ -91,6 +91,8 @@ struct func_result_t Ord(int entryStatus);
 struct func_result_t First(int entryStatus);
 struct func_result_t Last(int entryStatus);
 
+struct func_result_t Explode(int entryStatus);
+
 /* Вспомогательные функции.*/
 
 /// Обрабатывает аргументы командной строки и заполняет _refalProgramArgs.

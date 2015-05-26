@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Prout <Checker<Explode Uasd123>>>;
+}
+
+Checker
+{
+	'Uasd123' = Success;
+	= Fail;
+}

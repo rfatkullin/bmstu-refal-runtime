@@ -476,6 +476,30 @@ static struct func_result_t gcGetPart(int first, const char* funcName)
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
+struct func_result_t Explode(int entryStatus)
+{
+    gcInitBuiltinEnv();
+
+    if (BUILTIN_FRAG->length == 0)
+        FMT_PRINT_AND_EXIT(BAD_ARG, "Explode");
+
+    if (_memMngr.vterms[BUILTIN_FRAG->offset].tag != V_IDENT_TAG)
+        FMT_PRINT_AND_EXIT(BAD_ARG, "Explode");
+
+    checkAndCleanHeaps(_memMngr.vterms[BUILTIN_FRAG->offset].str->length, BUILTINS_RESULT_SIZE);
+
+    struct vstring_t* ident = _memMngr.vterms[BUILTIN_FRAG->offset].str;
+    uint64_t resOffset = _memMngr.vtermsOffset;
+    uint64_t i = 0;
+
+    for (i = 0; i < ident->length; ++i)
+        allocateSymbolVTerm(ident->head[i]);
+
+    struct lterm_t* res = allocateBuiltinsResult(resOffset, ident->length);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
+}
+
 static void chRecApplyOrd(uint64_t offset, uint64_t length, allocate_result* res)
 {
     uint64_t i = 0;
