@@ -11,8 +11,6 @@
 #include <defines/errors_str.h>
 #include <defines/gc_macros.h>
 
-#define HASH_TABLE_SIZE UINT64_C(157)
-
 struct stacks_holder_t
 {
     struct stacks_holder_t* prev;

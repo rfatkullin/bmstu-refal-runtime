@@ -8,9 +8,11 @@
 #include <defines/gc_macros.h>
 #include <defines/errors_str.h>
 #include <allocators/data_alloc.h>
+#include <builtins/stack_builtins.h>
 #include <defines/data_struct_sizes.h>
 
 
+static void copyStacksData();
 static struct lterm_t* getActual(struct lterm_t* term);
 static struct lterm_t* copyChainVTerm(struct lterm_t* term);
 static struct lterm_t* copyFuncCallLTerm(struct lterm_t* term);
@@ -38,6 +40,8 @@ void collectDataGarbage()
         funcCall->next = getActual(funcCall->next);
         funcCall = funcCall->next->funcCall;
     }
+
+    copyStacksData();
 }
 
 static struct lterm_t* getActual(struct lterm_t* term)
@@ -192,4 +196,28 @@ static struct lterm_t* copyFragmentLTerm(struct lterm_t* oldTerm)
     SET_MOVED(oldTerm, newTerm);
 
     return newTerm;
+}
+
+static void copyStacksData()
+{
+    struct stacks_holder_t* currStackHolder = _stacksHolders;
+
+    while (currStackHolder)
+    {
+        struct stack_t* currStack = currStackHolder->stack;
+
+        while (currStack)
+        {
+            GC_DATA_HEAP_CHECK_EXIT(FRAGMENT_STRUCT_SIZE(1));
+
+            struct fragment_t* frag = allocateFragment(1);
+            frag->offset = currStack->obj->offset;
+            frag->length = currStack->obj->length;
+            currStack->obj = frag;
+
+            currStack = currStack->next;
+        }
+
+        currStackHolder = currStackHolder->next;
+    }
 }

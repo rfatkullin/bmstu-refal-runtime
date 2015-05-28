@@ -7,7 +7,9 @@
 #include <memory_manager.h>
 #include <defines/gc_macros.h>
 #include <defines/errors_str.h>
+#include <builtins/stack_builtins.h>
 
+static void processVtermsInStacks();
 static void setActualDataInVTerms();
 static void processEnvVTerms(struct env_t* env);
 static void processVTermsInChain(struct lterm_t* expr);
@@ -22,12 +24,14 @@ void collectVTermGarbage()
 
     _gc.stage = GC_VTERMS_MARK_STAGE;
     processVTermsInChain(_memMngr.fieldOfView);
+    processVtermsInStacks();
 
     copyVTerms();
 
     _gc.stage = GC_VTERMS_SET_ACTUAL_STAGE;
     setActualDataInVTerms();
     processVTermsInChain(_memMngr.fieldOfView);
+    processVtermsInStacks();
 }
 
 static void processVTermsInChain(struct lterm_t* chain)
@@ -211,4 +215,22 @@ static void setActualFragmentOffset(struct fragment_t* frag)
 
     // Подправляем смещение.
     frag->offset = (uint64_t)_memMngr.vterms[frag->offset].brackets; // Приходтся кастить, чтобы избежать предупреждений.
+}
+
+static void processVtermsInStacks()
+{
+    struct stacks_holder_t* currStackHolder = _stacksHolders;
+
+    while (currStackHolder)
+    {
+        struct stack_t* currStack = currStackHolder->stack;
+
+        while (currStack)
+        {
+            processVTermsInFragment(currStack->obj);
+            currStack = currStack->next;
+        }
+
+        currStackHolder = currStackHolder->next;
+    }
 }

@@ -29,7 +29,6 @@ void mainLoop(const char* entryFuncName, RefalFunc entryFuncPointer)
 	struct func_result_t funcRes;    
     struct lterm_t* parentCall = 0;
     int entryStatus = 0;    
-    uint64_t step = 0;
 
     _currCallTerm = _memMngr.fieldOfView->next;
 
