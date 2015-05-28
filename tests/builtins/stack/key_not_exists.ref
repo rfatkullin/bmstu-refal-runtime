@@ -1,4 +1,4 @@
 $ENTRY Go
 {
-	= <Prout <Dg 'MyValue'>>;
+	= <Prout <Dg 'MyValue'> <Cp ASjdgas '4234' 807>>;
 }

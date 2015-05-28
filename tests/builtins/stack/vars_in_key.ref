@@ -1,0 +1,9 @@
+$ENTRY Go
+{
+	= <Prout <Dg <CalcMegaValue 'MyKey' (56 8)>>>;
+}
+
+CalcMegaValue
+{
+	e.Key (s.Number1 s.Number2) = e.Key <Br e.Key '=' <Div s.Number1 s.Number2>>
+}
