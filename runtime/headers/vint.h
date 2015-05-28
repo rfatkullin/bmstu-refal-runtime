@@ -1,6 +1,8 @@
 #ifndef _BMSTU_REFC_V_INT_H
 #define _BMSTU_REFC_V_INT_H
 
+#include <stdint.h>
+
 #define INT_LENGTH_MASK                     UINT64_C(0x3FFFFFFFFFFFFFFF)
 #define GET_INT_LENGTH(var)                 (var->info & 0x3FFFFFFFFFFFFFFF)  // Вряд ли длина будет больше.
 #define SET_INT_LENGTH(var, newLength)      (var->info = newLength & INT_LENGTH_MASK)

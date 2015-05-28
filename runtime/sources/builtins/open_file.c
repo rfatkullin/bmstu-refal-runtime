@@ -12,10 +12,7 @@
 #include <builtins/unicode_io.h>
 
 static uint8_t getOpenMode(struct fragment_t* frag);
-static void gcAssemblyFileName(struct fragment_t* frag);
 static getFileDescr(struct vint_t* bigInt, uint8_t* descr);
-static uint64_t getBytesCountToAssembly(struct fragment_t* frag);
-static char* assemblyFragment(struct fragment_t* frag, char* buff);
 static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr);
 static void gcOpenFile(struct fragment_t* frag, uint8_t mode, uint8_t descr);
 
@@ -64,8 +61,7 @@ uint8_t getDescr(struct fragment_t* frag)
 
 static void gcOpenFile(struct fragment_t* frag, uint8_t mode, uint8_t descr)
 {
-    gcAssemblyFileName(frag);
-    char* fileName = (char*)(_memMngr.data + _memMngr.dataOffset);
+    char* fileName = vtermsToChars(frag);
 
     if (!fileName)
     {
@@ -74,6 +70,8 @@ static void gcOpenFile(struct fragment_t* frag, uint8_t mode, uint8_t descr)
     }
 
     openFileWithName(fileName, mode, descr);
+
+    free(fileName);
 }
 
 static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr)
@@ -90,100 +88,6 @@ static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr)
         FMT_PRINT_AND_EXIT(FILE_OPEN_ERROR, "Open", fileName, modeStr[mode], strerror(errno));
 
     _files[descr].mode = mode;
-}
-
-static void gcAssemblyFileName(struct fragment_t* frag)
-{
-    uint64_t needBytesCount = getBytesCountToAssembly(frag);
-    checkAndCleanHeaps(0, needBytesCount + 1); // +1 for 0 character.
-    char* buff = (char*)(_memMngr.data + _memMngr.dataOffset);
-
-    buff = assemblyFragment(frag, buff);
-
-    *buff++ = 0;
-}
-
-static char* assemblyFragment(struct fragment_t* frag, char* buff)
-{
-    uint64_t i = 0;
-    for (i = 0; i < frag->length; ++i)
-    {
-        struct vterm_t* term = _memMngr.vterms + frag->offset + i;
-
-        switch (term->tag)
-        {
-            case V_BRACKETS_TAG:
-                *buff++ = '(';
-                buff = assemblyFragment(term->brackets, buff);
-                *buff++ = ')';
-                break;
-            case V_CHAR_TAG:
-                buff = writeAsUTF8ToBuff(term->ch, buff);
-                break;
-
-            case V_IDENT_TAG:
-                buff = vStringToCharArr(term->str, buff);
-                break;
-
-            case V_CLOSURE_TAG:
-                buff = vStringToCharArr(term->closure->ident, buff);
-                break;
-
-            case V_INT_NUM_TAG:
-                buff = vIntToCharArr(term->intNum, buff);
-                break;
-
-            case V_DOUBLE_NUM_TAG:
-                buff += sprintf(buff, "%f", term->doubleNum);
-                break;
-
-            default:
-                FMT_PRINT_AND_EXIT(BAD_VTERM, "Open");
-        }
-    }
-
-    return buff;
-}
-
-static uint64_t getBytesCountToAssembly(struct fragment_t* frag)
-{
-    uint64_t needBytesCount = 0;
-    uint64_t i = 0;
-
-    for (i = 0; i < frag->length; ++i)
-    {
-        struct vterm_t* term = _memMngr.vterms + frag->offset + i;
-
-        switch (term->tag)
-        {
-            case V_BRACKETS_TAG:
-                needBytesCount += getBytesCountToAssembly(term->brackets);
-                needBytesCount += 2;
-                break;
-
-            case V_CHAR_TAG:
-                needBytesCount += sizeof(uint32_t);
-                break;
-
-            case V_IDENT_TAG:
-                needBytesCount += calcBytesForVStringCharArr(term->str);
-                break;
-
-            case V_CLOSURE_TAG:
-                needBytesCount += calcBytesForVStringCharArr(term->closure->ident);
-                break;
-
-            case V_INT_NUM_TAG:
-                needBytesCount += calcBytesForIntCharArr(term->intNum, 0);
-                break;
-
-            case V_DOUBLE_NUM_TAG:
-                needBytesCount += snprintf(0, 0, "%f", term->doubleNum);
-                break;
-        }
-    }
-
-    return needBytesCount;
 }
 
 static uint8_t getOpenMode(struct fragment_t* frag)

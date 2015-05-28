@@ -97,6 +97,10 @@ struct func_result_t Implode(int entryStatus);
 struct func_result_t Explode_Ext(int entryStatus);
 struct func_result_t Implode_Ext(int entryStatus);
 
+struct func_result_t Br(int entryStatus);
+struct func_result_t Dg(int entryStatus);
+struct func_result_t Cp(int entryStatus);
+
 /* Вспомогательные функции.*/
 
 /// Обрабатывает аргументы командной строки и заполняет _refalProgramArgs.
@@ -122,5 +126,8 @@ void gcInitBuiltinEnv();
 
 /// Инициализация встроенных функций.
 void initBuiltins();
+
+char* vtermsToChars(struct fragment_t* frag);
+uint64_t calcBytesForIntCharArr(struct vint_t* intNum, mpz_t* outputNum);
 
 #endif

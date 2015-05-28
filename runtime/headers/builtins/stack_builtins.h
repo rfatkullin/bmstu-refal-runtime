@@ -13,19 +13,22 @@
 
 #define HASH_TABLE_SIZE UINT64_C(157)
 
-struct stack_node_t
+struct stacks_holder_t
 {
-    struct stack_node_t* next;
-    struct lterm_t* obj;
+    struct stacks_holder_t* prev;
+    struct stacks_holder_t* next;
+    char* name;
+    struct stack_t* stack;
 };
 
-struct stack_node_t _hashTable[HASH_TABLE_SIZE];
+struct stack_t
+{
+    struct stack_t* next;
+    struct fragment_t* obj;
+};
 
-void initHash();
+struct stacks_holder_t* _stacksHolders;
 
-uint64_t getKeyForVTermsFragment(uint64_t offset, uint64_t length);
-
-struct lterm_t* getObj(uint64_t key);
 
 #endif
 
