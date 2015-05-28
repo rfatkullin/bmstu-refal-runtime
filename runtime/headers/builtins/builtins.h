@@ -94,6 +94,9 @@ struct func_result_t Last(int entryStatus);
 struct func_result_t Explode(int entryStatus);
 struct func_result_t Implode(int entryStatus);
 
+struct func_result_t Explode_Ext(int entryStatus);
+struct func_result_t Implode_Ext(int entryStatus);
+
 /* Вспомогательные функции.*/
 
 /// Обрабатывает аргументы командной строки и заполняет _refalProgramArgs.
