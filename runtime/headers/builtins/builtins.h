@@ -103,6 +103,8 @@ struct func_result_t Cp(int entryStatus);
 
 struct func_result_t Time(int entryStatus);
 
+struct func_result_t GetEnv(int entryStatus);
+
 /* Вспомогательные функции.*/
 
 /// Обрабатывает аргументы командной строки и заполняет _refalProgramArgs.

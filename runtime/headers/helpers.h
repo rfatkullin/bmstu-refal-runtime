@@ -38,4 +38,6 @@ int eqSymbol(uint64_t a, uint64_t b);
 /// Начиная со смещений a и b.
 int eqFragment(uint64_t a, uint64_t b, uint64_t length);
 
+uint64_t min(uint64_t a, uint64_t b);
+
 #endif

@@ -417,12 +417,31 @@ struct func_result_t Time(int entryStatus)
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
-uint64_t min(uint64_t a, uint64_t b)
+struct func_result_t GetEnv(int entryStatus)
 {
-    if (a > b)
-        return b;
+    gcInitBuiltinEnv();
 
-    return a;
+    struct lterm_t* res = 0;
+    char* name = vtermsToChars(BUILTIN_FRAG);
+    char* envValue = getenv(name);
+    free(name);
+
+    if (envValue)
+    {
+        int len = strlen(envValue);
+
+        checkAndCleanHeaps(len, BUILTINS_RESULT_SIZE);
+
+        uint64_t offset = _memMngr.vtermsOffset;
+
+        int i = 0;
+        for (i = 0; i < len; ++i)
+            allocateSymbolVTerm(envValue[i]);
+
+        res = allocateBuiltinsResult(offset, len);
+    }
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
 struct func_result_t First(int first)
@@ -505,8 +524,6 @@ static struct func_result_t gcGetPart(int first, const char* funcName)
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
-
-
 
 static void chRecApplyOrd(uint64_t offset, uint64_t length, allocate_result* res)
 {

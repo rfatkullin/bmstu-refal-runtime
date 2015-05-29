@@ -75,3 +75,10 @@ int eqSymbol(uint64_t a, uint64_t b)
         );
 }
 
+uint64_t min(uint64_t a, uint64_t b)
+{
+    if (a > b)
+        return b;
+
+    return a;
+}
