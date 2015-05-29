@@ -678,4 +678,3 @@ static void recApplyCaseMappingOp(uint64_t offset, uint64_t length, uint32_t op(
         }
     }
 }
-
