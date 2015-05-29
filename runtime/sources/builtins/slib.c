@@ -1,7 +1,7 @@
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <inttypes.h>
 
 #include <helpers.h>
@@ -385,6 +385,36 @@ struct func_result_t Ord(int entryStatus)
     DOUBLE_TRY_VOID(chRecApplyOrd(BUILTIN_FRAG->offset, BUILTIN_FRAG->length, &res), res);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = chainTerm, .callChain = 0};
+}
+
+struct func_result_t Time(int entryStatus)
+{
+    struct lterm_t* res = 0;
+    time_t currTime;
+
+    currTime = time(0);
+
+    if (currTime != ((time_t)-1))
+    {
+        char* timeString = ctime(&currTime);
+
+        if (timeString != 0)
+        {
+            int len = strlen(timeString) - 1; // не учитываем конечный символ '\n'
+
+            checkAndCleanHeaps(len, BUILTINS_RESULT_SIZE);
+
+            uint64_t offset = _memMngr.vtermsOffset;
+
+            int i = 0;
+            for (i = 0; i < len; ++i)
+                allocateSymbolVTerm(timeString[i]);
+
+            res = allocateBuiltinsResult(offset, len);
+        }
+    }
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
 uint64_t min(uint64_t a, uint64_t b)
