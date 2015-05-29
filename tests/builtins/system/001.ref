@@ -1,0 +1,4 @@
+$ENTRY Go
+{
+	= <Prout <System 'touch _BMSTU_REFAL_TEST_FILE_.tmp'>>;
+}

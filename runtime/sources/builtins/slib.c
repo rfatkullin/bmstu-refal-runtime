@@ -444,6 +444,47 @@ struct func_result_t GetEnv(int entryStatus)
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
+struct func_result_t System(int entryStatus)
+{
+    gcInitBuiltinEnv();
+
+    char* cmdStr = vtermsToChars(BUILTIN_FRAG);
+    int callRes = system(cmdStr) / 256;
+    free(cmdStr);
+
+    int addVTerms = 0;
+    if (callRes < 0)
+    {
+        callRes *= -1;
+        addVTerms = 2;
+    }
+
+    mpz_t num;
+    mpz_init_set_ui(num, callRes);
+    uint32_t numb = 8 * sizeof(uint8_t);
+    uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
+
+    checkAndCleanHeaps(1 + addVTerms, VINT_STRUCT_SIZE(length) + BUILTINS_RESULT_SIZE);
+
+    uint64_t offset = _memMngr.vtermsOffset;
+
+    if (addVTerms)
+    {
+        allocateSymbolVTerm('-');
+        allocateSymbolVTerm('-');
+    }
+
+    struct vint_t* intNum = allocateIntStruct(length);
+    mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
+    mpz_clear(num);
+
+    allocateIntNumVTerm(intNum);
+
+    struct lterm_t* res = allocateBuiltinsResult(offset, 1 + addVTerms);
+
+    return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
+}
+
 struct func_result_t First(int first)
 {
     return gcGetPart(1, "First");

@@ -1,0 +1,4 @@
+$ENTRY Go
+{
+	= <Prout <System 'NOT_EXISTS_COMMAND_BMSTU_REFAL _NOT_EXISTS_REFAL_TEST_FILE_.tmp'>>;
+}

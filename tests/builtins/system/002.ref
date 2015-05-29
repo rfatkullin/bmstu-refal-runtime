@@ -1,0 +1,4 @@
+$ENTRY Go
+{
+	= <Prout <System 'cat _NOT_EXISTS_REFAL_TEST_FILE_.tmp'>>;
+}
