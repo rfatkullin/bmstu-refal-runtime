@@ -1,0 +1,47 @@
+$EXTERN ParseNums;
+$EXTERN LOADFILE;
+
+$ENTRY Go
+{
+    = <Open 'r' 1 <Arg 1>>      
+      <Prout <Sort <ParseNums <LOADFILE 1>>>>;
+}
+
+Sort 
+{ 
+  e.1 = <Check <Merge <Pairs e.1>>>; 
+};
+  
+Pairs 
+{
+  t.1 t.2 e.3, <Compare t.1 t.2>:
+    {
+      '-' = (t.1 t.2) <Pairs e.3>;
+      s.Dummy = (t.2 t.1) <Pairs e.3>; 
+    };
+  t.1 = (t.1); 
+  = ;   
+}
+   
+Merge 
+{
+    (e.1) (e.2) e.Rest = (<Merge2 (e.1) e.2>) <Merge e.Rest>;
+    (e.1) = (e.1);
+    =  ;  
+}
+
+Merge2 
+{
+  (t.1 e.X) t.2 e.Y, <Compare t.1 t.2>:
+    {
+      '-' = t.1 <Merge2 (e.X) t.2 e.Y>;
+      s.Dummy = t.2 <Merge2 (t.1 e.X) e.Y>; 
+    };
+  (e.1) e.2 = e.1 e.2;
+}
+
+Check 
+{
+  (e.1) = e.1;
+  e.1 = <Check <Merge e.1>>; 
+}

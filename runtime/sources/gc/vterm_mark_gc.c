@@ -11,6 +11,7 @@
 
 static void processVtermsInStacks();
 static void setActualDataInVTerms();
+static void setActualOffset(uint64_t* offset);
 static void processEnvVTerms(struct env_t* env);
 static void processVTermsInChain(struct lterm_t* expr);
 static void setActualFragmentOffset(struct fragment_t* frag);
@@ -104,17 +105,7 @@ static void processEnvVTerms(struct env_t* env)
             }
             else
             {
-                // Пропускаем фрагменты, которые указывают на литеральные vterm'ы.
-                if (offset < _memMngr.vtermsBeginOffset)
-                    continue;
-
-                // Если смещение указывает на новую кучу, значит фрагмент уже обработан - пропускаем.
-                if (_memMngr.vtActiveOffset <= offset && offset < _memMngr.vtActiveOffset + _memMngr.vtermsMaxOffset)
-                    return;
-
-                // Подправляем смещение.
-                env->assembled[i] = (uint64_t)_memMngr.vterms[offset].brackets; // Приходтся кастить, чтобы избежать предупреждений.
-
+                setActualOffset(env->assembled + i);
                 processVTermsInFragment(VTERM_BRACKETS(env->assembled[i]));
             }
         }
@@ -205,16 +196,21 @@ static void setActualFragmentOffset(struct fragment_t* frag)
     if (frag->length == 0)
         return;
 
+    setActualOffset(&(frag->offset));
+}
+
+static void setActualOffset(uint64_t* offset)
+{
     // Пропускаем фрагменты, которые указывают на литеральные vterm'ы.
-    if (frag->offset < _memMngr.vtermsBeginOffset)
+    if (*offset < _memMngr.vtermsBeginOffset)
         return;
 
     // Если смещение указывает на новую кучу, значит фрагмент уже обработан - пропускаем.
-    if (_memMngr.vtActiveOffset <= frag->offset && frag->offset < _memMngr.vtActiveOffset + _memMngr.vtermsMaxOffset)
+    if (_memMngr.vtActiveOffset <= *offset && *offset < _memMngr.vtActiveOffset + _memMngr.vtermsMaxOffset)
         return;
 
     // Подправляем смещение.
-    frag->offset = (uint64_t)_memMngr.vterms[frag->offset].brackets; // Приходтся кастить, чтобы избежать предупреждений.
+    *offset = (uint64_t)_memMngr.vterms[*offset].brackets; // Приходтся кастить, чтобы избежать предупреждений.
 }
 
 static void processVtermsInStacks()
