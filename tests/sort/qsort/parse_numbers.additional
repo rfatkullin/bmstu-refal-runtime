@@ -1,0 +1,8 @@
+$ENTRY ParseNums
+{
+	=;
+	' ' =;
+
+	e.1 ' ' e.2 = <Numb e.1><ParseNums e.2>;	
+	e.1 = <Numb e.1>;	
+}
