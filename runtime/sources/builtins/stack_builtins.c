@@ -35,7 +35,7 @@ struct func_result_t Br(int entryStatus)
     {
         BUILTIN_FRAG->length = border;
 
-        char* name = vtermsToChars(BUILTIN_FRAG);
+        char* name = vtermsToChars(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);
 
         BUILTIN_FRAG->length = length - border - 1;
         BUILTIN_FRAG->offset +=  border + 1;
@@ -52,7 +52,7 @@ struct func_result_t Dg(int entryStatus)
 
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
-    char* name = vtermsToChars(BUILTIN_FRAG);
+    char* name = vtermsToChars(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);
 
     struct lterm_t* res = 0;
     struct fragment_t* frag = popObject(name);
@@ -71,7 +71,7 @@ struct func_result_t Cp(int entryStatus)
 
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
 
-    char* name = vtermsToChars(BUILTIN_FRAG);
+    char* name = vtermsToChars(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);
 
     struct stacks_holder_t* stackHolder = searchStackHolder(name);
     struct lterm_t* res = 0;

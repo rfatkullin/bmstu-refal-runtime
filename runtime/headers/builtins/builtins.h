@@ -107,6 +107,9 @@ struct func_result_t GetEnv(int entryStatus);
 
 struct func_result_t System(int entryStatus);
 
+struct func_result_t DeSysfun(int entryStatus);
+struct func_call_t Sysfun(int entryStatus);
+
 /* Вспомогательные функции.*/
 
 /// Обрабатывает аргументы командной строки и заполняет _refalProgramArgs.
@@ -133,7 +136,7 @@ void gcInitBuiltinEnv();
 /// Инициализация встроенных функций.
 void initBuiltins();
 
-char* vtermsToChars(struct fragment_t* frag);
+char* vtermsToChars(uint64_t offset, uint64_t length);
 uint64_t calcBytesForIntCharArr(struct vint_t* intNum, mpz_t* outputNum);
 
 #endif

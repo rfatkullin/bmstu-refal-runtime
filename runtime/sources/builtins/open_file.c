@@ -61,7 +61,7 @@ uint8_t getDescr(struct fragment_t* frag)
 
 static void gcOpenFile(struct fragment_t* frag, uint8_t mode, uint8_t descr)
 {
-    char* fileName = vtermsToChars(frag);
+    char* fileName = vtermsToChars(frag->offset, frag->length);
 
     if (!fileName)
     {

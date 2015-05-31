@@ -422,7 +422,7 @@ struct func_result_t GetEnv(int entryStatus)
     gcInitBuiltinEnv();
 
     struct lterm_t* res = 0;
-    char* name = vtermsToChars(BUILTIN_FRAG);
+    char* name = vtermsToChars(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);
     char* envValue = getenv(name);
     free(name);
 
@@ -448,7 +448,7 @@ struct func_result_t System(int entryStatus)
 {
     gcInitBuiltinEnv();
 
-    char* cmdStr = vtermsToChars(BUILTIN_FRAG);
+    char* cmdStr = vtermsToChars(BUILTIN_FRAG->offset, BUILTIN_FRAG->length);
     int callRes = system(cmdStr) / 256;
     free(cmdStr);
 

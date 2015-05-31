@@ -9,6 +9,7 @@
 #include <helpers.h>
 #include <memory_manager.h>
 #include <defines/errors_str.h>
+#include <builtins/unicode_io.h>
 
 static void printUStr(FILE* file, struct vstring_t* str);
 static void printChain(FILE* file, struct lterm_t* chain);

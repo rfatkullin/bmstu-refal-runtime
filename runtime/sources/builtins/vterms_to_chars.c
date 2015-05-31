@@ -6,19 +6,19 @@
 #include <defines/errors_str.h>
 #include <builtins/unicode_io.h>
 
-static uint64_t calcBytesCount(struct fragment_t* frag);
-static char* assemblyFragment(struct fragment_t* frag, char* buff);
+static uint64_t calcBytesCount(uint64_t offset, uint64_t length);
+static char* assemblyFragment(uint64_t offset, uint64_t length, char* buff);
 static uint64_t calcBytesForVStringCharArr(struct vstring_t* str);
 static char* vIntToCharArr(struct vint_t* intNum, char* buff);
 static char* vStringToCharArr(struct vstring_t* str, char* buff);
 
-char* vtermsToChars(struct fragment_t* frag)
+char* vtermsToChars(uint64_t offset, uint64_t length)
 {
-    uint64_t needBytesCount = calcBytesCount(frag);
+    uint64_t needBytesCount = calcBytesCount(offset, length);
 
     char* buff = (char*)malloc(needBytesCount + 1);
 
-    char* str = assemblyFragment(frag, buff);
+    char* str = assemblyFragment(offset, length, buff);
     *str++ = 0;
 
     return buff;
@@ -44,18 +44,18 @@ uint64_t calcBytesForIntCharArr(struct vint_t* intNum, mpz_t* outputNum)
     return size;
 }
 
-static char* assemblyFragment(struct fragment_t* frag, char* buff)
+static char* assemblyFragment(uint64_t offset, uint64_t length, char* buff)
 {
     uint64_t i = 0;
-    for (i = 0; i < frag->length; ++i)
+    for (i = 0; i < length; ++i)
     {
-        struct vterm_t* term = _memMngr.vterms + frag->offset + i;
+        struct vterm_t* term = _memMngr.vterms + offset + i;
 
         switch (term->tag)
         {
             case V_BRACKETS_TAG:
                 *buff++ = '(';
-                buff = assemblyFragment(term->brackets, buff);
+                buff = assemblyFragment(term->brackets->offset, term->brackets->length, buff);
                 *buff++ = ')';
                 break;
             case V_CHAR_TAG:
@@ -86,19 +86,19 @@ static char* assemblyFragment(struct fragment_t* frag, char* buff)
     return buff;
 }
 
-static uint64_t calcBytesCount(struct fragment_t* frag)
+static uint64_t calcBytesCount(uint64_t offset, uint64_t length)
 {
     uint64_t needBytesCount = 0;
     uint64_t i = 0;
 
-    for (i = 0; i < frag->length; ++i)
+    for (i = 0; i < length; ++i)
     {
-        struct vterm_t* term = _memMngr.vterms + frag->offset + i;
+        struct vterm_t* term = _memMngr.vterms + offset + i;
 
         switch (term->tag)
         {
             case V_BRACKETS_TAG:
-                needBytesCount += calcBytesCount(term->brackets);
+                needBytesCount += calcBytesCount(term->brackets->offset, term->brackets->length);
                 needBytesCount += 2;
                 break;
 

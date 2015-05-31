@@ -7,6 +7,7 @@
 #include <debug_print.h>
 #include <defines/gc_macros.h>
 #include <builtins/builtins.h>
+#include <builtins/unicode_io.h>
 #include <defines/errors_str.h>
 #include <builtins/unicode_io.h>
 #include <allocators/data_alloc.h>
