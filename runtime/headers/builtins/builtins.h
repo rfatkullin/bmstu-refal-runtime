@@ -136,7 +136,8 @@ void gcInitBuiltinEnv();
 /// Инициализация встроенных функций.
 void initBuiltins();
 
-char* vtermsToChars(uint64_t offset, uint64_t length);
+char* vtermsToChars(uint64_t offset, uint64_t length, int esc);
+
 uint64_t calcBytesForIntCharArr(struct vint_t* intNum, mpz_t* outputNum);
 
 #endif

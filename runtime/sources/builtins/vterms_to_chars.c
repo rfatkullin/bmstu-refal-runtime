@@ -6,19 +6,19 @@
 #include <defines/errors_str.h>
 #include <builtins/unicode_io.h>
 
-static uint64_t calcBytesCount(uint64_t offset, uint64_t length);
-static char* assemblyFragment(uint64_t offset, uint64_t length, char* buff);
+static uint64_t calcBytesCount(uint64_t offset, uint64_t length, int esc);
+static char* assemblyFragment(uint64_t offset, uint64_t length, char* buff, int esc);
 static uint64_t calcBytesForVStringCharArr(struct vstring_t* str);
 static char* vIntToCharArr(struct vint_t* intNum, char* buff);
 static char* vStringToCharArr(struct vstring_t* str, char* buff);
 
-char* vtermsToChars(uint64_t offset, uint64_t length)
+char* vtermsToChars(uint64_t offset, uint64_t length, int esc)
 {
-    uint64_t needBytesCount = calcBytesCount(offset, length);
+    uint64_t needBytesCount = calcBytesCount(offset, length, esc);
 
     char* buff = (char*)malloc(needBytesCount + 1);
 
-    char* str = assemblyFragment(offset, length, buff);
+    char* str = assemblyFragment(offset, length, buff, esc);
     *str++ = 0;
 
     return buff;
@@ -44,85 +44,137 @@ uint64_t calcBytesForIntCharArr(struct vint_t* intNum, mpz_t* outputNum)
     return size;
 }
 
-static char* assemblyFragment(uint64_t offset, uint64_t length, char* buff)
+static char* assemblyFragment(uint64_t offset, uint64_t length, char* buff, int esc)
 {
     uint64_t i = 0;
+    int charStr = 0;
+
     for (i = 0; i < length; ++i)
     {
         struct vterm_t* term = _memMngr.vterms + offset + i;
+
+        if (term->tag != V_CHAR_TAG && charStr && esc)
+        {
+            *buff++ = '\'';
+            charStr = 0;
+        }
 
         switch (term->tag)
         {
             case V_BRACKETS_TAG:
                 *buff++ = '(';
-                buff = assemblyFragment(term->brackets->offset, term->brackets->length, buff);
+                buff = assemblyFragment(term->brackets->offset,
+                                        term->brackets->length,
+                                        buff,
+                                        esc);
                 *buff++ = ')';
                 break;
             case V_CHAR_TAG:
+                if (!charStr && esc)
+                {
+                    *buff++ = '\'';
+                    charStr = 1;
+                }
                 buff = writeAsUTF8ToBuff(term->ch, buff);
                 break;
 
             case V_IDENT_TAG:
                 buff = vStringToCharArr(term->str, buff);
+                if (esc)
+                    *buff++ = ' ';
                 break;
 
             case V_CLOSURE_TAG:
                 buff = vStringToCharArr(term->closure->ident, buff);
+                if (esc)
+                    *buff++ = ' ';
                 break;
 
             case V_INT_NUM_TAG:
                 buff = vIntToCharArr(term->intNum, buff);
+                if (esc)
+                    *buff++ = ' ';
                 break;
 
             case V_DOUBLE_NUM_TAG:
                 buff += sprintf(buff, "%f", term->doubleNum);
+                if (esc)
+                    *buff++ = ' ';
                 break;
 
             default:
-                FMT_PRINT_AND_EXIT(BAD_VTERM, "Open");
+                FMT_PRINT_AND_EXIT(BAD_VTERM, "I/O Builtins");
         }
     }
+
+    if (charStr && esc)
+        *buff++ = '\'';
 
     return buff;
 }
 
-static uint64_t calcBytesCount(uint64_t offset, uint64_t length)
+static uint64_t calcBytesCount(uint64_t offset, uint64_t length, int esc)
 {
     uint64_t needBytesCount = 0;
     uint64_t i = 0;
+    int charStr = 0;
 
     for (i = 0; i < length; ++i)
     {
         struct vterm_t* term = _memMngr.vterms + offset + i;
 
+        if (term->tag != V_CHAR_TAG && charStr && esc)
+        {
+            ++needBytesCount;
+            charStr = 0;
+        }
+
         switch (term->tag)
         {
             case V_BRACKETS_TAG:
-                needBytesCount += calcBytesCount(term->brackets->offset, term->brackets->length);
+                needBytesCount += calcBytesCount(term->brackets->offset, term->brackets->length, esc);
                 needBytesCount += 2;
                 break;
 
-            case V_CHAR_TAG:
+            case V_CHAR_TAG:            
+                if (!charStr && esc)
+                {
+                    ++needBytesCount;
+                    charStr = 1;
+                }
+
                 needBytesCount += sizeof(uint32_t);
                 break;
 
             case V_IDENT_TAG:
                 needBytesCount += calcBytesForVStringCharArr(term->str);
+
+                if (esc)
+                    ++needBytesCount;
                 break;
 
             case V_CLOSURE_TAG:
                 needBytesCount += calcBytesForVStringCharArr(term->closure->ident);
+                if (esc)
+                    ++needBytesCount;
                 break;
 
             case V_INT_NUM_TAG:
                 needBytesCount += calcBytesForIntCharArr(term->intNum, 0);
+                if (esc)
+                    ++needBytesCount;
                 break;
 
             case V_DOUBLE_NUM_TAG:
                 needBytesCount += snprintf(0, 0, "%f", term->doubleNum);
+                if (esc)
+                    ++needBytesCount;
                 break;
         }
     }
+
+    if (charStr && esc)
+        ++needBytesCount;
 
     return needBytesCount;
 }

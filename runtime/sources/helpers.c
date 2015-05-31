@@ -82,3 +82,15 @@ uint64_t min(uint64_t a, uint64_t b)
 
     return a;
 }
+
+uint32_t getUint32(struct vint_t* numData)
+{
+    mpz_t num;
+
+    mpz_init(num);
+    mpz_import(num, GET_INT_LENGTH(numData), 1, sizeof(uint8_t), 1, 0, numData->bytes);
+    uint32_t res = mpz_get_ui(num);
+    mpz_clear(num);
+
+    return res;
+}

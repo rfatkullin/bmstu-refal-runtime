@@ -1,0 +1,16 @@
+$ENTRY Go
+{
+	= <DeSysfun 'tmp.txt' (1000 Azaza 'Text ' ('String literal'(())1) (Gena 'Bukin' 23))><Open 'r' 1 'tmp.txt'><Prout <LOADFILE 1>>;
+}
+
+$ENTRY LOADFILE 
+{
+	s.1 = <LOADFILE2 s.1 <Get s.1>>;
+};
+
+LOADFILE2 
+{
+    s.1 0 = ;
+    s.1 e.2 0 = e.2;
+    s.1 e.2 = e.2 '\n' <LOADFILE s.1>;
+};
