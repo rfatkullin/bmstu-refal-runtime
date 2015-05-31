@@ -162,7 +162,7 @@ static void printUStr(FILE* file, struct vstring_t* str)
 
     uint64_t i = 0;
 
-    for (i = 0; i < str->length; ++i)
+    for (i = 0; i < GET_VSTRING_LENGTH(str); ++i)
         printUTF32(file, str->head[i]);
 
     fprintf(file, " ");

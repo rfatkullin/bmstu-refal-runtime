@@ -23,16 +23,6 @@ struct vclosure_t
     uint8_t             rollback;
 };
 
-/// vterm строк Юникода.
-struct vstring_t
-{
-    /// Для хранения кодовых точек Юникода.
-    uint32_t* head;
-
-    /// Длина Юникод строки
-    uint64_t length;
-};
-
 struct vterm_t
 {
     uint8_t tag;

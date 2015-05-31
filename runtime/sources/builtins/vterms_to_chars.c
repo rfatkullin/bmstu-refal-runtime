@@ -1,4 +1,5 @@
 #include <vint.h>
+#include <vstring.h>
 #include <helpers.h>
 #include <vmachine.h>
 #include <memory_manager.h>
@@ -184,7 +185,7 @@ static uint64_t calcBytesForVStringCharArr(struct vstring_t* str)
     if (!str)
         return 0;
 
-    return  sizeof(uint32_t) * str->length;
+    return  sizeof(uint32_t) * GET_VSTRING_LENGTH(str);
 }
 
 static char* vIntToCharArr(struct vint_t* intNum, char* buff)
@@ -205,7 +206,7 @@ static char* vIntToCharArr(struct vint_t* intNum, char* buff)
 static char* vStringToCharArr(struct vstring_t* str, char* buff)
 {
     uint64_t i = 0;
-    for (i = 0; i < str->length; ++i)
+    for (i = 0; i < GET_VSTRING_LENGTH(str); ++i)
         buff = writeAsUTF8ToBuff(str->head[i], buff);
 
     return buff;

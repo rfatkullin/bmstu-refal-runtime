@@ -131,7 +131,7 @@ struct vstring_t* allocateVStringLiteral(uint32_t* runes, uint64_t length)
     struct vstring_t* pointer = (struct vstring_t*)malloc(sizeof(struct vstring_t));
 
     pointer->head = (uint32_t*) malloc(length * sizeof(uint32_t));
-    pointer->length = length;
+    SET_VSTRING_LENGTH(pointer, length);
 
     memcpy(pointer->head, runes, length * sizeof(uint32_t));
 

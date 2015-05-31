@@ -4,6 +4,7 @@
 #include <vterm.h>
 #include <lterm.h>
 #include <vint.h>
+#include <vstring.h>
 
 #define VINT_STRUCT_SIZE(length)                (sizeof(struct vint_t) + length)
 

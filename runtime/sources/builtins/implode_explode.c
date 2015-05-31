@@ -137,16 +137,17 @@ static struct func_result_t innerExplode(const char* funcName)
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag != V_IDENT_TAG)
         FMT_PRINT_AND_EXIT(BAD_ARG, funcName);
 
-    checkAndCleanHeaps(_memMngr.vterms[BUILTIN_FRAG->offset].str->length, BUILTINS_RESULT_SIZE);
+    checkAndCleanHeaps(GET_VSTRING_LENGTH(_memMngr.vterms[BUILTIN_FRAG->offset].str),
+            BUILTINS_RESULT_SIZE);
 
     struct vstring_t* ident = _memMngr.vterms[BUILTIN_FRAG->offset].str;
     uint64_t resOffset = _memMngr.vtermsOffset;
     uint64_t i = 0;
 
-    for (i = 0; i < ident->length; ++i)
+    for (i = 0; i < GET_VSTRING_LENGTH(ident); ++i)
         allocateSymbolVTerm(ident->head[i]);
 
-    struct lterm_t* res = allocateBuiltinsResult(resOffset, ident->length);
+    struct lterm_t* res = allocateBuiltinsResult(resOffset, GET_VSTRING_LENGTH(ident));
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }

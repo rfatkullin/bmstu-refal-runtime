@@ -2,14 +2,16 @@
 
 #include <gc/gc.h>
 #include <vint.h>
+#include <vstring.h>
 #include <memory_manager.h>
 #include <defines/gc_macros.h>
 #include <allocators/data_alloc.h>
 #include <defines/data_struct_sizes.h>
 
-static void copyClosureVTerm(uint64_t to, struct vclosure_t* closure);
 static void copyIntVTerm(uint64_t to, struct vint_t* intNum);
+static void copyIdentVTerm(uint64_t to, struct vstring_t* str);
 static void copyBracketsVTerm(uint64_t to, struct fragment_t* frag);
+static void copyClosureVTerm(uint64_t to, struct vclosure_t* closure);
 
 void copyVTerms()
 {    
@@ -42,9 +44,7 @@ void copyVTerms()
                     break;
 
                 case V_IDENT_TAG:
-                    // пока vterm'ы идентификаторов могут хранятся только в области литеральных vterm'ов
-                    // поэтому данные можно не копировать.
-                    _memMngr.vterms[to] = _memMngr.vterms[from];
+                    copyIdentVTerm(to, _memMngr.vterms[from].str);
                     break;
             }
 
@@ -124,5 +124,27 @@ static void copyBracketsVTerm(uint64_t to, struct fragment_t* frag)
         // Отмечаем что скобки скопированы и сохраняем смещение.
         SET_MST_SIGN_BIT(frag->length);
         frag->offset = to;
+    }
+}
+
+static void copyIdentVTerm(uint64_t to, struct vstring_t* str)
+{
+    if (!ADDR_IN_INACTIVE_HEAP((uint8_t*)str))
+    {
+        _memMngr.vterms[to].str = str;
+    }
+    else if (CHECK_MST_SIGN_BIT(str->length))
+    {
+        _memMngr.vterms[to].str = _memMngr.vterms[(uint64_t)str->head].str;
+    }
+    else
+    {
+        GC_DATA_HEAP_CHECK_EXIT(VSTRING_SIZE(GET_VSTRING_LENGTH(str)));
+
+        _memMngr.vterms[to].str = allocateVString(GET_VSTRING_LENGTH(str));
+        memcpy(_memMngr.vterms[to].str->head, str->head, GET_VSTRING_LENGTH(str) * sizeof(uint32_t));
+
+        SET_MST_SIGN_BIT(str->length);
+        str->head = (uint32_t*)to;
     }
 }

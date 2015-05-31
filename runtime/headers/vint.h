@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define INT_LENGTH_MASK                     UINT64_C(0x3FFFFFFFFFFFFFFF)
-#define GET_INT_LENGTH(var)                 (var->info & 0x3FFFFFFFFFFFFFFF)  // Вряд ли длина будет больше.
+#define GET_INT_LENGTH(var)                 (var->info & INT_LENGTH_MASK)  // Вряд ли длина будет больше.
 #define SET_INT_LENGTH(var, newLength)      (var->info = newLength & INT_LENGTH_MASK)
 
 #define INT_SIGN_MASK           UINT64_C(0x4000000000000000)

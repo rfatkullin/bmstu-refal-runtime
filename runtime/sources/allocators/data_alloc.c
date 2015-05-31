@@ -22,12 +22,12 @@ struct vstring_t* chAllocateVStringFromASCIIName(const char* name, allocate_resu
     struct vstring_t* ptr = (struct vstring_t*)(_memMngr.data + _memMngr.dataOffset);
     _memMngr.dataOffset +=  sizeof(struct vstring_t);
 
-    ptr->length = length;
+    SET_VSTRING_LENGTH(ptr, length);
     ptr->head = (uint32_t*)(_memMngr.data + _memMngr.dataOffset);
     _memMngr.dataOffset += length * sizeof(uint32_t);
 
     uint64_t i = 0;
-    for (i = 0; i < ptr->length; ++i)
+    for (i = 0; i < length; ++i)
         ptr->head[i] = name[i];
 
     return ptr;
@@ -220,7 +220,7 @@ struct vstring_t*  allocateVString(uint64_t length)
     struct vstring_t* str = (struct vstring_t*)(_memMngr.data + _memMngr.dataOffset);
     _memMngr.dataOffset += sizeof(struct vstring_t);
 
-    str->length = length;
+    SET_VSTRING_LENGTH(str, length);
     str->head = (uint32_t*)(_memMngr.data + _memMngr.dataOffset);
 
     _memMngr.dataOffset += length * sizeof(uint32_t);

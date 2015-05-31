@@ -175,11 +175,11 @@ int ustrEq(struct vstring_t* a, struct vstring_t* b)
     if (!a || !b)
         return 0;
 
-    if (a->length != b->length)
+    if (GET_VSTRING_LENGTH(a) != GET_VSTRING_LENGTH(b))
         return 0;
 
     uint64_t i = 0;
-    for (i = 0; i < a->length; ++i)
+    for (i = 0; i < GET_VSTRING_LENGTH(a); ++i)
     {
         if (a->head[i] != b->head[i])
             return 0;
