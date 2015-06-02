@@ -37,6 +37,8 @@ struct func_result_t Sysfun(int entryStatus)
 
     char* fileName = vtermsToChars(BUILTIN_FRAG->offset + 1, BUILTIN_FRAG->length - 1, 0);
 
+//    printf("Open file: %s\n", fileName);
+
     struct lterm_t* res = 0;
     allocate_result gcRes = GC_OK;
     allocate_result prevGCRes = GC_OK;
@@ -203,7 +205,7 @@ static void chReadIdent(allocate_result* res)
         if (quoted && _ch == '"')
             break;
 
-        if (!quoted && !(isdigit(_ch) || isalpha(_ch)))
+        if (!quoted && !(isdigit(_ch) || isalpha(_ch) || _ch == '_'))
             break;
 
         addToCharVector(&_chVec, _ch);
