@@ -8,6 +8,26 @@
 #define GC_VTERM_OV(needCount)      (_memMngr.vtermsOffset + needCount > _memMngr.vtActiveOffset + _memMngr.vtermsMaxOffset)
 #define GC_DATA_OV(needDataSize)   (_memMngr.dataOffset + needDataSize > _memMngr.dtActiveOffset + _memMngr.dataMaxOffset)
 
+#define GC_VTERM_HEAP_CHECK_VOID_RETURN(needCount, statusVar)    \
+do{                                                         \
+    if (GC_VTERM_OV(needCount))                             \
+    {                                                       \
+        statusVar = GC_NEED_CLEAN;                          \
+        return;                                           \
+    }                                                       \
+    statusVar = GC_OK;                                      \
+}while(0)
+
+#define GC_DATA_HEAP_CHECK_VOID_RETURN(needDataSize, statusVar)  \
+do{                                                         \
+    if (GC_DATA_OV(needDataSize))                           \
+    {                                                       \
+        statusVar = GC_NEED_CLEAN;                          \
+        return;                                           \
+    }                                                       \
+    statusVar = GC_OK;                                      \
+}while(0)
+
 #define GC_VTERM_HEAP_CHECK_RETURN(needCount, statusVar)    \
 do{                                                         \
     if (GC_VTERM_OV(needCount))                             \
@@ -53,6 +73,13 @@ do{                                                     \
     var = expr;                                         \
     if (statusVar == GC_NEED_CLEAN)                     \
         return 0;                                       \
+}while(0)
+
+#define CHECK_VOID_RETURN(expr, statusVar)              \
+do{                                                     \
+    expr;                                               \
+    if (statusVar == GC_NEED_CLEAN)                     \
+        return;                                         \
 }while(0)
 
 /// Используем continue --> нельзя использовать do-while.

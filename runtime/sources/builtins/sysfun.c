@@ -19,12 +19,14 @@
 static struct char_vector_t _chVec;
 static char _ch;
 static FILE* _readFile;
+static struct lterm_t* _fragLTerm;
 
-static struct lterm_t* chReadStr(allocate_result* res);
-static struct lterm_t* chReadNum(allocate_result* res);
+static void chReadStr(allocate_result* res);
+static void chReadNum(allocate_result* res);
+static void chReadIdent(allocate_result* res);
 static struct lterm_t* chReadExpr(allocate_result* res);
-static struct lterm_t* chReadIdent(allocate_result* res);
 static struct lterm_t* chReadBrackets(allocate_result* res);
+static void chSetActualFragLTerm(allocate_result* res);
 
 struct func_result_t Sysfun(int entryStatus)
 {
@@ -43,6 +45,8 @@ struct func_result_t Sysfun(int entryStatus)
 
     do
     {
+        _fragLTerm = 0;
+
         _readFile = fopen(fileName, "r");
 
         if (!_readFile)
@@ -86,15 +90,23 @@ static struct lterm_t* chReadExpr(allocate_result* res)
 
         if (_ch == '(')
         {
+            if (_fragLTerm)
+            {
+                ADD_TO_CHAIN(expr, _fragLTerm);
+                _fragLTerm = 0;
+            }
+
             CHECK_ALLOCATION_RETURN(currItem, chReadBrackets(res), *res);
+
+            ADD_TO_CHAIN(expr, currItem);
         }        
         else if (isdigit(_ch))
         {
-            CHECK_ALLOCATION_RETURN(currItem, chReadNum(res), *res);
+            CHECK_VOID_RETURN(chReadNum(res), *res);
         }
         else if (isalpha(_ch) || _ch == '"')
         {
-            CHECK_ALLOCATION_RETURN(currItem, chReadIdent(res), *res);
+            CHECK_VOID_RETURN(chReadIdent(res), *res);
         }
         else if (isspace(_ch))
         {
@@ -106,11 +118,14 @@ static struct lterm_t* chReadExpr(allocate_result* res)
         }
         else
         {
-            CHECK_ALLOCATION_RETURN(currItem, chReadStr(res), *res);
+            CHECK_VOID_RETURN(chReadStr(res), *res);
         }
+    }
 
-        if (currItem)
-            ADD_TO_CHAIN(expr, currItem);
+    if (_fragLTerm)
+    {
+        ADD_TO_CHAIN(expr, _fragLTerm);
+        _fragLTerm = 0;
     }
 
     return expr;
@@ -132,7 +147,7 @@ static struct lterm_t* chReadBrackets(allocate_result* res)
     return brackets;
 }
 
-static struct lterm_t* chReadNum(allocate_result* res)
+static void chReadNum(allocate_result* res)
 {
     uint32_t resNum = 0;
 
@@ -150,21 +165,30 @@ static struct lterm_t* chReadNum(allocate_result* res)
     uint32_t numb = 8 * sizeof(uint8_t);
     uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
 
-    GC_VTERM_HEAP_CHECK_RETURN(1, *res);
-    GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_LTERM_SIZE(1) + VINT_STRUCT_SIZE(length), *res);
+    GC_VTERM_HEAP_CHECK_VOID_RETURN(1, *res);
+    GC_DATA_HEAP_CHECK_VOID_RETURN(VINT_STRUCT_SIZE(length), *res);
 
     struct vint_t* intNum = allocateIntStruct(length);
     mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
     mpz_clear(num);    
 
-    struct lterm_t* fragLTerm = allocateFragmentLTerm(1);
-    fragLTerm->fragment->offset = allocateIntNumVTerm(intNum);
-    fragLTerm->fragment->length = 1;
+    CHECK_VOID_RETURN(chSetActualFragLTerm(res), *res);
 
-    return fragLTerm;
+    allocateIntNumVTerm(intNum);
+    _fragLTerm->fragment->length++;
 }
 
-static struct lterm_t* chReadIdent(allocate_result* res)
+static void chSetActualFragLTerm(allocate_result* res)
+{
+    if (!_fragLTerm)
+    {
+        GC_DATA_HEAP_CHECK_VOID_RETURN(FRAGMENT_LTERM_SIZE(1), *res);
+        _fragLTerm = allocateFragmentLTerm(1);
+        _fragLTerm->fragment->offset = _memMngr.vtermsOffset;
+    }
+}
+
+static void chReadIdent(allocate_result* res)
 {
     int quoted = 0;
 
@@ -197,8 +221,8 @@ static struct lterm_t* chReadIdent(allocate_result* res)
     if (_ch != EOF && !isspace(_ch))
         FMT_PRINT_AND_EXIT(BAD_ARG, "Sysfun");
 
-    GC_VTERM_HEAP_CHECK_RETURN(1, *res);
-    GC_DATA_HEAP_CHECK_RETURN(VSTRING_SIZE(_chVec.size) + FRAGMENT_LTERM_SIZE(1), *res);
+    GC_VTERM_HEAP_CHECK_VOID_RETURN(1, *res);
+    GC_DATA_HEAP_CHECK_VOID_RETURN(VSTRING_SIZE(_chVec.size) + FRAGMENT_LTERM_SIZE(1), *res);
 
     struct vstring_t* ident = allocateVString(_chVec.size);
 
@@ -208,14 +232,12 @@ static struct lterm_t* chReadIdent(allocate_result* res)
 
     clearCharVector(&_chVec);
 
-    struct lterm_t* fragLTerm = allocateFragmentLTerm(1);
-    fragLTerm->fragment->offset = allocateIdentVTerm(ident);
-    fragLTerm->fragment->length = 1;
-
-    return fragLTerm;
+    CHECK_VOID_RETURN(chSetActualFragLTerm(res), *res);
+    _fragLTerm->fragment->length++;
+    allocateIdentVTerm(ident);
 }
 
-static struct lterm_t* chReadStr(allocate_result* res)
+static void chReadStr(allocate_result* res)
 {
     int quoted = 0;
 
@@ -245,18 +267,19 @@ static struct lterm_t* chReadStr(allocate_result* res)
         _ch = fgetc(_readFile);
     }        
 
-    GC_VTERM_HEAP_CHECK_RETURN(_chVec.size, *res);
-    GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_LTERM_SIZE(1), *res);
+    GC_VTERM_HEAP_CHECK_VOID_RETURN(_chVec.size, *res);
+    GC_DATA_HEAP_CHECK_VOID_RETURN(FRAGMENT_LTERM_SIZE(1), *res);
 
     struct lterm_t* fragLTerm = allocateFragmentLTerm(1);
     fragLTerm->fragment->offset = _memMngr.vtermsOffset;
     fragLTerm->fragment->length = _chVec.size;
+
+    CHECK_VOID_RETURN(chSetActualFragLTerm(res), *res);
+    _fragLTerm->fragment->length += _chVec.size;
 
     uint32_t ind = 0;
     for (ind = 0; ind < _chVec.size; ++ind)
         allocateSymbolVTerm(_chVec.buff[ind]);
 
     clearCharVector(&_chVec);
-
-    return fragLTerm;
 }
