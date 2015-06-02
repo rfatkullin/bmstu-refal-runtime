@@ -42,4 +42,6 @@ uint64_t min(uint64_t a, uint64_t b);
 
 uint32_t getUint32(struct vint_t* numData);
 
+void resizeStack();
+
 #endif
