@@ -5,8 +5,10 @@
 #include <stdint.h>
 #include <inttypes.h>
 
+#include <gc/gc.h>
 #include <vmachine.h>
 #include <defines/gc_macros.h>
+#include <builtins/char_vector.h>
 #include <builtins/builtins.h>
 #include <defines/errors_str.h>
 #include <builtins/unicode_io.h>
@@ -14,15 +16,15 @@
 #include <allocators/vterm_alloc.h>
 #include <defines/data_struct_sizes.h>
 
+static struct char_vector_t _chVec;
 static char _ch;
 static FILE* _readFile;
 
-static struct lterm_t* readStr();
-static struct lterm_t* readNum();
-static struct lterm_t* readExpr();
-static struct lterm_t* readIdent();
-static struct lterm_t* readBrackets();
-static char* addChar(char* buff, int* buffSize, int* buffCapacity, char ch);
+static struct lterm_t* chReadStr(allocate_result* res);
+static struct lterm_t* chReadNum(allocate_result* res);
+static struct lterm_t* chReadExpr(allocate_result* res);
+static struct lterm_t* chReadIdent(allocate_result* res);
+static struct lterm_t* chReadBrackets(allocate_result* res);
 
 struct func_result_t Sysfun(int entryStatus)
 {
@@ -32,23 +34,49 @@ struct func_result_t Sysfun(int entryStatus)
         FMT_PRINT_AND_EXIT(BAD_ARG, "Sysfun");
 
     char* fileName = vtermsToChars(BUILTIN_FRAG->offset + 1, BUILTIN_FRAG->length - 1, 0);
-    _readFile = fopen(fileName, "r");
+
+    struct lterm_t* res = 0;
+    allocate_result gcRes = GC_OK;
+    allocate_result prevGCRes = GC_OK;
+
+    constructCharVector(&_chVec);
+
+    do
+    {
+        _readFile = fopen(fileName, "r");
+
+        if (!_readFile)
+            FMT_PRINT_AND_EXIT(FILE_OPEN_ERROR, "Sysfun", fileName, "r", strerror(errno));
+
+        clearCharVector(&_chVec);
+
+        res = chReadExpr(&gcRes);
+        fclose(_readFile);
+
+        if (gcRes != GC_NEED_CLEAN)
+            break;
+
+        if (prevGCRes == GC_NEED_CLEAN)
+            PRINT_AND_EXIT(GC_MEMORY_OVERFLOW_MSG);
+
+        collectGarbage();
+        prevGCRes = GC_NEED_CLEAN;
+
+    } while (1);
+
+    delCharVec(&_chVec);
+
     free(fileName);
-
-    if (!_readFile)
-        FMT_PRINT_AND_EXIT(FILE_OPEN_ERROR, "Sysfun", fileName, "r", strerror(errno));
-
-    struct lterm_t* res = readExpr();
-
-    fclose(_readFile);
 
     return (struct func_result_t){.status = OK_RESULT, .fieldChain = res, .callChain = 0};
 }
 
-static struct lterm_t* readExpr()
-{
-    struct lterm_t* expr = allocateSimpleChain();
+static struct lterm_t* chReadExpr(allocate_result* res)
+{    
+    struct lterm_t* expr = 0;
     struct lterm_t* currItem = 0;
+
+    CHECK_ALLOCATION_RETURN(expr, chAllocateSimpleChainLTerm(res), *res);
 
     _ch = fgetc(_readFile);
 
@@ -58,15 +86,15 @@ static struct lterm_t* readExpr()
 
         if (_ch == '(')
         {
-            currItem = readBrackets();
+            CHECK_ALLOCATION_RETURN(currItem, chReadBrackets(res), *res);
         }        
         else if (isdigit(_ch))
         {
-            currItem = readNum();
+            CHECK_ALLOCATION_RETURN(currItem, chReadNum(res), *res);
         }
         else if (isalpha(_ch) || _ch == '"')
         {
-            currItem = readIdent();
+            CHECK_ALLOCATION_RETURN(currItem, chReadIdent(res), *res);
         }
         else if (isspace(_ch))
         {
@@ -78,7 +106,7 @@ static struct lterm_t* readExpr()
         }
         else
         {
-            currItem = readStr();
+            CHECK_ALLOCATION_RETURN(currItem, chReadStr(res), *res);
         }
 
         if (currItem)
@@ -88,12 +116,13 @@ static struct lterm_t* readExpr()
     return expr;
 }
 
-static struct lterm_t* readBrackets()
+static struct lterm_t* chReadBrackets(allocate_result* res)
 {
+    GC_DATA_HEAP_CHECK_RETURN(CHAIN_LTERM_SIZE, *res);
     struct lterm_t* brackets = allocateSimpleChain();
     brackets->tag = L_TERM_CHAIN_KEEPER_TAG;
 
-    brackets->chain = readExpr();
+    CHECK_ALLOCATION_RETURN(brackets->chain, chReadExpr(res), *res);
 
     if (_ch != ')')
         FMT_PRINT_AND_EXIT(BAD_ARG, "Sysfun");
@@ -103,7 +132,7 @@ static struct lterm_t* readBrackets()
     return brackets;
 }
 
-static struct lterm_t* readNum()
+static struct lterm_t* chReadNum(allocate_result* res)
 {
     uint32_t resNum = 0;
 
@@ -121,24 +150,22 @@ static struct lterm_t* readNum()
     uint32_t numb = 8 * sizeof(uint8_t);
     uint64_t length = (mpz_sizeinbase (num, 2) + numb - 1) / numb;
 
-    struct lterm_t* fragLTerm = allocateFragmentLTerm(1);
-    fragLTerm->fragment->offset = _memMngr.vtermsOffset;
-    fragLTerm->fragment->length = 1;
+    GC_VTERM_HEAP_CHECK_RETURN(1, *res);
+    GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_LTERM_SIZE(1) + VINT_STRUCT_SIZE(length), *res);
 
     struct vint_t* intNum = allocateIntStruct(length);
     mpz_export(intNum->bytes, &length, 1, sizeof(uint8_t), 1, 0, num);
-    mpz_clear(num);
+    mpz_clear(num);    
 
-    allocateIntNumVTerm(intNum);
+    struct lterm_t* fragLTerm = allocateFragmentLTerm(1);
+    fragLTerm->fragment->offset = allocateIntNumVTerm(intNum);
+    fragLTerm->fragment->length = 1;
 
     return fragLTerm;
 }
 
-static struct lterm_t* readIdent()
+static struct lterm_t* chReadIdent(allocate_result* res)
 {
-    char* buff = (char*) malloc(1);
-    int buffSize = 0;
-    int buffCapacity = 1;
     int quoted = 0;
 
     if (_ch == '"')
@@ -155,7 +182,7 @@ static struct lterm_t* readIdent()
         if (!quoted && !(isdigit(_ch) || isalpha(_ch)))
             break;
 
-        buff = addChar(buff, &buffSize, &buffCapacity, _ch);
+        addToCharVector(&_chVec, _ch);
         _ch = fgetc(_readFile);
     }
 
@@ -170,14 +197,16 @@ static struct lterm_t* readIdent()
     if (_ch != EOF && !isspace(_ch))
         FMT_PRINT_AND_EXIT(BAD_ARG, "Sysfun");
 
-    struct vstring_t* ident = allocateVString(buffSize);
+    GC_VTERM_HEAP_CHECK_RETURN(1, *res);
+    GC_DATA_HEAP_CHECK_RETURN(VSTRING_SIZE(_chVec.size) + FRAGMENT_LTERM_SIZE(1), *res);
+
+    struct vstring_t* ident = allocateVString(_chVec.size);
 
     uint32_t ind = 0;
-    for (ind = 0; ind < buffSize; ++ind)
-        ident->head[ind] = buff[ind];
+    for (ind = 0; ind < _chVec.size; ++ind)
+        ident->head[ind] = _chVec.buff[ind];
 
-
-    free(buff);
+    clearCharVector(&_chVec);
 
     struct lterm_t* fragLTerm = allocateFragmentLTerm(1);
     fragLTerm->fragment->offset = allocateIdentVTerm(ident);
@@ -186,11 +215,8 @@ static struct lterm_t* readIdent()
     return fragLTerm;
 }
 
-static struct lterm_t* readStr()
+static struct lterm_t* chReadStr(allocate_result* res)
 {
-    char* buff = (char*) malloc(1);
-    int buffSize = 0;
-    int buffCapacity = 1;
     int quoted = 0;
 
     if (_ch == '\'')
@@ -207,7 +233,7 @@ static struct lterm_t* readStr()
         if (!quoted && (isspace(_ch) || isdigit(_ch) || isalpha(_ch)))
             break;
 
-        buff = addChar(buff, &buffSize, &buffCapacity, _ch);
+        addToCharVector(&_chVec, _ch);
         _ch = fgetc(_readFile);
     }
 
@@ -217,34 +243,20 @@ static struct lterm_t* readStr()
             FMT_PRINT_AND_EXIT(BAD_ARG, "Sysfun");
 
         _ch = fgetc(_readFile);
-    }
+    }        
+
+    GC_VTERM_HEAP_CHECK_RETURN(_chVec.size, *res);
+    GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_LTERM_SIZE(1), *res);
 
     struct lterm_t* fragLTerm = allocateFragmentLTerm(1);
     fragLTerm->fragment->offset = _memMngr.vtermsOffset;
-    fragLTerm->fragment->length = buffSize;
+    fragLTerm->fragment->length = _chVec.size;
 
     uint32_t ind = 0;
-    for (ind = 0; ind < buffSize; ++ind)
-        allocateSymbolVTerm(buff[ind]);
+    for (ind = 0; ind < _chVec.size; ++ind)
+        allocateSymbolVTerm(_chVec.buff[ind]);
 
-    free(buff);
+    clearCharVector(&_chVec);
 
     return fragLTerm;
-}
-
-static char* addChar(char* buff, int* buffSize, int* buffCapacity, char ch)
-{
-    if (*buffSize + 1 > *buffCapacity)
-    {
-        char* tmp = (char*) malloc(2 * (*buffCapacity));
-        memcpy(tmp, buff, *buffCapacity);
-        (*buffCapacity) *= 2;
-        free(buff);
-        buff = tmp;
-    }
-
-    buff[*buffSize] = ch;
-    ++(*buffSize);
-
-    return buff;
 }
