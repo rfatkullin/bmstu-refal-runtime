@@ -77,7 +77,7 @@ static void gcOpenFile(struct fragment_t* frag, uint8_t mode, uint8_t descr)
 static void openFileWithName(char* fileName, uint8_t mode, uint8_t descr)
 {
     if (_files[descr].file)
-        FMT_PRINT_AND_EXIT(DESCR_ALREADY_IN_USE, "Open", descr);
+        fclose(_files[descr].file);
 
     if (descr == 0)
         FMT_PRINT_AND_EXIT(TRY_TO_TAKE_TERMINAL_DESCR, "Open", MAX_FILE_DESCR);
