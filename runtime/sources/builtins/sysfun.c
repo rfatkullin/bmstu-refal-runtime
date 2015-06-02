@@ -153,9 +153,11 @@ static void chReadNum(allocate_result* res)
 {
     uint32_t resNum = 0;
 
-    while (_ch != EOF && isdigit(_ch))
+    while (_ch != EOF && (isdigit(_ch) || _ch == '\n'))
     {
-        resNum = resNum * 10 + (_ch - '0');
+        if (_ch != '\n')
+            resNum = resNum * 10 + (_ch - '0');
+
         _ch = fgetc(_readFile);
     }
 
@@ -201,14 +203,16 @@ static void chReadIdent(allocate_result* res)
     }    
 
     while (_ch != EOF)
-    {
+    {        
         if (quoted && _ch == '"')
             break;
 
-        if (!quoted && !(isdigit(_ch) || isalpha(_ch) || _ch == '_'))
+        if (!quoted && !(isdigit(_ch) || isalpha(_ch) || _ch == '_' || _ch == '\n'))
             break;
 
-        addToCharVector(&_chVec, _ch);
+        if (_ch != '\n')
+            addToCharVector(&_chVec, _ch);
+
         _ch = fgetc(_readFile);
     }
 
@@ -254,10 +258,12 @@ static void chReadStr(allocate_result* res)
         if (quoted && _ch == '\'')
             break;
 
-        if (!quoted && (isspace(_ch) || isdigit(_ch) || isalpha(_ch)))
+        if (!quoted && (isspace(_ch) || isdigit(_ch) || isalpha(_ch) || _ch == '\n'))
             break;
 
-        addToCharVector(&_chVec, _ch);
+        if (_ch != '\n')
+            addToCharVector(&_chVec, _ch);
+
         _ch = fgetc(_readFile);
     }
 
