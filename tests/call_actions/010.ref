@@ -1,0 +1,15 @@
+$ENTRY Go
+{
+	= <Prout <Filter 1 2 3 4 5 6 >>;
+}
+
+Filter
+{
+	=;
+
+	s.1 e.Tail, <Mod s.1 2> :
+		{
+			0   = s.1 <Filter e.Tail>;
+			s.Other = <Filter e.Tail>;
+		}
+}
