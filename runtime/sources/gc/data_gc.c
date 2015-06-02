@@ -129,9 +129,30 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
 
     to->entryPoint      = from->entryPoint;
     to->failEntryPoint  = from->failEntryPoint;
-    to->funcPtr         = from->funcPtr;
-    to->ident           = from->ident;
+    to->funcPtr         = from->funcPtr;    
     to->rollback        = from->rollback;
+
+    if (from->ident)
+    {
+        if (!ADDR_IN_INACTIVE_HEAP((uint8_t*)from->ident))
+        {
+            to->ident = from->ident;
+        }
+        else if (CHECK_MST_SIGN_BIT(from->ident->length))
+        {
+            to->ident = (struct vstring_t*)from->ident->head;
+        }
+        else
+        {
+            GC_DATA_HEAP_CHECK_EXIT(VSTRING_SIZE(GET_VSTRING_LENGTH(from->ident)));
+
+            to->ident = allocateVString(GET_VSTRING_LENGTH(from->ident));
+            memcpy(to->ident->head, from->ident->head, GET_VSTRING_LENGTH(from->ident) * sizeof(uint32_t));
+
+            SET_MST_SIGN_BIT(from->ident->length);
+            from->ident->head = (uint32_t*)to->ident;
+        }
+    }
 
     if (from->fieldOfView)
         to->fieldOfView = copySimpleChain(from->fieldOfView);    
