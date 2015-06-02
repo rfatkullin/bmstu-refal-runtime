@@ -31,11 +31,6 @@ $EXTRN Trace, TraceRes, Trace0, PrArgUser;
 * key.ref:
 $EXTRN Transient, PutInHistory;
 
-$ENTRY Go
-{
-  =;
-}
-
 /*
  Drive uses the graph from the original program to make one step of driving
  which results in the construction of an one-step transition graph for a node.

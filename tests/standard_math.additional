@@ -1,4 +1,0 @@
-$ENTRY Divmod
-{
-	(e.1) e.2 = (<Div (e.1) e.2>)(<Mod (e.1) e.2>);
-}
