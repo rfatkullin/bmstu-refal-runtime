@@ -108,7 +108,7 @@ struct func_result_t GetEnv(int entryStatus);
 struct func_result_t System(int entryStatus);
 
 struct func_result_t DeSysfun(int entryStatus);
-struct func_call_t Sysfun(int entryStatus);
+struct func_result_t Sysfun(int entryStatus);
 
 /* Вспомогательные функции.*/
 

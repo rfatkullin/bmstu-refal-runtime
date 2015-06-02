@@ -1,0 +1,4 @@
+$ENTRY Go
+{
+	= <Prout <Sysfun 1 <Arg 1>>>;
+}
