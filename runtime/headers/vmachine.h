@@ -11,8 +11,13 @@
 #define NEXT_ENTRYPOINT	3
 
 #define CURR_FUNC_CALL              (_currCallTerm->funcCall)
-#define VTERM_BRACKETS(vtermInd)    (_memMngr.vterms[vtermInd].brackets)
+#define ENV                         (_currCallTerm->funcCall->env)
 #define RIGHT_BOUND(vtermInd)       (_memMngr.vterms[vtermInd].brackets->offset + _memMngr.vterms[vtermInd].brackets->length)
+
+#define GET_BR(brInd)               (_memMngr.vterms[(ENV->bracketsOffset[brInd])].brackets)
+#define CURR_FRAG_LENGTH(brInd)     (GET_BR(brInd)->length - ENV->brLeftOffset[brInd] - ENV->brRightOffset[brInd])
+#define CURR_FRAG_LEFT(brInd)       (GET_BR(brInd)->offset + ENV->brLeftOffset[brInd])
+#define CURR_FRAG_RIGHT(brInd)      (GET_BR(brInd)->offset + GET_BR(brInd)->length - ENV->brRightOffset[brInd])
 
 #define ASSEMBLY_FIELD(index, chain)                                \
 do{                                                                 \

@@ -28,6 +28,6 @@
         ( FRAGMENT_STRUCT_SIZE(localsCount)                     /*locals*/      \
         + patternsCount * sizeof(uint64_t)                      /*assembleds*/  \
         + patternsCount * sizeof(int)                           /*stretchs*/    \
-        + bracketsCount * sizeof(uint64_t))                     /*brackets*/    \
+        + 3 * bracketsCount * sizeof(uint64_t))                     /*brackets*/    \
 
 #endif

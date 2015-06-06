@@ -4,8 +4,9 @@
 #include <gmp.h>
 
 #include <lterm.h>
-#include <memory_manager.h>
 #include <func_call.h>
+#include <memory_manager.h>
+#include <defines/checkers.h>
 
 #define MAX_FILE_DESCR              20
 #define READ_MODE                   0

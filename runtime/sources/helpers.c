@@ -7,8 +7,8 @@
 #include <helpers.h>
 #include <vmachine.h>
 #include <memory_manager.h>
+#include <defines/checkers.h>
 #include <builtins/unicode_io.h>
-
 
 uint64_t getHeapSizeFromCmdArgs(int argc, char** argv)
 {

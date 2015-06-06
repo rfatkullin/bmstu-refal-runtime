@@ -131,6 +131,12 @@ struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patt
     env->bracketsOffset = (uint64_t*)(_memMngr.data + _memMngr.dataOffset);
     _memMngr.dataOffset += bracketsCount * sizeof(uint64_t);
 
+    env->brLeftOffset = (uint64_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += bracketsCount * sizeof(uint64_t);
+
+    env->brRightOffset = (uint64_t*)(_memMngr.data + _memMngr.dataOffset);
+    _memMngr.dataOffset += bracketsCount * sizeof(uint64_t);
+
     env->localsCount = localsCount;
     env->fovsCount = patternsCount;
     env->bracketsCount = bracketsCount;
@@ -138,6 +144,9 @@ struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patt
     memset(env->locals, 0, localsCount * sizeof(struct fragment_t));    
     memset(env->assembled, 0, patternsCount * sizeof(uint64_t));
     memset(env->stretchVarsNumber, 0, patternsCount * sizeof(int));
+    memset(env->bracketsOffset, 0, bracketsCount * sizeof(uint64_t));
+    memset(env->brLeftOffset, 0, bracketsCount * sizeof(uint64_t));
+    memset(env->brRightOffset, 0, bracketsCount * sizeof(uint64_t));
 
     return env;
 }

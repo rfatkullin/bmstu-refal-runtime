@@ -5,6 +5,7 @@
 
 #include <vmachine.h>
 #include <memory_manager.h>
+#include <defines/checkers.h>
 #include <defines/gc_macros.h>
 #include <defines/errors_str.h>
 #include <builtins/stack_builtins.h>

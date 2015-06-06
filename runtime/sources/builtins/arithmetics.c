@@ -7,6 +7,7 @@
 #include <vint.h>
 #include <helpers.h>
 #include <vmachine.h>
+#include <defines/checkers.h>
 #include <builtins/builtins.h>
 #include <allocators/data_alloc.h>
 #include <allocators/vterm_alloc.h>

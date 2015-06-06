@@ -36,6 +36,8 @@ struct env_t
     /// Offset для скобок.
     uint64_t* bracketsOffset;
     uint32_t bracketsCount;
+    uint64_t* brLeftOffset;
+    uint64_t* brRightOffset;
 };
 
 /// Хранит всю информацию о запросе на вызов.

@@ -39,7 +39,7 @@ AssertSuccess "Can't build compiler"
 cp ${1} ${refSourceFile}
 
 #Компилируем рефал программу
-refalc ${compilerArgs} ${refSourceFile} ${additionalSourcesList} 1>/dev/null 
+refalc ${compilerArgs} ${refSourceFile} ${additionalSourcesList} #1>/dev/null 
 AssertSuccess "Can't compile refal source ${1}"
 
 #Собираем весь проект - линкуем сгенерированный файл с библиотекой исполнения.

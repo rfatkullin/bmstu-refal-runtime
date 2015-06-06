@@ -1,0 +1,10 @@
+$ENTRY Go
+{
+	= <Prout <Func 'Hi!ss'>>;
+}
+
+Func
+{
+	'Hi!' e.1 = e.1;
+}
+
