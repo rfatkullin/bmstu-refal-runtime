@@ -209,18 +209,19 @@ static struct lterm_t* updateFieldOfView(struct lterm_t* currNode, struct func_r
 }
 
 void clearCurrFuncEnvData()
-{
-    CURR_FUNC_CALL->env->stretchVarsNumber[0] = 0;
-
+{    
     // Значение в CURR_FUNC_CALL->env->stretchVarsNumber[1] не трогем
     // Так как это единственный указатель на собранное поле зрения, которое было
     // передано функции при первом вызове.
     uint32_t i = 0;
+    CURR_FUNC_CALL->env->stretchVarsNumber[0] = -1;
     for (i = 1; i < CURR_FUNC_CALL->env->fovsCount; ++i)
     {
-        CURR_FUNC_CALL->env->stretchVarsNumber[i] = 0;
+        CURR_FUNC_CALL->env->stretchVarsNumber[i] = -1;
         CURR_FUNC_CALL->env->assembled[i] = 0;
     }
+
+
 
     memset(ENV->bracketsOffset, 0, ENV->bracketsCount * sizeof(uint64_t));
     memset(ENV->brLeftOffset, 0, ENV->bracketsCount * sizeof(uint64_t));
