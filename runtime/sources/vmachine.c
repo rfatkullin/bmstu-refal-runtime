@@ -222,10 +222,9 @@ void clearCurrFuncEnvData()
         CURR_FUNC_CALL->env->assembled[i] = 0;
     }
 
-    for (i = 1; i < CURR_FUNC_CALL->env->bracketsCount; ++i)
-    {
-        CURR_FUNC_CALL->env->bracketsOffset[i] = 0;
-    }
+    memset(ENV->bracketsOffset, 0, ENV->bracketsCount * sizeof(uint64_t));
+    memset(ENV->brLeftOffset, 0, ENV->bracketsCount * sizeof(uint64_t));
+    memset(ENV->brRightOffset, 0,ENV-> bracketsCount * sizeof(uint64_t));
 
     for (i = 0; i < CURR_FUNC_CALL->env->localsCount; ++i)
     {
