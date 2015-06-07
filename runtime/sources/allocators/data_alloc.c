@@ -141,9 +141,12 @@ struct env_t* initEnvData(struct env_t* env, uint32_t localsCount, uint32_t patt
     env->fovsCount = patternsCount;
     env->bracketsCount = bracketsCount;
 
+    uint32_t i = 0;
+    for (i = 0; i < patternsCount; ++i)
+        env->stretchVarsNumber[i] = -1;
+
     memset(env->locals, 0, localsCount * sizeof(struct fragment_t));    
-    memset(env->assembled, 0, patternsCount * sizeof(uint64_t));
-    memset(env->stretchVarsNumber, 0, patternsCount * sizeof(int));
+    memset(env->assembled, 0, patternsCount * sizeof(uint64_t));    
     memset(env->bracketsOffset, 0, bracketsCount * sizeof(uint64_t));
     memset(env->brLeftOffset, 0, bracketsCount * sizeof(uint64_t));
     memset(env->brRightOffset, 0, bracketsCount * sizeof(uint64_t));

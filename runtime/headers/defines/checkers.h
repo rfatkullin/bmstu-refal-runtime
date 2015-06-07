@@ -12,7 +12,7 @@
 
 #define CHECK_DOUBLE_LIT(i, j) (_memMngr.vterms[i].tag == V_DOUBLE_NUM_TAG && doubleCmp(_memMngr.vterms[i].doubleNum, _memMngr.vterms[j].doubleNum))
 
-#define CHECK_INT_LIT(i, j) (_memMngr.vterms[i].tag == V_INT_NUM_TAG && intCmp(_memMngr.vterms[i].intNum, _memMngr.vterms[j].intNum))
+#define CHECK_INT_LIT(i, j) (_memMngr.vterms[i].tag == V_INT_NUM_TAG && !intCmp(_memMngr.vterms[i].intNum, _memMngr.vterms[j].intNum))
 
 #define CHECK_BR(i) (_memMngr.vterms[i].tag == V_BRACKETS_TAG)
 
