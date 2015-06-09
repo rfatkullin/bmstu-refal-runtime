@@ -105,7 +105,6 @@ static struct lterm_t* onFuncFail(struct lterm_t* callTerm, int failResult)
     return callTerm->funcCall->parentCall;
 }
 
-static void printUStr(FILE* file, struct vstring_t* str);
 static RefalFunc getFuncPointer(struct lterm_t* callTerm)
 {
     struct lterm_t* fieldOfView = callTerm->funcCall->fieldOfView;
@@ -153,19 +152,6 @@ static RefalFunc getFuncPointer(struct lterm_t* callTerm)
     }
 
 	return newFuncPointer;
-}
-
-static void printUStr(FILE* file, struct vstring_t* str)
-{
-    if (!str)
-        return;
-
-    uint64_t i = 0;
-
-    for (i = 0; i < GET_VSTRING_LENGTH(str); ++i)
-        printUTF32(file, str->head[i]);
-
-    fprintf(file, " ");
 }
 
 static struct lterm_t* addFuncCallFiledOfView(struct lterm_t* currNode, struct func_result_t* funcResult)
@@ -220,8 +206,6 @@ void clearCurrFuncEnvData()
         CURR_FUNC_CALL->env->stretchVarsNumber[i] = -1;
         CURR_FUNC_CALL->env->assembled[i] = 0;
     }
-
-
 
     memset(ENV->bracketsOffset, 0, ENV->bracketsCount * sizeof(uint64_t));
     memset(ENV->brLeftOffset, 0, ENV->bracketsCount * sizeof(uint64_t));

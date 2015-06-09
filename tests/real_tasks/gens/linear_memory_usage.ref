@@ -1,6 +1,6 @@
 $ENTRY GO
 {
-	= <Prout <Gen 1000>>
+	= <Prout<Gen <Numb <Arg 1>>>>
 }
 
 Gen

@@ -8,11 +8,11 @@
 #include <lterm.h>
 #include <helpers.h>
 #include <vstring.h>
+#include <debug_print.h>
 #include <memory_manager.h>
 #include <defines/errors_str.h>
 #include <builtins/unicode_io.h>
 
-static void printUStr(FILE* file, struct vstring_t* str);
 static void printChain(FILE* file, struct lterm_t* chain);
 static void printSymbol(FILE* file, struct vterm_t* term);
 static void printIntNumber(FILE* file, struct vint_t* intNum);
@@ -145,7 +145,7 @@ static void printSymbol(FILE* file, struct vterm_t* term)
     }
 }
 
-static void printUStr(FILE* file, struct vstring_t* str)
+void printUStr(FILE* file, struct vstring_t* str)
 {
     if (!str)
         return;

@@ -4,25 +4,21 @@ $EXTERN LOADFILE;
 $ENTRY Go
 {
     = <Open 'r' 1 <Arg 1>>      
-      <Prout  <Sort <ParseNums<LOADFILE 1>>>>;
+      <Prout<Sort <ParseNums<LOADFILE 1>>>>;
 }
 
 Sort 
 {
   = ;
-  t.1 e.1 = <Sort<PartitLeft t.1 e.1>> t.1 <Sort<PartitRight t.1 e.1>>;  
+  t.1 e.2, <Partit () t.1 () e.2>: (e.L) t.1 (e.R) = <Sort e.L> t.1 <Sort e.R>;  
 }
    
-PartitLeft
+Partit 
 {
-  s.M =;
-  s.M s.X e.2, <Compare s.X s.M> : '+' = <PartitLeft s.M e.2>;
-  s.M s.X e.2 = s.X <PartitLeft s.M e.2>;
-} 
-
-PartitRight
-{
-  s.M =;
-  s.M s.X e.2, <Compare s.X s.M> : '+' = s.X <PartitRight s.M e.2>;
-  s.M s.X e.2 = <PartitRight s.M e.2>;
+  (e.L) s.M (e.R) = (e.L) s.M (e.R);
+  (e.L) s.M (e.R) s.X e.2, <Compare s.X s.M>:
+      {
+        '-' = <Partit (e.L s.X) s.M (e.R) e.2>;
+        s.Other = <Partit (e.L) s.M (e.R s.X) e.2>;
+      };
 }

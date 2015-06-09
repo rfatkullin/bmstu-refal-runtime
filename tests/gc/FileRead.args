@@ -1,1 +1,1 @@
--heapSize=30720 ../../tests/gc/Input.txt 
+-heapSize=30730 ../../tests/gc/Input.txt 

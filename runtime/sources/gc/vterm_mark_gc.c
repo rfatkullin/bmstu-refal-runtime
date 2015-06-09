@@ -111,6 +111,28 @@ static void processEnvVTerms(struct env_t* env)
             }
         }
     }
+
+//    for (i = 0; i < env->bracketsCount; ++i)
+//    {
+//        if (env->bracketsOffset[i])
+//        {
+//            uint64_t offset = env->bracketsOffset[i];
+
+//            if (_gc.stage == GC_VTERMS_MARK_STAGE)
+//            {
+//                // Пропускаем литеральные vterm'ы.
+//                if (!(offset < _memMngr.vtermsBeginOffset))
+//                    _gc.inUseVTerms[offset - _memMngr.vtInactiveOffset] = 1;
+
+//                processVTermsInFragment(VTERM_BRACKETS(env->bracketsOffset[i]));
+//            }
+//            else
+//            {
+//                setActualOffset(env->bracketsOffset + i);
+//                processVTermsInFragment(VTERM_BRACKETS(env->bracketsOffset[i]));
+//            }
+//        }
+//    }
 }
 
 static void processVTermsInFragment(struct fragment_t* frag)

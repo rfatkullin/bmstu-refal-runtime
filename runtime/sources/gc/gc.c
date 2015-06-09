@@ -19,6 +19,7 @@ void collectGarbage()
 {
 #ifdef DEBUG
     printf("Start garbage collection.\n");
+    printMemoryInfo();
 #endif
 
     swapHeaps();
@@ -29,9 +30,10 @@ void collectGarbage()
     memset(_memMngr.vterms + _memMngr.vtInactiveOffset, 0, _memMngr.vtermsMaxOffset * sizeof(struct vterm_t));
     memset(_memMngr.data + _memMngr.dtInactiveOffset, 0, _memMngr.dataMaxOffset * sizeof(uint8_t));
 
-#ifdef DEBUG    
+#ifdef DEBUG        
     printf("End garbage collection.\n");
-#endif
+    printMemoryInfo();
+#endif        
 }
 
 int checkAndCleanHeaps(uint64_t needTermCount, uint64_t needDataSize)

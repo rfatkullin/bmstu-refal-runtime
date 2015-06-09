@@ -4,6 +4,7 @@
 #include <inttypes.h>
 
 #include <vmachine.h>
+#include <debug_print.h>
 #include <memory_manager.h>
 #include <defines/gc_macros.h>
 #include <defines/errors_str.h>
@@ -133,7 +134,7 @@ static struct lterm_t* copyFuncCallLTerm(struct lterm_t* oldTerm)
     to->rollback        = from->rollback;
 
     if (from->ident)
-    {
+    {        
         if (!ADDR_IN_INACTIVE_HEAP((uint8_t*)from->ident))
         {
             to->ident = from->ident;
@@ -200,6 +201,10 @@ static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
 
     memcpy(to->assembled, from->assembled, from->fovsCount * sizeof(uint64_t));
     memcpy(to->stretchVarsNumber, from->stretchVarsNumber, from->fovsCount * sizeof(int));
+
+    memcpy(to->bracketsOffset, from->bracketsOffset, from->bracketsCount * sizeof(uint64_t));
+    memcpy(to->brLeftOffset, from->brLeftOffset, from->bracketsCount * sizeof(uint64_t));
+    memcpy(to->brRightOffset, from->brRightOffset, from->bracketsCount * sizeof(uint64_t));
 
     if (from->workFieldOfView)
         to->workFieldOfView = copySimpleChain(from->workFieldOfView);    
