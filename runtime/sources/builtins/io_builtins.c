@@ -82,10 +82,10 @@ struct func_result_t Putout(int entryStatus)
 
 static struct func_result_t _gcGet(FILE* file)
 {
-    uint64_t firstOffset = _memMngr.vtermsOffset;
-    uint64_t currOffset =  _memMngr.vtermsOffset;    
-
     checkAndCleanHeaps(0, BUILTINS_RESULT_SIZE);
+
+    uint64_t firstOffset = _memMngr.vtermsOffset;
+    uint64_t currOffset =  _memMngr.vtermsOffset;
 
     uint32_t ch = 1;
     while(ch)

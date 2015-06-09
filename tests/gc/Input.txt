@@ -1,13 +1,114 @@
-asgdasdgjhgkjdsfas
-sajdsdjfhksdjahflsadflsadf
-sdjfsdjhfkjsadhf
-shdbfjashdfljh
-ashdjasf
-sadflsdgflahsdgfkjhasdgflaghsd
+// file:source.ref
+#include <stdlib.h>
+#include <stdio.h>
+#include <memory_manager.h>
+#include <allocators/vterm_alloc.h>
+#include <allocators/data_alloc.h>
+#include <vmachine.h>
+#include <builtins/builtins.h>
+struct func_result_t func_0(int entryStatus);
+struct func_result_t func_1(int entryStatus);
+struct func_result_t func_2(int entryStatus);
+struct func_result_t func_3(int entryStatus);
+struct func_result_t func_4(int entryStatus);
+struct func_result_t func_5(int entryStatus);
+struct func_result_t func_6(int entryStatus);
+struct func_result_t func_7(int entryStatus);
+struct func_result_t func_8(int entryStatus);
+struct func_result_t func_9(int entryStatus);
+struct func_result_t func_10(int entryStatus);
+struct func_result_t func_11(int entryStatus);
+struct func_result_t func_12(int entryStatus);
+struct func_result_t func_13(int entryStatus);
+struct func_result_t func_14(int entryStatus);
+struct func_result_t func_15(int entryStatus);
+struct func_result_t func_16(int entryStatus);
+struct func_result_t func_17(int entryStatus);
+struct func_result_t func_18(int entryStatus);
+struct func_result_t func_19(int entryStatus);
+struct func_result_t func_20(int entryStatus);
+struct func_result_t func_21(int entryStatus);
+struct func_result_t func_22(int entryStatus);
+struct func_result_t func_23(int entryStatus);
+struct func_result_t func_24(int entryStatus);
+struct func_result_t func_25(int entryStatus);
+struct func_result_t func_26(int entryStatus);
+struct func_result_t func_27(int entryStatus);
+struct func_result_t func_28(int entryStatus);
+struct func_result_t func_29(int entryStatus);
+struct func_result_t func_30(int entryStatus);
+struct func_result_t func_31(int entryStatus);
+struct func_result_t func_32(int entryStatus);
+struct func_result_t func_33(int entryStatus);
+struct func_result_t func_34(int entryStatus);
+struct func_result_t func_35(int entryStatus);
+struct func_result_t func_36(int entryStatus);
+struct func_result_t func_37(int entryStatus);
+struct func_result_t func_38(int entryStatus);
+struct func_result_t func_39(int entryStatus);
+struct func_result_t func_40(int entryStatus);
+struct func_result_t func_41(int entryStatus);
+struct func_result_t func_42(int entryStatus);
+struct func_result_t func_43(int entryStatus);
+struct func_result_t func_44(int entryStatus);
+struct func_result_t func_45(int entryStatus);
+struct func_result_t func_46(int entryStatus);
+struct func_result_t func_47(int entryStatus);
+struct func_result_t func_48(int entryStatus);
+struct func_result_t func_49(int entryStatus);
+struct func_result_t func_50(int entryStatus);
+struct func_result_t func_51(int entryStatus);
+struct func_result_t func_52(int entryStatus);
+struct func_result_t func_53(int entryStatus);
+struct func_result_t func_54(int entryStatus);
+struct func_result_t func_55(int entryStatus);
+struct func_result_t func_56(int entryStatus);
+struct func_result_t func_57(int entryStatus);
+struct func_result_t func_58(int entryStatus);
+struct func_result_t func_59(int entryStatus);
+struct func_result_t func_60(int entryStatus);
+struct func_result_t func_61(int entryStatus);
+struct func_result_t func_62(int entryStatus);
+struct func_result_t func_63(int entryStatus);
+struct func_result_t func_64(int entryStatus);
+struct func_result_t func_65(int entryStatus);
+struct func_result_t func_66(int entryStatus);
+struct func_result_t func_67(int entryStatus);
+struct func_result_t func_68(int entryStatus);
+struct func_result_t func_69(int entryStatus);
+struct func_result_t func_70(int entryStatus);
+struct func_result_t func_71(int entryStatus);
+struct func_result_t func_72(int entryStatus);
+struct func_result_t func_73(int entryStatus);
+struct func_result_t func_74(int entryStatus);
+struct func_result_t func_75(int entryStatus);
+struct func_result_t func_76(int entryStatus);
+struct func_result_t func_77(int entryStatus);
+struct func_result_t func_78(int entryStatus);
+struct func_result_t func_79(int entryStatus);
+struct func_result_t func_80(int entryStatus);
+struct func_result_t func_81(int entryStatus);
+struct func_result_t func_82(int entryStatus);
+struct func_result_t func_83(int entryStatus);
+struct func_result_t func_84(int entryStatus);
+struct func_result_t func_85(int entryStatus);
+struct func_result_t func_86(int entryStatus);
+struct func_result_t func_87(int entryStatus);
+struct func_result_t func_88(int entryStatus);
+struct func_result_t func_89(int entryStatus);
+struct func_result_t func_90(int entryStatus);
+struct func_result_t func_91(int entryStatus);
+struct func_result_t func_92(int entryStatus);
+struct func_result_t func_93(int entryStatus);
+struct func_result_t func_94(int entryStatus);
+struct func_result_t func_95(int entryStatus);
+struct func_result_t func_96(int entryStatus);
+struct func_result_t func_97(int entryStatus);
 
-sadfjgsjdfg
+void initLiteralData()
+{
+	initAllocator(1024 * 1024 * 1024);
+	memMngr.vterms[0] = (struct v_term){.tag = V_IDENT_TAG, .str = allocateVStringLiteral((uint32_t[]){71,114,111,117,112,50}, UINT64_C(6))};
+	memMngr.vterms[1] = (struct v_term){.tag = V_IDENT_TAG, .str = allocateVStringLiteral((uint32_t[]){71,114,111,117,112}, UINT64_C(5))};
+	memMngr.vterms[2] = (struct v_term){.tag = V_IDENT_TAG, .str = allocateVStringLiteral((uint32_t[]){71,114,111,117,112}, UINT64_C(5))};
 
-asdashdkgasdmnas
-sadjjewgfjsdhf
-sdjkgjsdfgklasjdf
-sdhfkashdfkashdgkfhgasdkfhgaskdhfgaksjdhfgkhsagd

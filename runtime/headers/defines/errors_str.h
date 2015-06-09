@@ -28,7 +28,7 @@
 #define BAD_DESCR                   "[Builtins][%s]: Bad file descriptor! Descriptor must be in range [1,%d)! Descr: %d\n"
 #define BAD_FILE_OPEN_MODE          "[Builtins][%s]: Bad file open mode! Expected 'W','w', 'R' or 'r'\n"
 #define FILE_OPEN_ERROR             "[Builtins][%s]: Can't open file %s in '%s' mode! The reason: %s\n"
-#define BAD_VTERM                   "[Builtins][%s]: Bad vterm type!\n"
+#define UNKNOWN_VTERM_TYPE          "[Builtins][%s]: Bad vterm type!\n"
 #define TRY_TO_TAKE_TERMINAL_DESCR  "[Builtins][%s]: Trying to bind file to terminal descriptor! Descriptor must be in range [1,%d)!\n"
 #define GET_WRONG_ARG_NUM           "[Builtins][%s]: Get take 1 argument - file descriptor!\n"
 #define ARG_FUNC_BAD_ARG_NUM        "[Builtins][%s]: Arg take 1 argument - number of argument!\'n"

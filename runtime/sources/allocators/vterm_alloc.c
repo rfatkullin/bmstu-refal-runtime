@@ -44,6 +44,8 @@ uint64_t allocateVTerms(struct fragment_t* frag, allocate_result* res)
             case V_BRACKETS_TAG:
                 _memMngr.vterms[_memMngr.vtermsOffset++].brackets = _memMngr.vterms[frag->offset + i].brackets;
                 break;
+            default:
+                FMT_PRINT_AND_EXIT(UNKNOWN_VTERM_TYPE, "VA");
         }        
     }
 

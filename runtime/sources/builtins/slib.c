@@ -90,6 +90,7 @@ uint64_t initArgsData(uint64_t offset, int argc, char** argv)
 {
     _refalProgramArgsCount = argc;
     _refalProgramArgs = (struct fragment_t*)malloc(argc * sizeof(struct fragment_t));
+    memset(_refalProgramArgs, 0, argc * sizeof(struct fragment_t));
 
     int argIndex = 1;
 

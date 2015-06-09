@@ -18,8 +18,7 @@ static void swap(uint64_t* a, uint64_t* b);
 void collectGarbage()
 {
 #ifdef DEBUG
-    printf("Start garbage collection.\n");
-    printMemoryInfo();
+    printf("Start garbage collection.\n");    
 #endif
 
     swapHeaps();
@@ -31,8 +30,7 @@ void collectGarbage()
     memset(_memMngr.data + _memMngr.dtInactiveOffset, 0, _memMngr.dataMaxOffset * sizeof(uint8_t));
 
 #ifdef DEBUG        
-    printf("End garbage collection.\n");
-    printMemoryInfo();
+    printf("End garbage collection.\n");    
 #endif        
 }
 

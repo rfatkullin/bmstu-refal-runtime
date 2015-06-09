@@ -16,6 +16,8 @@ static double bytes2Gb(uint64_t bytesCount);
 void initAllocator(uint64_t size)
 {
     _memMngr.vterms = (struct vterm_t*)malloc(size);
+    memset(_memMngr.vterms, 0, size);
+
     _memMngr.totalSize = size;
 }
 

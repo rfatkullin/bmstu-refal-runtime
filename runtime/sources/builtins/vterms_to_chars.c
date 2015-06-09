@@ -104,7 +104,7 @@ static char* assemblyFragment(uint64_t offset, uint64_t length, char* buff, int 
                 break;
 
             default:
-                FMT_PRINT_AND_EXIT(BAD_VTERM, "I/O Builtins");
+                FMT_PRINT_AND_EXIT(UNKNOWN_VTERM_TYPE, "I/O Builtins");
         }
     }
 
