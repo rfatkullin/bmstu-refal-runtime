@@ -12,7 +12,6 @@
 
 #define CURR_FUNC_CALL              (_currCallTerm->funcCall)
 #define ENV                         (_currCallTerm->funcCall->env)
-#define RIGHT_BOUND(vtermInd)       (_memMngr.vterms[vtermInd].brackets->offset + _memMngr.vterms[vtermInd].brackets->length)
 
 #define GET_BR(brInd)               (_memMngr.vterms[(ENV->bracketsOffset[brInd])].brackets)
 #define CURR_FRAG_LENGTH(brInd)     (GET_BR(brInd)->length - ENV->brLeftOffset[brInd] - ENV->brRightOffset[brInd])
