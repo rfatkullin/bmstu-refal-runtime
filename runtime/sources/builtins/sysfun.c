@@ -186,7 +186,7 @@ static void chSetActualFragLTerm(allocate_result* res)
 {
     if (!_fragLTerm)
     {
-        GC_DATA_HEAP_CHECK_VOID_RETURN(FRAGMENT_LTERM_SIZE(1), *res);
+        GC_DATA_HEAP_CHECK_VOID_RETURN(FRAGMENT_LTERM_SIZE, *res);
         _fragLTerm = allocateFragmentLTerm(1);
         _fragLTerm->fragment->offset = _memMngr.vtermsOffset;
     }
@@ -228,7 +228,7 @@ static void chReadIdent(allocate_result* res)
         FMT_PRINT_AND_EXIT(BAD_ARG, "Sysfun");
 
     GC_VTERM_HEAP_CHECK_VOID_RETURN(1, *res);
-    GC_DATA_HEAP_CHECK_VOID_RETURN(VSTRING_SIZE(_chVec.size) + FRAGMENT_LTERM_SIZE(1), *res);
+    GC_DATA_HEAP_CHECK_VOID_RETURN(VSTRING_SIZE(_chVec.size) + FRAGMENT_LTERM_SIZE, *res);
 
     struct vstring_t* ident = allocateVString(_chVec.size);
 
@@ -276,7 +276,7 @@ static void chReadStr(allocate_result* res)
     }        
 
     GC_VTERM_HEAP_CHECK_VOID_RETURN(_chVec.size, *res);
-    GC_DATA_HEAP_CHECK_VOID_RETURN(FRAGMENT_LTERM_SIZE(1), *res);
+    GC_DATA_HEAP_CHECK_VOID_RETURN(FRAGMENT_LTERM_SIZE, *res);
 
     struct lterm_t* fragLTerm = allocateFragmentLTerm(1);
     fragLTerm->fragment->offset = _memMngr.vtermsOffset;

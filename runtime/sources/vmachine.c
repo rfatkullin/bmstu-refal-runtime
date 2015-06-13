@@ -392,7 +392,7 @@ struct lterm_t* chCopySimpleExpr(struct lterm_t* chain, allocate_result* res)
         if (currTerm->tag != L_TERM_FRAGMENT_TAG)
             PRINT_AND_EXIT(OBJ_EXPR_CONTAINS_ONLY_FRAGS);
 
-        GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_LTERM_SIZE(1), *res);
+        GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_LTERM_SIZE, *res);
 
         struct lterm_t* newTerm = allocateFragmentLTerm(1);
         memcpy(newTerm->fragment, currTerm->fragment, sizeof(struct fragment_t));

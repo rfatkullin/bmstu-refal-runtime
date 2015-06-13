@@ -214,7 +214,7 @@ static struct env_t* copyEnv(struct env_t* from, struct env_t* to)
 
 static struct lterm_t* copyFragmentLTerm(struct lterm_t* oldTerm)
 {
-    GC_DATA_HEAP_CHECK_EXIT(FRAGMENT_LTERM_SIZE(1));
+    GC_DATA_HEAP_CHECK_EXIT(FRAGMENT_LTERM_SIZE);
 
     struct lterm_t* newTerm = allocateFragmentLTerm(1);
     memcpy(newTerm->fragment, oldTerm->fragment, sizeof(struct fragment_t));

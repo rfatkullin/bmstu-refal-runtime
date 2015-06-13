@@ -56,7 +56,7 @@ struct lterm_t* chAllocateSimpleChainLTerm(allocate_result* res)
 
 struct lterm_t* chAllocateFragmentLTerm(uint32_t count, allocate_result *res)
 {
-    GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_LTERM_SIZE(count), *res);
+    GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_LTERM_SIZE_N(count), *res);
 
     return allocateFragmentLTerm(count);
 }
@@ -304,7 +304,7 @@ static struct lterm_t* chCopyChainKeeperLTerm(struct lterm_t* term, allocate_res
 
 static struct lterm_t* chCopyFragmentLTerm(struct lterm_t* term, allocate_result* res)
 {
-    GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_LTERM_SIZE(1), *res);
+    GC_DATA_HEAP_CHECK_RETURN(FRAGMENT_LTERM_SIZE, *res);
 
     struct lterm_t* newTerm = allocateFragmentLTerm(1);
     memcpy(newTerm->fragment, term->fragment, sizeof(struct fragment_t));

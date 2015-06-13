@@ -506,7 +506,7 @@ static struct func_result_t gcGetPart(int first, const char* funcName)
     if (_memMngr.vterms[BUILTIN_FRAG->offset].tag != V_INT_NUM_TAG)
         FMT_PRINT_AND_EXIT(BAD_ARG, funcName);
 
-    checkAndCleanHeaps(0, FRAGMENT_LTERM_SIZE(1) +
+    checkAndCleanHeaps(0, FRAGMENT_LTERM_SIZE +
                        2 * CHAIN_LTERM_SIZE +
                        CHAIN_KEEPER_LTERM_SIZE(1));
 

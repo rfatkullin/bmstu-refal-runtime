@@ -10,7 +10,9 @@
 
 #define FUNC_CALL_LTERM_SIZE                    (sizeof(struct func_call_t) + sizeof(struct env_t) + sizeof(struct lterm_t))
 
-#define FRAGMENT_LTERM_SIZE(count)              (count * (sizeof(struct lterm_t) + sizeof(struct fragment_t)))
+#define FRAGMENT_LTERM_SIZE                     (sizeof(struct lterm_t) + sizeof(struct fragment_t))
+
+#define FRAGMENT_LTERM_SIZE_N(count)            (count * (sizeof(struct lterm_t) + sizeof(struct fragment_t)))
 
 #define FRAGMENT_STRUCT_SIZE(count)             (count * sizeof(struct fragment_t))
 
@@ -18,7 +20,7 @@
 
 #define CHAIN_LTERM_SIZE                        (sizeof(struct lterm_t))
 
-#define BUILTINS_RESULT_SIZE                    (FRAGMENT_LTERM_SIZE(1) + CHAIN_LTERM_SIZE)
+#define BUILTINS_RESULT_SIZE                    (FRAGMENT_LTERM_SIZE + CHAIN_LTERM_SIZE)
 
 #define VCLOSURE_SIZE(paramsCount)              (sizeof(struct vclosure_t) + FRAGMENT_STRUCT_SIZE(paramsCount))
 
